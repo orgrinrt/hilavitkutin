@@ -34,7 +34,7 @@ These are facts about the source and say nothing of what is right.
 
 `run_parallel` publishes a frame and waits (`scheduler/run_parallel.rs:313-314`). Its workers never ask `dirty_units`: the record-less dispatch passes an all-ones mask under a comment that says so (`scheduler/worker.rs:307-328`) and the windowed walk passes the fiber's member mask alone (`worker.rs:340-388`). It consumes the plan-dirty bits (`run_parallel.rs:252`), folds the pass EMA (`run_parallel.rs:423`) and never calls `select_adapt_config`. A carrier with an accumulator leaves the phase loop altogether: each core walks the whole carrier once over its own slice of the records (`worker.rs:107-124`, `:160-266`).
 
-`run_fused` folds the whole carrier into one fused body the consumer asked for by calling it (`scheduler/run_fused.rs:70`), because choosing it automatically is not expressible with `min_specialization` (`run_fused.rs:54-59`). It asks `dirty_units` (`:103`), has no plan band and leaves the plan-dirty bits unconsumed under `FIXME(b8637199eb8a)` (`:77-86`), and windows by the run configuration's morsel size where `run` takes the plan's window per fiber.
+`run_fused` folds the whole carrier into one fused body the consumer asked for by calling it (`scheduler/run_fused.rs:70`), because choosing it automatically is not expressible with `min_specialization` (`run_fused.rs:54-59`). It asks `dirty_units` (`:103`), has no plan band and leaves the plan-dirty bits unconsumed under `FIXME(b8637199eb8a)` (`:77-86`), and windows by the run configuration's morsel size where `run` takes the plan's window per fiber (`run.rs:260`).
 
 The api revision changes this in four places that the build inherits. `dirty_units` takes the plan-band flag and adds the leading bands' writes to its seed; every entry ends on `bring_in_changes`, which leaves the next frame's seed where the trunk cleared it; a meta band on the phase-loop path is run by core 0 alone over the whole record range; and step 1 of the plan orders units of different lifecycle rank by rank and carries `FIXME(hilavitkutin_orders_two_writers_of_one_store_by_registration)` on the write-write edge. Its workers still ask no dirty mask, which is ticket 157.
 
@@ -60,13 +60,13 @@ Not settled by either seat: whether the thread that calls `run_parallel` runs co
 
 ### A panic aborts, on every build
 
-Op: "Abort stays, fix hang only" (`briefs/fixup/op-answers-36.md` on the kaski channel; the options were to redesign now, to redesign after the api revision, or this). The ratified row `execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen` (the spec `:2448-2451`) says a panic is an abort already on the no_os and os tiers, and that on a std tier "we prefer abort". The row `there_is_no_std_platform_tier` (ratified, by the seats' reading) leaves the first two.
+Op: "Abort stays, fix hang only" (`briefs/fixup/op-answers-36.md` on the kaski channel; the options were to redesign now, to redesign after the api revision, or this). The ratified row `execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen` (the spec `:2448-2451`) says a panic is an abort already on the no_os and os tiers, and that on a std tier "we prefer abort". The row `there_is_no_std_platform_tier` (ratified) leaves the first two.
 
 The hang exists because that premise does not hold in a build that unwinds: `mock/Cargo.toml` sets no `panic = "abort"`, test builds unwind, the dead worker never arrives, and `frame_await_done` loops with no way out (`thread/frame.rs:88-111`).
 
 Both seats refused the three options of the open question ticket. An executor that catches the unwind and reports a poisoned arrival is `catch_unwind` and a new failure policy. Requiring units never to panic leaves the hang. A timeout through the clock cannot tell a dead worker from a long frame, and long frames are what the engine is for ("millions of simulation and crunching work data going constantly", `briefs/fixup/op-answers-20.md`).
 
-Both chose the same fourth: the frame body runs behind a boundary that cannot unwind, so a panic in a unit's body aborts the process whatever the build's panic strategy. Two mechanisms are named, an `extern "C"` worker entry and a guard whose drop aborts. Neither is compiled against the generic `worker_main` yet. A guard that reports the arrival is the wrong one: the other workers stay parked at the waist barrier and the frame returns over partial output (the second seat, `thread/barrier.rs:65-70`, unopened by me).
+Both chose the same fourth: the frame body runs behind a boundary that cannot unwind, so a panic in a unit's body aborts the process whatever the build's panic strategy. Two mechanisms are named, an `extern "C"` worker entry and a guard whose drop aborts. Neither is compiled against the generic `worker_main` yet. A guard that reports the arrival is the wrong one: the other workers stay parked at the waist barrier and the frame returns over partial output (`thread/barrier.rs:65-70`).
 
 The api revision's design sentence "Catching it is the executor's" (`DESIGN.md.tmpl:687` there) goes with this. Provisional stamp.
 
@@ -76,7 +76,7 @@ A worker holds `&Scheduler` across every park (`worker.rs:77-84`) and parks on f
 
 Both seats found that the narrower repair, a raw pointer kept across the park with the reference formed per frame, cannot work: the pointer the worker parks through is derived from the scheduler, and the next exclusive borrow of the scheduler invalidates it under Stacked Borrows whether it is held as a reference or raw. Both chose the relocation the deviation ledger and the deviation 5 audit name: the frame words, the per-worker context and what a worker reads move to a plane the provider allocates and no exclusive borrow of the scheduler covers.
 
-The registry holds the round as an open question to op (`whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four`). Undefined behaviour is no design, so the hole closes either way, and the shape that closes it is stamped provisionally and asked of him.
+The registry holds the round as an open question to op (`whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four`), with two options: bless the proposed rulings, or "rebuild the deviations to the canon shape". The seats were asked about the relocation and the narrower repair and not about the rebuild, which is the spec's per-core program holding its own ranges and sync points and is the larger work that follows this track. Undefined behaviour is no design, so the hole closes either way. The relocation is stamped provisionally as what closes it now, and both of the registry's options are in the question ticket to him.
 
 The first seat predicts that two plain `run_parallel` frames with no swap between them already violate Stacked Borrows, since each call retags the scheduler. Nobody has run it. The Miri job below runs it first, because it says how wide the hole is.
 
@@ -88,6 +88,8 @@ Both found the measured 1.08 cores of four to come from somewhere else. The engi
 
 The stamp: the frame stays one phase, the waist criterion is left alone, and trunk formation is a ticket of its own. The second seat's caveat stands with it: the spec makes a phase of five fibers or fewer one trunk (`:1394-1396`), and whether this frame falls under that depends on the fibers the plan forms, which nobody dumped. The first step of that ticket is the plan dump.
 
+Ticket 128 (the twelve-unit frame spread over one core) is the measurement this question came from. It stays open and folds into the trunk-formation ticket, `hilavitkutin_forms_a_trunk_as_a_write_conflict_component_whe`, whose plan dump is its first step. Ticket 135 is answered by the stamp once op makes it formal.
+
 Both seats also found that `arvo_graph::waist_detect` counts the width of a level where the ratified row counts live paths. The two agree on this frame and differ in general. Ticketed.
 
 ### One dirty mask, on every walk
@@ -98,6 +100,8 @@ The frame after a plan-affecting swap opens on the plan band whatever its fibers
 
 What an accumulator fiber does under the mask neither seat settled. A skipped unit must leave what it would have written, and an accumulator is reset every frame, so either its writer always runs or a skipped writer's appends are kept across the reset. The code does the first (`run.rs:242-253`), a provisional row says the first (`a_mixed_carrier_keeps_incremental_skip_per_fiber_and_accumulator_fibers_always_run_the_whole_range`), and the build keeps it. What the body owes either way is the same accumulator contents whether a unit ran or rested, and the differential asserts that.
 
+Keeping it is this plan's own call on a provisional row, and no stamp. The registry leaves the accumulator's shape open (`which_shape_the_accumulator_takes_is_left_to_the_api_revision`, by the first seat's reading), and the call changes no behaviour, so nothing is asked of op for it here.
+
 ## What is already settled, and what is held
 
 The order of two writers of one store is op's: "Hints, dependents, registration" (`briefs/fixup/op-answers-13.md`, item 3; the options were that, or hints then registration). It is a job below.
@@ -106,7 +110,7 @@ The swap landed provisional, and S1 to S7 are ratified only after its two gaps c
 
 Which convergence a single-trunk phase uses is held, and no job touches it. Op answered "Measure first" (the options were head and tail with the deletion finished, as many ranges as cores with head and tail retired, both chosen at plan time, or measure first), recorded as "the question returns with the numbers. The code stays as it is meanwhile" (registry question `which_convergence_a_single_trunk_phase_uses`). The bench exists (`mock/benches/single-trunk-convergence/FINDINGS.md`) and its own header says no design call rests on it and the choice stays open until the engine has its headline features, on his word that the benches so far are a baseline (`briefs/fixup/op-answers-21.md`). So ticket 105 (build head and tail) waits, and so does any removal of the record tiling. The one frame body is written so that the record range a core takes in a single-trunk phase comes from one place, which either answer then fills.
 
-Ticket 116 is stale as written. It cites a split of a single-trunk phase into one record range per core at `worker.rs:323-348`. That branch is gone from `run_core_phase` on `dev`. The tiling that remains is the accumulator carrier's (`worker.rs:107-124`, `resource/bindings/per_core.rs:110-117`), which the engine design asks for on the accumulator (`DESIGN.md.tmpl:604-607` on the api revision). What is still ungated is commutativity: `COMMUTATIVE` is copied into the plan (`plan/project.rs:162`, `plan/mod.rs:423`) and read by nothing, where the spec sends non-commutative accumulation to one core (`:1171-1176`). That is a job below, restated.
+Ticket 116 is stale as written. It cites a split of a single-trunk phase into one record range per core at `worker.rs:323-348`. That branch is gone from `run_core_phase` on `dev`. The tiling that remains is the accumulator carrier's (`worker.rs:107-124`, `resource/bindings/per_core.rs:110-117`), which the engine design asks for on the accumulator (`DESIGN.md.tmpl:604-607` on the api revision). What is still ungated is commutativity: `COMMUTATIVE` is copied into the plan (`plan/project.rs:162`, `plan/mod.rs:423`) and read by nothing, where the spec keeps non-commutative resource accumulation off head and tail (`:1171-1176`). That is a job below, restated.
 
 ## The jobs, in sequence
 
@@ -118,7 +122,9 @@ Tickets 49 and 157 (its test half). Crates: `hilavitkutin` tests, `hilavitkutin-
 
 The seven-step history of `tests/incremental_skip.rs:481-519` (a skipping scheduler against an every-store-dirty one, equal column bytes at every frame) is driven through `run_parallel` at 1, 2 and 4 workers, with the set of executed units compared as well as the bytes. The history gains a `replace_value`, a `replace_resource` and a clean frame after each.
 
-The case that must fail: the executed-set comparison fails at 1, 2 and 4 workers on the tree as it stands, since the workers ask no mask at any count and `run_parallel` has no walk of its own for one worker. It is committed catalogued and ignored under ticket 157 and un-ignored by job 5. The twin test at `incremental_skip.rs:532` (an input changed without a mark makes the two runs differ) is repeated through `run_parallel`, so the comparison is shown able to fail.
+The case that must fail: the executed-set comparison fails at 1, 2 and 4 workers on the tree as it stands, since the workers ask no mask at any count and `run_parallel` has no walk of its own for one worker. It is committed catalogued and ignored under ticket 157 and un-ignored by job 5.
+
+The byte comparison needs a control of its own, because while `run_parallel` skips nothing its bytes equal the every-store-dirty run's for a trivial reason. The twin of `incremental_skip.rs:532` (an input changed without a mark makes the two runs differ) cannot serve yet: with no skip, the unmarked change reaches both runs and they agree, so that twin is committed ignored under ticket 157 as well and turns green with job 5. The control that works today is a broken runner: the comparison is run once against a worker count whose columns were altered by one record after the frame, shown red and not committed, the way `hilavitkutin-frozen-authors` already catches a wrong runner (`a_wrong_runner_is_caught_on_the_authors`, `tests/authors.rs:194` on the api revision).
 
 Frees: every later job is judged by it.
 
@@ -178,7 +184,7 @@ The case that must fail: that test on today's `run_fused` (`run_fused.rs:77-86`)
 
 Ticket 106. Crates: `hilavitkutin` (`scheduler/dirty.rs:77-84`, `FIXME(0ba7325f0216)`), and the api's `PlanAffecting` if the id is declared there.
 
-The case that must fail: two plan-affecting resources whose store positions clamp to one slot, one replaced, and the bit of the other read; and a registration with capacity zero, where the bit is dropped today.
+The case that must fail. The clamp cannot be reached through `build` today: store positions are below 64 and the plan-affecting capacity is 256 (`plan/dims.rs:81-82`), so the position never clamps and the capacity is never zero. The defect is the key. Swap spec S2 keys the bit by the plan-affecting id, and the source keys it by store position (`dirty.rs:77-84`). So the case is on the key: two plan-affecting resources registered so that their store positions and their plan-affecting ids differ in sequence, one replaced, and the bit asserted at the replaced one's id and at no other. It fails today, where the bit sits at the store position. The clamp and the zero capacity are covered by a unit test of the indexing function over a small capacity, which is where they can be reached.
 
 Jobs 4, 6 and 7 together free the ratification of S1 to S7, which is op's.
 
@@ -186,7 +192,7 @@ Jobs 4, 6 and 7 together free the ratification of S1 to S7, which is op's.
 
 Ticket 72. Crates: `hilavitkutin` (`plan/steps/step1_dag.rs`, the `FIXME` the api revision leaves there), engine design `:43-44`.
 
-The case that must fail: two writers of one store, the later-registered one with the higher hint, asserted to run first; and two with equal hints, the one with more dependents downstream first. Both fail today, where the lower input index wins (`step1_dag.rs:45-49`). The api revision's engine design already states the three steps (`DESIGN.md.tmpl:52-55` there), so the job is source and tests only.
+The case that must fail: two writers of one store, the later-registered one with the higher hint, asserted to run first; and two with equal hints, where the later-registered one has more dependents downstream, asserted to run first. The registration is pinned that way in both, since with the favoured writer registered first the test passes on the index rule. Both fail today, where the lower input index wins (`step1_dag.rs:45-49`). The api revision's engine design already states the three steps (`DESIGN.md.tmpl:52-55` there), so the job is source and tests only.
 
 Independent of jobs 3 to 7, so it may be done whenever the helper waits on a round.
 
@@ -198,7 +204,7 @@ Ticket 59 reads as done on `dev`: `tests/leading_band_appends.rs` (landed with `
 
 Ticket 58: a core's region is capped at its record slice, so a skew that fits the reservation is refused at more than one worker. The check is the ignored test `a_skew_that_fits_the_reservation_is_accepted_at_every_worker_count` (`tests/overflow_is_a_value.rs:377`) un-ignored and green, and it is the case that fails today.
 
-Ticket 116, restated: the tiling reads commutativity. This is this plan's own reading and no seat checked it: the spec's sentence is about head and tail (`:1171-1176`) and the api revision calls the accumulator tiling a different mechanism (`DESIGN.md.tmpl:602-608` there), while its design also says non-commutative accumulation keeps one core (`:682-683` there). The job's design round settles it before source moves. The case that must fail: a carrier whose accumulator-writing unit declares itself non-commutative, asserted to take one core at 2 and 4 workers.
+Ticket 116, restated: the tiling reads commutativity. This is this plan's own reading and no seat checked it: the spec's sentence is about head and tail (`:1171-1176`) and the api revision calls the accumulator tiling a different mechanism (`DESIGN.md.tmpl:602-608` there), while its design also says non-commutative accumulation keeps one core (`:682-683` there). It is asked of op as the question ticket titled "does the accumulator tiling read commutativity in hilavitkutin", and the job's design round takes his answer or, failing one, two seats before source moves. The case that must fail: a carrier whose accumulator-writing unit declares itself non-commutative, asserted to take one core at 2 and 4 workers.
 
 ### 10. The plan cache and the plan handle
 
@@ -206,7 +212,7 @@ Tickets 9, 92 and 108. Crates: `hilavitkutin` (`scheduler/run.rs:126`, `schedule
 
 Ticket 9 narrows to `plan_cache`: the plan-dirty half is live since the swap landed (`dirty.rs:133-143`), and the cache is still only named (`run.rs:126`). The row `the_cached_plan_lives_with_the_scheduler_for_the_pipeline_s_lifetime_and_is_recomputed_only_when_a_plan_affecting_resource_dirties` (provisional) says what it is for. The case that must fail: a counter on the recompute, which must not move on a frame with no plan-affecting change.
 
-Tickets 92 and 108 go together: `build` returns a scheduler where the plan does not fit, and the fiber descriptor array is sized apart from the plan's own dimensions. The case that must fail for 92: its catalogue test, a registration past the descriptor capacity, refused at `build` and not returned. For 108: a plan whose fiber count is above the fixed descriptor length and within the plan's own fiber capacity, asserted to build and to dispatch every fiber, which the fixed array cannot hold today.
+Tickets 92 and 108 go together: `build` returns a scheduler where the plan does not fit, and the fiber descriptor array is sized apart from the plan's own dimensions. Neither has a case that can be written against the tree as it stands, and the job says so before it starts. `build` is fixed to `DefaultPlanDims`, where the descriptor length and the plan's fiber capacity are the same 64 (`plan_handle.rs:226-241`, `plan/dims.rs:78`), and ticket 92's own row says its fixture file is gone and a real one is not reachable from an integration test. So the first step is the test that cannot compile: a scheduler built over plan dimensions of its own, smaller than the default, with a registration that passes the descriptor length. That it does not compile is the finding the job starts from. Once `build` takes the dimensions, the same test is the case: red where the registration is returned as a scheduler, green where it is refused (92), and a second registration within the plan's capacity and past the old fixed length builds and dispatches every fiber (108).
 
 ### 11. The small catalogued ones
 
@@ -214,13 +220,17 @@ Tickets 16 (with its FIXME, 29), 17 and 18. Crates: `hilavitkutin`.
 
 Ticket 16 has a real ignored test, `tests/gate2_worker_count.rs:152` (closures handed out number the smaller of the clamped worker count and the parallelisable width plus one). It is the case that fails today and the check when un-ignored. It waits on the caller question, since the count depends on whether the caller is a worker.
 
-Tickets 17 and 18 have placeholders and no test: `tests/r6_morsel_window_formula.rs:191` is an `unreachable!` and `tests/a1_fiber_morsel_size.rs:140` an `unimplemented!`, so un-ignoring either is red whatever the source does. Each job writes its fixture and assertion first and shows it red on the unfixed source. For 17: a run configuration whose morsel floor is 66, with a write sum that drives the raw window to the floor, asserting the emitted window is at least 64. For 18: a multi-trunk fixture whose dispatch reorders its fibers, asserting each fiber's recorded plan index is its own.
+Tickets 17 and 18 have placeholders and no test: `tests/r6_morsel_window_formula.rs:191` is an `unreachable!` and `tests/a1_fiber_morsel_size.rs:140` an `unimplemented!`, so un-ignoring either is red whatever the source does. Each job writes its fixture and assertion first.
+
+For 17 the placeholder's own text is wrong and is not copied: it asks for a window of at least 64 under a floor of 66, which `plan/steps/step9_morsel.rs:75` already gives (`clamped & !3`, and 66 masked is 64). The case that fails today is the floor itself: with a floor of 66 and a write sum that drives the raw window to it, the window is asserted to be at least 66; and with a floor of 2, asserted to be above zero.
+
+Ticket 18 is a gap in coverage and no defect in the source: `scheduler/plan_handle.rs:277` records `fiber_plan_idx: USize(f)` already. There is no red on the unfixed source to show. The job writes the multi-trunk fixture whose dispatch reorders its fibers, asserts each fiber's recorded plan index is its own, and shows the assertion able to fail against a mutation (the dispatch position in place of `f`), once and not committed.
 
 ### 12. Masks baked at build, and the ownership rule written once
 
 Tickets 85 and 132. Crates: `hilavitkutin` (`scheduler/run.rs:231-234`, `scheduler/worker.rs:354-356`, `dispatch/core_mask.rs:55`, `dispatch/trunk_dispatch.rs:246-253`).
 
-After job 5 there is one walk that rebuilds the per-fiber member mask, so 85 is done once. The check is the differential, unchanged, and a bench under the harness before and after; no number is quoted from outside it. The case that must fail: a baked mask with one member bit cleared by hand, under which the differential goes red, shown once and not committed.
+The per-fiber member mask is rebuilt at two sites today, `run.rs:231-234` and `worker.rs:354-356`. If `run`'s walk is retired by then (it waits on the caller question) 85 is done once; if not, the mask is baked once at build and both walks read it. The check is the differential, unchanged, and a bench under the harness before and after; no number is quoted from outside it. The case that must fail: a baked mask with one member bit cleared by hand, under which the differential goes red, shown once and not committed.
 
 For 132, `core_phase_mask` has no caller in `src`, and the rule lives inline in `trunk_dispatch.rs`. One of them goes. The check is a test that computes ownership through the surviving function for every core and trunk of a multi-trunk fixture and compares it with which core's dispatch ran each trunk. The case that must fail: the same test against the function that is to be deleted, with its rule changed by one (rank plus one modulo the core count), which the dispatch does not follow. If trunk formation is rebuilt (the ticket from the stamp above), 132 folds into it.
 
@@ -228,7 +238,7 @@ For 132, `core_phase_mask` has no caller in `src`, and the rule lives inline in 
 
 Ticket 155. Crates: `hilavitkutin` (`intrinsics/mod.rs:19-30`).
 
-Either the intrinsic behind the vetted gate, or a marker naming the ticket. For the first the check is the assembly of a caller showing the prefetch instruction, and the case that fails is the same assembly today, which shows none. For the second there is no lint in the repository that finds an unmarked stub (its lint list has none), so the job writes one under `mock/lints/`, and the case that fails is that lint on today's `intrinsics/mod.rs`.
+The stub's own doc names the intrinsic as what it is to become (`intrinsics/mod.rs:19-30`), so the intrinsic behind the vetted gate is the job where the workspace's vetted features carry `core::intrinsics::prefetch_read_data`; the helper checks the vetted list first. Where it is not vetted, the stub gets a marker naming the ticket and the ticket stays open. For the intrinsic the check is the assembly of a caller showing the prefetch instruction, and the case that fails is the same assembly today, which shows none. For the marker there is no lint in the repository that finds an unmarked stub (its lint list has none), so the job writes one under `mock/lints/`, and the case that fails is that lint on today's `intrinsics/mod.rs`.
 
 ## Tickets filed or bumped from this work
 
@@ -239,3 +249,5 @@ The question tickets to op: `one_frame_body_for_hilavitkutin_and_the_fused_entry
 ## What a review of this note found
 
 One reviewer pass on the first writing (`c082438a`) found it not ready on four counts, each fixed where it sits: the aliasing test said to exist nowhere exists as an empty stub on an unlanded branch; the ignored tests of tickets 17 and 18 are placeholders that cannot go green; five jobs had no failing case; and the retirement of `run` leaned on the caller question the plan leaves to op.
+
+A second pass, by a reviewer with none of the first one's context, on `f503c854`, found it not ready again, on the job list: the cases for tickets 92, 108 and 106 could not be built through `build` as it is, the case for 17 passed on the unfixed source, ticket 18 is a coverage gap and no defect, the differential of job 1 had no control that can fail before job 5, and ticket 128 had no disposition. Each is rewritten where it sits.
