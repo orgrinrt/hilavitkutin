@@ -76,7 +76,7 @@ A worker holds `&Scheduler` across every park (`worker.rs:77-84`) and parks on f
 
 Both seats found that the narrower repair, a raw pointer kept across the park with the reference formed per frame, cannot work: the pointer the worker parks through is derived from the scheduler, and the next exclusive borrow of the scheduler invalidates it under Stacked Borrows whether it is held as a reference or raw. Both chose the relocation the deviation ledger and the deviation 5 audit name: the frame words, the per-worker context and what a worker reads move to a plane the provider allocates and no exclusive borrow of the scheduler covers.
 
-The registry holds the round as an open question to op (`whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four`), with two options: bless the proposed rulings, or "rebuild the deviations to the canon shape". The seats were asked about the relocation and the narrower repair and not about the rebuild, which is the spec's per-core program holding its own ranges and sync points and is the larger work that follows this track. Undefined behaviour is no design, so the hole closes either way. The relocation is stamped provisionally as what closes it now, and both of the registry's options are in the question ticket to him.
+The registry holds the round as an open question to op (`whether_the_maintainer_blesses_the_plane_relocation_round_for_deviations_one_five_and_six_and_the_bless_of_deviation_four`), with two options: bless the proposed rulings, or "rebuild the deviations to the canon shape". The seats were asked about the relocation and the narrower repair and not about the rebuild, which is the spec's per-core program holding its own ranges and sync points and is the larger work that follows this track. Undefined behaviour is no design, so the hole closes either way. The relocation is stamped provisionally as what closes it now, and the question ticket to him carries the rebuild as a note beside its own options.
 
 The first seat predicts that two plain `run_parallel` frames with no swap between them already violate Stacked Borrows, since each call retags the scheduler. Nobody has run it. The Miri job below runs it first, because it says how wide the hole is.
 
@@ -136,7 +136,7 @@ Thirty-two files under `mock/crates` still define a provider whose buffer is an 
 
 The cases that must fail. For 26: one of those tests under Miri before the move, on the moved-from base; it passes after. For 48: a compile-fail test under `tests/ui/` in which a provider is implemented with a plain `impl MemoryProviderApi`, refused once the trait is `unsafe` and accepted today.
 
-Frees: Miri over anything, so jobs 3 and 4.
+Frees: Miri over anything, so jobs 3 and 4. The stable provider of the tests leaks one `Vec` (`tests/stable_provider/mod.rs:30`), so the Miri runs of jobs 2 and 4 pass `-Zmiri-ignore-leaks`, or a leak report hides the borrow result.
 
 ### 3. A panic in a unit aborts
 
