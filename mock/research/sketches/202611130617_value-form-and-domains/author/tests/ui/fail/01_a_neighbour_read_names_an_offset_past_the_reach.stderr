@@ -1,0 +1,109 @@
+error[E0277]: `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` does not hold `Cons<Shift<East, 2>, api::Empty>`
+  --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:14:17
+   |
+14 |     type Read = Cons<HeatAt, Cons<Near<HeatAt, Far, Cold>, Empty>>;
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `Contains<Cons<Shift<East, 2>, api::Empty>>` is not implemented for `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>`
+   = note: Membership is decided by walking the cells, so `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` has to be a list built from `Empty` and `Cons<H, T>`, and `Cons<Shift<East, 2>, api::Empty>` has to be one of its heads. If the compiler reports `overflow evaluating the requirement` instead, the list is deeper than the default recursion limit and the crate root wants `#![recursion_limit = "1024"]`.
+help: the trait `ReadList` is implemented for `Cons<M, T>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | / impl<M: Reads, T: ReadList> ReadList for Cons<M, T>
+   | | where
+   | |     M::Where: Join<T::Where>,
+   | |_____________________________^
+   = note: required for `Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>` to implement `Member`
+   = note: required for `Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>` to implement `ReadList`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>` to implement `ReadList`
+note: required by a bound in `api::RecordOp::Read`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Read: ReadList;
+   |                ^^^^^^^^ required by this bound in `RecordOp::Read`
+
+error[E0277]: `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` does not hold `Cons<Shift<East, 2>, api::Empty>`
+  --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:15:18
+   |
+15 |     type Write = Cons<HeatAt, Empty>;
+   |                  ^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `Contains<Cons<Shift<East, 2>, api::Empty>>` is not implemented for `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>`
+   = note: Membership is decided by walking the cells, so `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` has to be a list built from `Empty` and `Cons<H, T>`, and `Cons<Shift<East, 2>, api::Empty>` has to be one of its heads. If the compiler reports `overflow evaluating the requirement` instead, the list is deeper than the default recursion limit and the crate root wants `#![recursion_limit = "1024"]`.
+   = note: required for `Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>` to implement `Member`
+   = note: required for `Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>` to implement `ReadList`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>` to implement `ReadList`
+   = note: required for `Cons<Buffered<Heat, Plane>, api::Empty>` to implement `Along<Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>>`
+note: required by a bound in `api::RecordOp::Write`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Write: Along<Self::Read>;
+   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `RecordOp::Write`
+
+error[E0277]: `Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>` has no product
+   --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:17:5
+    |
+ 17 |     fn apply(&self, r: &Vals<Self::Read>) -> Vals<Self::Write> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+    = help: the trait `Project` is not implemented for `Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>`
+    = note: A product is defined for lists built from `Empty` and `Cons<H, T>` whose every member implements `Elem`, so the usual cause is a member that names no value type, or a tail that is not a list.
+note: required by a bound in `Vals`
+   --> /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/has.rs:146:20
+    |
+146 | pub struct Vals<L: Project>(pub L::Prod<Val>);
+    |                    ^^^^^^^ required by this bound in `Vals`
+
+error[E0277]: `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` does not hold `Cons<Shift<East, 2>, api::Empty>`
+  --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:14:5
+   |
+14 |     type Read = Cons<HeatAt, Cons<Near<HeatAt, Far, Cold>, Empty>>;
+   |     ^^^^^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `Contains<Cons<Shift<East, 2>, api::Empty>>` is not implemented for `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>`
+   = note: Membership is decided by walking the cells, so `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` has to be a list built from `Empty` and `Cons<H, T>`, and `Cons<Shift<East, 2>, api::Empty>` has to be one of its heads. If the compiler reports `overflow evaluating the requirement` instead, the list is deeper than the default recursion limit and the crate root wants `#![recursion_limit = "1024"]`.
+note: required by a bound in `Near`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | pub struct Near<C, O, E>(PhantomData<(C, O, E)>)
+   |            ---- required by a bound in this struct
+...
+   |     <C::Domain as Domain>::Reach: Contains<O>;
+   |                                   ^^^^^^^^^^^ required by this bound in `Near`
+
+error[E0277]: `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` does not hold `Cons<Shift<East, 2>, api::Empty>`
+  --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:17:24
+   |
+17 |     fn apply(&self, r: &Vals<Self::Read>) -> Vals<Self::Write> {
+   |                        ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `Contains<Cons<Shift<East, 2>, api::Empty>>` is not implemented for `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>`
+   = note: Membership is decided by walking the cells, so `Cons<Cons<Shift<East, 1>, api::Empty>, Cons<Cons<Shift<East, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, api::Empty>, Cons<Cons<Shift<North, -1>, api::Empty>, Cons<Cons<Shift<North, 1>, Cons<Shift<East, 1>, api::Empty>>, api::Empty>>>>>` has to be a list built from `Empty` and `Cons<H, T>`, and `Cons<Shift<East, 2>, api::Empty>` has to be one of its heads. If the compiler reports `overflow evaluating the requirement` instead, the list is deeper than the default recursion limit and the crate root wants `#![recursion_limit = "1024"]`.
+note: required by a bound in `Near`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | pub struct Near<C, O, E>(PhantomData<(C, O, E)>)
+   |            ---- required by a bound in this struct
+...
+   |     <C::Domain as Domain>::Reach: Contains<O>;
+   |                                   ^^^^^^^^^^^ required by this bound in `Near`
+
+error[E0599]: the method `get` exists for reference `&Vals<Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>>`, but its trait bounds were not satisfied
+  --> tests/ui/fail/01_a_neighbour_read_names_an_offset_past_the_reach.rs:18:16
+   |
+18 |         rec![r.get(HERE)]
+   |                ^^^ method cannot be called due to unsatisfied trait bounds
+   |
+  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
+   |
+20 | pub struct Empty;
+   | ---------------- doesn't satisfy `_: Contains<Cons<Shift<East, 2>, Empty>>`
+...
+29 | pub struct Cons<H, T>(core::marker::PhantomData<(H, T)>);
+   | --------------------- doesn't satisfy `_: Project`
+   |
+   = note: the following trait bounds were not satisfied:
+           `api::Empty: Contains<Cons<Shift<East, 2>, api::Empty>>`
+           which is required by `Cons<Buffered<Heat, Plane>, Cons<Near<Buffered<Heat, Plane>, Cons<Shift<East, 2>, api::Empty>, Cold>, api::Empty>>: Project`

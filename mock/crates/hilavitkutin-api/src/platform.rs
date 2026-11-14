@@ -218,15 +218,14 @@ pub trait HasClock {
 
 // ---------------------------------------------------------------------
 // Runtime data plane: PoolFrame + WakeStrategy + Executor.
-// Topic 6 axes A / G / I / J / K + Topic 3 amendment M11.
 // ---------------------------------------------------------------------
 
 use core::marker::PhantomData;
 use core::ptr::NonNull;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
 
-/// Per-pool runtime data plane carrier. Topic 6 axes G / I / J + Topic
-/// 3 M11. Hot fields live on per-pool cache lines, NOT per-fiber lines
+/// Per-pool runtime data plane carrier. Hot fields live on per-pool
+/// cache lines, NOT per-fiber lines
 /// (per-fiber lines hold progress counters via `progress_slots` arena
 /// indirection).
 ///
@@ -249,12 +248,12 @@ use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
 /// at `ScheduleEnd`; workers Relaxed-load on phase entry to pick the
 /// parking tier (spin / futex / park) per the WakeStrategy thresholds.
 ///
-/// `idle_accumulator` + `park_count` (Topic 5 core-idle axis): per-core
+/// `idle_accumulator` + `park_count`: per-core
 /// wait-time accumulators. Park entry/exit increments the accumulator
 /// (Release on increment paired with phase-boundary Release); AdaptWu
 /// reads with Acquire at `ScheduleEnd`.
 ///
-/// `progress_slots` (Topic 4 axis E): non-owning pointer into the
+/// `progress_slots`: non-owning pointer into the
 /// plan-stage scratch arena's `[AtomicUsize; MAX_FIBERS]` region.
 /// Codegen emits Release stores against `progress_slots.add(slot_idx)`.
 /// The `'arena` lifetime parameter ties the borrow to the scratch
@@ -345,7 +344,7 @@ pub struct PoolFrame<'arena, const MAX_CORES: usize, const MAX_PHASES: usize> {
 unsafe impl<'arena, const C: usize, const P: usize> Send for PoolFrame<'arena, C, P> {}
 unsafe impl<'arena, const C: usize, const P: usize> Sync for PoolFrame<'arena, C, P> {}
 
-/// Per-CoreClass wake strategy. Topic 6 axis K.
+/// Per-CoreClass wake strategy.
 ///
 /// Controls the three-tier parking selection per worker: spin budget
 /// before yielding, futex threshold for sub-50µs waits, park threshold
@@ -376,8 +375,8 @@ pub struct WakeStrategy {
 }
 
 impl WakeStrategy {
-    /// Substrate-default hybrid wake strategy. Topic 6 axis K
-    /// resolution: P-cores spin longer (128 iters; they cost more to
+    /// Substrate-default hybrid wake strategy.
+    /// P-cores spin longer (128 iters; they cost more to
     /// re-park); E-cores yield quickly (32 iters; cheap to restart).
     /// Thresholds: <2µs spin-only, 2-50µs spin+futex, >50µs park
     /// immediately.
@@ -397,12 +396,12 @@ impl Default for WakeStrategy {
     }
 }
 
-/// Sealed executor trait. Topic 6 axis A + audit-2 m4 + Topic 4 axis G.
+/// Sealed executor trait.
 ///
 /// The engine ships exactly one default impl `HybridExecutor` in
 /// `hilavitkutin::thread`. Sealed via the api crate's private
 /// `Sealed` supertrait so consumer impls of `Executor` cannot bypass
-/// Topic 3 S7's cross-thread atomic-ordering protocol.
+/// the cross-thread atomic-ordering protocol.
 ///
 /// Per-worker mainloop entry: `run(pool, core_id, wake_strategy)`
 /// walks the pre-computed `CoreProgram`, dispatching morsels, hitting
@@ -440,7 +439,7 @@ pub enum ExecutorError {
     Shutdown,
 }
 
-/// The substrate's default `Executor` impl. Topic 6 axes A + G + I.
+/// The substrate's default `Executor` impl.
 ///
 /// Per-worker mainloop: walks the pre-computed `CoreProgram`,
 /// dispatches morsels via the engine's `dispatch::run_fiber<S>` per
@@ -449,7 +448,7 @@ pub enum ExecutorError {
 ///
 /// Zero-sized marker. Sealed via the api crate's private supertrait
 /// so consumer impls of `Executor` cannot bypass the cross-thread
-/// atomic-ordering protocol Topic 3 S7 prescribes. The
+/// atomic-ordering protocol. The
 /// re-export module `hilavitkutin::thread::hybrid` lifts this type
 /// into the engine's public surface.
 pub struct HybridExecutor;

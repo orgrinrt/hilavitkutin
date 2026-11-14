@@ -3,13 +3,13 @@
 //! Round 4 reshape: Kit becomes declarative
 //! (`type Units; type Owned`), `add_kit` is type-level only,
 //! SchedulerBuilder loses cap const generics, `.build()` proves
-//! `Stores: ContainsAll<Wus::AccumRead> + ContainsAll<Wus::AccumWrite>`.
+//! `Stores: HoldsAll<Wus::AccumRead> + HoldsAll<Wus::AccumWrite>`.
 //!
 //! Two layers of tests:
 //!
 //! 1. Smoke tests with `Wus = Empty` exercising store accumulation.
 //! 2. WU-bearing tests with a Stub + TestCtx shim. These exercise
-//!    the load-bearing ContainsAll proof reduction.
+//!    the load-bearing HoldsAll proof reduction.
 //!
 //! The negative case (a unit registered without the resource it reads) is
 //! the compile-fail pair `tests/ui/unregistered_store_{fail,pass}.rs`, run
@@ -29,7 +29,6 @@ use hilavitkutin_api::{
     ColumnValue,
     ColumnWriterApi,
     Cons,
-    Contains,
     Depth,
     EachApi,
     Empty,
@@ -40,6 +39,7 @@ use hilavitkutin_api::{
     HasReduce,
     HasResourceProvider,
     HasVirtualFirer,
+    Holds,
     Immediate,
     Normal,
     ReduceApi,
@@ -49,6 +49,7 @@ use hilavitkutin_api::{
     ResolveVirtualFire,
     Resource,
     ResourceProviderApi,
+    StartsFromDefault,
     UnitDispatch,
     Virtual,
     VirtualFirerApi,
@@ -127,8 +128,14 @@ fn store_for_fifty() -> ArenaColumnStorage<TestProvider<65536>> {
 #[derive(Copy, Clone)]
 pub struct Interner;
 pub struct Workspace;
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct FileInfo;
+// A column no kit owns, for the raw registration beside a kit.
+#[derive(Copy, Clone, Default)]
+pub struct Notes;
+// A second one, registered after a kit.
+#[derive(Copy, Clone, Default)]
+pub struct Marks;
 
 // ---------------------------------------------------------------------
 // Kits (declarative shape).
@@ -181,7 +188,7 @@ fn raw_resource_registration_builds() {
 #[test]
 fn raw_column_registration_builds() {
     let built = Scheduler::builder()
-        .with(Column::<FileInfo>::new())
+        .with(Column::<FileInfo>::start())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
 }
@@ -203,14 +210,42 @@ fn two_kits_chained_build() {
     assert!(built.is_ok(), "the builder must accept this registration");
 }
 
+// The raw column is one the kit does not own. A column registered twice, once
+// by a kit and once raw, has two positions in the store list, so `build`
+// cannot give its binding one and the registration is refused for want of a
+// type annotation.
 #[test]
 fn mixed_kit_and_raw_build() {
     let built = Scheduler::builder()
         .with(WorkspaceKit)
         .with(Resource::new(Interner))
-        .with(Column::<FileInfo>::new())
+        .with(Column::<Notes>::start())
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
+}
+
+// A kit's stores have a place in the store list and no value of their own,
+// so they have no node along the bindings. A column registered ahead of the
+// kit is the second node and the fourth store, and its position is the
+// store's: the bit the access masks know it by.
+#[test]
+fn a_column_is_placed_by_the_store_list_and_not_by_its_node() {
+    let built = Scheduler::builder()
+        .with(Column::<Notes>::start())
+        .with(WorkspaceKit)
+        .with(Column::<Marks>::start())
+        .build(store(), USize(0));
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    let marks = scheduler.__bindings();
+    let notes = marks.__tail();
+    assert_eq!(
+        marks.__pos(),
+        USize(0),
+        "the last store registered leads the list"
+    );
+    assert_eq!(notes.__pos(), USize(3), "the kit's two stores sit between");
 }
 
 // ---------------------------------------------------------------------
@@ -222,7 +257,7 @@ struct Stub;
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         unimplemented!()
@@ -235,23 +270,20 @@ impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
     }
 }
 
-impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-    }
-}
+impl<W: AccessSet> ColumnWriterApi<W> for Stub {}
 
 impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unimplemented!()
+    }
 }
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         unimplemented!()
@@ -267,7 +299,7 @@ impl<T: 'static, I> ResolveResource<T, I> for Stub {
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
     }
@@ -520,7 +552,7 @@ fn smoke_fifty_wus() {
 
 // ---------------------------------------------------------------------
 // WuSatisfied uncap stress: a single WU with 16 stores in its Read
-// set. Validates the recursive ContainsAll proof handles realistic
+// set. Validates the recursive HoldsAll proof handles realistic
 // store-count depth via the read! macro emitting Cons cells.
 // ---------------------------------------------------------------------
 

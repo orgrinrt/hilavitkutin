@@ -5,9 +5,10 @@
 //! list, not on the `Stores` access set. Each `.with`-registered store
 //! value contributes one binding cons-cell: a `Resource<T>` carrier
 //! (`StagedResource<T>`) contributes a `ResourceBinding<T, _>` holding
-//! the moved-in value's `ResourcePtr<T>`; a `Column<T>` marker
-//! contributes a `ColumnBinding` holding the reserved column buffer base
-//! (`ColumnPtr<T>`, sized to the build-time record count) and the count;
+//! the moved-in value's `ResourcePtr<T>`; a column, plain or buffered,
+//! comes as a `Started<S>` carrier and contributes a `ColumnBinding`
+//! holding the reserved column buffer base (`ColumnPtr<T>`, sized to the
+//! build-time record count) and the count, its start written to every record;
 //! a `Virtual<T>` marker contributes a `VirtualBinding` (no backing
 //! storage).
 //!
@@ -22,7 +23,8 @@
 //! `DrainStores` walks the value list, reserving a one-record column per
 //! `Resource<T>` and a `record_count`-record column per `Column<T>`
 //! through the supplied `ColumnStorage`, and recording each column base
-//! pointer. Resources and column values are `ColumnValue` (`Copy +
+//! pointer. A `Buffered<T, M>` reserves two such columns, its frozen and
+//! its live side. Resources and column values are `ColumnValue` (`Copy +
 //! 'static`), so the bindings hold only raw pointers: the store owns the
 //! bytes and frees them on its own `Drop`, and there is no per-binding
 //! destructor to run. A zero-sized resource (or zero-record column)
@@ -35,7 +37,8 @@ use core::mem::size_of;
 
 use arvo::{Bool, USize};
 use hilavitkutin_api::access::{AccessSet, Cons, Empty};
-use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
+use hilavitkutin_api::member::Member;
+use hilavitkutin_api::store::{Accum, Resource, StagedResource, Started, Virtual};
 use hilavitkutin_api::store_values::{StoreValues, Sv, SvEmpty};
 use hilavitkutin_api::{ColumnStorage, ColumnValue, StoreId};
 
@@ -43,15 +46,20 @@ use crate::resource::provenance::{ColumnPtr, ErasedResourcePtr, ResourcePtr};
 use crate::resource::shape::ValueShape;
 use crate::scheduler::BuildError;
 
+mod close;
+mod column;
 mod per_core;
 mod refusal;
 
+pub use close::{BringIn, PlaceIn};
+pub use column::{ColKind, ColumnBinding, Flip, Kept, MarkPtr, Plain};
+use column::{drain_column, reserve_records};
 pub(crate) use per_core::accum_slice;
 pub use per_core::{CollectAccumCounts, MergeAccums, PerCoreCounts, RebaseBindings};
 pub use refusal::FirstRefusal;
 
 mod sealed {
-    pub trait Sealed {}
+    pub trait BindingsSealed {}
 }
 
 /// The empty bindings list (matches the empty value list).
@@ -97,41 +105,6 @@ impl<T, Tail> ResourceBinding<T, Tail> {
     }
 
     /// The tail node. Hidden test accessor; not supported surface.
-    #[doc(hidden)]
-    pub fn __tail(&self) -> &Tail {
-        &self.tail
-    }
-}
-
-/// Bindings cons-cell for one registered `Column<T>`.
-///
-/// Holds the reserved `ColumnPtr<T>` (base of the column buffer sized by
-/// the build-time record count) and the record count, read through
-/// hidden accessors mirroring `ResourceBinding`. A zero-record (or
-/// zero-sized) column records a dangling, well-aligned pointer (never
-/// dereferenced, the morsel is empty).
-pub struct ColumnBinding<T, Tail> {
-    pub(crate) ptr:   ColumnPtr<T>,
-    pub(crate) count: USize,
-    pub(crate) tail:  Tail,
-}
-
-impl<T, Tail> ColumnBinding<T, Tail> {
-    /// The recorded column base pointer. Hidden accessor used by the
-    /// column `ColSelector` and by tests. Not part of the supported surface.
-    #[doc(hidden)]
-    pub fn __ptr(&self) -> ColumnPtr<T> {
-        self.ptr
-    }
-
-    /// The reserved record count. Hidden test accessor; not supported surface.
-    #[doc(hidden)]
-    pub fn __count(&self) -> USize {
-        self.count
-    }
-
-    /// The tail node. Hidden accessor used by the pass-through selectors
-    /// and by tests. Not part of the supported surface.
     #[doc(hidden)]
     pub fn __tail(&self) -> &Tail {
         &self.tail
@@ -249,18 +222,19 @@ impl<T, Tail> VirtualBinding<T, Tail> {
 
 /// Maps a `StoreValues` list to its concrete bindings shape.
 ///
-/// Sealed: the four arms (`SvEmpty`, and `Sv` headed by
-/// `StagedResource<T>` / `Column<T>` / `Virtual<T>`) are the only
+/// Sealed: the arms (`SvEmpty`, and `Sv` headed by `StagedResource<T>`,
+/// a `Started<S>` carrier of a column, plain or buffered, `Virtual<T>` or
+/// `Accum<T>`) are the only
 /// store-value shapes the builder places on the list. The heads are
 /// distinct concrete types, so the arms are non-overlapping.
 #[allow(private_bounds)]
-pub trait BindingsFor: sealed::Sealed {
+pub trait BindingsFor: sealed::BindingsSealed {
     /// The concrete bindings cons-list for this value list.
     ///
     /// The bindings hold only `Copy` pointers; the store frees resource
     /// memory on its own `Drop`, so the scheduler runs no bindings walk
     /// on drop and `Bindings` carries no destructor bound.
-    type Bindings;
+    type Bindings: BringIn;
 
     /// The store-marker `AccessSet` this value list registers, in the same
     /// types and order as the builder's `Stores` param. `StoreDispatch<S>`
@@ -273,13 +247,13 @@ pub trait BindingsFor: sealed::Sealed {
     type Markers: AccessSet;
 }
 
-impl sealed::Sealed for SvEmpty {}
+impl sealed::BindingsSealed for SvEmpty {}
 impl BindingsFor for SvEmpty {
     type Bindings = BindingNil;
     type Markers = Empty;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<StagedResource<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<StagedResource<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource<T>, L> {
     type Bindings = ResourceBinding<T, <L as BindingsFor>::Bindings>;
     // The value list carries the `StagedResource<T>` carrier, but the builder's
@@ -290,19 +264,24 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource
     type Markers = Cons<Resource<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Column<T>, L> {}
-impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Column<T>, L> {
-    type Bindings = ColumnBinding<T, <L as BindingsFor>::Bindings>;
-    type Markers = Cons<Column<T>, <L as BindingsFor>::Markers>;
+impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed
+    for Sv<Started<S>, L>
+{
+}
+impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Started<S>, L> {
+    type Bindings = ColumnBinding<S::Value, <L as BindingsFor>::Bindings, S::Kind>;
+    // As with a resource, the value list carries the carrier and the access
+    // sets name the marker.
+    type Markers = Cons<S, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<Virtual<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Virtual<T>, L> {
     type Bindings = VirtualBinding<T, <L as BindingsFor>::Bindings>;
     type Markers = Cons<Virtual<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Accum<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<Accum<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
     type Bindings = AccumBinding<T, <L as BindingsFor>::Bindings>;
     type Markers = Cons<Accum<T>, <L as BindingsFor>::Markers>;
@@ -313,13 +292,14 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
 /// Implemented on the value list. Per `Resource<T>` value: reserve a
 /// one-record column through the store, write the carrier's value in,
 /// record the column base pointer. A zero-sized `T` reserves no column
-/// and records a dangling pointer. Per `Column<T>` / `Virtual<T>` value:
-/// no reservation (the column buffer round and virtual markers carry no
-/// storage here).
+/// and records a dangling pointer. Per column value, plain or buffered, which
+/// comes as a `Started<S>` carrier: reserve its records and write its start to
+/// every record of every reservation. A `Virtual<T>` marker carries no storage
+/// here.
 ///
 /// Sealed: only the arms below inhabit it.
 #[allow(private_bounds)]
-pub trait DrainStores: BindingsFor + sealed::Sealed {
+pub trait DrainStores: BindingsFor + sealed::BindingsSealed {
     /// Reserve and populate the bindings, consuming the value list.
     ///
     /// `next_id` is the running drain-order column id, advanced once per
@@ -417,8 +397,9 @@ where
     }
 }
 
-impl<T: ColumnValue, L> DrainStores for Sv<Column<T>, L>
+impl<S: Kept + Member + 'static, L> DrainStores for Sv<Started<S>, L>
 where
+    S::Value: ColumnValue,
     L: StoreValues + BindingsFor + DrainStores,
 {
     fn drain<CS: ColumnStorage>(
@@ -427,44 +408,23 @@ where
         next_id: &mut USize,
         record_count: USize,
     ) -> notko::Outcome<Self::Bindings, BuildError> {
-        // Input column: reserve a buffer sized by the record count at a
-        // `StoreId` continued past the resource columns, and record the real
-        // base pointer plus the count. Records are written by producer
-        // WorkUnits during the frame; the drain reserves, it does not
-        // initialise.
-        let (_marker, rest) = self.into_parts();
-        let id = StoreId(*next_id);
-        *next_id = USize(next_id.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
-        match cs.reserve::<T>(id, record_count) {
-            notko::Outcome::Ok(()) => {},
-            notko::Outcome::Err(_) => return notko::Outcome::Err(BuildError::AllocationFailed),
+        // A column of either kind. A plain one is one reservation of
+        // `record_count` records. A buffered one is two of one layout, the
+        // live side and the frozen one, at two storage ids one after the
+        // other, and one store in every access mask all the same. Every
+        // record of every reservation holds the value the store was
+        // registered with once the drain returns, so no read of a pass
+        // reaches a record nothing wrote.
+        let (carrier, rest) = self.into_parts();
+        let start = carrier.into_inner();
+        let drained =
+            drain_column::<S::Value, S::Kind, CS, _>(cs, next_id, record_count, |cs, next_id| {
+                <L as DrainStores>::drain(rest, cs, next_id, record_count)
+            });
+        if let notko::Outcome::Ok(binding) = &drained {
+            binding.start_from(start);
         }
-        // SAFETY: `id` names a column just reserved for `record_count`
-        // records of `T`; the store returns its 64-byte-aligned base pointer.
-        let typed = unsafe { cs.column_ptr_mut::<T>(id) };
-        let ptr = if typed.is_null() {
-            // A zero-record (or zero-sized `T`) column reserves no bytes and
-            // hands back a null base. The morsel is then empty, so the column
-            // is never read or written; record a dangling, well-aligned,
-            // non-null pointer to satisfy `ColumnPtr`'s invariant.
-            // SAFETY: `NonNull::dangling` is non-null and `T`-aligned; never
-            // dereferenced (the empty morsel skips every access).
-            unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) }
-        } else {
-            // SAFETY: `typed` is non-null (checked), 64-byte aligned, and sized
-            // for `record_count` records (just reserved).
-            unsafe { ColumnPtr::new_unchecked(typed) }
-        };
-        match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
-            notko::Outcome::Ok(tail) => {
-                notko::Outcome::Ok(ColumnBinding {
-                    ptr,
-                    count: record_count,
-                    tail,
-                })
-            },
-            notko::Outcome::Err(e) => notko::Outcome::Err(e),
-        }
+        drained
     }
 }
 
@@ -523,7 +483,7 @@ impl<T, Tail: ResetAccumulators> ResetAccumulators for ResourceBinding<T, Tail> 
     }
 }
 
-impl<T, Tail: ResetAccumulators> ResetAccumulators for ColumnBinding<T, Tail> {
+impl<T, Tail: ResetAccumulators, K: ColKind> ResetAccumulators for ColumnBinding<T, Tail, K> {
     #[inline]
     fn reset_accumulators(&self) {
         self.tail.reset_accumulators();
@@ -563,27 +523,9 @@ where
         // and `wanted` counts, it does not initialise records. An append past
         // `record_count` is refused and counted in `wanted`.
         let (_marker, rest) = self.into_parts();
-        let id = StoreId(*next_id);
-        *next_id = USize(next_id.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-arith on USize internal drain-order counter; tracked: #72
-        match cs.reserve::<T>(id, record_count) {
-            notko::Outcome::Ok(()) => {},
-            notko::Outcome::Err(_) => return notko::Outcome::Err(BuildError::AllocationFailed),
-        }
-        // SAFETY: `id` names a column just reserved for `record_count` records
-        // of `T`; the store returns its 64-byte-aligned base pointer.
-        let typed = unsafe { cs.column_ptr_mut::<T>(id) };
-        let ptr = if typed.is_null() {
-            // A zero-record (or zero-sized `T`) accumulator reserves no bytes and
-            // hands back a null base. Nothing is ever appended (an empty frame),
-            // so record a dangling, well-aligned, non-null pointer to satisfy
-            // `ColumnPtr`'s invariant.
-            // SAFETY: `NonNull::dangling` is non-null and `T`-aligned; never
-            // dereferenced (no append touches an empty buffer).
-            unsafe { ColumnPtr::new_unchecked(core::ptr::NonNull::<T>::dangling().as_ptr()) }
-        } else {
-            // SAFETY: `typed` is non-null (checked), 64-byte aligned, and sized
-            // for `record_count` records (just reserved).
-            unsafe { ColumnPtr::new_unchecked(typed) }
+        let ptr = match reserve_records::<T, CS>(cs, next_id, record_count) {
+            notko::Outcome::Ok(ptr) => ptr,
+            notko::Outcome::Err(e) => return notko::Outcome::Err(e),
         };
         match <L as DrainStores>::drain(rest, cs, next_id, record_count) {
             notko::Outcome::Ok(tail) => {

@@ -32,7 +32,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -80,9 +80,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Outv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -127,8 +127,8 @@ fn windowed_trunk_dispatches_one_morsel_per_window() {
     MORSEL_LENS.with(|s| s.borrow_mut().clear());
     let provider = BumpProvider::<16384>::new();
     let mut s = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Outv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Outv>::start())
         .with(Windowed)
         .build(store(provider), USize(10))
         .unwrap_or_else(|_| panic!("build should succeed"));

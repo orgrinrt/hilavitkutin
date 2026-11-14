@@ -48,7 +48,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -105,11 +105,11 @@ fn fz(a: u32) -> u32 {
     (a >> 13) ^ a
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct InX(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct AX(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct CZ(u32);
 type One<T> = Cons<Column<T>, Empty>;
 
@@ -201,9 +201,9 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
     // registered CZ, AX, InX, so the builder's prepend makes InX the bindings
     // head, AX its tail, CZ the tail's tail (the sketch-A bindings-walk order).
     let mut flat = Scheduler::builder()
-        .with(Column::<CZ>::new())
-        .with(Column::<AX>::new())
-        .with(Column::<InX>::new())
+        .with(Column::<CZ>::start())
+        .with(Column::<AX>::start())
+        .with(Column::<InX>::start())
         .with(SX)
         .with(SZ)
         .build(store(BumpProvider::<32768>::new()), USize(N))
@@ -225,9 +225,9 @@ fn runtrunk_two_fiber_trunk_matches_flat_walk() {
     // the isolated trunk harness; the 2-deep witness cons-list infers with no
     // turbofish.
     let trunk = Scheduler::builder()
-        .with(Column::<CZ>::new())
-        .with(Column::<AX>::new())
-        .with(Column::<InX>::new())
+        .with(Column::<CZ>::start())
+        .with(Column::<AX>::start())
+        .with(Column::<InX>::start())
         .with(SX)
         .with(SZ)
         .build(store(BumpProvider::<32768>::new()), USize(N))

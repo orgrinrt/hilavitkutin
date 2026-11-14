@@ -1,0 +1,12 @@
+error[E0277]: the store `Other` is not in `Cons<Buffered<Heat, Plane>, api::Empty>`
+ --> tests/ui/fail/11_a_missing_store_reads_with_the_apis_message.rs:9:13
+  |
+9 |     needs::<Cons<HeatAt, Empty>>();
+  |             ^^^^^^^^^^^^^^^^^^^ the trait `Holds<Other>` is not implemented for `Cons<Buffered<Heat, Plane>, api::Empty>`
+  |
+  = note: register it with `.with(..)` before `build`, or install a kit that owns it
+note: required by a bound in `needs`
+ --> tests/ui/fail/11_a_missing_store_reads_with_the_apis_message.rs:6:13
+  |
+6 | fn needs<L: Holds<Other>>() {}
+  |             ^^^^^^^^^^^^ required by this bound in `needs`

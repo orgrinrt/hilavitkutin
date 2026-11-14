@@ -6,7 +6,7 @@
 //!
 //! `NullSink`, `CountingSink`, `TeeSink` are the standard combinators
 //! consumers pass where a sink is expected. Tuple blanket impls are
-//! not provided in this round; callers taking disjoint sinks take
+//! not provided yet; callers taking disjoint sinks take
 //! them as separate parameters or wrap via `TeeSink`.
 
 use core::marker::PhantomData;

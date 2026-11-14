@@ -123,8 +123,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 
@@ -146,8 +146,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EmaWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let ema = ctx.meta::<SchedulerMetrics>().ema_pass_duration_ns.get();
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(ema.to_raw())) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(ema.to_raw()));
     }
 }
 
@@ -165,7 +165,7 @@ fn single_core_scripted_ema_fold() {
         2000, 2100, 2200, 2300, 2400, 2700, // frame 2: 700
         3000, 3100, 3200, 3300, 3400, 3700, // frame 3: 700
     ];
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let mut scheduler = Scheduler::builder()
         .clock(ScriptClock::new(&SCRIPT))
         .with(Accum::<Mark>::new())
@@ -208,7 +208,7 @@ fn parallel_scripted_ema_seed() {
     use crate::common::TestExecutor;
 
     static SCRIPT: [u64; 4] = [1000, 1300, 2000, 2700];
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(ScriptClock::new(&SCRIPT))
         .with(Accum::<Mark>::new())
@@ -258,7 +258,7 @@ fn parallel_scripted_ema_seed() {
 #[cfg(feature = "platform-os")]
 #[test]
 fn os_clock_default_nonzero() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Mark>::new())
         .with(ConsumerWu)

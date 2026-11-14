@@ -1,116 +1,90 @@
-//! AccessSet and Contains: compile-time store membership.
+//! Access sets: the lists a unit reads and writes, and what a list holds.
 //!
-//! `AccessSet` is sealed on the cons-list typestate: `Empty` and
-//! `Cons<H, T>`. A WU that reads `Column<X>` constrains its `Read`
-//! set to implement `Contains<Column<X>>`. Violating that at a call
-//! site fails to compile.
+//! The list itself is `notko-hlist`'s. `Empty`, `Cons`, `Contains`,
+//! `ContainsAll` and `Concat` are that crate's items, re-exported here so
+//! that a unit's crate names one crate. This module adds what the engine's
+//! contract needs on top: `AccessSet`, the bound saying a list is made of
+//! members and carrying its count, and `Holds` and `HoldsAll`, the two
+//! membership bounds that report a missing store in this crate's words.
 
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
+use notko_hlist::List;
+pub use notko_hlist::{Concat, Cons, Contains, ContainsAll, Empty};
 
-use crate::sealed;
+use crate::member::Member;
 
-/// Sealed marker on the cons-list typestate.
+/// A list whose every cell is a member.
 ///
-/// Implemented for `Empty` and recursively for `Cons<H, T>` where
-/// `T: AccessSet`. `LEN` reports the cons-list cardinality.
-#[allow(private_bounds)]
-pub trait AccessSet: sealed::Sealed + 'static {
-    /// Number of member types in the set.
+/// Implemented for `Empty` and for `Cons<H, T>` where `H` is a `Member` and
+/// `T` is an `AccessSet`. A store marker is a member that stands for itself,
+/// and `Reach`, `Written` and `Differs` are members that stand for the store
+/// they wrap. `LEN` is the count of cells.
+///
+/// Closed without a seal of its own: the supertrait `List` is sealed in the
+/// shared crate, and neither `Empty` nor `Cons` is a type another crate may
+/// implement a foreign trait for.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not an access set",
+    note = "An access set is `Empty`, or `Cons<H, T>` where `H` is a store marker (`Resource`, `Column`, `Buffered`, `Accum`, `Virtual`) or a wrapper over a `Column` or a `Buffered` (`Reach`, `Written`, `Differs`) and `T` is an access set. `Differs` asks `PartialEq` of the value type, and `Written` asks nothing of it. The `read!` and `write!` macros build one from a flat list."
+)]
+pub trait AccessSet: List + 'static {
+    /// Number of members in the set.
     const LEN: USize;
 }
 
-/// Sealed membership witness: the implementing `AccessSet` contains
-/// `S` as one of its cons-list members.
-///
-/// Provider API where-clauses reference `Contains<Column<T>>` or
-/// `Contains<Resource<T>>` on the WU-declared set. Accessing a store
-/// that was not declared is a compile error.
-///
-/// Marker trait (`#[marker]`) so the head-match and tail-recurse
-/// impls coexist: a cons-list whose head IS `S` and whose tail also
-/// contains `S` resolves through whichever impl the trait solver
-/// finds first, without coherence conflict.
-#[marker]
-#[diagnostic::on_unimplemented(
-    message = "store `{Self}` does not contain `{S}`",
-    note = "Register it with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
-)]
-pub trait Contains<S>: AccessSet {}
-
-// ---------------------------------------------------------------------
-// HList substrate: Empty + Cons<H, T> primitives.
-//
-// `Empty` is the cons-list leaf. `Cons<H, T>` is the cons-cell.
-// `read![T0, T1]` and `write![T0, T1]` macros (in macros.rs) expand
-// to nested `Cons<...>` chains terminated by `Empty`.
-// ---------------------------------------------------------------------
-
-/// Cons-list leaf (empty).
-pub struct Empty;
-
-/// Cons-list cell carrying head `H` and tail `T`.
-pub struct Cons<H, T>(core::marker::PhantomData<(H, T)>);
-
-impl sealed::Sealed for Empty {}
+#[diagnostic::do_not_recommend]
 impl AccessSet for Empty {
     const LEN: USize = <USize as Identity<Additive>>::IDENTITY;
 }
 
-impl<H: 'static, T: 'static> sealed::Sealed for Cons<H, T> {}
-impl<H: 'static, T: 'static + AccessSet> AccessSet for Cons<H, T> {
-    const LEN: USize = USize(T::LEN.0 + 1);
+#[diagnostic::do_not_recommend]
+impl<H: Member, T: AccessSet> AccessSet for Cons<H, T> {
+    const LEN: USize = USize(T::LEN.0 + 1); // lint:allow(no-bare-numeric) reason: successor step of the const count; tracked: #121
 }
 
-// Head match: Cons<H, T> contains H. Coexists with the recursive
-// tail match below under #[marker].
-impl<H: 'static, T: 'static + AccessSet> Contains<H> for Cons<H, T> {}
-
-// Recursive tail match: Cons<H, T> contains M if T does.
-impl<H: 'static, T: 'static + AccessSet, M: 'static> Contains<M> for Cons<H, T> where T: Contains<M> {}
-
-/// Type-level Cons-list append.
+/// The list holds the store marker `S`, bare.
 ///
-/// `<Self as Concat<L>>::Out` produces a cons list with every
-/// element of Self followed by every element of L. Used by Kit
-/// composition to grow `Wus` and `Stores` bundles.
+/// Holds exactly where `Contains<S>` does. It exists for its message: the
+/// shared crate's `Contains` knows nothing of stores, so every bound an
+/// author or a `build` caller can fail is written on `Holds`, and the
+/// failure is reported in this crate's words with the store named.
 #[diagnostic::on_unimplemented(
-    message = "cannot concatenate `{L}` onto `{Self}`",
-    note = "Concat is implemented for `Empty` and `Cons<H, T>` where `T: Concat<L>`. Make sure both sides are cons-lists built from `Empty` and `Cons<H, T>` (the `read!` / `write!` macros emit this shape)."
+    message = "store `{Self}` does not contain `{S}`",
+    note = "Register it with `.with(Resource::new(value))`, `.with(Column::<T>::start())`, `.with(Virtual::<T>::new())`, or install a Kit that owns it via `.with(MyKit)`. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root.",
+    note = "In a unit's body the list is the unit's own `type Read` or `type Write`: a positional accessor reaches a store the unit lists there bare. A store read with a reach, and a `Buffered<T, M>` under any member, are reached through the value function."
 )]
-pub trait Concat<L> {
-    type Out;
+pub trait Holds<S>: List {}
+
+#[diagnostic::do_not_recommend]
+impl<L: Contains<S>, S> Holds<S> for L {}
+
+mod seal {
+    use notko_hlist::{Cons, Empty, List};
+
+    /// The seal on `HoldsAll`: the walk has these two steps and no other.
+    pub trait Walk<L> {}
+
+    impl<S: List> Walk<Empty> for S {}
+    impl<S: List, H, T> Walk<Cons<H, T>> for S {}
 }
 
-impl<L> Concat<L> for Empty {
-    type Out = L;
-}
-
-impl<H, T, L> Concat<L> for Cons<H, T>
-where
-    T: Concat<L>,
-{
-    type Out = Cons<H, <T as Concat<L>>::Out>;
-}
-
-/// Sealed-via-AccessSet membership: every element of `L` is in
-/// `Self`.
+/// The list holds the store of every member of `L`.
 ///
-/// Marker trait so per-position impls coexist without coherence
-/// overlap. Two impls: base (`L = Empty`) and recursive
-/// (`L = Cons<H, T>`, requires `Self: Contains<H> + ContainsAll<T>`).
-/// `.build()` carries `Stores: ContainsAll<AccumRead> +
-/// ContainsAll<AccumWrite>` as the proof shape.
-#[marker]
+/// A walk of `L` in two steps: the empty list is held by any list, and
+/// `Cons<H, T>` is held where the store `H` stands for is held and `T` is
+/// held. Each step asks `Holds`, so the store that is missing is named in
+/// the failure, and a wrapper is resolved to its store through
+/// `Member::Store`. The two impls are on `Empty` and on `Cons` and do not
+/// overlap. Sealed: the walk is the only legitimate shape.
 #[diagnostic::on_unimplemented(
-    message = "store bundle `{Self}` does not contain every element of `{L}`",
-    note = "Register the missing store with `.add_resource::<T>(initial)`, `.add_column::<T>()`, `.add_virtual::<T>()`, or install a Kit that registers it. If `.build()` reports `overflow evaluating the requirement`, declare `#![recursion_limit = \"1024\"]` at your crate root."
+    message = "store bundle `{Self}` does not hold every store of `{L}`",
+    note = "Each member of `{L}` is checked on its own, and the store that is missing is named in the `Holds` failure reported with this one."
 )]
-pub trait ContainsAll<L>: AccessSet {}
+pub trait HoldsAll<L>: seal::Walk<L> {}
 
-impl<S: AccessSet> ContainsAll<Empty> for S {}
+// Neither impl is kept out of a diagnostic: the compiler walks into the step
+// that failed and reports the `Holds` it asked, which names the store.
+impl<S: List> HoldsAll<Empty> for S {}
 
-impl<S, H: 'static, T: 'static> ContainsAll<Cons<H, T>> for S where
-    S: AccessSet + Contains<H> + ContainsAll<T>
-{
-}
+impl<S, H: Member, T> HoldsAll<Cons<H, T>> for S where S: List + Holds<H::Store> + HoldsAll<T> {}

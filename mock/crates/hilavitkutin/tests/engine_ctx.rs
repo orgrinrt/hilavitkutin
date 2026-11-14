@@ -128,7 +128,7 @@ fn context_column_read_after_write() {
     let col_ptr = unsafe { ColumnPtr::new_unchecked(buf.as_mut_ptr()) };
     // The per-frame column source the run-loop hands in. The projecting
     // constructor re-projects it over the access set.
-    let col_source = ColPtrCons::__new(col_ptr, ColPtrNil);
+    let col_source = ColPtrCons::__new(col_ptr, USize(8), ColPtrNil);
 
     // The column is both read and written, so it appears in `R` and `W`.
     // No resources are declared, so the resource source is empty.
@@ -168,7 +168,11 @@ fn context_multi_column_distinct_read_write() {
     let pc = unsafe { ColumnPtr::new_unchecked(buf_c.as_mut_ptr()) };
     // The source holds every column the access sets project over, in the
     // order [u8, u16, u32]; per-side projection pulls the relevant subset.
-    let col_source = ColPtrCons::__new(pa, ColPtrCons::__new(pb, ColPtrCons::__new(pc, ColPtrNil)));
+    let col_source = ColPtrCons::__new(
+        pa,
+        USize(8),
+        ColPtrCons::__new(pb, USize(8), ColPtrCons::__new(pc, USize(8), ColPtrNil)),
+    );
 
     let meta = hilavitkutin::meta::MetaBlock::default();
     let ctx: EngineCtx<'_, ReadU8U16, WriteU16U32, _, _, _> = EngineCtx::project(

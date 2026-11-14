@@ -4,18 +4,22 @@
 //! Split out of `dispatch/engine_ctx.rs` (file-size lint). No behaviour
 //! change.
 
-use hilavitkutin_api::access::{Cons, Empty};
-use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
+use core::marker::PhantomData;
 
-use super::selectors::{AccumSelector, ColSelector};
+use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::store::{Accum, Resource, Virtual};
+
+use super::col_select::{ColMember, ColSelector};
+use super::selectors::AccumSelector;
 use super::{AccPtrCons, AccPtrNil, ColPtrCons, ColPtrNil};
 
 // ---------------------------------------------------------------------
 // ColProject: build the projected column bundle from a column source.
 //
-// `ColProject<Set, Indices>` recurses on the `Column<T>` members of an
-// access set `Set`, pulling each matching `ColumnPtr<T>` out of a column
-// source via `ColSelector`. `Indices` is a parallel cons-list whose
+// `ColProject<Set, Indices>` recurses on the column members of an access
+// set `Set` (every `ColMember`: a `Column`, a `Buffered`, either under a
+// wrapper), pulling each matching `ColRef<T>` out of a column source via
+// `ColSelector`. `Indices` is a parallel cons-list whose
 // elements are the per-member selector indices; carrying it as a trait
 // type parameter constrains each index (dodging E0207). This is the
 // column analogue of `Project`: it forces the projected column bundle to
@@ -45,19 +49,21 @@ impl<C> ColProject<Empty, Empty> for C {
     }
 }
 
-// Column head: pull the pointer, recurse on the tail.
-impl<C, T, I, STail, ITail> ColProject<Cons<Column<T>, STail>, Cons<I, ITail>> for C
+// Column head, bare or under a wrapper: pull the column of the member's
+// value type and kind, recurse on the tail.
+impl<C, M: ColMember, I, STail, ITail> ColProject<Cons<M, STail>, Cons<I, ITail>> for C
 where
-    C: ColSelector<T, I>,
+    C: ColSelector<M::T, I, M::K>,
     C: ColProject<STail, ITail>,
 {
-    type Out = ColPtrCons<T, <C as ColProject<STail, ITail>>::Out>;
+    type Out = ColPtrCons<M::T, <C as ColProject<STail, ITail>>::Out, M::K>;
 
     #[inline(always)]
     fn col_project(&self) -> Self::Out {
         ColPtrCons {
-            head: <C as ColSelector<T, I>>::get(self),
+            head: <C as ColSelector<M::T, I, M::K>>::get(self),
             tail: <C as ColProject<STail, ITail>>::col_project(self),
+            _k:   PhantomData,
         }
     }
 }
@@ -173,7 +179,7 @@ where
 }
 
 // Column head: no accumulator node, recurse on the tail.
-impl<'s, C, T, STail, Indices> AccumProject<'s, Cons<Column<T>, STail>, Indices> for C
+impl<'s, C, M: ColMember, STail, Indices> AccumProject<'s, Cons<M, STail>, Indices> for C
 where
     C: AccumProject<'s, STail, Indices>,
 {

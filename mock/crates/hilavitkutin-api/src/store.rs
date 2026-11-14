@@ -1,8 +1,8 @@
 //! Store marker types.
 //!
-//! Zero-sized type-level descriptors for the three store shapes
-//! (`Resource`, `Column`, `Virtual`) and the three resource layouts
-//! (`Field`, `Seq`, `Map`). The scheduler sees `StoreId` pairs at
+//! Zero-sized type-level descriptors for the store shapes (`Resource`,
+//! `Column`, `Buffered` with its two modes, `Accum`, `Virtual`) and the
+//! three resource layouts (`Field`, `Seq`, `Map`). The scheduler sees `StoreId` pairs at
 //! runtime; these types are the compile-time identity erased to
 //! plain indices by execution time.
 
@@ -91,14 +91,70 @@ impl<T> Default for Column<T> {
 
 impl<T> Column<T> {
     /// Construct a `Column<T>` marker.
+    ///
+    /// The marker is what a unit names the store by. A store is registered
+    /// with [`start`](Column::start) or [`start_from`](Column::start_from),
+    /// which say what its records hold before any unit has written them.
     pub const fn new() -> Self {
         Column(PhantomData)
     }
+
+    /// Register the store with `value` at every record.
+    ///
+    /// There for every element type, also one that has a start of its own.
+    #[inline]
+    pub const fn start_from(value: T) -> Started<Self> {
+        Started(value)
+    }
 }
 
-impl<T: 'static> BuilderInput for Column<T> {
-    type Dispatch = StoreDispatch<Self>;
-    type Init = ();
+impl<T: notko::HasTrivialCtor> Column<T> {
+    /// Register the store with the element type's own start at every record.
+    ///
+    /// The start is the type's trivial constructor where it has one, else
+    /// its `Default` through [`StartsFromDefault`], and for a type that has
+    /// both it is the constructor:
+    ///
+    /// ```
+    /// use hilavitkutin_api::store::{Column, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug)]
+    /// struct Both(u8);
+    /// impl notko::HasTrivialCtor for Both {
+    ///     fn new() -> Self {
+    ///         Both(7)
+    ///     }
+    /// }
+    /// impl Default for Both {
+    ///     fn default() -> Self {
+    ///         Both(9)
+    ///     }
+    /// }
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug, Default)]
+    /// struct Zeroed(u8);
+    ///
+    /// assert_eq!(Column::<Both>::start().into_inner(), Both(7));
+    /// assert_eq!(Column::<Zeroed>::start().into_inner(), Zeroed(0));
+    /// ```
+    ///
+    /// An element type with neither has no `start`, and
+    /// [`start_from`](Column::start_from) is the one way to register it:
+    ///
+    /// ```compile_fail,E0599
+    /// use hilavitkutin_api::store::{Column, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone)]
+    /// struct Neither(u8);
+    /// let _ = Column::<Neither>::start();
+    /// ```
+    #[inline]
+    pub const fn start() -> Started<Self>
+    where
+        T: [const] notko::HasTrivialCtor,
+    {
+        Started(<T as notko::HasTrivialCtor>::new())
+    }
 }
 
 impl<T> notko::HasTrivialCtor for Column<T> {
@@ -147,6 +203,206 @@ impl<T: 'static> BuilderInput for Accum<T> {
 impl<T> notko::HasTrivialCtor for Accum<T> {
     fn new() -> Self {
         Accum(PhantomData)
+    }
+}
+
+/// The live side of a buffered column is copied into its frozen side.
+///
+/// The default mode. The live side always holds the whole store, so a unit
+/// may write any part of it.
+pub struct Snapshot;
+
+/// The two sides of a buffered column trade places, with no copy.
+///
+/// The side a unit then writes into holds the values of two passes before,
+/// so the store is right only where a unit that writes it writes every
+/// record, which a value function does.
+pub struct Exchange;
+
+/// How the live side of a buffered column becomes its frozen side.
+///
+/// `Snapshot` and `Exchange`, and no other.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a mode of a buffered column",
+    note = "The modes are `Snapshot` (the live side is copied into the frozen side, the default) and `Exchange` (the two sides trade places)."
+)]
+pub trait BufferMode: crate::sealed::Sealed + 'static {}
+
+impl crate::sealed::Sealed for Snapshot {}
+impl BufferMode for Snapshot {}
+impl crate::sealed::Sealed for Exchange {}
+impl BufferMode for Exchange {}
+
+/// A column held in two sides: read frozen, written live.
+///
+/// Every read sees the frozen side, which is the store as it stood when the
+/// pass began, and every write lands on the live side. After the last unit
+/// of a pass the live side of every buffered store the pass changed becomes
+/// its frozen side. `M` says how, and is settled at compile time.
+#[repr(transparent)]
+pub struct Buffered<T, M = Snapshot>(PhantomData<(T, M)>);
+
+impl<T, M> Copy for Buffered<T, M> {}
+impl<T, M> Clone for Buffered<T, M> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<T, M> Default for Buffered<T, M> {
+    #[inline(always)]
+    fn default() -> Self {
+        Buffered(PhantomData)
+    }
+}
+
+impl<T, M> Buffered<T, M> {
+    /// Construct a `Buffered<T, M>` marker.
+    ///
+    /// The marker is what a unit names the store by. It is not what a
+    /// scheduler is built with, since it says nothing of what the first pass
+    /// reads, so it is no `BuilderInput`. A store is registered with
+    /// [`start`](Buffered::start) or [`start_from`](Buffered::start_from).
+    pub const fn new() -> Self {
+        Buffered(PhantomData)
+    }
+}
+
+impl<T, M: BufferMode> Buffered<T, M> {
+    /// Register the store with `value` at every record of both sides.
+    ///
+    /// There for every element type, also one that has a start of its own.
+    #[inline]
+    pub const fn start_from(value: T) -> Started<Self> {
+        Started(value)
+    }
+}
+
+impl<T: notko::HasTrivialCtor, M: BufferMode> Buffered<T, M> {
+    /// Register the store with the element type's own start at every record.
+    ///
+    /// The start is the type's trivial constructor where it has one, else
+    /// its `Default` through [`StartsFromDefault`], and for a type that has
+    /// both it is the constructor:
+    ///
+    /// ```
+    /// use hilavitkutin_api::store::{Buffered, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug)]
+    /// struct Both(u8);
+    /// impl notko::HasTrivialCtor for Both {
+    ///     fn new() -> Self {
+    ///         Both(7)
+    ///     }
+    /// }
+    /// impl Default for Both {
+    ///     fn default() -> Self {
+    ///         Both(9)
+    ///     }
+    /// }
+    ///
+    /// #[derive(Copy, Clone, PartialEq, Debug, Default)]
+    /// struct Plain(u8);
+    ///
+    /// assert_eq!(Buffered::<Both>::start().into_inner(), Both(7));
+    /// assert_eq!(Buffered::<Plain>::start().into_inner(), Plain(0));
+    /// ```
+    ///
+    /// An element type with neither has no `start`, and
+    /// [`start_from`](Buffered::start_from) is the one way to register it:
+    ///
+    /// ```compile_fail,E0599
+    /// use hilavitkutin_api::store::{Buffered, StartsFromDefault};
+    ///
+    /// #[derive(Copy, Clone)]
+    /// struct Neither(u8);
+    /// let _ = Buffered::<Neither>::start();
+    /// ```
+    #[inline]
+    pub const fn start() -> Started<Self>
+    where
+        T: [const] notko::HasTrivialCtor,
+    {
+        Started(<T as notko::HasTrivialCtor>::new())
+    }
+}
+
+/// A store that holds a value of its element type at every record.
+///
+/// `Column<T>` and `Buffered<T, M>`, and no other. Such a store is registered
+/// with the value its records start from, so no read of it reaches a record
+/// nothing wrote.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` is not a store that is registered with a start",
+    note = "The stores with a start are `Column<T>` and `Buffered<T, M>`."
+)]
+pub trait Starts: crate::sealed::Sealed + Sized {
+    /// The element type, which is the type of the start.
+    type Value;
+}
+
+impl<T> crate::sealed::Sealed for Column<T> {}
+impl<T> Starts for Column<T> {
+    type Value = T;
+}
+
+impl<T, M: BufferMode> crate::sealed::Sealed for Buffered<T, M> {}
+impl<T, M: BufferMode> Starts for Buffered<T, M> {
+    type Value = T;
+}
+
+/// The second way a column's element type gives it a start.
+///
+/// Implemented for every store that [`Starts`] whose element type has a
+/// `Default`, and by nothing else. Its `start` is found only where the
+/// inherent [`Column::start`] or [`Buffered::start`] does not apply, which is
+/// where the element type has no trivial constructor, so the two make one
+/// sequence. The choice is made where `start()` is written, from what is known
+/// of the type there: a generic caller that knows only `T: Default` gets the
+/// default.
+pub trait StartsFromDefault: Starts {
+    /// Register the store with the element type's default at every record.
+    fn start() -> Started<Self>;
+}
+
+impl<S: Starts> StartsFromDefault for S
+where
+    S::Value: Default,
+{
+    #[inline]
+    fn start() -> Started<S> {
+        Started(<S::Value as Default>::default())
+    }
+}
+
+/// A column, plain or buffered, with the value every record of it starts from.
+///
+/// `start` and `start_from` on [`Column`] and on [`Buffered`] return this.
+/// The builder keeps it on its value list and writes the value to every
+/// record of the store when the scheduler is built. The marker `S`, not this
+/// carrier, is what lands in the store access set, routed via
+/// `StoreDispatch<S>`.
+pub struct Started<S: Starts>(S::Value);
+
+impl<S: Starts> Started<S> {
+    /// Take the start value out of the carrier.
+    #[inline]
+    pub fn into_inner(self) -> S::Value {
+        self.0
+    }
+}
+
+impl<S: Starts + 'static> BuilderInput for Started<S>
+where
+    S::Value: 'static,
+{
+    type Dispatch = StoreDispatch<S>;
+    type Init = S::Value;
+}
+
+impl<T, M> notko::HasTrivialCtor for Buffered<T, M> {
+    fn new() -> Self {
+        Buffered(PhantomData)
     }
 }
 
@@ -241,7 +497,7 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 }
 
 // ---------------------------------------------------------------------
-// Round 4 substrate: StoreBundle + Replaceable.
+// `StoreBundle` and `Replaceable`.
 //
 // StoreBundle marks Cons-list bundles of store markers (Resource /
 // Column / Virtual / Field / Seq / Map / mixed). Used by Kit's
@@ -251,8 +507,7 @@ impl<K, V, const N: Cap> Default for Map<K, V, N> {
 // Replaceable opts a store-typed value into Scheduler::replace_resource
 // override semantics. Apps impl Replaceable per-type to opt their
 // Resources into override semantics; non-opt-in types stay locked.
-// Single substrate-enforced annotation on Owned types per
-// topic_round_4_layered_enforcement.md.
+// Single substrate-enforced annotation on Owned types.
 // ---------------------------------------------------------------------
 
 use crate::access::{Cons, Empty};
@@ -260,7 +515,7 @@ use crate::access::{Cons, Empty};
 /// Marker for a Cons-list of stores.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a StoreBundle",
-    note = "StoreBundle is auto-implemented for `Empty` and `Cons<H, T>` where `T: StoreBundle`. Build the bundle through the scheduler builder's `.add_resource::<T>(initial)`, `.add_column::<T>()`, and `.add_virtual::<T>()` calls, or install a Kit whose `Owned` declares it."
+    note = "StoreBundle is auto-implemented for `Empty` and `Cons<H, T>` where `T: StoreBundle`. Register each store on the scheduler builder with `.with(...)`, or install a Kit whose `Owned` declares it."
 )]
 pub trait StoreBundle {}
 

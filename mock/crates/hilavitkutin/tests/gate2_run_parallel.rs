@@ -39,7 +39,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,14 +86,13 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
-#[allow(dead_code)] // written by Combiner, read back post-run as raw u32
+#[derive(Copy, Clone, Default)]
 struct Zv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -234,20 +233,19 @@ impl ThreadPoolApi for CountingPool {
 fn run_parallel_threaded_fan_in_is_correct() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Zv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Zv>::start_from(Zv(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i (absolute) and poison Zv (head column) so an
-    // unwritten record is caught. Columns from head: Zv(0), Bv(1), Av(2), In(3).
-    // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let zv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
+    // Zv (head column) starts at u32::MAX so an unwritten record is caught.
+    // Host-populate In[i] = i (absolute). Columns from head: Zv(0), Bv(1), Av(2), In(3).
+    // SAFETY: In reserved for N records of u32; the scheduler is alive.
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -258,7 +256,6 @@ fn run_parallel_threaded_fan_in_is_correct() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *zv_base.add(i) = u32::MAX;
         }
     }
 
@@ -269,10 +266,10 @@ fn run_parallel_threaded_fan_in_is_correct() {
 
     // Av(i*10) + Bv(i*100) = i*110, written to Zv by the phase-1 combiner after
     // both phase-0 producer trunks finished (the waist barrier).
-    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
     for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
-        let z = unsafe { *zv_base.add(i) };
+        let z = unsafe { (*zv_base.add(i)).0 };
         assert_eq!(
             z,
             (i as u32) * 110,
@@ -286,10 +283,10 @@ fn run_parallel_threaded_fan_in_is_correct() {
 fn run_parallel_spawns_the_pool_once_across_frames() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Zv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Zv>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
@@ -323,10 +320,10 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         pool.worker_count().0,
         "the persistent pool spawns worker_count workers once, not per frame"
     );
-    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
     for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
-        let z = unsafe { *zv_base.add(i) };
+        let z = unsafe { (*zv_base.add(i)).0 };
         assert_eq!(z, (i as u32) * 110, "rec {i} after two frames");
     }
 }
@@ -338,18 +335,17 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
 // Sink fan-in (waist 2). Per record i: P1=2i, P2=3i, Mid=5i, Q1=5i, Q2=10i,
 // Sink=15i.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Mv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q2v(u32);
-#[derive(Copy, Clone)]
-#[allow(dead_code)] // written by Sink, read back post-run as raw u32
+#[derive(Copy, Clone, Default)]
 struct Sv(u32);
 
 type ColP1 = Cons<Column<P1v>, Empty>;
@@ -542,10 +538,9 @@ impl WorkUnit<Always> for Sink {
 // fixture cannot. A combiner in phase 1 reads all three. Per record i:
 // Av=10i, Bv=100i, Cv=1000i, Wv=1110i.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Cv(u32);
-#[derive(Copy, Clone)]
-#[allow(dead_code)] // written by Combiner3, read back post-run as raw u32
+#[derive(Copy, Clone, Default)]
 struct Wv(u32);
 
 type ColC = Cons<Column<Cv>, Empty>;
@@ -616,11 +611,11 @@ impl WorkUnit<Always> for Combiner3 {
 fn run_parallel_three_trunks_two_cores_matches_single_core() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Wv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Wv>::start_from(Wv(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)
@@ -628,10 +623,9 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i and poison Wv (head column). Columns from head:
+    // Wv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
     // Wv(0), Cv(1), Bv(2), Av(3), In(4).
     // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let wv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -643,7 +637,6 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *wv_base.add(i) = u32::MAX;
         }
     }
 
@@ -658,10 +651,10 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     // Wv = Av(10i) + Bv(100i) + Cv(1000i) = 1110i, correct only if all three
     // phase-0 trunks were dispatched (including both trunks core 0 owns) and the
     // phase-1 combiner ran after the waist.
-    let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Wv;
     for i in 0 .. N {
         // SAFETY: Wv holds N reserved records; the scheduler is alive.
-        let w = unsafe { *wv_base.add(i) };
+        let w = unsafe { (*wv_base.add(i)).0 };
         assert_eq!(
             w,
             (i as u32) * 1110,
@@ -675,13 +668,13 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
 fn run_parallel_threaded_two_waists_reuses_barrier() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<P1v>::new())
-        .with(Column::<P2v>::new())
-        .with(Column::<Mv>::new())
-        .with(Column::<Q1v>::new())
-        .with(Column::<Q2v>::new())
-        .with(Column::<Sv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<P1v>::start())
+        .with(Column::<P2v>::start())
+        .with(Column::<Mv>::start())
+        .with(Column::<Q1v>::start())
+        .with(Column::<Q2v>::start())
+        .with(Column::<Sv>::start_from(Sv(u32::MAX)))
         .with(P1)
         .with(P2)
         .with(Mid)
@@ -691,10 +684,9 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i and poison Sv (head column). Columns from head:
+    // Sv (head column) starts at u32::MAX. Host-populate In[i] = i. Columns from head:
     // Sv(0), Q2v(1), Q1v(2), Mv(3), P2v(4), P1v(5), In(6).
     // SAFETY: both reserved for N records of u32; the scheduler is alive.
-    let sv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -708,7 +700,6 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *sv_base.add(i) = u32::MAX;
         }
     }
 
@@ -720,10 +711,10 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
     // Sv = Q1(5i) + Q2(10i) = 15i, correct only if both interior waist barriers
     // ordered their phases AND the barrier was reused correctly for the second
     // waist (the sense flip; a stale-count reset would deadlock or corrupt here).
-    let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Sv;
     for i in 0 .. N {
         // SAFETY: Sv holds N reserved records; the scheduler is alive.
-        let s = unsafe { *sv_base.add(i) };
+        let s = unsafe { (*sv_base.add(i)).0 };
         assert_eq!(
             s,
             (i as u32) * 15,
@@ -742,9 +733,9 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
 // it. Five column-disjoint producers against four records reaches a core in that
 // range; every other parallel fixture here tops out at three trunks and cannot.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Dv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Ev(u32);
 
 type ColD = Cons<Column<Dv>, Empty>;
@@ -831,12 +822,12 @@ impl WorkUnit<Always> for ProducerE {
 fn every_producer_runs_when_cores_outnumber_records() {
     let provider = BumpProvider::<32768>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Dv>::new())
-        .with(Column::<Ev>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Dv>::start())
+        .with(Column::<Ev>::start_from(Ev(u32::MAX)))
         .with(ProducerA)
         .with(ProducerB)
         .with(ProducerC)
@@ -847,7 +838,6 @@ fn every_producer_runs_when_cores_outnumber_records() {
 
     // Columns from head: Ev(0), Dv(1), Cv(2), Bv(3), Av(4), In(5).
     // SAFETY: all reserved for N records of u32; the scheduler is alive.
-    let ev_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler
         .__bindings()
         .__tail()
@@ -861,7 +851,6 @@ fn every_producer_runs_when_cores_outnumber_records() {
         // SAFETY: both cover the reserved record.
         unsafe {
             *in_base.add(i) = (i + 1) as u32;
-            *ev_base.add(i) = u32::MAX;
         }
     }
 
@@ -874,11 +863,11 @@ fn every_producer_runs_when_cores_outnumber_records() {
     let sched_ref = scheduler.as_ref();
     let b = sched_ref.__bindings();
     // SAFETY: each column holds the reserved record; the scheduler is alive.
-    let ev = unsafe { *(b.__ptr().as_ptr() as *const u32) };
-    let dv = unsafe { *(b.__tail().__ptr().as_ptr() as *const u32) };
-    let cv = unsafe { *(b.__tail().__tail().__ptr().as_ptr() as *const u32) };
-    let bv = unsafe { *(b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
-    let av = unsafe { *(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
+    let ev = unsafe { (*(b.__ptr().as_ptr() as *const Ev)).0 };
+    let dv = unsafe { (*(b.__tail().__ptr().as_ptr() as *const Dv)).0 };
+    let cv = unsafe { (*(b.__tail().__tail().__ptr().as_ptr() as *const Cv)).0 };
+    let bv = unsafe { (*(b.__tail().__tail().__tail().__ptr().as_ptr() as *const Bv)).0 };
+    let av = unsafe { (*(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const Av)).0 };
     // In[0] = 1, so each producer's multiplier is its expected value.
     assert_eq!(av, 10, "ProducerA did not run");
     assert_eq!(bv, 100, "ProducerB did not run");
@@ -886,7 +875,7 @@ fn every_producer_runs_when_cores_outnumber_records() {
     assert_eq!(dv, 7, "ProducerD did not run");
     assert_eq!(
         ev, 9,
-        "ProducerE did not run: the poison value means no core dispatched it, \
+        "ProducerE did not run: the start value left in place means no core dispatched it, \
          which is what happens if participation and dispatch ownership disagree"
     );
 }

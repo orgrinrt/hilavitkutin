@@ -100,7 +100,8 @@ impl<
         // its root, so the chain runs iff dirty bit 0 is set (its input
         // changed, or the cold frame). A clean frame skips the whole chain,
         // leaving its output column untouched.
-        let dirty = self.dirty_units();
+        // A fused frame runs no meta band, so no leading band seeds it.
+        let dirty = self.dirty_units(Bool::FALSE);
         self.virtual_epoch.fetch_add(1, Ordering::Relaxed); // lint:allow(no-bare-numeric) reason: per-pass epoch successor; tracked: #121
         self.meta_block
             .metrics
@@ -138,7 +139,9 @@ impl<
         }
         // Capture the change_class signal before the seed is consumed.
         let stores_changed = !self.store_dirty.get().is_empty().0;
-        self.store_dirty.set(AccessMask::empty());
+        // SAFETY: the fused chain has returned on the calling thread, so no
+        // context is alive.
+        unsafe { self.bring_in_changes() };
         self.first_frame.store(false, Ordering::Relaxed);
         // E8 adapt: fold this frame's duration into the pass-duration EMA.
         // Between frames, so the write needs no synchronisation.

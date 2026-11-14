@@ -16,15 +16,28 @@ use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{
-    ColumnReaderApi, ColumnWriterApi, EachApi, HasColumnReader, HasColumnWriter, HasEach,
+    ColumnReaderApi,
+    ColumnWriterApi,
+    EachApi,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
-use hilavitkutin_api::RecordOp;
+use hilavitkutin_api::{ReadVals, RecordOp, WriteVals, rec};
 
 use crate::{
-    HeapBump, WorkloadMeasure, arena_bytes, bench, fnv1a_u32_slice, stage1, stage2, stage3, stage4,
+    HeapBump,
+    WorkloadMeasure,
+    arena_bytes,
+    bench,
+    fnv1a_u32_slice,
+    stage1,
+    stage2,
+    stage3,
+    stage4,
     store,
 };
 
@@ -33,15 +46,19 @@ pub const NAME: &str = "element_wise";
 // The host pre-populates In[i] = i (the global record index); WorkUnits
 // transform element-wise and never synthesise a value from the record's global
 // position (each yields morsel-relative indices).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+// The fold takes a unit whose value function returns for a column listed
+// bare, and such a column's value type is `PartialEq`. The fused unit and
+// the four `execute` bodies write by position, which stores and does not
+// compare, so the measured loop carries no compare.
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Cv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 #[allow(dead_code)] // written by S4, read back post-run as raw u32 for the hash
 struct Dv(u32);
 
@@ -50,15 +67,22 @@ type One<T> = Cons<Column<T>, Empty>;
 #[derive(Copy, Clone)]
 struct S1;
 impl BuilderInput for S1 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S1 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Inv>,
+        One<Av>,
+        SnapNil,
+        ColPtrCons<Inv, ColPtrNil>,
+        ColPtrCons<Av, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Inv>;
     type Write = One<Av>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Inv>, One<Av>, SnapNil, ColPtrCons<Inv, ColPtrNil>, ColPtrCons<Av, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: In was host-populated for the record count; read adds the
@@ -73,15 +97,22 @@ impl WorkUnit<Always> for S1 {
 #[derive(Copy, Clone)]
 struct S2;
 impl BuilderInput for S2 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S2 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Av>,
+        One<Bv>,
+        SnapNil,
+        ColPtrCons<Av, ColPtrNil>,
+        ColPtrCons<Bv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Av>;
     type Write = One<Bv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Av>, One<Bv>, SnapNil, ColPtrCons<Av, ColPtrNil>, ColPtrCons<Bv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             // SAFETY: S1 (ordered before by the RAW edge) wrote every record;
@@ -95,15 +126,22 @@ impl WorkUnit<Always> for S2 {
 #[derive(Copy, Clone)]
 struct S3;
 impl BuilderInput for S3 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S3 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Bv>,
+        One<Cv>,
+        SnapNil,
+        ColPtrCons<Bv, ColPtrNil>,
+        ColPtrCons<Cv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Bv>;
     type Write = One<Cv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Bv>, One<Cv>, SnapNil, ColPtrCons<Bv, ColPtrNil>, ColPtrCons<Cv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let b = unsafe { ctx.reader().read::<Bv, _>(i) };
@@ -115,15 +153,22 @@ impl WorkUnit<Always> for S3 {
 #[derive(Copy, Clone)]
 struct S4;
 impl BuilderInput for S4 {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 impl WorkUnit<Always> for S4 {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        One<Cv>,
+        One<Dv>,
+        SnapNil,
+        ColPtrCons<Cv, ColPtrNil>,
+        ColPtrCons<Dv, ColPtrNil>,
+    >;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = One<Cv>;
     type Write = One<Dv>;
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> =
-        EngineCtx<'frame, One<Cv>, One<Dv>, SnapNil, ColPtrCons<Cv, ColPtrNil>, ColPtrCons<Dv, ColPtrNil>>;
+
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         ctx.each().run(|i| {
             let c = unsafe { ctx.reader().read::<Cv, _>(i) };
@@ -137,31 +182,23 @@ impl WorkUnit<Always> for S4 {
 // four-stage chain into one fused unit (`run_fused`) that keeps Av/Bv/Cv in
 // registers and writes only Dv, the deep-single-fiber rust-pipe.
 impl RecordOp for S1 {
-    type In = Inv;
-    type Out = Av;
-    fn apply(&self, x: Inv) -> Av {
-        Av(stage1(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Inv>>) -> WriteVals<One<Av>> {
+        rec![Av(stage1(read.get(Column::<Inv>::new()).0))]
     }
 }
 impl RecordOp for S2 {
-    type In = Av;
-    type Out = Bv;
-    fn apply(&self, x: Av) -> Bv {
-        Bv(stage2(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Av>>) -> WriteVals<One<Bv>> {
+        rec![Bv(stage2(read.get(Column::<Av>::new()).0))]
     }
 }
 impl RecordOp for S3 {
-    type In = Bv;
-    type Out = Cv;
-    fn apply(&self, x: Bv) -> Cv {
-        Cv(stage3(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Bv>>) -> WriteVals<One<Cv>> {
+        rec![Cv(stage3(read.get(Column::<Bv>::new()).0))]
     }
 }
 impl RecordOp for S4 {
-    type In = Cv;
-    type Out = Dv;
-    fn apply(&self, x: Cv) -> Dv {
-        Dv(stage4(x.0))
+    fn apply(&self, read: &ReadVals<'_, One<Cv>>) -> WriteVals<One<Dv>> {
+        rec![Dv(stage4(read.get(Column::<Cv>::new()).0))]
     }
 }
 
@@ -170,11 +207,11 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     let eng_startup = bench(warmup, iters, || {
         let provider = HeapBump::new(arena_bytes(5, n));
         let scheduler = Scheduler::builder()
-            .with(Column::<Dv>::new())
-            .with(Column::<Cv>::new())
-            .with(Column::<Bv>::new())
-            .with(Column::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Dv>::start())
+            .with(Column::<Cv>::start())
+            .with(Column::<Bv>::start())
+            .with(Column::<Av>::start())
+            .with(Column::<Inv>::start())
             .with(S1)
             .with(S2)
             .with(S3)
@@ -195,11 +232,11 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // ----- runtime engine: build once, run many -----
     let provider = HeapBump::new(arena_bytes(5, n));
     let mut sched = Scheduler::builder()
-        .with(Column::<Dv>::new())
-        .with(Column::<Cv>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Inv>::new())
+        .with(Column::<Dv>::start())
+        .with(Column::<Cv>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Inv>::start())
         .with(S1)
         .with(S2)
         .with(S3)
@@ -210,7 +247,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     // SAFETY: In's buffer was reserved for N records of Inv (repr u32); the
     // scheduler (hence the arena) is alive; each reserved slot is written once.
     let in_base = sched.__bindings().__ptr().as_ptr() as *mut Inv;
-    for i in 0..n {
+    for i in 0 .. n {
         unsafe { *in_base.add(i) = Inv(i as u32) };
     }
     let eng_runtime = bench(warmup, iters, || {
@@ -244,7 +281,7 @@ pub fn measure(n: usize, warmup: usize, iters: usize) -> WorkloadMeasure {
     };
 
     // ----- runtime std: alloc + fill input once, fused loop many -----
-    let in_buf: Vec<u32> = (0..n as u32).collect();
+    let in_buf: Vec<u32> = (0 .. n as u32).collect();
     let mut d_out: Vec<u32> = vec![0u32; n];
     let std_runtime = bench(warmup, iters, || {
         // Zip so bounds checks elide and LLVM autovectorises: the optimal fused

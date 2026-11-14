@@ -53,7 +53,7 @@ fn main() -> ExitCode {
         // is a targeted error naming this line.
         byte_dispatch: byte_routine_dispatch!(
             out = 8,
-            sizes = [8, 16, 32, 64, 128, 256, 1024, 2048, 4096, 8192, 16384]
+            sizes = [8, 16, 32, 64, 128, 256, 1024, 2048, 4096, 8192, 16384, 65536, 262144]
         ),
     });
 

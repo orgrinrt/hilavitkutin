@@ -783,6 +783,34 @@ variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/
 n = 16384
 variants = ["variants/iter_seq/target/release/iter_seq", "variants/iter_strided/target/release/iter_strided", "variants/iter_gather/target/release/iter_gather"]
 
+# Registration: typed binding against a run-time binding table, over a column
+# workload of two units and five u32 columns in 512-record morsels. N is the
+# byte size of one column, so N / 4 records. The typed arm is the baseline,
+# and its twin is the same arm again: the distance between the two is the
+# noise floor of the run, and no smaller difference between arms counts.
+# Output is the FNV-1a checksum of the last column, byte-exact across arms.
+[bench.registration_binding]
+title = "Registration: typed binding vs a run-time binding table over a column workload"
+workload = "realistic"
+master_seed = 0x71c4_0e2b_95a3_d86f
+baseline = "reg_typed"
+
+[[bench.registration_binding.sizes]]
+n = 4096
+variants = ["variants/reg_typed/target/release/reg_typed", "variants/reg_typed_twin/target/release/reg_typed_twin", "variants/reg_bound_columns/target/release/reg_bound_columns", "variants/reg_bound_units/target/release/reg_bound_units", "variants/reg_bound_strided/target/release/reg_bound_strided", "variants/reg_bound_record/target/release/reg_bound_record"]
+
+[[bench.registration_binding.sizes]]
+n = 16384
+variants = ["variants/reg_typed/target/release/reg_typed", "variants/reg_typed_twin/target/release/reg_typed_twin", "variants/reg_bound_columns/target/release/reg_bound_columns", "variants/reg_bound_units/target/release/reg_bound_units", "variants/reg_bound_strided/target/release/reg_bound_strided", "variants/reg_bound_record/target/release/reg_bound_record"]
+
+[[bench.registration_binding.sizes]]
+n = 65536
+variants = ["variants/reg_typed/target/release/reg_typed", "variants/reg_typed_twin/target/release/reg_typed_twin", "variants/reg_bound_columns/target/release/reg_bound_columns", "variants/reg_bound_units/target/release/reg_bound_units", "variants/reg_bound_strided/target/release/reg_bound_strided", "variants/reg_bound_record/target/release/reg_bound_record"]
+
+[[bench.registration_binding.sizes]]
+n = 262144
+variants = ["variants/reg_typed/target/release/reg_typed", "variants/reg_typed_twin/target/release/reg_typed_twin", "variants/reg_bound_columns/target/release/reg_bound_columns", "variants/reg_bound_units/target/release/reg_bound_units", "variants/reg_bound_strided/target/release/reg_bound_strided", "variants/reg_bound_record/target/release/reg_bound_record"]
+
 [timing]
 passes = 8
 runs_per_pass = 2000
@@ -885,6 +913,34 @@ variants = ["sb_none", "sb_value", "sb_plan"]
 sizes = [64, 1024, 8192]
 
 [bench.swap_band.timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]
+
+# swap_column: what a pass costs by the kind of the column between a
+# producer and its reader. One carrier in swap_common, three stores:
+# cs_plain is a plain column, where the reader follows the producer in
+# the same pass and nothing is brought in (the floor); cs_snap is a
+# buffered column under Snapshot, whose boundary copies the live side
+# over the frozen one; cs_exch is a buffered column under Exchange,
+# whose boundary turns the two sides. cs_snap_twin is cs_snap again:
+# the distance between the two is the noise floor of the run. Every
+# timed frame holds one producer pass, one reader pass and, in the
+# buffered arms, one boundary. Four-byte records, n x 1024 of them, so
+# 256 KiB, 4 MiB and 32 MiB a column side. The output column holds the
+# same records in every arm.
+[bench.swap_column]
+title = "a buffered column's swap: plain floor vs Snapshot copy vs Exchange"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0004"
+may_differ = false
+baseline = "cs_plain"
+variants = ["cs_plain", "cs_snap", "cs_snap_twin", "cs_exch"]
+sizes = [64, 1024, 8192]
+
+[bench.swap_column.timing]
 passes = 3
 runs_per_pass = 30
 batch_size = 10

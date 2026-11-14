@@ -1,0 +1,22 @@
+[package]
+name = "hilavitkutin-frozen-authors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Work units written as a consumer writes them, beside a hand model, kept frozen under a ledger"
+repository.workspace = true
+publish = false
+
+[dependencies]
+hilavitkutin-api.workspace = true
+hilavitkutin.workspace = true
+arvo.workspace = true
+arvo-tensor.workspace = true
+notko.workspace = true
+
+[dev-dependencies]
+hilavitkutin-conformance.workspace = true
+hilavitkutin-providers.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

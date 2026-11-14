@@ -42,7 +42,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -174,10 +174,10 @@ fn an_executor_reporting_one_worker_runs_the_frame_on_one() {
 fn run_fan_in_and_check<const W: usize>(pool: &Reports<W>) -> usize {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
-        .with(Column::<Zv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
+        .with(Column::<Zv>::start())
         .with(ProducerA)
         .with(ProducerB)
         .with(Combiner)
@@ -264,13 +264,13 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Combiner, read back post-run as raw u32
 struct Zv(u32);
 

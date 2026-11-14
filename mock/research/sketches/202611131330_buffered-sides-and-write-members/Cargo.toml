@@ -1,0 +1,25 @@
+# Sketch: a column held in two sides with its swap chosen in the type, and
+# a positional write that follows the member it is listed under.
+# Its own workspace, so the repository's build never sees it.
+
+[workspace]
+
+[package]
+name = "buffered-sides-and-write-members"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[lib]
+path = "src/lib.rs"
+
+# The `refused-*` features each turn on one function that must not compile,
+# so the compiler's own words can be read again with
+# `cargo build --features <one>`. The `mutant-*` features each break one
+# thing the tests are meant to notice: `cargo test --features <one>` is red.
+[features]
+refused-differs-without-eq = []
+refused-positional-write-of-buffered = []
+mutant-read-live = []
+mutant-exchange-copies = []
+mutant-swap-when-unwritten = []

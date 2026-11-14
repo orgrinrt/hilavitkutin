@@ -10,20 +10,16 @@ use core::cell::Cell;
 use arvo::{Bool, USize};
 use hilavitkutin_api::{Always, On, OnMeta};
 
-use super::{
-    AccPtrCons,
-    AccumColPtr,
-    ColPtrCons,
-    Here,
-    MetaNil,
-    MetaRef,
-    SnapCons,
-    There,
-    VirtCons,
-};
+use super::{AccPtrCons, AccumColPtr, Here, MetaNil, MetaRef, SnapCons, There, VirtCons};
 use crate::meta::MetaBlock;
-use crate::resource::bindings::{AccumBinding, ColumnBinding, ResourceBinding, VirtualBinding};
-use crate::resource::provenance::{ColumnPtr, ResourcePtr};
+use crate::resource::bindings::{
+    AccumBinding,
+    ColKind,
+    ColumnBinding,
+    ResourceBinding,
+    VirtualBinding,
+};
+use crate::resource::provenance::ResourcePtr;
 
 /// Type-keyed lookup yielding the `&Cell<USize>` stamp for `Virtual<V>` in the
 /// bindings list. The shared keying primitive: both the firer (via the projected
@@ -62,7 +58,7 @@ where
     }
 }
 
-impl<V, U, Tail, I> VirtualStampSelector<V, There<I>> for ColumnBinding<U, Tail>
+impl<V, U, Tail, I, K: ColKind> VirtualStampSelector<V, There<I>> for ColumnBinding<U, Tail, K>
 where
     Tail: VirtualStampSelector<V, I>,
 {
@@ -195,7 +191,7 @@ where
 // the tail. Without these, `Selector` traversed only resource nodes, so a
 // resource behind a column was unreachable (the resource-after-column gap).
 
-impl<T, U, Tail, I> Selector<T, There<I>> for ColumnBinding<U, Tail>
+impl<T, U, Tail, I, K: ColKind> Selector<T, There<I>> for ColumnBinding<U, Tail, K>
 where
     Tail: Selector<T, I>,
 {
@@ -256,85 +252,7 @@ where
     }
 }
 
-// ---------------------------------------------------------------------
-// Column selector: type-keyed lookup over the projected column bundle.
-// ---------------------------------------------------------------------
-
-/// Type-keyed lookup yielding the `ColumnPtr<T>` for `T` in the bundle.
-pub trait ColSelector<T, Index> {
-    /// The recorded column pointer for `T`.
-    fn get(&self) -> ColumnPtr<T>;
-}
-
-impl<T, Tail> ColSelector<T, Here> for ColPtrCons<T, Tail> {
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.head
-    }
-}
-
-impl<T, U, Tail, I> ColSelector<T, There<I>> for ColPtrCons<U, Tail>
-where
-    Tail: ColSelector<T, I>,
-{
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.tail.get()
-    }
-}
-
-// Over the scheduler bindings nodes (Shape A): the same bindings cons-list
-// that resolves resources via `Selector` resolves columns via `ColSelector`,
-// so one witness list into the one `ColumnStorage` serves both. `Here`
-// matches a `ColumnBinding<T, _>`; `There<I>` recurses the tail over any node
-// kind (a column behind a resource, column, or virtual node).
-
-impl<T, Tail> ColSelector<T, Here> for ColumnBinding<T, Tail> {
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.__ptr()
-    }
-}
-
-impl<T, U, Tail, I> ColSelector<T, There<I>> for ColumnBinding<U, Tail>
-where
-    Tail: ColSelector<T, I>,
-{
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.__tail().get()
-    }
-}
-
-impl<T, U, Tail, I> ColSelector<T, There<I>> for ResourceBinding<U, Tail>
-where
-    Tail: ColSelector<T, I>,
-{
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.__tail().get()
-    }
-}
-
-impl<T, U, Tail, I> ColSelector<T, There<I>> for VirtualBinding<U, Tail>
-where
-    Tail: ColSelector<T, I>,
-{
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.__tail().get()
-    }
-}
-
-impl<T, U, Tail, I> ColSelector<T, There<I>> for AccumBinding<U, Tail>
-where
-    Tail: ColSelector<T, I>,
-{
-    #[inline(always)]
-    fn get(&self) -> ColumnPtr<T> {
-        self.__tail().get()
-    }
-}
+// The column selector lives in `super::col_select`, with the column kinds.
 
 // ---------------------------------------------------------------------
 // Accumulator selector: type-keyed lookup over bindings nodes and over
@@ -390,7 +308,7 @@ where
     }
 }
 
-impl<T, U, Tail, I> AccumSelector<T, There<I>> for ColumnBinding<U, Tail>
+impl<T, U, Tail, I, K: ColKind> AccumSelector<T, There<I>> for ColumnBinding<U, Tail, K>
 where
     Tail: AccumSelector<T, I>,
 {

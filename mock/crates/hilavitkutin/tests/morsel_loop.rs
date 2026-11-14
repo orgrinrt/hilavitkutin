@@ -90,7 +90,7 @@ const RECORDS: usize = 7000;
 const SENTINEL: u32 = u32::MAX;
 
 // Column value: a Copy newtype over u32, so the blanket `ColumnValue` applies.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Tv(u32);
 
 type Col = Cons<Column<Tv>, Empty>;
@@ -130,7 +130,7 @@ impl WorkUnit<Always> for RelIndexWu {
 fn morsel_windowing_writes_relative_index_per_morsel() {
     let provider = BumpProvider::<65536>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Tv>::new())
+        .with(Column::<Tv>::start_from(Tv(SENTINEL)))
         .with(RelIndexWu)
         .build(store(provider), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
@@ -146,14 +146,8 @@ fn morsel_windowing_writes_relative_index_per_morsel() {
         "test record count must exceed the morsel window"
     );
 
-    // Pre-fill every record with the sentinel through the binding pointer, so a
-    // morsel that never runs leaves its records detectably untouched.
-    let base = scheduler.__bindings().__ptr().as_ptr();
-    for k in 0 .. RECORDS {
-        // SAFETY: the drain reserved `RECORDS` records; `k` is in bounds.
-        unsafe { core::ptr::write(base.add(k), Tv(SENTINEL)) };
-    }
-
+    // Every record starts at the sentinel, so a morsel that never runs leaves its
+    // records detectably untouched.
     let result = scheduler.run();
     assert!(matches!(result, Outcome::Ok(())));
 

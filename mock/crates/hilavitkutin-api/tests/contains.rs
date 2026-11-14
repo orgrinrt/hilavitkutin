@@ -1,66 +1,96 @@
-//! Compile-time Contains<S> membership for arities 1..=6.
+//! Compile-time membership: `Holds<S>` for a bare marker at every place of a
+//! list, and `HoldsAll<L>` for the stores a whole list stands for.
 //!
-//! Post round 202605082142 the legacy flat-tuple `AccessSet`/`Contains`
-//! impls are gone; the cons-list shape is the sole substrate. Each
-//! `requires_*` invocation forces the trait bound at monomorphisation
-//! against an `read!`-built cons-list. The test is that this file
-//! compiles.
+//! Each `requires_*` call forces the bound at monomorphisation against a
+//! `read!`-built list. The test is that this file compiles.
 
 #![no_std]
 
-use hilavitkutin_api::access::{AccessSet, Contains};
-use hilavitkutin_api::read;
+use arvo::Cap;
+use hilavitkutin_api::access::{AccessSet, Contains, Holds, HoldsAll};
+use hilavitkutin_api::{
+    Accum,
+    Buffered,
+    Column,
+    Differs,
+    Exchange,
+    Reach,
+    Resource,
+    Virtual,
+    Written,
+    read,
+    write,
+};
 
+#[derive(Clone, Copy, PartialEq)]
 struct A;
+#[derive(Clone, Copy, PartialEq)]
 struct B;
+#[derive(Clone, Copy)]
 struct C;
 struct D;
 struct E;
 struct F;
 
-fn requires<S, Ts: AccessSet + Contains<S>>() {}
+const ONE: Cap = arvo_tensor::cap(1);
+
+fn requires<S, Ts: AccessSet + Holds<S>>() {}
+
+// `Holds` holds exactly where the shared crate's `Contains` does.
+fn requires_contains<S, Ts: AccessSet + Contains<S>>() {}
+
+type Six = read![Column<A>, Resource<D>, Buffered<B>, Accum<A>, Virtual<E>, Resource<F>];
 
 #[test]
-fn arity_1() {
-    requires::<A, read![A]>();
+fn holds_at_the_head() {
+    requires::<Column<A>, read![Column<A>]>();
+    requires_contains::<Column<A>, read![Column<A>]>();
 }
 
 #[test]
-fn arity_2() {
-    requires::<A, read![A, B]>();
-    requires::<B, read![A, B]>();
+fn holds_at_every_place_of_a_list_of_six() {
+    requires::<Column<A>, Six>();
+    requires::<Resource<D>, Six>();
+    requires::<Buffered<B>, Six>();
+    requires::<Accum<A>, Six>();
+    requires::<Virtual<E>, Six>();
+    requires::<Resource<F>, Six>();
+    requires_contains::<Resource<F>, Six>();
+}
+
+// A buffered column's mode is part of the marker.
+#[test]
+fn holds_tells_the_two_modes_apart() {
+    requires::<Buffered<A, Exchange>, read![Buffered<A>, Buffered<A, Exchange>]>();
+    requires::<Buffered<A>, read![Buffered<A>, Buffered<A, Exchange>]>();
+}
+
+fn requires_all<L, Ts: AccessSet + HoldsAll<L>>() {}
+
+type Stores = read![Column<A>, Column<C>, Buffered<B>, Resource<D>, Accum<A>, Virtual<E>];
+
+#[test]
+fn holds_all_of_the_empty_list() {
+    requires_all::<read![], read![]>();
+    requires_all::<read![], Stores>();
 }
 
 #[test]
-fn arity_3() {
-    requires::<A, read![A, B, C]>();
-    requires::<B, read![A, B, C]>();
-    requires::<C, read![A, B, C]>();
+fn holds_all_of_bare_markers() {
+    requires_all::<read![Column<A>, Resource<D>], Stores>();
+    requires_all::<write![Accum<A>, Virtual<E>, Buffered<B>], Stores>();
 }
 
+// A wrapper asks of registration what the bare store would: the walk reads
+// `Member::Store`, so no wrapper is itself looked for in the store list.
 #[test]
-fn arity_4() {
-    requires::<A, read![A, B, C, D]>();
-    requires::<B, read![A, B, C, D]>();
-    requires::<C, read![A, B, C, D]>();
-    requires::<D, read![A, B, C, D]>();
+fn holds_all_resolves_a_wrapper_to_its_store() {
+    requires_all::<read![Reach<Column<A>, ONE>, Reach<Buffered<B>, ONE>, Resource<D>], Stores>();
+    requires_all::<write![Written<Column<C>>, Differs<Column<A>>, Differs<Buffered<B>>], Stores>();
 }
 
+// The same store named twice, once bare and once wrapped, is held once.
 #[test]
-fn arity_5() {
-    requires::<A, read![A, B, C, D, E]>();
-    requires::<B, read![A, B, C, D, E]>();
-    requires::<C, read![A, B, C, D, E]>();
-    requires::<D, read![A, B, C, D, E]>();
-    requires::<E, read![A, B, C, D, E]>();
-}
-
-#[test]
-fn arity_6() {
-    requires::<A, read![A, B, C, D, E, F]>();
-    requires::<B, read![A, B, C, D, E, F]>();
-    requires::<C, read![A, B, C, D, E, F]>();
-    requires::<D, read![A, B, C, D, E, F]>();
-    requires::<E, read![A, B, C, D, E, F]>();
-    requires::<F, read![A, B, C, D, E, F]>();
+fn holds_all_of_a_store_named_twice() {
+    requires_all::<read![Column<A>, Reach<Column<A>, ONE>], Stores>();
 }

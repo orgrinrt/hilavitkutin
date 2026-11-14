@@ -60,7 +60,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -80,7 +80,7 @@ const PRODUCER_TAG: u8 = 0;
 const CONSUMER_TAG: u8 = 1;
 const APPENDER_TAG: u8 = 2;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cv(u32);
 #[derive(Copy, Clone)]
@@ -181,10 +181,10 @@ impl WorkUnit<Always> for AppenderWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_TAG));
-        // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
+        // `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
         // exclusive appender; the append stays within the reservation.
-        unsafe { ctx.accums().append::<Av, _>(Av(1)) };
+        ctx.accums().append::<Av, _>(Av(1));
     }
 }
 
@@ -204,9 +204,9 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
     // build. The original per-fiber-block assertion is the contract #670
     // re-enables.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cv>::new())
+        .with(Column::<Cv>::start())
         .with(Accum::<Av>::new())
         .with(ProducerWu)
         .with(ConsumerWu)

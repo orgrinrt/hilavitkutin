@@ -8,10 +8,11 @@ use core::marker::PhantomData;
 
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
-use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
+use hilavitkutin_api::store::{Accum, Resource, Virtual};
 
-use super::selectors::{Selector, VirtualStampSelector};
-use super::{SnapCons, SnapNil, VirtCons, VirtNil};
+use super::col_select::ColMember;
+use super::selectors::{AccumSelector, Selector, VirtualStampSelector};
+use super::{AccSnap, SnapCons, SnapNil, VirtCons, VirtNil};
 
 // ---------------------------------------------------------------------
 // VirtualProject: build the projected write-virtual bundle from the bindings.
@@ -74,7 +75,7 @@ where
     }
 }
 
-impl<'s, C, T, STail, Indices> VirtualProject<'s, Cons<Column<T>, STail>, Indices> for C
+impl<'s, C, M: ColMember, STail, Indices> VirtualProject<'s, Cons<M, STail>, Indices> for C
 where
     C: VirtualProject<'s, STail, Indices>,
 {
@@ -174,7 +175,7 @@ where
 
 // Column head: no resource node, recurse on the tail with the same
 // index list (columns do not consume a resource selector index).
-impl<A, T, RTail, Indices> Project<Cons<Column<T>, RTail>, Indices> for A
+impl<A, M: ColMember, RTail, Indices> Project<Cons<M, RTail>, Indices> for A
 where
     A: Project<RTail, Indices>,
 {
@@ -199,16 +200,28 @@ where
     }
 }
 
-// Accum head: no resource node, recurse on the tail.
-impl<A, T, RTail, Indices> Project<Cons<Accum<T>, RTail>, Indices> for A
+// Accum head: the base of the buffer and the length it has now, recurse on
+// the tail. The length is read once, here, so the node borrows nothing. A
+// maintenance unit is bound after the units that append have returned, and
+// after the per-core regions were merged, so the prefix it is handed is the
+// whole of what the pass appended.
+impl<A, T, I, RTail, ITail> Project<Cons<Accum<T>, RTail>, Cons<I, ITail>> for A
 where
-    A: Project<RTail, Indices>,
+    A: AccumSelector<T, I>,
+    A: Project<RTail, ITail>,
 {
-    type Out = <A as Project<RTail, Indices>>::Out;
+    type Out = SnapCons<AccSnap<T>, <A as Project<RTail, ITail>>::Out>;
 
     #[inline(always)]
     fn project(&self) -> Self::Out {
-        <A as Project<RTail, Indices>>::project(self)
+        let acc = <A as AccumSelector<T, I>>::get(self);
+        SnapCons {
+            head: AccSnap {
+                base: acc.base,
+                len:  acc.len.get(),
+            },
+            tail: <A as Project<RTail, ITail>>::project(self),
+        }
     }
 }
 

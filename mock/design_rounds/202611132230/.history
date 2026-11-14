@@ -1,0 +1,50 @@
+08beef97 chore: lock src changelist 202611132233
+2b50b5be docs: say what a buffered column is registered with
+77d64d10 fix: write a buffered column's start to both of its sides
+559f3933 feat!: register a buffered column with its start value
+5d693514 chore: lock doc changelist 202611132230
+ecd50010 docs: design a buffered column registered with its start value
+192933f6 docs: file the topic of what a buffered column starts from
+d312b4e7 docs: sketch a buffered column's start chosen by its element type
+db9d2094 test: build the cross-target probe one feature set at a time
+fe108a99 chore: close design round 202611132054
+09ed41e6 chore: lock src changelist 202611132103
+9658b105 docs: fill the source changelist of the instruments round
+29c9b779 feat: add the cross-target check as the repository's first tool
+ded46285 feat: add the frozen authors and hold the scheduler to the reference
+7c03dcf2 feat: add the reference runner, the digest and the laws
+57dc2c99 Merge branch 'tmp/frozen-lints' into work/api-revision
+730986e9 chore: open src changelist 202611132103
+2ef76177 chore: lock doc changelist 202611132054
+513a6c3d chore: bind the frozen lints to `hilavitkutin-frozen-authors`
+08c568d5 feat: add the frozen crate lints and share the code scanner
+0763d242 docs: design the conformance crate and the frozen authors
+40399db7 docs: open the instruments round with its topic
+364a7723 chore: close design round 202611132014
+4cd86a2e chore: lock src changelist 202611132016
+dd683701 fix: cut the unit-outer walk at a barrier ahead of a reach read
+1fc04131 test: hold the reach boundary across cores, red on the unit-outer path
+4a17b1f5 chore: lock doc changelist 202611132014
+0025165d docs: say how the unit-outer path keeps the reach boundary
+0d644638 docs: sketch a one-thread runner over `RecordOp::apply` alone
+eeb7f555 chore: close design round 202611131924
+87d997d9 chore: lock src changelist 202611131925
+cbcae6b4 fix: port the bench crates to the revised contract
+e10410a1 chore: lock doc changelist 202611131924
+392a4c27 docs: open a round for the bench crates the revised contract broke
+0b27a5d5 chore: close design round 202611130617-h6mb
+0f6e5009 chore: lock src changelist 202611131627
+08fa26a9 docs: say in the source changelist when the generated pages landed
+efb7a714 docs: regenerate the bench pages with the buffered column's swap
+0367b57a docs: say what ships in the readme and the api and kit comments
+866cc260 test: record the run of a buffered column's swap and what it decides
+5e6887fd Merge remote-tracking branch 'origin/dev' into work/api-revision
+ca500848 test: add the arms of a buffered column's swap beside the resource ones
+c35ef2be test: hold the edge rules, both unit bodies and the store positions
+271909e5 feat: build every crate through `hilavitkutin-build`
+c191bca0 feat: run a band once on one core and let ranks order registration
+99196bab feat: order by rank, cut phases at a reach and bring changes in
+44f7de28 bench: add the frame_wide member and the wide bench matrix
+eed30b2a feat: port the engine to members and add the value function
+852694e9 feat!: revise `hilavitkutin-api` for members and value functions
+f8371b30 chore: lock doc changelist 202611130617-h6mb

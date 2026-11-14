@@ -1,0 +1,26 @@
+error[E0308]: mismatched types
+   --> tests/ui/fail/06_a_unit_reads_a_member_absent_from_its_list.rs:16:39
+    |
+ 16 |         rec![Pos(r.get(POS).0 + r.get(VEL).0)]
+    |                                   --- ^^^ expected `Column<Pos>`, found `Column<Vel>`
+    |                                   |
+    |                                   arguments to this method are incorrect
+    |
+    = note: expected struct `Column<Pos>`
+               found struct `Column<Vel>`
+help: the return type of this call is `Column<Vel>` due to the type of the argument passed
+   --> tests/ui/fail/06_a_unit_reads_a_member_absent_from_its_list.rs:16:33
+    |
+ 16 |         rec![Pos(r.get(POS).0 + r.get(VEL).0)]
+    |                                 ^^^^^^---^
+    |                                       |
+    |                                       this argument influences the return type of `get`
+note: method defined here
+   --> /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/has.rs:91:27
+    |
+ 91 |             pub $($c)? fn get<M: Elem, P: Place>(&self, member: M) -> M::Value
+    |                           ^^^
+...
+149 | has_items!(const);
+    | ----------------- in this macro invocation
+    = note: this error originates in the macro `has_items` (in Nightly builds, run with -Z macro-backtrace for more info)

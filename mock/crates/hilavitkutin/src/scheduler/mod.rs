@@ -15,8 +15,8 @@
 //! retains the registered WorkUnit instances so `build()` can carry
 //! them into the `Scheduler`, where `run()` walks them.
 //!
-//! `.build(memory_provider)` carries `Stores: ContainsAll<Wus::AccumRead>
-//! + ContainsAll<Wus::AccumWrite>`, which proves at compile time that
+//! `.build(memory_provider)` carries `Stores: HoldsAll<Wus::AccumRead>
+//! + HoldsAll<Wus::AccumWrite>`, which proves at compile time that
 //! every registered WU's `Read` and `Write` membership is satisfied by
 //! the registered stores. It walks `Stores` and `store_values` in
 //! lockstep, allocating each `Resource<T>`'s block via the supplied
@@ -91,10 +91,14 @@ mod plan_handle;
 pub use plan_handle::PlanHandle;
 
 mod null_providers;
+pub use buildable::Buildable;
 pub use null_providers::{DefaultClock, NullClock, NullColumnStorage, NullMemoryProvider};
 
+mod buildable;
 mod defaults;
 mod dirty;
+mod reach_rule;
+pub use reach_rule::ReachRule;
 mod run;
 mod run_fused;
 mod run_parallel;
@@ -204,6 +208,10 @@ pub struct Scheduler<
     /// Per-unit read access masks, copied off the plan. A unit is seeded
     /// dirty when its reads intersect the changed-store mask.
     read_masks:           <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
+    /// The stores the maintenance units of the leading bands write, copied
+    /// off the plan. Each pass adds them to the change seed before its first
+    /// band, so their readers dispatch in the pass the writer runs.
+    band_writes:          crate::plan::BandWrites<D::Stores>,
     /// Per-store change seed (Stores-list-position space). `mark_dirty`,
     /// `replace_resource`, and `replace_value` set bits here; `run` /
     /// `run_fused` consume and clear it each frame.

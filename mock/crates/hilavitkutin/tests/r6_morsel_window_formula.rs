@@ -27,7 +27,7 @@ use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::footprint::{CollectionBytes, ResourceFootprint};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Resource, Seq};
+use hilavitkutin_api::store::{Column, Resource, Seq, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -68,7 +68,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Outv(u32);
 
 // A resource value with one Seq collection member of 2 u32 elements: 8 bytes
@@ -137,7 +137,7 @@ fn morsel_window_matches_l1_formula() {
     let provider = BumpProvider::<16384>::new();
     let s = Scheduler::builder()
         .with(Resource::new(FxRes))
-        .with(Column::<Outv>::new())
+        .with(Column::<Outv>::start())
         .with(Producer)
         .build(store(provider), USize(16))
         .unwrap_or_else(|_| panic!("build should succeed"));
@@ -156,7 +156,7 @@ fn morsel_window_is_not_the_record_count_partition() {
     let provider = BumpProvider::<65536>::new();
     let s = Scheduler::builder()
         .with(Resource::new(FxRes))
-        .with(Column::<Outv>::new())
+        .with(Column::<Outv>::start())
         .with(Producer)
         .build(store(provider), USize(4096))
         .unwrap_or_else(|_| panic!("build should succeed"));

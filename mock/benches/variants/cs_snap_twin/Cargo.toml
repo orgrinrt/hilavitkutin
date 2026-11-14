@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "cs_snap_twin"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "cs_snap_twin"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913" }
+swap_common = { path = "../swap_common" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

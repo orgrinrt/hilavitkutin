@@ -1,42 +1,42 @@
-//! Opt-in per-record transform contract for within-fiber linear fusion.
+//! The value function under a name, for within-fiber linear fusion.
 //!
-//! A `WorkUnit` that is a pure per-record map (reads one column, writes one
-//! column, value to value, no cross-record state) may additionally implement
-//! `RecordOp` to declare that map. The engine folds a linear read-after-write
-//! chain of such maps into one fused unit whose body keeps every intermediate
-//! in a register (dead-store elimination removes the intermediate column
-//! traffic), matching a hand-fused loop. The fold is a compile-time composition
-//! of concrete monomorphised calls, no function pointers and no dynamic
-//! dispatch.
+//! The engine folds units together at compile time, and a fold cannot see
+//! into a closure built inside `execute`. `RecordOp` is the unit's value
+//! function under a name on the unit's own type. A unit that offers it
+//! writes `execute` as `ctx.each().map(|r| self.apply(r))`, so the function
+//! exists once.
 //!
-//! `RecordOp` is orthogonal to `WorkUnit::execute`: implementing it changes
-//! nothing about the execute contract, and a simple `WorkUnit` author never
-//! implements it. A unit that carries cross-record state (an accumulator) does
-//! not implement `RecordOp` and stays on the ordinary per-unit dispatch path.
-//!
-//! The associated `In` / `Out` types are `ColumnValue` because they are exactly
-//! the unit's read and write column types; the fused unit reads the chain's
-//! input column and writes its output column, with the links held in registers.
+//! The trait sits under `WorkUnit` and reads the unit's own lists: it
+//! declares no stores, no schedule and no hint of its own. A unit that
+//! carries state across records (an accumulator read) has no such function
+//! and does not implement it.
 
-use crate::column_value::ColumnValue;
+use crate::values::{ReadSet, ReadVals, WriteSet, WriteVals};
+use crate::work_unit::{Always, WorkUnit};
 
-/// A pure per-record map a `WorkUnit` opts into so the engine can fuse a linear
-/// chain of such maps into one register-passing loop body.
+/// A unit's value function, named so the engine can fold a run of units.
 ///
-/// `apply` is the per-record transform: it must be a pure function of its input
-/// (the engine composes it with sibling maps and relies on it having no
-/// cross-record or observable side effect). `In` is the unit's read column type,
-/// `Out` its write column type.
+/// `apply` takes the values of the unit's read list at one record and
+/// returns the values of its write list at that record. It must be a pure
+/// function of its reads: the engine composes it with the functions of the
+/// units around it and may apply it in any sequence.
+///
+/// The fold takes a unit whose read list is one `Column` and whose write
+/// list is one `Column`. A `RecordOp` over longer lists, a wrapper member or
+/// another store runs per unit through its own `execute`.
 #[diagnostic::on_unimplemented(
-    message = "`{Self}` does not declare a per-record map for fusion",
-    note = "Implement `RecordOp` on a WorkUnit that is a pure per-record map (one column in, one column out, no cross-record state) to let the engine fuse a linear chain of such units. Declare `type In`, `type Out`, and `fn apply(&self, x: In) -> Out`. A unit with cross-record state (an accumulator) does not implement `RecordOp`."
+    message = "`{Self}` does not name its value function for fusion",
+    note = "Implement `RecordOp` on a WorkUnit whose body is a value function: `fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>`, and write `execute` as `ctx.each().map(|r| self.apply(r))`."
 )]
-pub trait RecordOp {
-    /// The record value this map consumes (the unit's read column type).
-    type In: ColumnValue;
-    /// The record value this map produces (the unit's write column type).
-    type Out: ColumnValue;
-
-    /// Transform one record value. Must be a pure function of `x`.
-    fn apply(&self, x: Self::In) -> Self::Out;
+pub trait RecordOp<S = Always>: WorkUnit<S>
+where
+    <Self as WorkUnit<S>>::Read: ReadSet,
+    <Self as WorkUnit<S>>::Write: WriteSet,
+{
+    /// The values of the write list at one record, from the values of the
+    /// read list at that record. Must be a pure function of `read`.
+    fn apply(
+        &self,
+        read: &ReadVals<'_, <Self as WorkUnit<S>>::Read>,
+    ) -> WriteVals<<Self as WorkUnit<S>>::Write>;
 }

@@ -1,0 +1,52 @@
+# One line for each frozen file of the crate. A file's content changes only
+# together with its hash here, its count of breaks, and a line in BREAKS.toml
+# that says what in the contract forced the change.
+
+[[file]]
+path = "Cargo.toml"
+form = "manifest"
+hash = "fnv1a64:0d78a223192770ab"
+breaks = 0
+locked = false
+
+[[file]]
+path = "build.rs"
+form = "build"
+hash = "fnv1a64:ddf9b94f2159b250"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/lib.rs"
+form = "root"
+hash = "fnv1a64:e0a401bedad296a1"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/values.rs"
+form = "values"
+hash = "fnv1a64:d7356cf6e366f368"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/units.rs"
+form = "value"
+hash = "fnv1a64:fce2222593edb039"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/model.rs"
+form = "model"
+hash = "fnv1a64:10185239999edd9b"
+breaks = 0
+locked = false
+
+[[file]]
+path = "src/record.rs"
+form = "record"
+hash = "fnv1a64:b05f66420f7f7253"
+breaks = 0
+locked = false

@@ -29,6 +29,7 @@ use crate::dispatch::fiber_run::RunFiber;
 use crate::dispatch::morsel::MorselRange;
 use crate::dispatch::trunk_dispatch::RunTrunkDispatch;
 use crate::meta::fold_ema;
+use crate::plan::PlanDims;
 use crate::plan::grouping::{
     BundleMasks,
     GATE2_MAX_ACCUMS,
@@ -37,7 +38,6 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
-use crate::plan::{AccessMask, PlanDims};
 use crate::resource::bindings::{
     BindingsFor,
     CollectAccumCounts,
@@ -114,9 +114,9 @@ impl<
                 <D as PlanDims>::AdjRow,
                 0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
             >,
-        WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-        <D as PlanDims>::Units: ConstCapacity,
-        <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+        WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+        <D as PlanDims>::Units: const ConstCapacity,
+        <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
         <Vals as BindingsFor>::Bindings:
             ResetAccumulators + RebaseBindings + CollectAccumCounts + MergeAccums + FirstRefusal,
         P: ThreadPoolApi,
@@ -242,8 +242,10 @@ impl<
         // remaining pre-consumer bands) dispatch here, before the publish, so
         // every worker's consumer slice work happens-after them; the trailing
         // bands dispatch after the await plus merge below. `core = 0, ncores =
-        // 1` makes this thread own every trunk in the dispatched phases. The
-        // band ranges are const and empty for a no-meta carrier.
+        // 1` makes this thread own every trunk in the dispatched phases, and
+        // each band is handed the whole record range, since a maintenance unit
+        // may write at a record it names from data. The band ranges are const
+        // and empty for a no-meta carrier.
         // Swap spec S2, parallel path: decide and publish the plan band while
         // every worker is parked, so the worker phase loops and the
         // leading-band dispatch below agree.
@@ -292,7 +294,7 @@ impl<
                         &(*me).meta_block,
                         MorselRange::new(
                             <USize as Identity<Additive>>::IDENTITY,
-                            <USize as Identity<Additive>>::IDENTITY,
+                            (*me).record_count,
                         ),
                         all,
                         epoch,
@@ -390,7 +392,7 @@ impl<
                         &(*me).meta_block,
                         MorselRange::new(
                             <USize as Identity<Additive>>::IDENTITY,
-                            <USize as Identity<Additive>>::IDENTITY,
+                            (*me).record_count,
                         ),
                         all,
                         epoch,
@@ -408,10 +410,12 @@ impl<
         // unit's own body still can, and the engine cannot catch it without std.
         // SAFETY: all phases done, every worker re-parked.
         let stores_changed = unsafe { !(*me).store_dirty.get().is_empty().0 };
-        // The frame consumed the change seed; clear it and leave cold-start.
-        // SAFETY: all phases done, every worker re-parked.
+        // The frame consumed the change seed. The boundary brings in what the
+        // pass changed and leaves the next frame's seed; then leave cold-start.
+        // SAFETY: all phases done, every worker re-parked, so no context over
+        // the bindings or a per-core copy of them is alive.
         unsafe {
-            (*me).store_dirty.set(AccessMask::empty());
+            (*me).bring_in_changes();
             (*me).first_frame.store(false, Ordering::Relaxed);
         }
         // E8 adapt: fold this frame's duration into the pass-duration EMA on

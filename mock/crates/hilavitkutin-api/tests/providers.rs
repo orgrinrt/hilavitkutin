@@ -10,10 +10,29 @@
 use arvo::USize;
 use hilavitkutin_api::access::Empty;
 use hilavitkutin_api::{
-    AccessSet, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi, Contains,
-    EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, ReduceApi, ResolveColumnRead, ResolveColumnWrite,
-    ResolveResource, ResolveVirtualFire, Resource, ResourceProviderApi, Virtual,
+    AccessSet,
+    BatchApi,
+    Column,
+    ColumnReaderApi,
+    ColumnValue,
+    ColumnWriterApi,
+    EachApi,
+    HasBatch,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasReduce,
+    HasResourceProvider,
+    HasVirtualFirer,
+    Holds,
+    ReduceApi,
+    ResolveColumnRead,
+    ResolveColumnWrite,
+    ResolveResource,
+    ResolveVirtualFire,
+    Resource,
+    ResourceProviderApi,
+    Virtual,
     VirtualFirerApi,
 };
 
@@ -31,7 +50,7 @@ struct ReduceP;
 impl<R: AccessSet> ColumnReaderApi<R> for ReaderP {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         unsafe { core::mem::zeroed() }
@@ -44,23 +63,22 @@ impl<T: ColumnValue, I> ResolveColumnRead<T, I> for ReaderP {
     }
 }
 
-impl<W: AccessSet> ColumnWriterApi<W> for WriterP {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-    }
-}
+// The positional write is the api's own method over the bridge, so the
+// provider implements the bridge and names the trait.
+impl<W: AccessSet> ColumnWriterApi<W> for WriterP {}
 
 impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for WriterP {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unsafe { core::mem::zeroed() }
+    }
 }
 
 impl<R: AccessSet> ResourceProviderApi<R> for ResourceP {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         unsafe { &*(self as *const _ as *const T) }
@@ -76,7 +94,7 @@ impl<T: 'static, I> ResolveResource<T, I> for ResourceP {
 impl<W: AccessSet> VirtualFirerApi<W> for FirerP {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
     }
@@ -114,17 +132,18 @@ impl<R: AccessSet, W: AccessSet> ReduceApi<R, W> for ReduceP {
 
 // A bespoke provider-bundle newtype. Seven fields, one per provider.
 struct Bundle {
-    reader: ReaderP,
-    writer: WriterP,
+    reader:    ReaderP,
+    writer:    WriterP,
     resources: ResourceP,
-    firer: FirerP,
-    each: EachP,
-    batch: BatchP,
-    reduce: ReduceP,
+    firer:     FirerP,
+    each:      EachP,
+    batch:     BatchP,
+    reduce:    ReduceP,
 }
 
 impl<R: AccessSet> HasColumnReader<R> for Bundle {
     type Provider = ReaderP;
+
     fn reader(&self) -> &ReaderP {
         &self.reader
     }
@@ -132,6 +151,7 @@ impl<R: AccessSet> HasColumnReader<R> for Bundle {
 
 impl<W: AccessSet> HasColumnWriter<W> for Bundle {
     type Provider = WriterP;
+
     fn writer(&self) -> &WriterP {
         &self.writer
     }
@@ -139,6 +159,7 @@ impl<W: AccessSet> HasColumnWriter<W> for Bundle {
 
 impl<R: AccessSet> HasResourceProvider<R> for Bundle {
     type Provider = ResourceP;
+
     fn resources(&self) -> &ResourceP {
         &self.resources
     }
@@ -146,6 +167,7 @@ impl<R: AccessSet> HasResourceProvider<R> for Bundle {
 
 impl<W: AccessSet> HasVirtualFirer<W> for Bundle {
     type Provider = FirerP;
+
     fn virtuals(&self) -> &FirerP {
         &self.firer
     }
@@ -153,6 +175,7 @@ impl<W: AccessSet> HasVirtualFirer<W> for Bundle {
 
 impl<R: AccessSet, W: AccessSet> HasEach<R, W> for Bundle {
     type Provider = EachP;
+
     fn each(&self) -> &EachP {
         &self.each
     }
@@ -160,6 +183,7 @@ impl<R: AccessSet, W: AccessSet> HasEach<R, W> for Bundle {
 
 impl<R: AccessSet, W: AccessSet> HasBatch<R, W> for Bundle {
     type Provider = BatchP;
+
     fn batch(&self) -> &BatchP {
         &self.batch
     }
@@ -167,6 +191,7 @@ impl<R: AccessSet, W: AccessSet> HasBatch<R, W> for Bundle {
 
 impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for Bundle {
     type Provider = ReduceP;
+
     fn reduce(&self) -> &ReduceP {
         &self.reduce
     }
@@ -175,13 +200,13 @@ impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for Bundle {
 #[test]
 fn accessors_dispatch_through_bundle() {
     let b = Bundle {
-        reader: ReaderP,
-        writer: WriterP,
+        reader:    ReaderP,
+        writer:    WriterP,
         resources: ResourceP,
-        firer: FirerP,
-        each: EachP,
-        batch: BatchP,
-        reduce: ReduceP,
+        firer:     FirerP,
+        each:      EachP,
+        batch:     BatchP,
+        reduce:    ReduceP,
     };
 
     // Fix the generic parameters by binding once through the

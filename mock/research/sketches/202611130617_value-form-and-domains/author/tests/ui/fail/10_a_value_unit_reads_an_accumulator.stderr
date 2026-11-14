@@ -1,0 +1,42 @@
+error[E0277]: the trait bound `Accum<Crossed>: Reads` is not satisfied
+  --> tests/ui/fail/10_a_value_unit_reads_an_accumulator.rs:12:17
+   |
+12 |     type Read = Cons<Column<Pos>, Cons<Accum<Crossed>, Empty>>;
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Reads` is not implemented for `Accum<Crossed>`
+   |
+   = help: the following other types implement trait `Reads`:
+             Buffered<T, D>
+             Column<T, D>
+             Extent<D>
+             Near<C, O, E>
+             Resource<T>
+   = note: required for `Cons<Accum<Crossed>, api::Empty>` to implement `ReadList`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Column<Pos>, Cons<Accum<Crossed>, api::Empty>>` to implement `ReadList`
+note: required by a bound in `api::RecordOp::Read`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Read: ReadList;
+   |                ^^^^^^^^ required by this bound in `RecordOp::Read`
+
+error[E0277]: the trait bound `Accum<Crossed>: Reads` is not satisfied
+  --> tests/ui/fail/10_a_value_unit_reads_an_accumulator.rs:13:18
+   |
+13 |     type Write = Cons<Column<Pos>, Empty>;
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Reads` is not implemented for `Accum<Crossed>`
+   |
+   = help: the following other types implement trait `Reads`:
+             Buffered<T, D>
+             Column<T, D>
+             Extent<D>
+             Near<C, O, E>
+             Resource<T>
+   = note: required for `Cons<Accum<Crossed>, api::Empty>` to implement `ReadList`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Column<Pos>, Cons<Accum<Crossed>, api::Empty>>` to implement `ReadList`
+   = note: required for `Cons<Column<Pos>, api::Empty>` to implement `Along<Cons<Column<Pos>, Cons<Accum<Crossed>, api::Empty>>>`
+note: required by a bound in `api::RecordOp::Write`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Write: Along<Self::Read>;
+   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `RecordOp::Write`

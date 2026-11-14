@@ -59,7 +59,7 @@ use hilavitkutin_api::context::{
     ResourceProviderApi,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::store::{Column, Resource, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,16 +86,16 @@ struct InC(u32);
 // `ColumnValue`. The payloads only give the units something to write and
 // read (the RAW edge that orders the producer before the consumer); the
 // test asserts execution counts, not values.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Ca(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cb(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cc(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cd(u32);
 
@@ -278,13 +278,13 @@ fn counts() -> [u32; 4] {
 #[test]
 fn incremental_skip_runs_only_the_changed_cone() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
-        .with(Column::<Ca>::new())
-        .with(Column::<Cb>::new())
-        .with(Column::<Cc>::new())
+        .with(Column::<Ca>::start())
+        .with(Column::<Cb>::start())
+        .with(Column::<Cc>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .with(UnrelatedWu)
@@ -326,7 +326,7 @@ fn incremental_skip_runs_only_the_changed_cone() {
 #[test]
 fn incremental_skip_propagates_two_hops() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     // Producer -> Consumer -> SecondConsumer is a depth-two RAW chain
     // (InA -> Ca -> Cb -> Cd); the unrelated unit reads InC -> Cc. Registration
     // order is topological (each writer before its reader), which `build`
@@ -334,10 +334,10 @@ fn incremental_skip_propagates_two_hops() {
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
-        .with(Column::<Ca>::new())
-        .with(Column::<Cb>::new())
-        .with(Column::<Cc>::new())
-        .with(Column::<Cd>::new())
+        .with(Column::<Ca>::start())
+        .with(Column::<Cb>::start())
+        .with(Column::<Cc>::start())
+        .with(Column::<Cd>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .with(SecondConsumerWu)
@@ -389,10 +389,10 @@ macro_rules! four_chain_scheduler {
         Scheduler::builder()
             .with(Resource::new(InA(100)))
             .with(Resource::new(InC(200)))
-            .with(Column::<Ca>::new())
-            .with(Column::<Cb>::new())
-            .with(Column::<Cc>::new())
-            .with(Column::<Cd>::new())
+            .with(Column::<Ca>::start())
+            .with(Column::<Cb>::start())
+            .with(Column::<Cc>::start())
+            .with(Column::<Cd>::start())
             .with(ProducerWu)
             .with(ConsumerWu)
             .with(SecondConsumerWu)
@@ -480,8 +480,8 @@ const HISTORY: [Step; 7] = [
 
 #[test]
 fn skipping_run_matches_every_store_dirty_run_at_every_frame() {
-    let provider_a = StableProvider::new(32768);
-    let provider_b = StableProvider::new(32768);
+    let provider_a = StableProvider::new(32768, 0);
+    let provider_b = StableProvider::new(32768, 0);
     let mut skipping = four_chain_scheduler!(provider_a);
     let mut every = four_chain_scheduler!(provider_b);
     let (mut a, mut c) = (100u32, 200u32);
@@ -531,8 +531,8 @@ fn model(a: u32, c: u32) -> [[u32; RECORDS]; 4] {
 
 #[test]
 fn skipping_run_diverges_when_a_mutated_store_is_not_marked() {
-    let provider_a = StableProvider::new(32768);
-    let provider_b = StableProvider::new(32768);
+    let provider_a = StableProvider::new(32768, 0);
+    let provider_b = StableProvider::new(32768, 0);
     let mut skipping = four_chain_scheduler!(provider_a);
     let mut every = four_chain_scheduler!(provider_b);
     assert!(matches!(skipping.run(), Outcome::Ok(())));

@@ -28,7 +28,7 @@ use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
 use hilavitkutin_api::context::{ColumnWriterApi, EachApi, HasColumnWriter, HasEach};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -73,9 +73,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 4;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Bv(u32);
 
 type ColA = Cons<Column<Av>, Empty>;
@@ -142,8 +142,8 @@ fn run_one_trunk_runs_only_trunk0_member() {
     OBS_B.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
         .with(WuA)
         .with(WuB)
         .build(store(provider), USize(N))
@@ -166,8 +166,8 @@ fn run_one_trunk_runs_only_trunk1_member() {
     OBS_B.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
         .with(WuA)
         .with(WuB)
         .build(store(provider), USize(N))
@@ -190,8 +190,8 @@ fn run_all_trunks_runs_every_trunk_once() {
     OBS_B.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<8192>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Av>::new())
-        .with(Column::<Bv>::new())
+        .with(Column::<Av>::start())
+        .with(Column::<Bv>::start())
         .with(WuA)
         .with(WuB)
         .build(store(provider), USize(N))

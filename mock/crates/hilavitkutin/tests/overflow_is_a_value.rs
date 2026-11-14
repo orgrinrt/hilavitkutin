@@ -51,7 +51,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::platform::{MemoryProviderApi, ThreadPoolApi};
 use hilavitkutin_api::run_cfg::DefaultRunCfg;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{AccumRefused, Assert};
 use hilavitkutin_providers::ArenaColumnStorage;
@@ -75,7 +75,7 @@ struct Bv(u32);
 
 /// The input column, seeded with each record's global index: the `each` index
 /// is morsel-local, so a unit keyed on it would ask a different total per split.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -111,7 +111,7 @@ impl WorkUnit<Always> for SkewWu {
         ctx.each().run(|i| {
             let rec = unsafe { ctx.reader().read::<Inv, _>(i) }.0 as usize;
             for v in asked_by(rec).iter().flatten() {
-                unsafe { ctx.accums().append::<Av, _>(Av(*v)) };
+                ctx.accums().append::<Av, _>(Av(*v));
             }
         });
     }
@@ -207,11 +207,11 @@ fn expected_av(workers: usize) -> [u32; N] {
 macro_rules! build {
     (@finish [$($finish:tt)+] $($unit:expr),+) => {{
         let scheduler = Scheduler::builder()
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(Accum::<Bv>::new())
             .with(Accum::<Av>::new())
             $(.with($unit))+
-            .$($finish)+(store(StableProvider::new(16384)), USize(N))
+            .$($finish)+(store(StableProvider::new(16384, 0)), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
         let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {
@@ -364,7 +364,7 @@ impl WorkUnit<Always> for FitsWu {
                 1
             };
             for _ in 0 .. n {
-                unsafe { ctx.accums().append::<Av, _>(Av(rec)) };
+                ctx.accums().append::<Av, _>(Av(rec));
             }
         });
     }

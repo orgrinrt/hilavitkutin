@@ -42,7 +42,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -86,7 +86,7 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 256;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
 #[derive(Copy, Clone)]
 struct Av(u32);
@@ -127,9 +127,9 @@ impl WorkUnit<Always> for KeepWu {
             // relative index to the absolute column index, in bounds.
             let v = unsafe { ctx.reader().read::<Inv, _>(i) };
             if v.0 % 7 != 0 {
-                // SAFETY: the accumulator reserves N records (>= the kept count),
-                // and the plan proved this unit the exclusive appender.
-                unsafe { ctx.accums().append::<Av, _>(Av(v.0 * 10)) };
+                // The accumulator reserves N records (>= the kept count), and
+                // the plan proved this unit the exclusive appender.
+                ctx.accums().append::<Av, _>(Av(v.0 * 10));
             }
         });
     }
@@ -143,7 +143,7 @@ macro_rules! build_and_seed {
     ($provider:expr) => {{
         let scheduler = Scheduler::builder()
             .with(Accum::<Av>::new())
-            .with(Column::<Inv>::new())
+            .with(Column::<Inv>::start())
             .with(KeepWu)
             .build(store($provider), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
@@ -228,7 +228,7 @@ fn run_parallel_accumulator_matches_single_core() {
 // accumulator region is still sized from that slice. This exists to find out
 // whether that configuration can be built and run, not to assert a conclusion.
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Sv(u32);
 
 type ColSide = Cons<Column<Sv>, Empty>;
@@ -273,25 +273,23 @@ fn accumulator_in_a_two_trunk_phase_matches_single_core() {
     let provider = BumpProvider::<16384>::new();
     let scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
-        .with(Column::<Inv>::new())
-        .with(Column::<Sv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Sv>::start_from(Sv(u32::MAX)))
         .with(KeepWu)
         .with(SideWu)
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
     {
-        // Bindings head: Sv, then In, then the AccumBinding<Av>.
+        // Bindings head: Sv, then In, then the AccumBinding<Av>. The side column
+        // starts at u32::MAX so a record its unit skipped is seen.
         let b = scheduler.__bindings();
-        let side_base: *mut Sv = b.__ptr().as_ptr();
         let in_base = b.__tail().__ptr().as_ptr() as *mut u32;
         let acc_base = b.__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {
-            // SAFETY: all three buffers reserve N records; written once here.
-            // The side column is poisoned so a record its unit skipped is seen.
+            // SAFETY: both buffers reserve N records; written once here.
             unsafe {
                 *in_base.add(i) = i as u32;
                 *acc_base.add(i) = u32::MAX;
-                *side_base.add(i) = Sv(u32::MAX);
             }
         }
     }
