@@ -464,7 +464,7 @@ macro_rules! fan_in {
 // --- Invariant: single-core `run` crosses no waist barrier, so idle is zero. ---
 #[test]
 fn single_core_run_no_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let mut scheduler = fan_in!(provider);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
@@ -507,7 +507,7 @@ impl WorkUnit<Always> for AccumWu {
 
 #[test]
 fn accum_unit_outer_no_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(CounterClock::new())
         .with(Accum::<Mark>::new())
@@ -529,7 +529,7 @@ fn accum_unit_outer_no_idle() {
 // --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
 #[test]
 fn imbalanced_parallel_records_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = two_waist!(provider);
 
     let pool = TestExecutor::new();

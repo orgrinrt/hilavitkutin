@@ -9,21 +9,30 @@ use arvo_tensor::{Capacity, ConstCapacity};
 use super::access::AccessMask;
 use super::bundle_masks::BundleMasks;
 
+/// One access mask over `CS` stores for each of up to `CU` units.
+pub(super) type MaskArray<CU, CS> = <CU as ConstCapacity>::Array<AccessMask<CS>>;
+
+/// What [`masks_of`] folds out of a bundle, one slot for each unit.
+pub(super) struct UnitMasks<CU: ConstCapacity, CS: Capacity> {
+    /// The stores each unit reads.
+    pub(super) reads:  MaskArray<CU, CS>,
+    /// The stores each unit writes.
+    pub(super) writes: MaskArray<CU, CS>,
+    /// Each unit's lifecycle rank.
+    pub(super) ranks:  <CU as ConstCapacity>::Array<USize>,
+    /// How many units the bundle holds.
+    pub(super) count:  USize,
+}
+
 /// Fold the per-unit read/write masks and lifecycle ranks for a registered
-/// bundle into `CU`-capacity locals, returning `(reads, writes, ranks,
-/// unit_count)`.
+/// bundle into `CU`-capacity arrays.
 pub(super) const fn masks_of<
     Wus,
     Stores,
     Witnesses,
     CU: Capacity + [const] ConstCapacity,
     CS: Capacity,
->() -> (
-    <CU as ConstCapacity>::Array<AccessMask<CS>>,
-    <CU as ConstCapacity>::Array<AccessMask<CS>>,
-    <CU as ConstCapacity>::Array<USize>,
-    USize,
-)
+>() -> UnitMasks<CU, CS>
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
@@ -36,13 +45,18 @@ where
     let mut reads = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
     let mut writes = <CU as ConstCapacity>::filled(AccessMask::<CS>::empty());
     let mut ranks = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
-    let n = <Wus as BundleMasks<Stores, Witnesses, CS>>::fill(
+    let count = <Wus as BundleMasks<Stores, Witnesses, CS>>::fill(
         <CU as ConstCapacity>::slice_mut(&mut reads),
         <CU as ConstCapacity>::slice_mut(&mut writes),
         <CU as ConstCapacity>::slice_mut(&mut ranks),
         <USize as Identity<Additive>>::IDENTITY,
     );
-    (reads, writes, ranks, n)
+    UnitMasks {
+        reads,
+        writes,
+        ranks,
+        count,
+    }
 }
 
 /// Fold, per unit, the plain columns it reads with a reach.
@@ -52,7 +66,7 @@ pub(super) const fn reaches_of<
     Witnesses,
     CU: Capacity + [const] ConstCapacity,
     CS: Capacity,
->() -> <CU as ConstCapacity>::Array<AccessMask<CS>>
+>() -> MaskArray<CU, CS>
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {

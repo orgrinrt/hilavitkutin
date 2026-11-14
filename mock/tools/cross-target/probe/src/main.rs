@@ -1,35 +1,16 @@
 //! The frozen authors under the reference runner, one digest a frame, on
 //! whatever target this is built for.
 //!
-//! The four frozen files are taken by path, so the bytes the ledger holds are
-//! the bytes every target compiles, and the world is lent by the macro the
-//! frozen crate's own tests lend it with. On the host a digest is a line of
-//! sixteen hex digits. On wasm it is handed to the `emit` the embedder
-//! imports, which prints the same line.
+//! The four frozen files come from this package's library, which takes them
+//! by path, and the world is lent by the macro the frozen crate's own tests
+//! lend it with. On the host a digest is a line of sixteen hex digits. On
+//! wasm it is handed to the `emit` the embedder imports, which prints the
+//! same line.
 
-#[allow(dead_code)]
-#[path = "../../../../crates/hilavitkutin-frozen-authors/tests/common/lend.rs"]
-mod lend;
-#[allow(dead_code)]
-#[path = "../../../../crates/hilavitkutin-frozen-authors/src/model.rs"]
-mod model;
-#[allow(dead_code)]
-#[path = "../../../../crates/hilavitkutin-frozen-authors/src/record.rs"]
-mod record;
-#[allow(dead_code)]
-#[path = "../../../../crates/hilavitkutin-frozen-authors/src/units.rs"]
-mod units;
-#[allow(dead_code)]
-#[path = "../../../../crates/hilavitkutin-frozen-authors/src/values.rs"]
-mod values;
-
-use hilavitkutin_api::store::{Accum, Column, Virtual};
-use hilavitkutin_conformance::{Ascending, Faithful, Fold, Lent, Oracle, Word};
-use notko::Outcome;
-
-use crate::model::Model;
-use crate::units::{Alarm, Crest, Cross, Drift, Fade, Smooth, Spread, Tally, Warm};
-use crate::values::{
+use cross_target_probe::model::Model;
+use cross_target_probe::record;
+use cross_target_probe::units::{Alarm, Crest, Cross, Drift, Fade, Smooth, Spread, Tally, Warm};
+use cross_target_probe::values::{
     Alarms,
     Ash,
     Crossed,
@@ -46,6 +27,9 @@ use crate::values::{
     RECORDS,
     Vel,
 };
+use hilavitkutin_api::store::{Accum, Column, Virtual};
+use hilavitkutin_conformance::{Ascending, Faithful, Fold, Lent, Oracle, Word};
+use notko::Outcome;
 
 /// How many frames the stream is, the same count the frozen crate's tests
 /// hold the scheduler over.
@@ -70,7 +54,7 @@ fn out(digest: u64) {
 }
 
 fn main() {
-    crate::lend!(world, 0);
+    cross_target_probe::lend!(world, 0);
     let Outcome::Ok(mut oracle) = Oracle::<_, Faithful, Ascending>::new(world, RECORDS) else {
         panic!("the reference runner refused the stores");
     };
@@ -89,7 +73,7 @@ fn main() {
             panic!("the reference runner refused frame {frame}");
         };
         let mut fold = Fold::new();
-        crate::kept!(oracle, record::words, |word| fold.word(word));
+        cross_target_probe::kept!(oracle, record::words, |word| fold.word(word));
         if cfg!(all(feature = "skew", target_family = "wasm")) && frame + 1 == FRAMES {
             fold.word(Word::from_raw(1));
         }

@@ -49,21 +49,23 @@ macro_rules! lend {
     };
 }
 
-/// Hand what `$oracle` holds after a frame to `$record`, in the sequence
-/// `record::words` takes it, with `$rest` after it.
+/// Hand what `$oracle` holds after a frame to `$record` as one
+/// `record::State`, with `$rest` after it.
 #[macro_export]
 macro_rules! kept {
     ($oracle:expr, $record:path, $($rest:expr),+ $(,)?) => {
         $record(
-            $oracle.of::<Column<Pos>, _>().values(),
-            $oracle.of::<Field, _>().frozen(),
-            $oracle.of::<Column<Alarms>, _>().values(),
-            $oracle.of::<Pool, _>().frozen(),
-            $oracle.of::<Column<Peak>, _>().values(),
-            $oracle.of::<Column<Glow>, _>().values(),
-            $oracle.of::<Column<Ash>, _>().values(),
-            $oracle.of::<Virtual<Overheat>, _>().fired(),
-            $oracle.of::<Accum<Crossed>, _>().appended(),
+            record::State {
+                pos:      $oracle.of::<Column<Pos>, _>().values(),
+                heat:     $oracle.of::<Field, _>().frozen(),
+                alarms:   $oracle.of::<Column<Alarms>, _>().values(),
+                level:    $oracle.of::<Pool, _>().frozen(),
+                peak:     $oracle.of::<Column<Peak>, _>().values(),
+                glow:     $oracle.of::<Column<Glow>, _>().values(),
+                ash:      $oracle.of::<Column<Ash>, _>().values(),
+                overheat: $oracle.of::<Virtual<Overheat>, _>().fired(),
+                crossed:  $oracle.of::<Accum<Crossed>, _>().appended(),
+            },
             $($rest),+
         )
     };

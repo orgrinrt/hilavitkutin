@@ -222,7 +222,6 @@ pub struct Exchange;
 /// How the live side of a buffered column becomes its frozen side.
 ///
 /// `Snapshot` and `Exchange`, and no other.
-#[allow(private_bounds)]
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a mode of a buffered column",
     note = "The modes are `Snapshot` (the live side is copied into the frozen side, the default) and `Exchange` (the two sides trade places)."
@@ -333,7 +332,6 @@ impl<T: notko::HasTrivialCtor, M: BufferMode> Buffered<T, M> {
 /// `Column<T>` and `Buffered<T, M>`, and no other. Such a store is registered
 /// with the value its records start from, so no read of it reaches a record
 /// nothing wrote.
-#[allow(private_bounds)]
 #[diagnostic::on_unimplemented(
     message = "`{Self}` is not a store that is registered with a start",
     note = "The stores with a start are `Column<T>` and `Buffered<T, M>`."

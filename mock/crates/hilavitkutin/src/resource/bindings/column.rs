@@ -19,7 +19,7 @@ use crate::resource::provenance::ColumnPtr;
 use crate::scheduler::BuildError;
 
 mod sealed {
-    pub trait Sealed {}
+    pub trait KindSealed {}
 }
 
 /// Reserve `count` records of `T` at the next storage id.
@@ -140,8 +140,7 @@ impl ChangeMark {
 /// `Plain` is the kind of a `Column<T>`. The two buffer modes of the api,
 /// `Snapshot` and `Exchange`, are the kinds of a `Buffered<T, M>`. Sealed:
 /// those three and no other.
-#[allow(private_bounds)]
-pub trait ColKind: sealed::Sealed + 'static {
+pub trait ColKind: sealed::KindSealed + 'static {
     /// What the binding keeps beside its first reservation.
     type Side<T>;
 
@@ -182,7 +181,7 @@ pub trait ColKind: sealed::Sealed + 'static {
 /// The kind of a plain column: one reservation, read and written in place.
 pub struct Plain;
 
-impl sealed::Sealed for Plain {}
+impl sealed::KindSealed for Plain {}
 impl ColKind for Plain {
     type Marker<T> = Column<T>;
     type Side<T> = PhantomData<T>;
@@ -220,7 +219,7 @@ impl ColKind for Plain {
 // `Snapshot`: the first reservation is the live side for good and the second
 // the frozen one. The boundary copies the live side over the frozen.
 // FIXME(placeholders_tagged_8c7cc9768579): the copy is of the whole column, where a mark kept per morsel would let it copy the morsels that changed
-impl sealed::Sealed for Snapshot {}
+impl sealed::KindSealed for Snapshot {}
 impl ColKind for Snapshot {
     type Marker<T> = Buffered<T, Snapshot>;
     type Side<T> = ColumnPtr<T>;
@@ -281,7 +280,7 @@ pub struct Flip<T> {
 // `Exchange`: the two reservations trade places at the boundary. Nothing is
 // copied and no base moves; the index says which one a read reaches, and a
 // context reads it when it is bound.
-impl sealed::Sealed for Exchange {}
+impl sealed::KindSealed for Exchange {}
 impl ColKind for Exchange {
     type Marker<T> = Buffered<T, Exchange>;
     type Side<T> = Flip<T>;

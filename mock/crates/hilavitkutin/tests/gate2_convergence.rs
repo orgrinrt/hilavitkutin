@@ -81,7 +81,6 @@ const N: usize = 256;
 #[derive(Copy, Clone, Default)]
 struct Inv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // set as the column start; the test reads it through the binding pointer
 struct Fv(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -160,10 +159,10 @@ fn run_parallel_single_trunk_phase_covers_every_record_once() {
     // Every record written exactly once with Fv = i*7: the owning core walked
     // the single trunk over windows covering [0,N). A gap leaves the
     // start value; a wrong window writes the wrong i.
-    let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Fv;
     for i in 0 .. N {
         // SAFETY: Fv holds N reserved records; the scheduler is alive.
-        let v = unsafe { *base.add(i) };
+        let v = unsafe { (*base.add(i)).0 };
         assert_eq!(
             v,
             (i as u32) * 7,

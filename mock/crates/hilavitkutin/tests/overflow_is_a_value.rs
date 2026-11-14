@@ -211,7 +211,7 @@ macro_rules! build {
             .with(Accum::<Bv>::new())
             .with(Accum::<Av>::new())
             $(.with($unit))+
-            .$($finish)+(store(StableProvider::new(16384)), USize(N))
+            .$($finish)+(store(StableProvider::new(16384, 0)), USize(N))
             .unwrap_or_else(|_| panic!("build should succeed"));
         let in_base = scheduler.__bindings().__tail().__tail().__ptr().as_ptr() as *mut u32;
         for i in 0 .. N {

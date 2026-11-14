@@ -227,17 +227,19 @@ pub trait Committed: Elem {
     type Domain: Domain;
 }
 
+/// The offsets a neighbour read of committed store `C` may name.
+pub type ReachOf<C> = <<C as Committed>::Domain as Domain>::Reach;
+
 /// The committed value of `C` at offset `O` from the record, `E` past the shape.
-#[allow(clippy::type_complexity)]
 pub struct Near<C, O, E>(PhantomData<(C, O, E)>)
 where
     C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>;
+    ReachOf<C>: Contains<O>;
 
 impl<C, O, E> Near<C, O, E>
 where
     C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>,
+    ReachOf<C>: Contains<O>,
 {
     /// The marker, as a value to name the member by.
     pub const fn new() -> Self {
@@ -271,7 +273,7 @@ impl<D: Domain> Elem for Extent<D> {
 impl<C, O: 'static, E: 'static> Elem for Near<C, O, E>
 where
     C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>,
+    ReachOf<C>: Contains<O>,
 {
     type Value = C::Value;
 }
@@ -353,7 +355,7 @@ impl<D: Domain> Member for Extent<D> {
 impl<C, O: 'static, E: Edge<C::Value>> Member for Near<C, O, E>
 where
     C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>,
+    ReachOf<C>: Contains<O>,
 {
     type Store = C;
     type Where = In<C::Domain>;
@@ -368,7 +370,7 @@ impl<D: Domain> Reads for Extent<D> {}
 impl<C, O: 'static, E: Edge<C::Value>> Reads for Near<C, O, E>
 where
     C: Committed,
-    <C::Domain as Domain>::Reach: Contains<O>,
+    ReachOf<C>: Contains<O>,
 {
 }
 

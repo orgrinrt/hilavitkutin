@@ -158,7 +158,7 @@ impl WorkUnit<Always> for OverAppendWu {
 // returns the refusal with every append it was asked for.
 #[test]
 fn accum_append_past_reserved_capacity_is_refused_as_a_value() {
-    let provider = StableProvider::new(8192);
+    let provider = StableProvider::new(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(OverAppendWu)
@@ -193,7 +193,7 @@ fn accum_append_past_reserved_capacity_is_refused_as_a_value() {
 
 #[test]
 fn accum_appends_land_in_order_with_live_length_through_run() {
-    let provider = StableProvider::new(8192);
+    let provider = StableProvider::new(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendWu)

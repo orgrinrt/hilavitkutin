@@ -7,8 +7,6 @@
 //! it, and a snapshot column only that `On` unit writes, so most frames leave
 //! it unwritten.
 
-#![allow(dead_code)]
-
 use arvo::{Bool, Cap, Hot, Uint};
 use hilavitkutin::dispatch::engine_ctx::CtxFor;
 use hilavitkutin_api::access::{Cons, Empty};

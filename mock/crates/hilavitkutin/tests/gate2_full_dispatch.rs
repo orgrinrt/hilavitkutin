@@ -77,7 +77,6 @@ struct Inv(u32);
 #[derive(Copy, Clone, Default)]
 struct Mid(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // set as the column start; the test reads it through the binding pointer
 struct Out(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -177,10 +176,10 @@ fn run_drives_two_phase_chain_in_order() {
 
     // Out[i] = (In[i] + 1) * 10. If the consumer ran before the producer, it
     // would have read the start value in Mid and Out would not match.
-    let base = scheduler.__bindings().__ptr().as_ptr() as *const u32;
+    let base = scheduler.__bindings().__ptr().as_ptr() as *const Out;
     for i in 0 .. N {
         // SAFETY: Out holds N reserved records; scheduler alive.
-        let v = unsafe { *base.add(i) };
+        let v = unsafe { (*base.add(i)).0 };
         assert_eq!(
             v,
             (i as u32 + 1) * 10,

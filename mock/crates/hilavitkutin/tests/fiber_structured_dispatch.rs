@@ -204,7 +204,7 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
     // build. The original per-fiber-block assertion is the contract #670
     // re-enables.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::start())
         .with(Accum::<Av>::new())

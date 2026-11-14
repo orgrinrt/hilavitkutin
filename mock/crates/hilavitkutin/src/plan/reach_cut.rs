@@ -18,7 +18,7 @@ use hilavitkutin_api::meta::RANK_CONSUMER;
 use super::bundle_masks::BundleMasks;
 use super::edge::reach_behind_a_writer;
 use super::grouping::{consumer_mask, group_n};
-use super::unit_masks::{masks_of, reaches_of};
+use super::unit_masks::{UnitMasks, masks_of, reaches_of};
 
 /// The cuts of one carrier, as constants of its types.
 ///
@@ -64,7 +64,12 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (_reads, writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        writes,
+        ranks,
+        count: n,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let reaches = reaches_of::<Wus, Stores, Witnesses, CU, CS>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut cuts = <Adj as Identity<Additive>>::IDENTITY;

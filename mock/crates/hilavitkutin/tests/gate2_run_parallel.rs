@@ -93,7 +93,6 @@ struct Av(u32);
 #[derive(Copy, Clone, Default)]
 struct Bv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Combiner, read back post-run as raw u32
 struct Zv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -267,10 +266,10 @@ fn run_parallel_threaded_fan_in_is_correct() {
 
     // Av(i*10) + Bv(i*100) = i*110, written to Zv by the phase-1 combiner after
     // both phase-0 producer trunks finished (the waist barrier).
-    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
     for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
-        let z = unsafe { *zv_base.add(i) };
+        let z = unsafe { (*zv_base.add(i)).0 };
         assert_eq!(
             z,
             (i as u32) * 110,
@@ -321,10 +320,10 @@ fn run_parallel_spawns_the_pool_once_across_frames() {
         pool.worker_count().0,
         "the persistent pool spawns worker_count workers once, not per frame"
     );
-    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let zv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Zv;
     for i in 0 .. N {
         // SAFETY: Zv holds N reserved records; the scheduler is alive.
-        let z = unsafe { *zv_base.add(i) };
+        let z = unsafe { (*zv_base.add(i)).0 };
         assert_eq!(z, (i as u32) * 110, "rec {i} after two frames");
     }
 }
@@ -347,7 +346,6 @@ struct Q1v(u32);
 #[derive(Copy, Clone, Default)]
 struct Q2v(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Sink, read back post-run as raw u32
 struct Sv(u32);
 
 type ColP1 = Cons<Column<P1v>, Empty>;
@@ -543,7 +541,6 @@ impl WorkUnit<Always> for Sink {
 #[derive(Copy, Clone, Default)]
 struct Cv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // written by Combiner3, read back post-run as raw u32
 struct Wv(u32);
 
 type ColC = Cons<Column<Cv>, Empty>;
@@ -654,10 +651,10 @@ fn run_parallel_three_trunks_two_cores_matches_single_core() {
     // Wv = Av(10i) + Bv(100i) + Cv(1000i) = 1110i, correct only if all three
     // phase-0 trunks were dispatched (including both trunks core 0 owns) and the
     // phase-1 combiner ran after the waist.
-    let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let wv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Wv;
     for i in 0 .. N {
         // SAFETY: Wv holds N reserved records; the scheduler is alive.
-        let w = unsafe { *wv_base.add(i) };
+        let w = unsafe { (*wv_base.add(i)).0 };
         assert_eq!(
             w,
             (i as u32) * 1110,
@@ -714,10 +711,10 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
     // Sv = Q1(5i) + Q2(10i) = 15i, correct only if both interior waist barriers
     // ordered their phases AND the barrier was reused correctly for the second
     // waist (the sense flip; a stale-count reset would deadlock or corrupt here).
-    let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    let sv_base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Sv;
     for i in 0 .. N {
         // SAFETY: Sv holds N reserved records; the scheduler is alive.
-        let s = unsafe { *sv_base.add(i) };
+        let s = unsafe { (*sv_base.add(i)).0 };
         assert_eq!(
             s,
             (i as u32) * 15,
@@ -739,7 +736,6 @@ fn run_parallel_threaded_two_waists_reuses_barrier() {
 #[derive(Copy, Clone, Default)]
 struct Dv(u32);
 #[derive(Copy, Clone, Default)]
-#[allow(dead_code)] // set as the column start; the test reads it through the binding pointer
 struct Ev(u32);
 
 type ColD = Cons<Column<Dv>, Empty>;
@@ -867,11 +863,11 @@ fn every_producer_runs_when_cores_outnumber_records() {
     let sched_ref = scheduler.as_ref();
     let b = sched_ref.__bindings();
     // SAFETY: each column holds the reserved record; the scheduler is alive.
-    let ev = unsafe { *(b.__ptr().as_ptr() as *const u32) };
-    let dv = unsafe { *(b.__tail().__ptr().as_ptr() as *const u32) };
-    let cv = unsafe { *(b.__tail().__tail().__ptr().as_ptr() as *const u32) };
-    let bv = unsafe { *(b.__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
-    let av = unsafe { *(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const u32) };
+    let ev = unsafe { (*(b.__ptr().as_ptr() as *const Ev)).0 };
+    let dv = unsafe { (*(b.__tail().__ptr().as_ptr() as *const Dv)).0 };
+    let cv = unsafe { (*(b.__tail().__tail().__ptr().as_ptr() as *const Cv)).0 };
+    let bv = unsafe { (*(b.__tail().__tail().__tail().__ptr().as_ptr() as *const Bv)).0 };
+    let av = unsafe { (*(b.__tail().__tail().__tail().__tail().__ptr().as_ptr() as *const Av)).0 };
     // In[0] = 1, so each producer's multiplier is its expected value.
     assert_eq!(av, 10, "ProducerA did not run");
     assert_eq!(bv, 100, "ProducerB did not run");

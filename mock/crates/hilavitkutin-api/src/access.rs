@@ -77,7 +77,6 @@ mod seal {
 /// the failure, and a wrapper is resolved to its store through
 /// `Member::Store`. The two impls are on `Empty` and on `Cons` and do not
 /// overlap. Sealed: the walk is the only legitimate shape.
-#[allow(private_bounds)]
 #[diagnostic::on_unimplemented(
     message = "store bundle `{Self}` does not hold every store of `{L}`",
     note = "Each member of `{L}` is checked on its own, and the store that is missing is named in the `Holds` failure reported with this one."

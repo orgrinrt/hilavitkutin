@@ -47,6 +47,6 @@ locked = false
 [[file]]
 path = "src/record.rs"
 form = "record"
-hash = "fnv1a64:061e7050dba35be5"
+hash = "fnv1a64:b05f66420f7f7253"
 breaks = 0
 locked = false

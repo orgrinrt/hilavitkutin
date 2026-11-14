@@ -148,7 +148,7 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(65536);
+    let provider = StableProvider::new(65536, 0);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::start())
         .with(ProducerWu)
@@ -292,7 +292,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(131072);
+    let provider = StableProvider::new(131072, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

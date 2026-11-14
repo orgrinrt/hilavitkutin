@@ -33,7 +33,7 @@ use super::access::AccessMask;
 pub use super::bundle_masks::{BundleMasks, UnitAccess};
 use super::edge::{raw_edge, reach_behind_a_writer};
 use super::project::WitnessIndex;
-use super::unit_masks::{masks_of, reaches_of};
+use super::unit_masks::{UnitMasks, masks_of, reaches_of};
 
 /// Fixed upper bound on registered units for the GATE-2 const grouping arrays.
 ///
@@ -254,7 +254,11 @@ pub const fn reach_reads_write_nothing<
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
-    let (_reads, writes, _ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        writes,
+        count: n,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let reaches = reaches_of::<Wus, Stores, Witnesses, CU, CS>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121
@@ -288,7 +292,12 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (reads, writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        reads,
+        writes,
+        ranks,
+        count: n,
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let reaches = reaches_of::<Wus, Stores, Witnesses, CU, CS>();
     let mut waist = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     compute_phases_waist::<CU, CS, Adj>(
@@ -315,7 +324,10 @@ pub const fn group_n<Wus, Stores, Witnesses, CU: Capacity + [const] ConstCapacit
 where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
 {
-    let (_reads, _writes, _ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        count: n,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     n
 }
 
@@ -356,7 +368,12 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (reads, writes, _ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        reads,
+        writes,
+        count: n,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, _n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     let mut trunk = <CU as ConstCapacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     compute_trunks::<CS>(
@@ -447,7 +464,10 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        ranks,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: plan-band phase count (max plan phase + 1); tracked: #121
@@ -481,7 +501,10 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        ranks,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: leading-band phase count (max pre-consumer phase + 1); tracked: #121
@@ -515,7 +538,10 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (_reads, _writes, ranks, _n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        ranks,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let (phase, n) = final_phases_of::<Wus, Stores, Witnesses, CU, CS, Adj>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut maxp1 = 0; // lint:allow(no-bare-numeric) reason: consumer-band end (max phase at-or-below consumer rank + 1); tracked: #121
@@ -549,7 +575,11 @@ where
     Wus: [const] BundleMasks<Stores, Witnesses, CS>,
     Adj: [const] BitAccess + Identity<Additive>,
 {
-    let (_reads, _writes, ranks, n) = masks_of::<Wus, Stores, Witnesses, CU, CS>();
+    let UnitMasks {
+        ranks,
+        count: n,
+        ..
+    } = masks_of::<Wus, Stores, Witnesses, CU, CS>();
     let count = n.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: loop bound; tracked: #121
     let mut m = <Adj as Identity<Additive>>::IDENTITY;
     let mut i = 0; // lint:allow(no-bare-numeric) reason: unit index; tracked: #121

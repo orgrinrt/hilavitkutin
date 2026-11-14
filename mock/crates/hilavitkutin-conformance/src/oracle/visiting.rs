@@ -10,8 +10,7 @@ use super::sealed;
 /// columns and the same flags behind. An accumulator's appends come out in
 /// the sequence of the visiting, so a comparison across visitings records
 /// them sorted. The trait is sealed.
-#[allow(private_bounds)]
-pub trait Visiting: sealed::Sealed + 'static {
+pub trait Visiting: sealed::OracleSealed + 'static {
     /// The record visited at `step` of `records`, `step` counted from zero
     /// and below `records`.
     fn record(step: USize, records: USize) -> USize;
@@ -23,8 +22,8 @@ pub struct Ascending;
 /// The last record first.
 pub struct Descending;
 
-impl sealed::Sealed for Ascending {}
-impl sealed::Sealed for Descending {}
+impl sealed::OracleSealed for Ascending {}
+impl sealed::OracleSealed for Descending {}
 
 impl Visiting for Ascending {
     #[inline(always)]

@@ -66,7 +66,7 @@ type CS = <DefaultPlanDims as PlanDims>::Stores;
 type Adj = <DefaultPlanDims as PlanDims>::AdjRow;
 
 fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19))
+    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
 }
 
 macro_rules! unit {

@@ -223,7 +223,7 @@ fn carrier_band_bounds() {
 #[test]
 fn unit_outer_meta_bands_run_once_per_frame_ordered() {
     PASS_STARTS.store(0, Ordering::Relaxed);
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .with(Accum::<Mark>::new())
         .with(StartWu)

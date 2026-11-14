@@ -6,8 +6,6 @@
 //! The workers and the memory provider are the engine's own test support,
 //! taken by path so there is one of each.
 
-#![allow(dead_code)]
-
 pub mod lend;
 #[path = "../../../hilavitkutin/tests/stable_provider/mod.rs"]
 pub mod stable_provider;
@@ -44,7 +42,7 @@ pub const N: usize = RECORDS.0;
 pub const POISON: u32 = 0xDEAD;
 
 pub fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19))
+    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
 }
 
 pub fn num(raw: u32) -> Num {
@@ -53,34 +51,17 @@ pub fn num(raw: u32) -> Num {
 
 /// One frame's state as words. `sorted` writes the crossed values sorted, for
 /// a comparison between runners that append in different sequences.
-#[allow(clippy::too_many_arguments)]
-pub fn words_of(
-    pos: &[Pos],
-    heat: &[Heat],
-    alarms: &[Alarms],
-    level: &[Level],
-    peak: &[Peak],
-    glow: &[Glow],
-    ash: &[Ash],
-    overheat: Bool,
-    crossed: &[Crossed],
-    sorted: bool,
-) -> Vec<Word> {
-    let mut crossed = crossed.to_vec();
+pub fn words_of(state: record::State<'_>, sorted: bool) -> Vec<Word> {
+    let mut crossed = state.crossed.to_vec();
     if sorted {
         crossed.sort_unstable_by_key(|c| c.0.to_raw());
     }
     let mut out = Vec::new();
     record::words(
-        pos,
-        heat,
-        alarms,
-        level,
-        peak,
-        glow,
-        ash,
-        overheat,
-        &crossed,
+        record::State {
+            crossed: &crossed,
+            ..state
+        },
         |word| out.push(word),
     );
     out
@@ -96,15 +77,17 @@ pub fn model_frames(frames: usize, sorted: bool, cross: bool) -> Vec<Vec<Word>> 
             model.frame();
             let crossed: &[Crossed] = if cross { &model.appended[.. model.crossed.0] } else { &[] };
             words_of(
-                &model.pos,
-                &model.heat,
-                &model.alarms,
-                &model.level,
-                &model.peak,
-                &model.glow,
-                &model.ash,
-                model.overheat,
-                crossed,
+                record::State {
+                    pos: &model.pos,
+                    heat: &model.heat,
+                    alarms: &model.alarms,
+                    level: &model.level,
+                    peak: &model.peak,
+                    glow: &model.glow,
+                    ash: &model.ash,
+                    overheat: model.overheat,
+                    crossed,
+                },
                 sorted,
             )
         })
@@ -260,15 +243,17 @@ impl Stores<'_> {
         // SAFETY: `N` initialised records each, per the contract above.
         unsafe {
             words_of(
-                core::slice::from_raw_parts(self.pos, N),
-                core::slice::from_raw_parts(heat, N),
-                core::slice::from_raw_parts(self.alarms, N),
-                core::slice::from_raw_parts(level, N),
-                core::slice::from_raw_parts(self.peak, N),
-                core::slice::from_raw_parts(self.glow, N),
-                core::slice::from_raw_parts(self.ash, N),
-                Bool((self.fired)(frame)),
-                &(self.crossed)(),
+                record::State {
+                    pos:      core::slice::from_raw_parts(self.pos, N),
+                    heat:     core::slice::from_raw_parts(heat, N),
+                    alarms:   core::slice::from_raw_parts(self.alarms, N),
+                    level:    core::slice::from_raw_parts(level, N),
+                    peak:     core::slice::from_raw_parts(self.peak, N),
+                    glow:     core::slice::from_raw_parts(self.glow, N),
+                    ash:      core::slice::from_raw_parts(self.ash, N),
+                    overheat: Bool((self.fired)(frame)),
+                    crossed:  &(self.crossed)(),
+                },
                 sorted,
             )
         }

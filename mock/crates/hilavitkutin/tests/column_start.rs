@@ -75,7 +75,7 @@ struct Zeroed(u32);
 struct Seen(u32);
 
 fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::filled(1 << 19, 0xA5))
+    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0xA5))
 }
 
 /// Read `RECORDS` records at `base` through `raw`.

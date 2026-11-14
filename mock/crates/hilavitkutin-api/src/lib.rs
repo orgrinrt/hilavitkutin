@@ -17,9 +17,10 @@
 #![allow(incomplete_features)]
 
 mod sealed {
-    /// Crate-private sealing supertrait. Consumers cannot impl traits
-    /// that use it as a supertrait.
-    pub(crate) trait Sealed {} // lint:allow(undocumented_type) reason: crate-private sealing supertrait; semantics live on mod + parent trait docs; tracked: #72
+    /// The sealing supertrait. Public in a module no path outside the crate
+    /// names, so a consumer cannot implement a trait that has it as a
+    /// supertrait, and a public trait may name it in its bounds.
+    pub trait Sealed {}
 }
 
 pub mod access;

@@ -59,7 +59,7 @@ pub use per_core::{CollectAccumCounts, MergeAccums, PerCoreCounts, RebaseBinding
 pub use refusal::FirstRefusal;
 
 mod sealed {
-    pub trait Sealed {}
+    pub trait BindingsSealed {}
 }
 
 /// The empty bindings list (matches the empty value list).
@@ -228,7 +228,7 @@ impl<T, Tail> VirtualBinding<T, Tail> {
 /// store-value shapes the builder places on the list. The heads are
 /// distinct concrete types, so the arms are non-overlapping.
 #[allow(private_bounds)]
-pub trait BindingsFor: sealed::Sealed {
+pub trait BindingsFor: sealed::BindingsSealed {
     /// The concrete bindings cons-list for this value list.
     ///
     /// The bindings hold only `Copy` pointers; the store frees resource
@@ -247,13 +247,13 @@ pub trait BindingsFor: sealed::Sealed {
     type Markers: AccessSet;
 }
 
-impl sealed::Sealed for SvEmpty {}
+impl sealed::BindingsSealed for SvEmpty {}
 impl BindingsFor for SvEmpty {
     type Bindings = BindingNil;
     type Markers = Empty;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<StagedResource<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<StagedResource<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource<T>, L> {
     type Bindings = ResourceBinding<T, <L as BindingsFor>::Bindings>;
     // The value list carries the `StagedResource<T>` carrier, but the builder's
@@ -264,7 +264,7 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<StagedResource
     type Markers = Cons<Resource<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> sealed::Sealed
+impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed
     for Sv<Started<S>, L>
 {
 }
@@ -275,13 +275,13 @@ impl<S: Kept + Member + 'static, L: StoreValues + BindingsFor> BindingsFor for S
     type Markers = Cons<S, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Virtual<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<Virtual<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Virtual<T>, L> {
     type Bindings = VirtualBinding<T, <L as BindingsFor>::Bindings>;
     type Markers = Cons<Virtual<T>, <L as BindingsFor>::Markers>;
 }
 
-impl<T: 'static, L: StoreValues + BindingsFor> sealed::Sealed for Sv<Accum<T>, L> {}
+impl<T: 'static, L: StoreValues + BindingsFor> sealed::BindingsSealed for Sv<Accum<T>, L> {}
 impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
     type Bindings = AccumBinding<T, <L as BindingsFor>::Bindings>;
     type Markers = Cons<Accum<T>, <L as BindingsFor>::Markers>;
@@ -299,7 +299,7 @@ impl<T: 'static, L: StoreValues + BindingsFor> BindingsFor for Sv<Accum<T>, L> {
 ///
 /// Sealed: only the arms below inhabit it.
 #[allow(private_bounds)]
-pub trait DrainStores: BindingsFor + sealed::Sealed {
+pub trait DrainStores: BindingsFor + sealed::BindingsSealed {
     /// Reserve and populate the bindings, consuming the value list.
     ///
     /// `next_id` is the running drain-order column id, advanced once per

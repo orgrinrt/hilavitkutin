@@ -12,8 +12,7 @@ use super::sealed;
 /// [`Faithful`] keeps it as the frame's meaning says. Every other member,
 /// under [`mutant`](super::mutant), keeps it wrongly in one named way, and is
 /// there to be run through the laws and seen to fail. The trait is sealed.
-#[allow(private_bounds)]
-pub trait Keeping: sealed::Sealed + 'static {
+pub trait Keeping: sealed::OracleSealed + 'static {
     /// A read of a buffered column sees the live side.
     const READS_LIVE: Bool = Bool(false);
     /// A write to a buffered column lands on the frozen side, in place.
@@ -33,5 +32,5 @@ pub trait Keeping: sealed::Sealed + 'static {
 /// The frame kept as its meaning says.
 pub struct Faithful;
 
-impl sealed::Sealed for Faithful {}
+impl sealed::OracleSealed for Faithful {}
 impl Keeping for Faithful {}

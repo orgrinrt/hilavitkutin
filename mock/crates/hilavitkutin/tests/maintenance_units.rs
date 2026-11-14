@@ -74,7 +74,7 @@ fn store() -> ArenaColumnStorage<StableProvider> {
 }
 
 fn store_of(bytes: usize) -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(bytes))
+    ArenaColumnStorage::new(StableProvider::new(bytes, 0))
 }
 
 fn counter() -> &'static AtomicUsize {

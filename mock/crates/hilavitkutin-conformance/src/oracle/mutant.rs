@@ -15,7 +15,7 @@ macro_rules! mutants {
         $(#[$doc])*
         pub struct $name;
 
-        impl sealed::Sealed for $name {}
+        impl sealed::OracleSealed for $name {}
 
         impl Keeping for $name {
             const $wrong: Bool = Bool(true);

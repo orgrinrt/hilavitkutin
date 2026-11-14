@@ -52,7 +52,7 @@ struct Height(u32);
 struct Seen(u32);
 
 fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 19))
+    ArenaColumnStorage::new(StableProvider::new(1 << 19, 0))
 }
 
 // Count: writes one four-byte column and counts its dispatches, one a window.

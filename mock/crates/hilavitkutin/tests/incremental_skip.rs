@@ -278,7 +278,7 @@ fn counts() -> [u32; 4] {
 #[test]
 fn incremental_skip_runs_only_the_changed_cone() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(InA(100)))
         .with(Resource::new(InC(200)))
@@ -326,7 +326,7 @@ fn incremental_skip_runs_only_the_changed_cone() {
 #[test]
 fn incremental_skip_propagates_two_hops() {
     EXEC.with(|e| *e.borrow_mut() = [0, 0, 0, 0]);
-    let provider = StableProvider::new(32768);
+    let provider = StableProvider::new(32768, 0);
     // Producer -> Consumer -> SecondConsumer is a depth-two RAW chain
     // (InA -> Ca -> Cb -> Cd); the unrelated unit reads InC -> Cc. Registration
     // order is topological (each writer before its reader), which `build`
@@ -480,8 +480,8 @@ const HISTORY: [Step; 7] = [
 
 #[test]
 fn skipping_run_matches_every_store_dirty_run_at_every_frame() {
-    let provider_a = StableProvider::new(32768);
-    let provider_b = StableProvider::new(32768);
+    let provider_a = StableProvider::new(32768, 0);
+    let provider_b = StableProvider::new(32768, 0);
     let mut skipping = four_chain_scheduler!(provider_a);
     let mut every = four_chain_scheduler!(provider_b);
     let (mut a, mut c) = (100u32, 200u32);
@@ -531,8 +531,8 @@ fn model(a: u32, c: u32) -> [[u32; RECORDS]; 4] {
 
 #[test]
 fn skipping_run_diverges_when_a_mutated_store_is_not_marked() {
-    let provider_a = StableProvider::new(32768);
-    let provider_b = StableProvider::new(32768);
+    let provider_a = StableProvider::new(32768, 0);
+    let provider_b = StableProvider::new(32768, 0);
     let mut skipping = four_chain_scheduler!(provider_a);
     let mut every = four_chain_scheduler!(provider_b);
     assert!(matches!(skipping.run(), Outcome::Ok(())));

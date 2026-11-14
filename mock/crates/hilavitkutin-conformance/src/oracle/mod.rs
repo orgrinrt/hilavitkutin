@@ -24,8 +24,8 @@ mod walk;
 
 mod sealed {
     /// Closes [`Keeping`](super::Keeping) and [`Visiting`](super::Visiting)
-    /// to this crate.
-    pub(crate) trait Sealed {}
+    /// to this crate: public in a module no path outside the crate names.
+    pub trait OracleSealed {}
 }
 
 pub use keeping::{Faithful, Keeping};

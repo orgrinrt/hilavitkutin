@@ -25,17 +25,10 @@ pub struct StableProvider {
 }
 
 impl StableProvider {
-    /// A provider over a fresh leaked buffer of `cap` bytes.
-    #[allow(dead_code)]
-    pub fn new(cap: usize) -> Self {
-        Self::filled(cap, 0)
-    }
-
     /// A provider over a fresh leaked buffer of `cap` bytes, each of them
-    /// `byte`, for a test that must not pass on memory that happens to be
-    /// zero.
-    #[allow(dead_code)]
-    pub fn filled(cap: usize, byte: u8) -> Self {
+    /// `byte`. Every test says what its memory starts as, so one that must not
+    /// pass on memory that happens to be zero says another byte.
+    pub fn new(cap: usize, byte: u8) -> Self {
         let leaked: &'static mut [u8] = std::vec![byte; cap].leak();
         Self {
             base: leaked.as_mut_ptr(),

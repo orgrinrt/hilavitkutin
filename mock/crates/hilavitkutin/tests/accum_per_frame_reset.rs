@@ -89,7 +89,7 @@ impl WorkUnit<Always> for AppendKWu {
 
 #[test]
 fn accum_resets_live_length_each_frame() {
-    let provider = StableProvider::new(8192);
+    let provider = StableProvider::new(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(AppendKWu)

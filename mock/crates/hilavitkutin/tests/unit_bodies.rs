@@ -86,7 +86,7 @@ impl ResourceFootprint for Table {
 type Hints = (Immediate, Atomic, Normal);
 
 fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 16))
+    ArenaColumnStorage::new(StableProvider::new(1 << 16, 0))
 }
 
 /// Fill `RECORDS` records at `base`.

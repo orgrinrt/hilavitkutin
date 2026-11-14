@@ -148,7 +148,7 @@ fn check<const K: usize, const W: usize>(expect: Outcome<(), AccumRefused>) {
         .with(Accum::<Mark>::new())
         .with(LeadWu::<K>)
         .with(ConsumerWu)
-        .build(store(StableProvider::new(32768)), USize(RECORDS))
+        .build(store(StableProvider::new(32768, 0)), USize(RECORDS))
         .unwrap_or_else(|_| panic!("build should succeed"));
     let pool = FixedWorkers::<W>;
     assert_eq!(pool.worker_count().0, W);
