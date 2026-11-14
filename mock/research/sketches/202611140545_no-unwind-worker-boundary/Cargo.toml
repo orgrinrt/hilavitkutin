@@ -1,0 +1,14 @@
+# Feasibility sketch: can a generic worker entry be made a boundary a panic
+# cannot unwind through, in a build that unwinds? Own workspace, so the
+# repository's build never sees it. Run with `cargo test` here.
+
+[workspace]
+
+[package]
+name = "no-unwind-worker-boundary"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[profile.dev]
+panic = "unwind"

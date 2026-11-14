@@ -20,11 +20,11 @@
 //! Lives under `tests/` so the bare byte buffer backing the test memory
 //! provider does not trip the src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrNil, EngineCtx, SnapCons, SnapNil};
 use hilavitkutin::plan::UnitMeta;
 use hilavitkutin::scheduler::{BuildError, Scheduler};
@@ -37,47 +37,11 @@ use hilavitkutin_api::store::Resource;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/fiber_walk.rs).
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // Two distinct resource types: the arena holds both, each unit reads its
@@ -144,7 +108,7 @@ impl WorkUnit<Always> for ReadBWu {
 #[test]
 fn run_walks_two_registered_units() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     // Register the resources both units read, then the two units. The two
     // readers touch disjoint resources (Ra, Rb) and neither writes, so the
     // plan's dependency graph has no edge between them. With no edge, the
@@ -176,7 +140,7 @@ fn run_walks_two_registered_units() {
 #[test]
 fn run_walks_single_registered_unit() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(42)))
         .with(ReadAWu)
@@ -225,7 +189,7 @@ impl WorkUnit<Always> for WriteAWu {
 #[test]
 fn run_dispatches_in_topological_order_not_registration() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     // Register the writer of Ra FIRST, then the reader of Ra LAST. The builder
     // appends, so the retained value list is [writer, reader] in registration
     // order. The plan adds a RAW edge writer to reader (the writer writes what
@@ -302,7 +266,7 @@ impl WorkUnit<Always> for CycleBWu {
 
 #[test]
 fn build_rejects_a_cyclic_registration() {
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     // CycleAWu (reads Ra, writes Rb) and CycleBWu (reads Rb, writes Ra) form a
     // dependency cycle. `build` computes the plan before draining the store
     // arena; `compute_execution_plan` returns `PlanError::Cycle`, so `build`
@@ -319,7 +283,7 @@ fn build_rejects_a_cyclic_registration() {
 
 #[test]
 fn build_rejects_anti_topological_registration() {
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     // Register the reader of Ra FIRST, then the writer of Ra LAST. The builder
     // appends, so the retained carrier order is [reader, writer]: slot 0 reads
     // Ra, slot 1 writes Ra. The plan adds a RAW edge writer to reader (the
@@ -389,7 +353,7 @@ fn build_store_backs_the_plan_unit_meta() {
     // out of the scheduler's storage through the `PlanHandle` and confirm it
     // carries that order. Before store-backing, the column is unreserved
     // (count zero), so the round-trip assertions fail.
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(10)))
         .with(WriteAWu)

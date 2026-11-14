@@ -47,7 +47,7 @@ use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use input::{Inv, OneIn};
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 const N: usize = 4;
 
@@ -281,7 +281,7 @@ macro_rules! two_waist {
 /// waists produce whatever the worker count, and say whether the frame
 /// recorded any idle.
 fn two_waist_frame_idles<P: ThreadPoolApi>(pool: &P) -> bool {
-    let provider = StableProvider::new(16384, 0);
+    let provider = stable_provider(16384, 0);
     let scheduler = two_waist!(provider);
 
     let mut scheduler = core::pin::pin!(scheduler);

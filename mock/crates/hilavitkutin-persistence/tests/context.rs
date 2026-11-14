@@ -7,7 +7,9 @@ use hilavitkutin_str::{ArenaInterner, StringInterner};
 
 struct StubMemory;
 
-impl MemoryProviderApi for StubMemory {
+// SAFETY: `allocate` refuses every request with null, so no block exists for
+// a promise of `MemoryProviderApi` to be about.
+unsafe impl MemoryProviderApi for StubMemory {
     unsafe fn allocate(&self, _len: USize, _align: USize) -> *mut u8 {
         core::ptr::null_mut()
     }

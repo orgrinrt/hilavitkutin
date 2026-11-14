@@ -1,0 +1,66 @@
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin v0.1.0 (/home/user/hilavitkutin/mock/crates/hilavitkutin)
+warning: struct `AdaptArena` is never constructed
+  --> crates/hilavitkutin/src/adapt/arena.rs:38:19
+   |
+38 | pub(crate) struct AdaptArena<'arena, CF: Capacity, CC: Capacity, CP: Capacity> {
+   |                   ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/hilavitkutin/src/adapt/arena.rs:46:25
+   |
+43 | impl<'arena, CF: Capacity, CC: Capacity, CP: Capacity> AdaptArena<'arena, CF, CC, CP> {
+   | ------------------------------------------------------------------------------------- associated function in this implementation
+...
+46 |     pub(crate) const fn new() -> Self {
+   |                         ^^^
+
+warning: `hilavitkutin` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.55s
+     Running tests/replace_swap_plan_band.rs (/home/user/target/miri/miri/x86_64-unknown-linux-gnu/debug/deps/replace_swap_plan_band-f1728bfb83e5a5a3)
+
+running 1 test
+test a_plan_affecting_swap_runs_the_plan_band_and_a_value_swap_does_not ... error: Undefined Behavior: Data race detected between (1) non-atomic write on thread `a_plan_affectin` and (2) retag read of type `hilavitkutin::scheduler::Scheduler<hilavitkutin_api::DefaultRunCfg, hilavitkutin_api::WuCons<PlanWu, hilavitkutin_api::WuCons<ConsumerWu, hilavitkutin_api::WuNil>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Av>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Pv>>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Cfgish>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Val>, hilavitkutin_api::SvEmpty>>>>, hilavitkutin_providers::ArenaColumnStorage<hilavitkutin_providers::StaticBumpMemory>, hilavitkutin::DefaultPlanDims, hilavitkutin_api::Cons<hilavitkutin_api::Column<Av>, hilavitkutin_api::Cons<hilavitkutin_api::Column<Pv>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Cfgish>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Val>, hilavitkutin_api::Empty>>>>>` on thread `unnamed-2` at alloc1778110+0x1727c
+  --> crates/hilavitkutin/src/scheduler/worker.rs:101:21
+   |
+   = note: (2) just happened here
+help: and (1) occurred earlier here
+  --> crates/hilavitkutin/src/scheduler/run_parallel.rs:212:16
+   = help: retags occur on all (re)borrows and as well as when references are copied or moved
+   = help: retags permit optimizations that insert speculative reads or writes
+   = help: therefore from the perspective of data races, a retag has the same implications as a read or write
+   = help: this indicates a bug in the program: it performed an invalid operation, and caused Undefined Behavior
+   = help: see https://doc.rust-lang.org/nightly/reference/behavior-considered-undefined.html for further information
+   = note: this is on thread `unnamed-2`
+   = note: stack backtrace:
+           0: hilavitkutin::scheduler::worker::worker_main::<hilavitkutin_api::DefaultRunCfg, hilavitkutin_api::WuCons<PlanWu, hilavitkutin_api::WuCons<ConsumerWu, hilavitkutin_api::WuNil>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Av>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Pv>>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Cfgish>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Val>, hilavitkutin_api::SvEmpty>>>>, hilavitkutin_providers::ArenaColumnStorage<hilavitkutin_providers::StaticBumpMemory>, hilavitkutin::DefaultPlanDims, hilavitkutin_api::Cons<hilavitkutin_api::Column<Av>, hilavitkutin_api::Cons<hilavitkutin_api::Column<Pv>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Cfgish>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Val>, hilavitkutin_api::Empty>>>>, hilavitkutin::OsClock, hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>, hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>, hilavitkutin_api::Empty>), hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>>>
+               at crates/hilavitkutin/src/scheduler/worker.rs:101:22: 101:29
+           1: hilavitkutin::scheduler::run_parallel::<impl hilavitkutin::scheduler::Scheduler<hilavitkutin_api::DefaultRunCfg, hilavitkutin_api::WuCons<PlanWu, hilavitkutin_api::WuCons<ConsumerWu, hilavitkutin_api::WuNil>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Av>>, hilavitkutin_api::Sv<hilavitkutin_api::Started<hilavitkutin_api::Column<Pv>>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Cfgish>, hilavitkutin_api::Sv<hilavitkutin_api::StagedResource<Val>, hilavitkutin_api::SvEmpty>>>>, hilavitkutin_providers::ArenaColumnStorage<hilavitkutin_providers::StaticBumpMemory>, hilavitkutin::DefaultPlanDims, hilavitkutin_api::Cons<hilavitkutin_api::Column<Av>, hilavitkutin_api::Cons<hilavitkutin_api::Column<Pv>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Cfgish>, hilavitkutin_api::Cons<hilavitkutin_api::Resource<Val>, hilavitkutin_api::Empty>>>>>>::run_parallel::<hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>, hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>, hilavitkutin_api::Empty>), hilavitkutin_api::Cons<(hilavitkutin_api::Empty, hilavitkutin_api::Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>>, common::TestExecutor>::{closure#0}
+               at crates/hilavitkutin/src/scheduler/run_parallel.rs:196:21: 206:28
+note: the last function in that backtrace got called indirectly due to this code
+  --> crates/hilavitkutin/tests/common/mod.rs:47:17
+   |
+47 |         let _ = std::thread::spawn(f);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+
+error: test failed, to rerun pass `-p hilavitkutin --test replace_swap_plan_band`
+
+Caused by:
+  process didn't exit successfully: `/root/.rustup/toolchains/nightly-2026-05-28-x86_64-unknown-linux-gnu/bin/cargo-miri runner /home/user/target/miri/miri/x86_64-unknown-linux-gnu/debug/deps/replace_swap_plan_band-f1728bfb83e5a5a3` (exit status: 1)
+note: test exited abnormally; to see the full output pass --no-capture to the harness.
+
+real	0m31.557s
+user	0m30.987s
+sys	0m0.323s

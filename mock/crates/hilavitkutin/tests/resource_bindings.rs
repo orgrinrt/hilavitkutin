@@ -13,8 +13,8 @@
 //! internals are reached through the engine's hidden `__` accessors
 //! (`Scheduler::__bindings`, `ResourceBinding::__ptr` / `__tail`).
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 use arvo::{Bool, USize};
@@ -22,6 +22,7 @@ use hilavitkutin::scheduler::{BuildError, NullMemoryProvider, Scheduler};
 use hilavitkutin_api::Resource;
 use hilavitkutin_api::platform::MemoryProviderApi;
 use hilavitkutin_providers::ArenaColumnStorage;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 /// Wrap a provider in the default-capacity bindings store. The return type
 /// omits `D`, which applies the `Dim<256>` default and anchors inference
@@ -34,65 +35,12 @@ fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
 // Stack-backed counting test memory provider.
 // ---------------------------------------------------------------------
 
-/// Fixed-buffer bump allocator counting allocate / deallocate pairs.
-///
-/// `N` is the byte capacity. Interior mutability via `Cell` behind
-/// `&self` (tests are single-threaded). The `Send + Sync` impls are
-/// sound only under that single-threaded use.
-struct BumpProvider<const N: usize> {
-    buf:      UnsafeCell<[MaybeUninit<u8>; N]>,
-    used:     Cell<usize>,
-    allocs:   Cell<usize>,
-    deallocs: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:      UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used:     Cell::new(0),
-            allocs:   Cell::new(0),
-            deallocs: Cell::new(0),
-        }
-    }
-}
-
-// SAFETY: the provider is never shared across threads in these tests;
-// the MemoryProviderApi bound requires Send + Sync.
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        self.allocs.set(self.allocs.get() + 1);
-        // SAFETY: `aligned + len <= N`, so the offset is in bounds of
-        // the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {
-        self.deallocs.set(self.deallocs.get() + 1);
-    }
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
-}
-
 // A provider that delegates to a bump allocator but counts through
 // process-static atomics, so the counts survive the provider being
 // moved into (and dropped with) the store / scheduler.
-struct CountingProvider<const N: usize> {
-    inner: BumpProvider<N>,
+struct CountingProvider {
+    inner: StaticBumpMemory,
 }
-unsafe impl<const N: usize> Send for CountingProvider<N> {}
-unsafe impl<const N: usize> Sync for CountingProvider<N> {}
 
 static ALLOCS: AtomicUsize = AtomicUsize::new(0);
 static DEALLOCS: AtomicUsize = AtomicUsize::new(0);
@@ -113,13 +61,15 @@ static LAST_ALLOC_ALIGN: AtomicUsize = AtomicUsize::new(0);
 /// check the value survived the round trip rather than trusting it did.
 static LAST_DEALLOC_ALIGN: AtomicUsize = AtomicUsize::new(0);
 
-impl<const N: usize> MemoryProviderApi for CountingProvider<N> {
+// SAFETY: every block comes from `inner` and goes back to it unchanged, so
+// the promises `StaticBumpMemory` keeps are kept here; the counters are atomics.
+unsafe impl MemoryProviderApi for CountingProvider {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
         // SAFETY: delegates to the inner bump allocator.
         let ptr = unsafe { self.inner.allocate(len, align) };
         // Count successful allocations only. A null return reserves no
         // column, so it must not count toward the live-column total that
-        // DEALLOCS is balanced against (matches BumpProvider's own
+        // DEALLOCS is balanced against (matches the bump provider's own
         // success-only count).
         if !ptr.is_null() {
             ALLOCS.fetch_add(1, Ordering::SeqCst);
@@ -161,7 +111,7 @@ struct Rc(u8);
 
 #[test]
 fn resource_bindings_round_trip() {
-    let provider = BumpProvider::<256>::new();
+    let provider = stable_provider(256, 0);
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(99)))
         .build(store(provider), USize(0))
@@ -179,7 +129,7 @@ fn resource_bindings_round_trip() {
 fn resource_bindings_multiple_resources() {
     // Three distinct types, all reachable through the bindings chain, each
     // backed by its own reserved column in the store.
-    let provider = BumpProvider::<256>::new();
+    let provider = stable_provider(256, 0);
     let scheduler = Scheduler::builder()
         .with(Resource::new(Ra(1)))
         .with(Resource::new(Rb(2)))
@@ -205,8 +155,8 @@ fn resource_bindings_drop_deallocates() {
     ALLOCS.store(0, Ordering::SeqCst);
     DEALLOCS.store(0, Ordering::SeqCst);
     {
-        let provider = CountingProvider::<256> {
-            inner: BumpProvider::<256>::new(),
+        let provider = CountingProvider {
+            inner: stable_provider(256, 0),
         };
         let scheduler = Scheduler::builder()
             .with(Resource::new(Ra(1)))
@@ -243,8 +193,8 @@ fn zst_resource_round_trips_without_reserving() {
     ALLOCS.store(0, Ordering::SeqCst);
     DEALLOCS.store(0, Ordering::SeqCst);
     {
-        let provider = CountingProvider::<256> {
-            inner: BumpProvider::<256>::new(),
+        let provider = CountingProvider {
+            inner: stable_provider(256, 0),
         };
         let scheduler = Scheduler::builder()
             .with(Resource::new(Marker))
@@ -289,8 +239,8 @@ fn partial_failure_frees_the_reserved_columns() {
     ALLOCS.store(0, Ordering::SeqCst);
     DEALLOCS.store(0, Ordering::SeqCst);
     {
-        let provider = CountingProvider::<64> {
-            inner: BumpProvider::<64>::new(),
+        let provider = CountingProvider {
+            inner: stable_provider(64, 0),
         };
         let result = Scheduler::builder()
             .with(Resource::new(Ra(1)))
@@ -334,8 +284,8 @@ fn a_dropped_scheduler_frees_its_column_at_the_alignment_it_reserved() {
     DEALLOCS.store(0, Ordering::SeqCst);
 
     let reserved_at = {
-        let provider = CountingProvider::<256> {
-            inner: BumpProvider::<256>::new(),
+        let provider = CountingProvider {
+            inner: stable_provider(256, 0),
         };
         let scheduler = Scheduler::builder()
             .with(Resource::new(Ra(7)))
@@ -387,7 +337,7 @@ impl hilavitkutin_api::store::Replaceable for Ra {}
 /// so this test is complete for the scalar-blob half.
 #[test]
 fn replace_value_installs_into_the_data_plane() {
-    let provider = BumpProvider::<256>::new();
+    let provider = stable_provider(256, 0);
     let mut scheduler = Scheduler::builder()
         .with(Resource::new(Ra(99)))
         .build(store(provider), USize(0))

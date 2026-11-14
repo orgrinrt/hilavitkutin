@@ -30,6 +30,31 @@ fn os_memory_allocate_deallocate_roundtrip() {
     unsafe { provider.deallocate(ptr, len, align) };
 }
 
+/// A mapping is page-aligned and no more, so an alignment wider than a page
+/// cannot be met and one that is not a power of two means nothing; both are
+/// refused with null rather than handed a block that only looks aligned. The
+/// page-wide alignment, the widest a mapping meets, is handed a block at it.
+#[test]
+fn os_memory_refuses_an_alignment_a_mapping_cannot_meet() {
+    let provider = OsMemoryProvider::new();
+    // SAFETY: sysconf takes no pointer and reads no caller memory.
+    let page = unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize;
+    let len = USize(4096);
+    for refused in [page * 2, 3, 0] {
+        // SAFETY: a refusal hands out nothing, so there is nothing to free.
+        let ptr = unsafe { provider.allocate(len, USize(refused)) };
+        assert!(
+            ptr.is_null(),
+            "align {refused} with {page}-byte pages is refused"
+        );
+    }
+    // SAFETY: a power of two no wider than a page, len is positive.
+    let ptr = unsafe { provider.allocate(len, USize(page)) };
+    assert!(!ptr.is_null() && ptr.addr() % page == 0);
+    // SAFETY: ptr came from allocate with the same len and align.
+    unsafe { provider.deallocate(ptr, len, USize(page)) };
+}
+
 #[test]
 fn os_memory_protect_is_ok_stub() {
     let provider = OsMemoryProvider::new();

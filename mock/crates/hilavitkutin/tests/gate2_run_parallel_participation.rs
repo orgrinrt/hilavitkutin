@@ -15,7 +15,7 @@ mod producer_c;
 #[path = "run_parallel/producers.rs"]
 mod producers;
 
-use arena::{BumpProvider, HintT, Inv, OneIn, store};
+use arena::{HintT, Inv, OneIn, stable_provider, store};
 use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
@@ -123,7 +123,7 @@ impl WorkUnit<Always> for ProducerE {
 /// independently.
 #[test]
 fn every_producer_runs_when_cores_outnumber_records() {
-    let provider = BumpProvider::<32768>::new();
+    let provider = stable_provider(32768, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())

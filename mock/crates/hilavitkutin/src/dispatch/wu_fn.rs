@@ -33,8 +33,29 @@ pub type WuFn<Ctx> = fn(&Ctx);
 ///
 /// Generic over the WU's recovered schedule (`Always` or `On<V>`), so a mixed
 /// carrier invokes either kind through the same shim (E4 slice 1).
+///
+/// The one place a unit body runs, under every entry and on every thread, so
+/// it is where an unwind out of the body is stopped: `execute` is called
+/// through [`execute_without_unwinding`], and a panic in it aborts the process.
 #[inline(always)]
 pub fn invoke_wu_in_fiber<'frame, W>(
+    wu: &W,
+    ctx: &<W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'frame>,
+) where
+    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
+{
+    execute_without_unwinding::<W>(wu, ctx);
+}
+
+/// Run a unit body behind a boundary an unwind cannot cross.
+///
+/// An unwind reaching an `extern "C"` function aborts, whatever the build's
+/// panic strategy. The engine owns no thread and cannot catch, so a body that
+/// unwound on a `run_parallel` worker would end the executor's thread before
+/// the engine's worker reached the frame's done barrier, and the frame would
+/// never return.
+#[inline(always)]
+extern "C" fn execute_without_unwinding<'frame, W>(
     wu: &W,
     ctx: &<W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'frame>,
 ) where

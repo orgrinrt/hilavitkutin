@@ -25,6 +25,7 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/appending_unit_fused_fail.rs");
     t.pass("tests/ui/assert_out_names_no_refusal_pass.rs");
     t.compile_fail("tests/ui/assert_out_names_no_refusal_fail.rs");
+    t.compile_fail("tests/ui/memory_provider_safe_impl_fail.rs");
 }
 
 #[test]

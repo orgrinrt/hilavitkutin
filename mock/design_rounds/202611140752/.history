@@ -1,0 +1,50 @@
+e684f678 chore: lock src changelist 202611140752
+c9263225 test: name the raw-parts test for what it shows, drop dead checks
+e47cf657 chore: merge `dev` into `work/hv-engine-path`
+d247d214 docs: write src changelist 202611140752
+1ede960a chore: lock doc changelist 202611140752
+9899d28c docs: take `dev`'s providers readme with the branch's two facts
+0de217e8 docs: open the round that carries the merge of `dev`
+e8f85c8a chore: close design round 202611140720
+530fcd1a docs: regenerate the documents
+3bac132f chore: lock src changelist 202611140721
+81b49e40 docs: write src changelist 202611140721
+36848904 test: commit the provider and panic controls as tests
+62706333 test: hold the wide counts to the cone and the canon, not the engine
+dd729453 chore: lock doc changelist 202611140720
+62f3242b docs: say how long `StaticBumpMemory` holds its buffer
+fc1b1eca docs: record review pass two and the round that answers it
+7315943a chore: close design round 202611140620
+56b8d962 chore: lock src changelist 202611140644
+36dd78ca docs: regenerate the documents
+f125e3a2 docs: name `with` and the whole surface in the providers crate docs
+62453a65 fix: make the hilavitkutin suite and surface hold what they claim
+b6247630 chore: lock doc changelist 202611140620
+2a27b79d docs: name what `hilavitkutin-providers` ships in its readme
+13bdc2e1 chore: unlock design round, deprecate src and unlock doc
+39036b27 test: hold `run_parallel` to the skip on every worker walk
+e6cd7de4 fix: hold the panic and provider tests to what they claim
+a0d89eb5 chore: lock doc changelist 202611140620
+e4673611 docs: add a raw-parts `StaticBumpMemory` constructor, fix the platforms
+9cb2871c docs: record the first review of jobs one to three and its fixes
+bb1daf29 docs: record the parked-worker aliasing measurement topic
+2e5d31b8 test: rerun the parked-worker sketch matrix on the committed sources
+eda72ddd test: sketch four parked-worker shapes under miri
+ade63db9 fix: make the hilavitkutin benches measure what they claim
+779c3ef0 chore: close design round 202611140546
+70476ac9 chore: lock src changelist 202611140547
+d233110d fix: abort a unit panic behind a no-unwind boundary
+246f40fc chore: lock doc changelist 202611140546
+3bb1e878 docs: abort a unit panic behind a no-unwind boundary
+3de2755e test: sketch a no-unwind boundary on a generic worker entry
+bcb8fd70 chore: close design round 202611140513
+c5378924 chore: lock src changelist 202611140515
+30888615 fix: make `MemoryProviderApi` an unsafe trait over sound providers
+12f15f48 chore: lock doc changelist 202611140513
+8e6c8c73 docs: make the memory provider an unsafe trait with a static default
+a85939b6 chore: close design round 202611140452
+cae96933 test: drive the skip differential through `run_parallel`
+f0304be0 docs: plan the engine's one path and its correctness work
+8236de3c feat: revise the hilavitkutin api in place
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e99af156 docs: record the load-time units panel and its sketches

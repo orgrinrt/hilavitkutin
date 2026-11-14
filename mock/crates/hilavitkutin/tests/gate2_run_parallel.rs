@@ -27,7 +27,7 @@ mod common;
 #[path = "run_parallel/producers.rs"]
 mod producers;
 
-use arena::{BumpProvider, HintT, Inv, store};
+use arena::{HintT, Inv, stable_provider, store};
 use arvo::USize;
 use common::TestExecutor;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
@@ -113,7 +113,7 @@ impl ThreadPoolApi for CountingPool {
 
 #[test]
 fn run_parallel_threaded_fan_in_is_correct() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())
@@ -163,7 +163,7 @@ fn run_parallel_threaded_fan_in_is_correct() {
 
 #[test]
 fn run_parallel_spawns_the_pool_once_across_frames() {
-    let provider = BumpProvider::<16384>::new();
+    let provider = stable_provider(16384, 0);
     let scheduler = Scheduler::builder()
         .with(Column::<Inv>::start())
         .with(Column::<Av>::start())

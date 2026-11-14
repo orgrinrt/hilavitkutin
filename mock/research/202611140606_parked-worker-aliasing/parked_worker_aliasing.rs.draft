@@ -1,0 +1,170 @@
+//! The three drivers of the parked-worker aliasing hole, for Miri.
+//!
+//! A worker of `run_parallel` forms a shared reference to the scheduler and
+//! holds it across every park (`scheduler/worker.rs`), while the calling thread
+//! writes the scheduler between frames: the frame start, `replace_value` and
+//! `replace_resource` all take it exclusively. Natively nothing goes wrong, so
+//! each driver asserts what its frames compute and passes. Under Miri, Stacked
+//! and Tree Borrows each judge whether the parked worker's reference survives
+//! the next exclusive borrow; the drivers are the measurement the question
+//! `bless_the_scheduler_plane_relocation_that_closes_the_worker` rests on, and
+//! they are red under Miri on today's tree.
+//!
+//! The drivers: two consecutive frames; a frame, `replace_value`, a frame; a
+//! frame, `replace_resource`, a frame. Each runs at two workers through
+//! `FixedWorkers` over a `StaticBumpMemory` provider, so the pool and the
+//! memory are the test's and not the host's.
+//!
+//! Run with `cargo miri test -p hilavitkutin --test parked_worker_aliasing`,
+//! adding `MIRIFLAGS=-Zmiri-tree-borrows` for Tree Borrows. The evidence of
+//! both, on the commit that adds this file, is in
+//! `mock/research/202611140606_parked-worker-aliasing/`.
+
+mod common;
+mod stable_provider;
+
+use arvo::USize;
+use common::FixedWorkers;
+use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapCons, SnapNil};
+use hilavitkutin::scheduler::Scheduler;
+use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::builder_input::{BuilderInput, UnitDispatch};
+use hilavitkutin_api::context::{
+    ColumnWriterApi,
+    EachApi,
+    HasColumnWriter,
+    HasEach,
+    HasResourceProvider,
+    ResourceProviderApi,
+};
+use hilavitkutin_api::platform::MemoryProviderApi;
+use hilavitkutin_api::store::{Column, Resource};
+use hilavitkutin_api::work_unit::{Always, WorkUnit};
+use hilavitkutin_providers::ArenaColumnStorage;
+use notko::Outcome;
+use stable_provider::stable_provider;
+
+const RECORDS: usize = 8;
+
+/// A value the host swaps through `replace_value`.
+#[derive(Copy, Clone, Debug, PartialEq)]
+struct Val(u32);
+impl hilavitkutin_api::store::Replaceable for Val {}
+impl hilavitkutin_api::footprint::ResourceFootprint for Val {
+    const L1_BYTES: USize = USize(0);
+}
+
+/// A plan-affecting resource the host swaps through `replace_resource`.
+#[derive(Copy, Clone, Debug, PartialEq)]
+struct Cfg(u32);
+impl hilavitkutin_api::run_cfg::PlanAffecting for Cfg {}
+impl hilavitkutin_api::footprint::ResourceFootprint for Cfg {
+    const L1_BYTES: USize = USize(0);
+}
+
+/// The column the unit writes: `Val + Cfg` at every record.
+#[derive(Copy, Clone, Default)]
+struct Sum(u32);
+
+type Read = Cons<Resource<Val>, Cons<Resource<Cfg>, Empty>>;
+type Write = Cons<Column<Sum>, Empty>;
+type Hint = (
+    hilavitkutin_api::hint::Immediate,
+    hilavitkutin_api::hint::Atomic,
+    hilavitkutin_api::hint::Normal,
+);
+
+/// Reads both resources and writes their sum at every record.
+struct Summer;
+
+impl BuilderInput for Summer {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+
+impl WorkUnit<Always> for Summer {
+    type Ctx<'frame> = EngineCtx<
+        'frame,
+        Read,
+        Write,
+        SnapCons<Val, SnapCons<Cfg, SnapNil>>,
+        ColPtrNil,
+        ColPtrCons<Sum, ColPtrNil>,
+    >;
+    type Hint = Hint;
+    type Read = Read;
+    type Write = Write;
+
+    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+        let sum = ctx.resources().resource::<Val, _>().0 + ctx.resources().resource::<Cfg, _>().0;
+        ctx.each().run(|i| {
+            // SAFETY: `build` reserved the column for the record count and the
+            // plan proved this unit its one writer.
+            unsafe { ctx.writer().write::<Sum, _>(i, Sum(sum)) };
+        });
+    }
+}
+
+fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
+    ArenaColumnStorage::new(provider)
+}
+
+macro_rules! build {
+    () => {
+        Scheduler::builder()
+            .with(Resource::new(Val(5)))
+            .with(Resource::new(Cfg(1)))
+            .with(Column::<Sum>::start())
+            .with(Summer)
+            .build(store(stable_provider(32768, 0xA5)), USize(RECORDS))
+            .unwrap_or_else(|_| panic!("the one-unit plan builds"))
+    };
+}
+
+/// Every record of the sum column.
+macro_rules! sums {
+    ($scheduler:expr) => {{
+        let base: *const Sum = $scheduler.__bindings().__ptr().as_ptr();
+        // SAFETY: the column reserves RECORDS records, the scheduler is alive
+        // and every worker is parked.
+        (0 .. RECORDS).map(|i| unsafe { (*base.add(i)).0 }).collect::<Vec<_>>()
+    }};
+}
+
+/// Run one `run_parallel` frame at two workers and hold its outcome to `Ok`.
+macro_rules! frame {
+    ($scheduler:expr) => {
+        assert!(matches!($scheduler.as_mut().run_parallel(&FixedWorkers::<2>), Outcome::Ok(())))
+    };
+}
+
+#[test]
+fn two_consecutive_frames() {
+    let scheduler = build!();
+    let mut scheduler = core::pin::pin!(scheduler);
+    frame!(scheduler);
+    frame!(scheduler);
+    assert_eq!(sums!(scheduler.as_ref()), vec![6; RECORDS]);
+}
+
+#[test]
+fn a_frame_a_value_swap_and_a_frame() {
+    let scheduler = build!();
+    let mut scheduler = core::pin::pin!(scheduler);
+    frame!(scheduler);
+    // SAFETY: the scheduler is not moved out of its pin.
+    unsafe { scheduler.as_mut().get_unchecked_mut() }.replace_value(Val(9));
+    frame!(scheduler);
+    assert_eq!(sums!(scheduler.as_ref()), vec![10; RECORDS]);
+}
+
+#[test]
+fn a_frame_a_plan_swap_and_a_frame() {
+    let scheduler = build!();
+    let mut scheduler = core::pin::pin!(scheduler);
+    frame!(scheduler);
+    // SAFETY: the scheduler is not moved out of its pin.
+    unsafe { scheduler.as_mut().get_unchecked_mut() }.replace_resource(Cfg(3));
+    frame!(scheduler);
+    assert_eq!(sums!(scheduler.as_ref()), vec![8; RECORDS]);
+}

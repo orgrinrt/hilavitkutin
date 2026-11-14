@@ -31,7 +31,7 @@ use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::{Differs, ResourceRead, Written, rec};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::{StaticBumpMemory, stable_provider};
 
 const RECORDS: usize = 600;
 const SENTINEL: u32 = 0xDEAD;
@@ -85,8 +85,8 @@ impl ResourceFootprint for Table {
 
 type Hints = (Immediate, Atomic, Normal);
 
-fn store() -> ArenaColumnStorage<StableProvider> {
-    ArenaColumnStorage::new(StableProvider::new(1 << 16, 0))
+fn store() -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(stable_provider(1 << 16, 0))
 }
 
 /// Fill `RECORDS` records at `base`.

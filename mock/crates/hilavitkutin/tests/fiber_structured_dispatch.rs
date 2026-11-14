@@ -64,7 +64,7 @@ use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -202,7 +202,7 @@ fn mixed_plan_dispatches_whole_carrier_flat() {
     // build. The original per-fiber-block assertion is the contract #670
     // re-enables.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(32768, 0);
+    let provider = stable_provider(32768, 0);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::start())
         .with(Accum::<Av>::new())

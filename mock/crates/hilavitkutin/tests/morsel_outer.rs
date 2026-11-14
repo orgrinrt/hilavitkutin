@@ -56,7 +56,7 @@ use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
@@ -148,7 +148,7 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(65536, 0);
+    let provider = stable_provider(65536, 0);
     let mut scheduler = Scheduler::builder()
         .with(Column::<Cv>::start())
         .with(ProducerWu)
@@ -304,7 +304,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(131072, 0);
+    let provider = stable_provider(131072, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

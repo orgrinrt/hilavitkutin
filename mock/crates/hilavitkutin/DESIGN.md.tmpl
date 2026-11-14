@@ -682,10 +682,23 @@ its `AccumRefused`, which says the region and not the reservation refused. Non-c
 single-core fallback, routed by a commutativity hint that defaults to
 single-core until reachable at dispatch.
 
-A panic inside a unit's own body on a worker is not caught or reported: the
-engine is `no_std` and owns no thread, so the worker never arrives at the done
-barrier and `frame_await_done` does not return. Catching it is the executor's,
-and no over-capacity append reaches that path any more.
+A panic inside a unit's own body aborts the process, on every build and under
+every entry. The engine is `no_std` and owns no thread, so it cannot catch an
+unwind and has nothing to report it to; a worker whose thread unwound would
+never arrive at the done barrier, and `frame_await_done` would not return. So
+the body runs behind a boundary an unwind cannot cross: `invoke_wu_in_fiber`,
+the one shim through which `run`, `run_fused` and the workers of
+`run_parallel` reach `execute`, calls it through an `extern "C"` function, and a
+panic reaching that edge aborts whatever the build's panic strategy is. The
+worker entry `worker_main` is `extern "C"` too, so a panic in the worker's own
+code between units aborts rather than stalling the frame. This is what the
+abort row asks of failure (`execute_returns_nothing_and_a_failing_unit_aborts_because_abort_gives_better_llvm_codegen`),
+carried to a build that unwinds; the boundary is the provisionally stamped
+answer of the question ticket
+`a_unit_panic_aborts_behind_a_no_unwind_boundary_in_hilavitku`, not a
+ratified one. The assert configuration's refusal is the one panic left that
+unwinds, raised on the caller's thread after every worker has re-parked, where
+nothing waits on it.
 
 ## Threading (domain 20)
 
@@ -1616,10 +1629,14 @@ SchedulerMetrics. Irreducible kernel ~50 lines.
 Version stamps: parallel arrays (SoA), capture-before + compare-after.
 Changed stores = bitmask. Increment only on completion.
 
-Error handling (R7): execute() → (). Abort on failure. Errors via
-data flow (error columns/virtuals). Fiber failure → freeze progress
-→ poison dependents → independent fibers continue. PipelineResult:
-per-fiber status (Completed / Failed / Poisoned).
+Error handling (R7): execute() → (). Two kinds of failure, kept apart.
+A failure a unit reports is data: it writes an error column or fires an
+error virtual, and the scheduler freezes that fiber's progress, poisons
+its dependents and lets independent fibers continue, with a per-fiber
+status (Completed / Failed / Poisoned) in the pipeline result. That path
+is designed and not built. A panic is no report: it aborts the process at
+the unit's no-unwind boundary (Resource handling, the panic paragraph) and
+poisons nothing, since nothing runs after it.
 
 R2 APIs: evict/dump + inject/import for column persistence.
 hilavitkutin owns generation counters; consumer owns storage.
@@ -1653,6 +1670,14 @@ changed to agree.
 
 os tier (default): raw mmap/munmap for MemoryProvider and
 clock_gettime for Clock. Direct syscalls, no libc where possible.
+
+The os tier's memory provider keeps the api's four promises this way.
+Every block is a fresh anonymous mapping, so it is the provider's alone,
+lives until `munmap` in `deallocate`, and does not move with the provider.
+A mapping is page-aligned; an `align` wider than a page, or one that is not
+a power of two, is refused with null rather than handed a block that only
+looks aligned. The engine's null provider, the default memory type a bare `Scheduler`
+names, refuses every request, and so keeps the promises trivially.
 
 no_os tier: trait contracts only. Consumer provides all impls.
 

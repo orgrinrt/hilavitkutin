@@ -1,13 +1,13 @@
 error[E0277]: `MapWu` does not name its value function for fusion
-   --> tests/ui/unmapped_unit_fused_fail.rs:116:19
-    |
-116 |     let outcome = scheduler.run_fused();
-    |                   ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
-    |
+  --> tests/ui/unmapped_unit_fused_fail.rs:86:19
+   |
+86 |     let outcome = scheduler.run_fused();
+   |                   ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
 help: the trait `RecordOp` is not implemented for `MapWu`
-   --> tests/ui/unmapped_unit_fused_fail.rs:65:1
-    |
- 65 | struct MapWu;
-    | ^^^^^^^^^^^^
-    = note: Implement `RecordOp` on a WorkUnit whose body is a value function: `fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>`, and write `execute` as `ctx.each().map(|r| self.apply(r))`.
-    = note: required for `MapWu` to implement `Link`
+  --> tests/ui/unmapped_unit_fused_fail.rs:39:1
+   |
+39 | struct MapWu;
+   | ^^^^^^^^^^^^
+   = note: Implement `RecordOp` on a WorkUnit whose body is a value function: `fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>`, and write `execute` as `ctx.each().map(|r| self.apply(r))`.
+   = note: required for `MapWu` to implement `Link`

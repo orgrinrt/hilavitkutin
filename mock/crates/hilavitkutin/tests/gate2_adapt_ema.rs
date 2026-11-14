@@ -44,7 +44,7 @@ use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, HasSchedule, OnMeta, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
@@ -165,7 +165,7 @@ fn single_core_scripted_ema_fold() {
         2000, 2100, 2200, 2300, 2400, 2700, // frame 2: 700
         3000, 3100, 3200, 3300, 3400, 3700, // frame 3: 700
     ];
-    let provider = StableProvider::new(16384, 0);
+    let provider = stable_provider(16384, 0);
     let mut scheduler = Scheduler::builder()
         .clock(ScriptClock::new(&SCRIPT))
         .with(Accum::<Mark>::new())
@@ -208,7 +208,7 @@ fn parallel_scripted_ema_seed() {
     use crate::common::TestExecutor;
 
     static SCRIPT: [u64; 4] = [1000, 1300, 2000, 2700];
-    let provider = StableProvider::new(16384, 0);
+    let provider = stable_provider(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(ScriptClock::new(&SCRIPT))
         .with(Accum::<Mark>::new())
@@ -258,7 +258,7 @@ fn parallel_scripted_ema_seed() {
 #[cfg(feature = "platform-os")]
 #[test]
 fn os_clock_default_nonzero() {
-    let provider = StableProvider::new(16384, 0);
+    let provider = stable_provider(16384, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Mark>::new())
         .with(ConsumerWu)

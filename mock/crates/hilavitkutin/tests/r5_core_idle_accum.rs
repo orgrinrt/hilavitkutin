@@ -34,7 +34,7 @@ use hilavitkutin_api::platform::ThreadPoolApi;
 use hilavitkutin_api::store::Accum;
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use notko::Outcome;
-use stable_provider::StableProvider;
+use stable_provider::stable_provider;
 
 // Accumulator capacity headroom over the per-frame appends (an append past
 // the reserved capacity, which equals the record count at build, is refused).
@@ -77,7 +77,7 @@ impl WorkUnit<Always> for AccumWu {
 /// shows as a wrong count. Each walking core appends the one value the unit
 /// makes, and every append fits, so the merged live count is that number.
 fn accum_frame<P: ThreadPoolApi>(pool: &P, walking: usize) {
-    let provider = StableProvider::new(16384, 0);
+    let provider = stable_provider(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(CounterClock::new())
         .with(Accum::<Mark>::new())

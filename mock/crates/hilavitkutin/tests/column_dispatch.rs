@@ -19,11 +19,11 @@
 //! Lives under `tests/` so the bare numeric record values do not trip the
 //! src-tree primitive lints.
 
-use core::cell::{Cell, UnsafeCell};
-use core::mem::MaybeUninit;
+mod stable_provider;
+
 use std::cell::RefCell;
 
-use arvo::{Bool, USize};
+use arvo::USize;
 use hilavitkutin::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_api::access::{Cons, Empty};
@@ -41,47 +41,11 @@ use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
+use stable_provider::stable_provider;
 
 /// Wrap a provider in the default-capacity arena store (`D = Dim<256>`).
 fn store<M: MemoryProviderApi>(provider: M) -> ArenaColumnStorage<M> {
     ArenaColumnStorage::new(provider)
-}
-
-// Stack-backed test memory provider (mirrors tests/scheduler_run_walk.rs).
-struct BumpProvider<const N: usize> {
-    buf:  UnsafeCell<[MaybeUninit<u8>; N]>,
-    used: Cell<usize>,
-}
-
-impl<const N: usize> BumpProvider<N> {
-    fn new() -> Self {
-        Self {
-            buf:  UnsafeCell::new([const { MaybeUninit::uninit() }; N]),
-            used: Cell::new(0),
-        }
-    }
-}
-
-unsafe impl<const N: usize> Send for BumpProvider<N> {}
-unsafe impl<const N: usize> Sync for BumpProvider<N> {}
-
-impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
-    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
-        let base = self.buf.get() as *mut u8;
-        let used = self.used.get();
-        let align = align.0.max(1);
-        let aligned = (used + align - 1) / align * align;
-        if aligned + len.0 > N {
-            return core::ptr::null_mut();
-        }
-        self.used.set(aligned + len.0);
-        // SAFETY: `aligned + len <= N`, in bounds of the owned buffer.
-        unsafe { base.add(aligned) }
-    }
-
-    unsafe fn deallocate(&self, _ptr: *mut u8, _len: USize, _align: USize) {}
-
-    unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
 // The record count for the test column.
@@ -157,7 +121,7 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn column_round_trips_producer_to_consumer_through_run() {
     OBSERVED.with(|o| o.borrow_mut().clear());
-    let provider = BumpProvider::<8192>::new();
+    let provider = stable_provider(8192, 0);
     // Register the column, then the producer, then the consumer. The builder
     // appends the WorkUnit carrier, so the retained value list is [producer,
     // consumer] in registration order: a plain walk already runs the producer

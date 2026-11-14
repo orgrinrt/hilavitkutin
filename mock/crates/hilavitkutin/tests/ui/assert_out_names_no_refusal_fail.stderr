@@ -1,7 +1,7 @@
 error[E0308]: mismatched types
-  --> tests/ui/assert_out_names_no_refusal_fail.rs:90:47
+  --> tests/ui/assert_out_names_no_refusal_fail.rs:60:47
    |
-90 |     let _: notko::Outcome<(), AccumRefused> = scheduler.run();
+60 |     let _: notko::Outcome<(), AccumRefused> = scheduler.run();
    |            --------------------------------   ^^^^^^^^^^^^^^^ expected `Outcome<(), AccumRefused>`, found `()`
    |            |
    |            expected due to this
@@ -10,5 +10,5 @@ error[E0308]: mismatched types
            found unit type `()`
 help: try wrapping the expression in `arvo::Outcome::Ok`
    |
-90 |     let _: notko::Outcome<(), AccumRefused> = arvo::Outcome::Ok(scheduler.run());
+60 |     let _: notko::Outcome<(), AccumRefused> = arvo::Outcome::Ok(scheduler.run());
    |                                               ++++++++++++++++++               +

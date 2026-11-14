@@ -1,0 +1,7 @@
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test child_entry ... ok
+test the_extern_c_entry_aborts ... ok
+test the_guard_entry_aborts ... ok
+test an_unguarded_entry_unwinds_and_the_child_exits_normally ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

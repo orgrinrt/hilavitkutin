@@ -1,38 +1,38 @@
 error[E0271]: type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
-   --> tests/ui/appending_unit_fused_fail.rs:124:19
-    |
-124 |     let outcome = scheduler.run_fused();
-    |                   ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
-    |
+  --> tests/ui/appending_unit_fused_fail.rs:94:19
+   |
+94 |     let outcome = scheduler.run_fused();
+   |                   ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
+   |
 note: expected this to be `Cons<Column<Ya>, hilavitkutin_api::Empty>`
-   --> tests/ui/appending_unit_fused_fail.rs:92:18
-    |
- 92 |     type Write = WriteBoth;
-    |                  ^^^^^^^^^
-    = note: expected struct `Cons<Column<Ya>, hilavitkutin_api::Empty>`
-               found struct `Cons<Column<Ya>, Cons<Accum<Log>, hilavitkutin_api::Empty>>`
-    = note: required for `MapAndLogWu` to implement `Link`
+  --> tests/ui/appending_unit_fused_fail.rs:66:18
+   |
+66 |     type Write = WriteBoth;
+   |                  ^^^^^^^^^
+   = note: expected struct `Cons<Column<Ya>, hilavitkutin_api::Empty>`
+              found struct `Cons<Column<Ya>, Cons<Accum<Log>, hilavitkutin_api::Empty>>`
+   = note: required for `MapAndLogWu` to implement `Link`
 
 error[E0271]: type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
-   --> tests/ui/appending_unit_fused_fail.rs:124:29
-    |
-124 |     let outcome = scheduler.run_fused();
-    |                             ^^^^^^^^^ type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
-    |
+  --> tests/ui/appending_unit_fused_fail.rs:94:29
+   |
+94 |     let outcome = scheduler.run_fused();
+   |                             ^^^^^^^^^ type mismatch resolving `<MapAndLogWu as WorkUnit>::Write == Cons<Column<Ya>, Empty>`
+   |
 note: expected this to be `Cons<Column<Ya>, hilavitkutin_api::Empty>`
-   --> tests/ui/appending_unit_fused_fail.rs:92:18
-    |
- 92 |     type Write = WriteBoth;
-    |                  ^^^^^^^^^
-    = note: expected struct `Cons<Column<Ya>, hilavitkutin_api::Empty>`
-               found struct `Cons<Column<Ya>, Cons<Accum<Log>, hilavitkutin_api::Empty>>`
-    = note: required for `MapAndLogWu` to implement `Link`
-    = note: required for `WuCons<ChainWu<OpCons<MapAndLogWu, OpNil<_>>>, WuNil>` to implement `RunFiber<AccumBinding<Log, ColumnBinding<Ya, ColumnBinding<Xa, BindingNil>>>, Cons<(hilavitkutin_api::Empty, Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+  --> tests/ui/appending_unit_fused_fail.rs:66:18
+   |
+66 |     type Write = WriteBoth;
+   |                  ^^^^^^^^^
+   = note: expected struct `Cons<Column<Ya>, hilavitkutin_api::Empty>`
+              found struct `Cons<Column<Ya>, Cons<Accum<Log>, hilavitkutin_api::Empty>>`
+   = note: required for `MapAndLogWu` to implement `Link`
+   = note: required for `WuCons<ChainWu<OpCons<MapAndLogWu, OpNil<_>>>, WuNil>` to implement `RunFiber<AccumBinding<Log, ColumnBinding<Ya, ColumnBinding<Xa, BindingNil>>>, Cons<(hilavitkutin_api::Empty, Cons<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::Here>>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
 note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
-   --> src/scheduler/run_fused.rs
-    |
-    |     pub fn run_fused<W2>(&mut self) -> Cfg::Out
-    |            --------- required by a bound in this associated function
+  --> src/scheduler/run_fused.rs
+   |
+   |     pub fn run_fused<W2>(&mut self) -> Cfg::Out
+   |            --------- required by a bound in this associated function
 ...
-    |             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
-    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+   |             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
