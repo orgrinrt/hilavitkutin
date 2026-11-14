@@ -1,0 +1,81 @@
+# The questions whose subject is `downstream`.
+
+[[question]]
+id = "how_kaski_holds_its_lattice"
+asks = "How is kaski's lattice held: as entities of an entity system, outside it, or decided after benches?"
+options = [
+    "Tile is an entity (Recommended): A tile is an entity with one component pointing at its block in a kaski-owned store, found through the place index and read by a declared query.",
+    "Outside the entity system: Tiles are keys of the store; the lattice does not touch entities at all.",
+    "Decide after benches: Wait for lattice-floor and thing-tables to report, with an entity-cells arm and an entity-handle arm added to the bench.",
+]
+state = "answered"
+answer = "Option 3 but I would be interested in reducing the ecs role to even zero if hilavitkutin proves capable and we can implement realistically the things we need under its mantle"
+answered = "2026-11-13 05:05: .data/op-responses/202611130448_answers-to-the-fix-up-calls-batch-1.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:176-198"
+quote = '''
+#### Lattice
+
+  ```text
+  How is the lattice held? Both experts lean to the first option; upstream block addressing fits the first two either way.
+  ```
+
+Options offered:
+
+1. Tile is an entity (Recommended)
+
+   A tile is an entity with one component pointing at its block in a kaski-owned store, found through the place index and read by a declared query.
+
+2. Outside the entity system
+
+   Tiles are keys of the store; the lattice does not touch entities at all.
+
+3. Decide after benches
+
+   Wait for lattice-floor and thing-tables to report, with an entity-cells arm and an entity-handle arm added to the bench.
+
+Answered in their own words:
+
+> Option 3 but I would be interested in reducing the ecs role to even zero if hilavitkutin proves capable and we can implement realistically the things we need under its mantle
+'''
+subject = "downstream"
+keywords = ["kaski", "lattice", "entity system", "ecs", "tile", "bench", "under its mantle"]
+
+[[question]]
+id = "whether_a_lattice_lane_may_be_narrower_than_64_bits"
+asks = "May a lattice lane of kaski be narrower than 64 bits?"
+options = [
+    "Closed set 16/32/64 (Recommended): Formats exist as members; a channel's assignment waits for the lattice-floor bench and matching digests on native and wasm.",
+    "64-bit everywhere: One 64-bit lane with a 128-bit intermediate. The narrow formats stay unused.",
+    "Everything after the bench: No format set is fixed until lattice-floor reports per width.",
+]
+state = "answered"
+answer = "Upstream on hila it should be entirely generic and configurable by user. Unless that’s infeasible, but I swear I remember the research and panels there found ways and benched it okay with enough headroom to match or surpass as ceiling"
+answered = "2026-11-13 05:05: .data/op-responses/202611130448_answers-to-the-fix-up-calls-batch-1.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:204-226"
+quote = '''
+#### Lane width
+
+  ```text
+  May a lattice lane be narrower than 64 bits? (Your open ticket.) Both experts picked the first option.
+  ```
+
+Options offered:
+
+1. Closed set 16/32/64 (Recommended)
+
+   Formats exist as members; a channel's assignment waits for the lattice-floor bench and matching digests on native and wasm.
+
+2. 64-bit everywhere
+
+   One 64-bit lane with a 128-bit intermediate. The narrow formats stay unused.
+
+3. Everything after the bench
+
+   No format set is fixed until lattice-floor reports per width.
+
+Answered in their own words:
+
+> Upstream on hila it should be entirely generic and configurable by user. Unless that’s infeasible, but I swear I remember the research and panels there found ways and benched it okay with enough headroom to match or surpass as ceiling
+'''
+subject = "downstream"
+keywords = ["kaski", "lane width", "generic", "configurable by user", "64 bits", "format"]

@@ -1,0 +1,31 @@
+# The questions whose subject is `future`, part 1.
+
+[[question]]
+id = "what_the_accessor_shape_for_consumers_reading_resource_collections_after_the_pipeline_is"
+asks = "What is the typed accessor shape for consumers reading resource collections after the pipeline, given that resource sequences and maps are backed by the arena?"
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2470-2473"
+quote = '''
+1. **Resource collection accessor shape** (item 25): R5 defines Seq/Map
+   backed by arena, but the typed accessor for consumers reading
+   resource collections post-pipeline depends on the storage layout
+   design. Can't design the accessor before the storage exists.
+'''
+subject = "future"
+keywords = ["resource collection accessor", "Seq", "Map", "arena", "storage layout", "open item"]
+related = ["tenet::the_accessor_for_resource_collections_follows_from_the_resource_collection_storage_layout_design"]
+
+[[question]]
+id = "what_the_api_surface_const_generic_sizing_and_llvm_optimisation_of_each_arvo_sub_crate_are"
+asks = "What are the API surface, the const-generic sizing and the LLVM optimisation of each arvo sub-crate (arvo, arvo-bitmask, arvo-sparse, arvo-graph, arvo-spectral, arvo-comb)?"
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2475-2478"
+quote = '''
+2. **arvo sub-crate detailed design**: domain 01 defines the crate
+   split (arvo, arvo-bitmask, arvo-sparse, arvo-graph, arvo-spectral,
+   arvo-comb) and dependency flow. Each crate needs its own design
+   round for API surface, const-generic sizing, and LLVM optimisation.
+'''
+subject = "future"
+keywords = ["arvo sub-crates", "API surface", "const-generic sizing", "LLVM optimisation", "design round", "open item"]
+related = ["tenet::each_arvo_sub_crate_gets_its_own_design_round_for_api_surface_const_generic_sizing_and_llvm_optimisation"]

@@ -163,7 +163,7 @@ impl<
             }
             // The engine runs on the executor's count clamped into
             // `1..=MAX_CORES`; every later read takes this stored value.
-            // FIXME: the principles bound the closures handed out at
+            // FIXME(hilavitkutin_7_unmarked_placeholders): the principles bound the closures handed out at
             // `min(worker_count, parallelisable_width + 1)`, the width being
             // the most trunks any phase carries; this hands out one per
             // clamped worker whatever the plan's width. Needs the widest

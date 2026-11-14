@@ -466,7 +466,7 @@ impl<
             let mut fi = 0; // lint:allow(no-bare-numeric) reason: fiber index; tracked: #121
             while fi < fcount {
                 let desc = descriptors[fi];
-                // FIXME(2a77ac57ef94): the member mask is rebuilt per (phase, fiber)
+                // FIXME(placeholders_tagged_2a77ac57ef94): the member mask is rebuilt per (phase, fiber)
                 // here and in `run`; plan-baking the masks plus a fiber-to-phase map
                 // would also skip the walks for fibers outside this phase.
                 let mut fmask = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY;

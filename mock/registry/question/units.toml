@@ -1,0 +1,41 @@
+# The questions whose subject is `units`.
+
+[[question]]
+id = "how_a_unit_in_the_value_form_reads_a_resource"
+asks = "The value form is a unit written as a plain function: it receives the values of its declared reads and returns the values of its declared writes. When such a unit reads a resource, how does it get it?"
+options = [
+    "By reference: The read product carries a lifetime and hands `&T`, so any resource works, including `Seq` and `Map` collections, as `resource() -> &T` does today. Signatures carry a lifetime.",
+    "By value, collections via block form: Only `Copy` resources are read in the value form, by value, with no lifetime in the signature; a unit that needs a collection resource is written in the block form.",
+    "Both, by the resource's kind: A `Copy` resource arrives by value and a collection by reference, chosen in the types from the resource's declared kind, so an author writes one form and the signature follows the declaration.",
+]
+state = "answered"
+answer = "Yes. Use typestate and statically branch accordingly"
+answered = "2026-11-13 07:59: .data/op-responses/202611130726_does-anyone-here-know-what-hilavitkutin-is.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:407-429"
+quote = '''
+#### Resource read
+
+  ```text
+  hilavitkutin api revision. The value form is a unit written as a plain function: it receives the values of its declared reads and returns the values of its declared writes (your `RecordOp`, widened to lists). When such a unit reads a resource, how does it get it? This fixes the signature every unit author writes.
+  ```
+
+Options offered:
+
+1. By reference
+
+   The read product carries a lifetime and hands `&T`, so any resource works, including `Seq` and `Map` collections, as `resource() -> &T` does today. Signatures carry a lifetime.
+
+2. By value, collections via block form
+
+   Only `Copy` resources are read in the value form, by value, with no lifetime in the signature; a unit that needs a collection resource is written in the block form.
+
+3. Both, by the resource's kind
+
+   A `Copy` resource arrives by value and a collection by reference, chosen in the types from the resource's declared kind, so an author writes one form and the signature follows the declaration.
+
+Answered in their own words:
+
+> Yes. Use typestate and statically branch accordingly
+'''
+subject = "units"
+keywords = ["value form", "plain function", "RecordOp", "resource read", "by reference", "by value", "typestate", "signature"]

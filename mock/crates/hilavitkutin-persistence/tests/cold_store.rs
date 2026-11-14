@@ -9,7 +9,7 @@
 //! The second group is catalogued red, in the shape `adapt_perf_contracts.rs`
 //! set in the engine: each states what the design's Flush coordination,
 //! Manifest and Backup sections promise, is `#[ignore]`d so the gate stays green, and
-//! fails when run until the file-backed round lands. The `FIXME:` on each stub
+//! fails when run until the file-backed round lands. The `FIXME(hilavitkutin_persistence_5_unmarked_placeholders):` on each stub
 //! in `src/cold_store.rs` names the same gap.
 
 use core::cell::{Cell, UnsafeCell};

@@ -74,7 +74,7 @@ impl<
             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
         <Vals as BindingsFor>::Bindings: ResetAccumulators + FirstRefusal,
     {
-        // FIXME(b8637199eb8a): a fused frame has no plan band and does not
+        // FIXME(placeholders_tagged_b8637199eb8a): a fused frame has no plan band and does not
         // consume the plan-dirty bits, so a plan-affecting swap before it
         // stands until the next unfused frame. Whether that is the intended
         // behaviour is not specified.

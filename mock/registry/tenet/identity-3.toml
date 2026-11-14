@@ -1,0 +1,363 @@
+# What the record says about `identity`, part 3.
+
+[[tenet]]
+id = "the_width_a_shape_declares_is_counted_from_a_mask_the_layout_generates_by_a_function_no_implementation_can_override"
+subject = "identity"
+what = "A width the shape trait declares is one something constrains: a layout carries its own generated mask, and the width is counted from that mask by a function no implementation can override. Nobody writes the number, so nobody can write it wrong."
+mechanism = "`SymLayoutOps` carries `KIND_MASK` and `ID_MASK` in place of `KIND_WIDTH` and `ID_WIDTH`, each forwarded from the mask its own `bitfield!` generated; `width_of`, a free function."
+source = "mock/design_rounds/202608090700/202608090700_changelist.doc.lock.md:9-15, mock/design_rounds/202608090700/202608090700_changelist.src.lock.md:16-19"
+provenance = ["mock::design_rounds::202608090700::202608090700_changelist.doc.lock::#change-the-symshape-section"]
+quote = '''
+The document says a width the trait declares is one something constrains. Round
+four made that half-true by tying a shape's declaration to a number the layout
+also wrote by hand, which is the same statement twice rather than a constraint.
+
+State the mechanism that closes it: a layout carries its own generated mask, and
+the width is counted from that mask by a function no implementation can override.
+Nobody writes the number, so nobody can write it wrong.
+---
+`KIND_WIDTH` and `ID_WIDTH` are replaced by `KIND_MASK` and `ID_MASK`, each
+forwarded from the mask its own `bitfield!` generated. The width is counted from
+a mask by `width_of`, a free function, so no implementation can supply a
+different answer.
+'''
+origin = "proposed"
+written_by = "doc and source changelists of round 202608090700 'a width nobody writes', agent-written"
+standing = "held"
+keywords = ["SymShape", "width_of", "KIND_MASK", "ID_MASK", "generated mask", "declared width", "SymLayoutOps"]
+
+[[tenet]]
+id = "the_width_a_shape_declares_comes_from_the_associated_types_its_accessors_are_typed_against_and_not_from_a_forwarded_mask"
+subject = "identity"
+what = "The width a shape declares comes from the associated types the layout's accessors are typed against, read through a width trait that no layout can supply for itself. A layout cannot lie about those, because the accessor must return what the bitfield hands it, and a wrong associated type is a type error rather than a silent disagreement. The forwarded mask constants have no reader and go."
+because = "The earlier defence, that a layout which lied would have to lie about its mask, which its own accessors read through, is false: the accessor uses the bitfield's own mask directly, the forwarded mask has no reader outside the test law, and a layout may forward any mask while every accessor still round-trips."
+mechanism = "`KIND_BITS == width of Self::Kind` and `ID_BITS == width of Self::Id`, read through a `FieldWidth` trait with a blanket impl over `Bits<N, S>` yielding `N`; blanket because `specialization` is forbidden. `get_kind` returns `self.kind()`. Changing `type Kind = Bits<5, Hot>` to `Bits<9, Hot>` on a five-bit field is four `E0308`s."
+source = "mock/design_rounds/202608091100/202608091100_changelist.doc.lock.md:16-30, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:88-91, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:93-104"
+provenance = ["mock::design_rounds::202608091100::202608091100_changelist.doc.lock::#change-the-width-derivation-paragraph-from-the-mask-to-the-associated-type"]
+quote = '''
+The current text says the width is counted from the layout's generated mask, and
+defends that choice with: "a layout that lied would have to lie about its mask,
+which its own accessors read through."
+
+**That is false and the review proved it by construction.** `get_kind` returns
+`self.kind()`, the bitfield's inherent accessor, which uses the macro's mask
+directly. The forwarded `KIND_MASK` constant has no reader outside the test law,
+so a layout may forward any mask at all and every accessor still round-trips.
+
+Replacement states the derivation that holds: the width comes from `Self::Kind`
+and `Self::Id`, the associated types the accessors are typed against, read
+through a `FieldWidth` trait whose blanket impl over `Bits<N, S>` yields `N`. A
+layout cannot lie about those, because `get_kind` must return what the bitfield
+hands it, and a wrong associated type is a type error rather than a silent
+disagreement.
+---
+**What is actually constrained is `Self::Kind` and `Self::Id`.** `get_kind`
+returns `Self::Kind` and its body returns `self.kind()`, which the bitfield
+types at the field's real width. Changing `type Kind = Bits<5, Hot>` to
+`Bits<9, Hot>` on a five-bit field is four `E0308`s. Verified the same way.
+---
+So the widths come from the associated types, not from the masks:
+
+```
+KIND_BITS == width of Self::Kind
+ID_BITS   == width of Self::Id
+```
+
+read through a `FieldWidth` trait with a blanket impl over `Bits<N, S>`
+yielding `N`. Blanket, so no layout can supply its own; `specialization` is
+forbidden, so that is not a stylistic claim.
+
+The forwarded mask constants then have no reader at all and go.
+'''
+origin = "proposed"
+written_by = "doc changelist and topic of round 202608091100 'widths tied to the mechanism and a dead gate', 2026-08-09, agent-written"
+standing = "held"
+keywords = ["FieldWidth", "KIND_BITS", "ID_BITS", "associated type", "Self::Kind", "forwarded mask", "width derivation", "SymShape"]
+rejects = ["a layout that lied would have to lie about its mask, which its own accessors read through"]
+related = ["tenet::the_width_a_shape_declares_is_counted_from_a_mask_the_layout_generates_by_a_function_no_implementation_can_override"]
+
+[[tenet]]
+id = "the_declared_width_reaches_a_value_the_code_uses_through_the_associated_type_and_the_round_trip_together_and_neither_alone_is_sufficient"
+subject = "identity"
+what = "The associated type pins what the accessors are compiled against, and the round trip pins that the field behind them is that wide. The declaration reaches a value the code uses through both together, and neither alone is sufficient, because an accessor may convert and satisfy every signature while the field stays narrower. The design states what is currently checked and by what, and does not claim that this is the last rung."
+mechanism = "The associated type and the round-trip law of the shape."
+source = "mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md:11-19, mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md:21-23"
+provenance = ["mock::design_rounds::202608091600::202608091600_changelist.doc.lock::#change-the-width-derivation-section-from-the-type-to-the-round-trip"]
+quote = '''
+The current text says the associated type is the rung that ends the class,
+because a layout naming a width its field does not have is a type error. That is
+true only of a layout whose accessors forward. **An accessor may convert**, and
+one that does satisfies every signature while the field stays narrower.
+
+Replacement says what holds: the type pins what the accessors are compiled
+against, and the round trip pins that the field behind them is that wide. The
+declaration reaches a value the code uses through both together, and neither
+alone is sufficient.
+---
+It also drops the claim that this is the last rung. Four rounds named a mechanism
+and stopped looking, and the honest statement is what is currently checked and by
+what, not that the question is closed forever.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202608091600 'credit the mechanism that actually holds', 2026-08-09, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["round trip", "associated type", "accessor converts", "declared width", "last rung", "width law"]
+rejects = ["the associated type is the rung that ends the class"]
+related = ["tenet::the_width_a_shape_declares_comes_from_the_associated_types_its_accessors_are_typed_against_and_not_from_a_forwarded_mask"]
+
+[[tenet]]
+id = "a_shape_s_counter_width_is_tied_to_the_span_a_minter_owns_read_off_the_functions_that_define_it_and_not_to_another_declaration"
+subject = "identity"
+what = "A law relating two declarations to each other constrains neither, so the counter width is tied to what the mechanism does. For every shape and every origin, the span a minter owns equals two to the power of the counter width minus one, read off the two functions that define it. The origin width then follows from the existing sum law. The law is written for every shape and not only the varying one."
+mechanism = "`origin_ceiling(o) - origin_base(o)  ==  2^COUNTER_BITS - 1`; `ORIGIN_BITS` follows from the existing sum law."
+source = "mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:31-34, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:38-48, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:50-51"
+provenance = ["mock::design_rounds::202608091100::202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate::#one-the-split-between-origin-and-counter-is-free"]
+quote = '''
+This is the fourth appearance of one class, and the shape of its survival is the
+part worth recording. **A law relating two declarations to each other constrains
+neither.** Three rounds tied declarations to declarations, each time producing a
+consistent story, which is exactly what a wrong declaration also produces.
+---
+Tie `COUNTER_BITS` to what the mechanism does, not to another declaration. For
+every shape and every origin:
+
+```
+origin_ceiling(o) - origin_base(o)  ==  2^COUNTER_BITS - 1
+```
+
+That is the span a minter owns, read off the two functions that define it. A
+wrong `COUNTER_BITS` fails it whatever the other declarations say. `ORIGIN_BITS`
+then follows from the existing sum law, which becomes load-bearing once the
+other term is pinned to a fact.
+---
+Written for every shape, not the varying one, because choosing which
+instantiations to check is choosing what not to find out.
+'''
+origin = "proposed"
+written_by = "topic of round 202608091100 'widths tied to the mechanism and a dead gate', 2026-08-09, phase TOPIC, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["COUNTER_BITS", "span law", "origin_ceiling", "origin_base", "ORIGIN_BITS", "sum law", "every shape"]
+
+[[tenet]]
+id = "the_id_width_in_the_shape_trait_signature_is_the_default_shape_s_twenty_eight_bits_and_making_it_follow_the_shape_was_left_open"
+subject = "identity"
+what = "The id width in the shape trait's signature is the default shape's twenty-eight bits, sitting where a shape cannot override it. Making the type follow the shape is a design question the round does not have the answer to, so it is documented instead of fixed, and two laws contain the hole meanwhile."
+mechanism = "`Uint<28, Hot>` in the trait."
+source = "mock/design_rounds/202608092200/202608092200_changelist.src.lock.md:43-47"
+provenance = ["mock::design_rounds::202608092200::202608092200_changelist.src.lock::#change-origins-must-fit-the-id-field-they-are-placed-in"]
+quote = '''
+**The `Uint<28, Hot>` in the trait is not fixed here and is documented instead.**
+Twenty-eight is `Standard`'s id width sitting where a shape cannot override it,
+which is the same substance as the constant this branch lifted, one level down.
+Making the type follow the shape is a design question this round does not have
+the answer to; the two laws contain the hole meanwhile.
+'''
+origin = "proposed"
+written_by = "source changelist of round 202608092200, phase IMPL, agent-written"
+standing = "held"
+keywords = ["Uint<28, Hot>", "id width", "SymShape", "shape trait", "documented gap", "origin_base"]
+
+[[tenet]]
+id = "a_shape_declares_which_minter_an_origin_is_by_an_index_and_the_run_it_owns_is_derived_so_disjointness_is_arithmetic"
+subject = "identity"
+what = "A shape declares which minter an origin is, by an index, and the run that origin owns is derived from the index and the counter width. Distinct indices own disjoint runs by arithmetic, so disjointness is a consequence of the derivation and not a law, and a shape with overlapping origins cannot supply its own bounds. The base and the ceiling leave the shape trait entirely."
+because = "Two laws had been written to reject the construction that had just been found, each did, and neither described the property; a law samples the shapes that exist, while a derivation covers the ones that do not yet."
+mechanism = "`origin_index` on the shape; free functions generic over the shape: `base = index << COUNTER_BITS`, `ceiling = base + (1 << COUNTER_BITS) - 1`; the run is `[index << COUNTER_BITS, ((index+1) << COUNTER_BITS) - 1]`. `origin_base` and `origin_ceiling` leave the trait."
+source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:11-22, mock/design_rounds/202608101000/202608101000_changelist.doc.lock.md:11-24"
+provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#change-symshape-declares-origin-index-base-and-ceiling-become-free-functions"]
+quote = '''
+`origin_base` and `origin_ceiling` leave the trait entirely. A shape declares
+`origin_index`, and the run it owns is derived by free functions generic over
+the shape:
+
+```
+base    = index << COUNTER_BITS
+ceiling = base + (1 << COUNTER_BITS) - 1
+```
+
+**Disjointness stops being a law and becomes arithmetic.** Distinct indices own
+`[i << C, ((i+1) << C) - 1]`, which cannot overlap, so the shape that defeated
+round nine cannot be written at all.
+---
+The document says origins divide the id space so two minters cannot collide
+however far either counts. The code let a shape supply two arbitrary numbers, and
+three rounds of numbers were wrong: first placed past the field, then placed
+inside it but overlapping.
+
+The document now says what the mechanism is. A shape declares **which minter an
+origin is**; the run it owns is derived, `[index << COUNTER_BITS, ((index+1) <<
+COUNTER_BITS) - 1]`. Distinct indices own disjoint runs by arithmetic, so an
+overlapping shape cannot be written rather than being caught by a law.
+
+It also records why the previous answer was wrong in kind rather than in detail:
+**both laws were written to reject the construction that had just been found**,
+each succeeded at that, and neither described the property. A law samples the
+shapes that exist; a derivation covers the ones that do not yet.
+'''
+origin = "proposed"
+written_by = "source and doc changelists of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["origin_index", "derived run", "disjoint runs", "COUNTER_BITS", "free functions", "origin_base", "origin_ceiling", "disjointness by arithmetic"]
+rejects = ["The code let a shape supply two arbitrary numbers"]
+related = ["tenet::a_generator_is_built_for_an_origin_and_a_shape_with_no_origin_bits_has_one_origin_and_a_constructor_with_no_argument"]
+
+[[tenet]]
+id = "a_value_derived_from_a_shape_is_a_free_function_and_never_a_provided_trait_method_because_a_provided_method_is_overridable"
+subject = "identity"
+what = "A value derived from a shape is carried by a free function and not by a provided trait method. A provided method is overridable, so a shape could still supply a colliding value and the illegal state stayed representable, while a free function carries no such hole."
+mechanism = "`origin_base` and `origin_ceiling` were provided trait methods for one revision; the free functions are the instrument `width_of` already used in the crate for the same reason."
+source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:62-66, mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:68-69"
+provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#the-first-attempt-at-this-was-wrong-and-my-own-check-caught-it"]
+quote = '''
+They were **provided trait methods** for one revision. That is overridable, so a
+shape could still supply a colliding `origin_base` and the illegal state stayed
+representable. Written and compiled to find out, which is the only reason it was
+caught: the reasoning that produced the design said "derived", and the design as
+written said "default".
+---
+Free functions carry no such hole, and they are the instrument `width_of`
+already used in this crate for the same reason.
+'''
+origin = "proposed"
+written_by = "source changelist of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["provided trait method", "free function", "overridable", "origin_base", "width_of", "illegal state representable"]
+rejects = ["provided trait methods"]
+related = ["tenet::a_shape_declares_which_minter_an_origin_is_by_an_index_and_the_run_it_owns_is_derived_so_disjointness_is_arithmetic"]
+
+[[tenet]]
+id = "the_span_law_is_deleted_because_the_derivation_computes_what_it_asserted"
+subject = "identity"
+what = "The law that asserted the span a minter owns is deleted rather than kept, because the derivation now computes that span, so the law became a tautology that cannot fail. Its becoming tautological is the evidence that the derivation subsumes it, and the shipped shape keeps its numbers exactly."
+mechanism = "The span law asserted `ceiling - base == 2^COUNTER_BITS - 1`; `SixteenMinters` keeps its shipped numbers, checked against the raw values in `hilavitkutin-str/tests/handle.rs`."
+source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:80-86"
+provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#verification"]
+quote = '''
+**The span law was deleted rather than kept.** It asserted `ceiling - base ==
+2^COUNTER_BITS - 1`, which the derivation now computes, so it became a tautology
+the moment the derivation landed and cannot fail. Its becoming tautological is
+the evidence the derivation subsumes it. `SixteenMinters` keeps
+its shipped numbers exactly, checked against the raw values in
+`hilavitkutin-str/tests/handle.rs`, so `Standard` byte compatibility is
+unaffected. Counts measured after the autofix rather than predicted here.
+'''
+origin = "proposed"
+written_by = "source changelist of round 202608101000 'an origin is an index, and the run is derived', 2026-08-10, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["span law", "tautology", "derivation", "SixteenMinters", "deleted law", "COUNTER_BITS"]
+rejects = ["The span law was deleted rather than kept"]
+related = ["tenet::a_shape_s_counter_width_is_tied_to_the_span_a_minter_owns_read_off_the_functions_that_define_it_and_not_to_another_declaration", "tenet::a_shape_declares_which_minter_an_origin_is_by_an_index_and_the_run_it_owns_is_derived_so_disjointness_is_arithmetic"]
+
+[[tenet]]
+id = "a_shape_supplies_no_base_ceiling_or_counter_projection_and_the_layout_still_supplies_the_projection_so_the_freedom_is_reduced_and_not_eliminated"
+subject = "identity"
+what = "A shape can no longer supply a base, a ceiling or a counter projection. The counter projection belongs to the layout, whose id type its bitfield fixes, so what is left in the shape is forwarding rather than arithmetic. A layout is still written by hand and can still lie, constrained by the round-trip law, and an out-of-range origin index is refused at the point of use rather than being unwritable. This is a reduction of the freedom and not an elimination, and the design names what remains."
+because = "Five rounds claimed elimination and were wrong, and a design that has overclaimed that often has to say which parts are load bearing to be worth reading."
+mechanism = "`id_from_counter` leaves `SymShape`; the id width `Uint<28, Hot>` that a signature carried moves with the projection to the layout."
+source = "mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:7-19, mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:25-37, mock/design_rounds/202608101900/202608101900_topic.the-sixth-route-and-what-a-shape-may-still-decide.md:38-43"
+provenance = ["mock::design_rounds::202608101900::202608101900_changelist.doc.lock::#change-retract-the-uint-28-hot-in-the-trait-signature-is-gone"]
+quote = '''
+## CHANGE: retract "the `Uint<28, Hot>` in the trait signature is gone"
+
+File: `mock/crates/hilavitkutin-sym/DESIGN.md.tmpl`
+
+**It is not gone.** `shape.rs:73` carries it on `id_from_counter`, as do four
+impls and `generator.rs`. The claim is in the design tier and was repeated in
+round thirteen's src changelist, which makes it the sixth false locked claim on
+this branch and the first to sit in a document that governs code.
+
+It becomes true in this round, by moving the projection to the layout. The
+document says what actually happened rather than being quietly edited to match:
+the claim was written from the intended end state while one signature still held
+the type.
+---
+The document says a shape whose origins overlap cannot be written. That holds for
+the routes closed so far and is stated universally, and two more routes were live
+when it was written.
+
+Replaced with what is true and what is not: a shape can no longer supply a base,
+a ceiling or a counter projection; a **layout** still supplies the projection and
+can lie, constrained by the round-trip law; and an out-of-range index is refused
+at the point of use rather than being unwritable.
+
+**Five rounds have now claimed elimination and been wrong.** The document records
+that, because the next reader's real question is which parts of this are load
+bearing, and a document that has overclaimed five times has to say so to be worth
+reading.
+---
+`id_from_counter` leaves `SymShape`. The projection belongs to the layout, whose
+`Id` type its bitfield fixes, so what is left there is forwarding rather than
+arithmetic. **This reduces the freedom rather than eliminating it**: a layout is
+still written by hand and can still lie, and what constrains it is the round-trip
+law that already exists. Round thirteen claimed elimination and was wrong; this
+round claims a reduction and names what remains.
+'''
+origin = "proposed"
+written_by = "doc changelist and topic of round 202608101900 'the sixth route and what a shape may still decide', 2026-08-10, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["id_from_counter", "counter projection", "layout", "round-trip law", "reduction not elimination", "SymShape", "Uint<28, Hot>"]
+rejects = ["a shape whose origins overlap cannot be written"]
+related = ["tenet::a_shape_declares_which_minter_an_origin_is_by_an_index_and_the_run_it_owns_is_derived_so_disjointness_is_arithmetic", "tenet::the_id_width_in_the_shape_trait_signature_is_the_default_shape_s_twenty_eight_bits_and_making_it_follow_the_shape_was_left_open"]
+
+[[tenet]]
+id = "building_a_generator_refuses_an_origin_whose_index_is_out_of_range_because_a_shape_is_an_open_extension_point"
+subject = "identity"
+what = "Building a generator for an origin is fallible and refuses an origin whose index is out of range for its shape. A shape is an open extension point, so the only place a check binds unconditionally is where a generator is built."
+mechanism = "`Generator::at` returns `Maybe<Self>`."
+source = "mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:39-48"
+provenance = ["mock::design_rounds::202608101900::202608101900_changelist.doc.lock::#change-generator-at-is-fallible"]
+quote = '''
+## CHANGE: `Generator::at` is fallible
+
+Same file, and `README.md` where it names the constructor.
+
+It refuses an origin whose index is out of range for its shape. A shape is an
+open extension point, so the only place a check binds unconditionally is where a
+generator is built.
+
+Verification: `grep -c 'is gone with it'` returns 0; the document names
+`Maybe<Self>` on `at`; `grep -c 'cannot be written'` returns 0.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202608101900 'the sixth route and what a shape may still decide', 2026-08-10, agent-written"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["Generator::at", "Maybe", "out-of-range index", "origin index", "open extension point", "refusal at point of use"]
+related = ["tenet::a_generator_is_built_for_an_origin_and_a_shape_with_no_origin_bits_has_one_origin_and_a_constructor_with_no_argument"]
+
+[[tenet]]
+id = "the_build_crate_is_no_std_takes_the_profile_and_target_strings_as_parameters_and_writes_its_text_into_a_formatting_writer"
+subject = "identity"
+what = "The build crate is no_std and touches neither the environment nor the filesystem. The build script owns the environment and the filesystem: it reads the profile and the target configuration values and passes them in, and the crate writes the directives and the config file text into a writer the script supplies. Profile-guided optimisation inputs, whether a profile exists and how far the head is from the profiled commit, are read by the script and passed the same way. Nothing in the crate's design needed std for itself, because each value it read from the environment is one a build script can pass in."
+because = "The workspace rule forbidding extern crate std settles it, and not a ruling."
+mechanism = "The crate is `#![no_std]`; takes `PROFILE` and the `CARGO_CFG_*` values as parameters; writes directives and config file text into any `core::fmt::Write`; `configure().run()` keeps its builder shape and takes that input. The earlier design read `CARGO_CFG_*`, emitted `cargo:rustc-cfg` lines and wrote config files from a build script."
+source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:66-66, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:85-85, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:25-25"
+provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#hilavitkutin-build"]
+quote = '''
+`mock/crates/hilavitkutin-build/DESIGN.md.tmpl` has the crate read `CARGO_CFG_*`, emit `cargo:rustc-cfg` lines and write config files from a build script, which is std by nature. The crate already does not claim `no_std`. `mock/PRINCIPLES.md.tmpl` and the `hilavitkutin*` forbidden-imports scope say every crate is. The design of the crate and the principle over it disagree. Handed back.
+---
+hilavitkutin-build. Settled by the workspace rule that forbids `extern crate std`, not by a ruling: the build script owns the environment and the filesystem, and the crate is `#![no_std]`, takes the profile and target feature strings as parameters, and writes its directives and config file text into any `core::fmt::Write`. Nothing in the crate's design needed std for itself; each value it read from the environment is one a build script can pass in.
+---
+The crate is `no_std` and touches neither the environment nor the filesystem. The build script reads `PROFILE` and the `CARGO_CFG_*` values, and passes them in; the crate writes the directives and the config file text into a `core::fmt::Write` the script supplies. PGO's profile presence and HEAD's distance from the profiled commit are read by the script and passed in the same way. `configure().run()` keeps its builder shape and takes that input.
+'''
+origin = "proposed"
+written_by = "topic and doc changelist of round 202609181402 'hilavitkutin on arvo's current dev', 2026-09-18, agent-written; the text says the crate was settled by the workspace rule and not by a ruling"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-build", "no_std", "core::fmt::Write", "CARGO_CFG", "build script", "extern crate std", "PROFILE"]
+rejects = ["the crate touching the environment or the filesystem"]
+related = ["tenet::the_build_crate_is_a_build_dependency_of_every_crate_and_has_no_runtime_dependencies"]

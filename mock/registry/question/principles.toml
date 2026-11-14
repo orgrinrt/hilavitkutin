@@ -1,0 +1,21 @@
+# The questions whose subject is `principles`, part 1.
+
+[[question]]
+id = "whether_the_hilavitkutin_crates_use_no_std_and_no_external_crates_given_the_std_tier_and_arrayvec"
+asks = "Is it true that none of the three hilavitkutin crates depends on std or on any external crate, given that the platform tiers include a std tier and the fixed-size structures may use arrayvec?"
+options = ["no dependency on std, alloc or external crates in any of the three crates", "the std platform tier uses std::alloc, std::thread and std::time::Instant, and fixed-size structures use stack arrays, arrayvec or SlabColumn"]
+state = "open"
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:62-63, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:280-280, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310"
+quote = '''
+No dependency on polka-*, std, alloc, or external crates in any of
+the three crates. Designed for extraction to a separate repository.
+---
+| `std` | Windows, other | std::alloc | std::thread | std::time::Instant | catch_unwind |
+---
+**No alloc crate.** All dynamic storage through SlabColumn (mmap on os,
+std::alloc on std, consumer-provided on no_os). Fixed-size structures
+use stack arrays, arrayvec, or SlabColumn.
+'''
+subject = "principles"
+keywords = ["std tier", "arrayvec", "external crates", "no_std", "platform tiers", "no dependency"]
+related = ["tenet::the_hilavitkutin_crates_depend_on_no_polka_crate_no_std_no_alloc_and_no_external_crate"]

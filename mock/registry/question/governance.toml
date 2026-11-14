@@ -1,0 +1,305 @@
+# The questions whose subject is `governance`.
+
+[[question]]
+id = "how_the_contract_crates_put_beside_the_api_are_handled"
+asks = "A branch not yet landed adds four crates beside the existing engine and its api, as a second, parallel vocabulary for the same thing until the existing scheduler is ported onto them. How is it wanted?"
+options = [
+    "Hold, map it first (Recommended): Loop-core does not land yet. A fable seat maps every new item onto hilavitkutin's own design (WorkUnit, Column/Resource/Virtual, access sets, morsels) and says per item: already exists under its own name, extends it, or is new and why. You get that map, then decide.",
+    "Fold into the existing api: No second contract crate. The value-kernel form, store trait and laws become a revision of `hilavitkutin-api` and its design in place; the reference runner and laws are the oracle for the existing scheduler. Costs: the existing engine is pinned at a tag or ported sooner.",
+    "Oracle and laws only: Keep only the one-thread reference runner and the laws, written against today's `hilavitkutin-api`, as the test oracle the existing scheduler is held to. No new author or store vocabulary at all.",
+    "As planned, beside: Land the four crates beside the old api, mark the old api legacy, converge at HV18 when the scheduler is ported onto the new contracts.",
+]
+state = "answered"
+answer = "Hold, map it first (Recommended)"
+answered = "2026-11-13 05:16: .data/op-responses/202611130508_the-canon-goes-provisional-and-hilavitkutin-is-revised-in.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:26-52"
+quote = '''
+#### New crates
+
+  ```text
+  What the words mean. 'The engine' in hilavitkutin = the existing `hilavitkutin` crate: the static scheduler that turns WorkUnit read/write access sets into per-core morsel dispatch, with `hilavitkutin-api` as its contract. The loop-core branch (not landed, in review) adds four crates BESIDE that: `-contracts` (authors name a record domain, columns and resources and write value kernels; implementors write a store), `-reference` (one-thread runner kept as oracle), `-laws` (laws over recorded runs), `-frozen-authors` (authors that must never need editing). 'Ported later as another runner' means the existing scheduler would be rewritten to run those new contracts and the old api deleted (step HV18). It was put beside, not in place, because `hilavitkutin-api` sits on old arvo and moving it stops the existing engine building. So yes: until HV18 it is a second, parallel vocabulary for the same thing, and one expert flagged exactly that. How do you want it?
+  ```
+
+Options offered:
+
+1. Hold, map it first (Recommended)
+
+   Loop-core does not land yet. A fable seat maps every new item onto hilavitkutin's own design (WorkUnit, Column/Resource/Virtual, access sets, morsels) and says per item: already exists under its own name, extends it, or is new and why. You get that map, then decide.
+
+2. Fold into the existing api
+
+   No second contract crate. The value-kernel form, store trait and laws become a revision of `hilavitkutin-api` and its design in place; the reference runner and laws are the oracle for the existing scheduler. Costs: the existing engine is pinned at a tag or ported sooner.
+
+3. Oracle and laws only
+
+   Keep only the one-thread reference runner and the laws, written against today's `hilavitkutin-api`, as the test oracle the existing scheduler is held to. No new author or store vocabulary at all.
+
+4. As planned, beside
+
+   Land the four crates beside the old api, mark the old api legacy, converge at HV18 when the scheduler is ported onto the new contracts.
+
+Chosen:
+
+- Hold, map it first (Recommended)
+'''
+subject = "governance"
+keywords = ["contract crate", "beside the api", "parallel vocabulary", "loop-core", "map", "legacy"]
+related = ["question::which_shape_the_additions_take_after_the_map"]
+
+[[question]]
+id = "which_shape_the_additions_take_after_the_map"
+asks = "After the map of the branch onto hilavitkutin's own design: which shape for what the branch tried to add? In every option the duplicate items go and nothing calls the api legacy."
+options = [
+    "Instruments now, api round with you (Recommended): Now: only the one-thread oracle, the laws, the frozen crates, the ledger and lints, rewritten against today's `hilavitkutin-api`. Then a design round on `hilavitkutin-api` itself with you in it: per-domain record count, a frame-buffered column kind beside `Accum`, `RecordOp` widened into the primary value form, declared neighbour reads, safe exclusive writes. The mapping seat's pick.",
+    "Revise the api in place now: Same destination without waiting for you in the round: the needed forms go into `hilavitkutin-api` and its design now, drafted by a fable seat from the map, reviewed, landed; you overturn afterwards what you dislike.",
+    "Instruments only: Oracle, laws, frozen crates and lints against today's api, and nothing else. Contract changes wait until you raise them yourself.",
+    "Drop the branch whole: Nothing of loop-core lands. hilavitkutin continues from its own roadmap r6, and kaski's needs are filed as tickets on it.",
+]
+state = "answered"
+answer = "Revise the api in place now"
+answered = "2026-11-13 05:32: .data/op-responses/202611130508_the-canon-goes-provisional-and-hilavitkutin-is-revised-in.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:68-94"
+quote = '''
+#### Hila shape
+
+  ```text
+  Hilavitkutin, after the map: which shape for what the loop-core branch tried to add? (The branch has not landed. In every option the 20 duplicate items go and nothing calls `hilavitkutin-api` legacy.)
+  ```
+
+Options offered:
+
+1. Instruments now, api round with you (Recommended)
+
+   Now: only the one-thread oracle, the laws, the frozen crates, the ledger and lints, rewritten against today's `hilavitkutin-api`. Then a design round on `hilavitkutin-api` itself with you in it: per-domain record count, a frame-buffered column kind beside `Accum`, `RecordOp` widened into the primary value form, declared neighbour reads, safe exclusive writes. The mapping seat's pick.
+
+2. Revise the api in place now
+
+   Same destination without waiting for you in the round: the needed forms go into `hilavitkutin-api` and its design now, drafted by a fable seat from the map, reviewed, landed; you overturn afterwards what you dislike.
+
+3. Instruments only
+
+   Oracle, laws, frozen crates and lints against today's api, and nothing else. Contract changes wait until you raise them yourself.
+
+4. Drop the branch whole
+
+   Nothing of loop-core lands. hilavitkutin continues from its own roadmap r6, and kaski's needs are filed as tickets on it.
+
+Chosen:
+
+- Revise the api in place now
+'''
+subject = "governance"
+keywords = ["api revision", "in place", "instruments", "oracle", "laws", "frozen", "record count per domain", "frame-buffered", "value form", "neighbour read"]
+related = ["question::how_the_contract_crates_put_beside_the_api_are_handled"]
+
+[[question]]
+id = "who_counts_as_an_implementor_that_must_not_need_an_edit"
+asks = "The maintainer's sentence is that the work demands no change on implementors, it happens in the plumbing side of hilavitkutin. Who counts as an implementor that must never need an edit when the plumbing grows?"
+options = [
+    "Units, stores, providers, hosts (Recommended): Whoever writes units, and also whoever implements a store, a memory provider or a host against the contracts. Runners and the planner are plumbing and may change. Both experts read your 'Impls are trivial. And interchangeable' this way.",
+    "Unit authors only: Only code written as units against the api. Stores and providers may need edits as the plumbing grows.",
+    "Also outside runners: The above, plus anyone who writes their own runner or planner against the contracts.",
+]
+state = "answered"
+answer = "Okay so that is the ideal. At this point we can break it, and in future too, so let’s rephrase it so that we’d prefer not to break the public facing api. Mostly thinking about unit authors and data structure authors and such, not so much runners, but not forgetting them"
+answered = "2026-11-13 05:50: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:282-304"
+quote = '''
+#### Implementors
+
+  ```text
+  Your sentence: 'the work demands no change on implementors, it happens in the plumbing side of hilavitkutin'. Who counts as an implementor that must never need an edit when the plumbing grows?
+  ```
+
+Options offered:
+
+1. Units, stores, providers, hosts (Recommended)
+
+   Whoever writes units, and also whoever implements a store, a memory provider or a host against the contracts. Runners and the planner are plumbing and may change. Both experts read your 'Impls are trivial. And interchangeable' this way.
+
+2. Unit authors only
+
+   Only code written as units against the api. Stores and providers may need edits as the plumbing grows.
+
+3. Also outside runners
+
+   The above, plus anyone who writes their own runner or planner against the contracts.
+
+Answered in their own words:
+
+> Okay so that is the ideal. At this point we can break it, and in future too, so let’s rephrase it so that we’d prefer not to break the public facing api. Mostly thinking about unit authors and data structure authors and such, not so much runners, but not forgetting them
+'''
+subject = "governance"
+keywords = ["implementor", "public api", "breaking change", "unit authors", "data structure authors", "runners", "plumbing"]
+
+[[question]]
+id = "when_the_frozen_test_units_freeze"
+asks = "The frozen test units and implementations are kept unedited to prove that growing the plumbing forces no edit on them. When do they freeze?"
+options = [
+    "When their form locks (Recommended): Edits are allowed but each one is logged in a ledger until the api form they use is locked; the check asks that the last two slices added no ledger row; append-only after. Both experts picked this.",
+    "At first landing: Append-only from the first commit; any first-night mistake becomes a second form beside the old.",
+    "When kaski's first unit lands: Ledgered until a real consumer exists, then frozen.",
+]
+state = "answered"
+answer = "When their form locks (Recommended)"
+answered = "2026-11-13 05:50: .data/op-responses/202611130550_four-calls-that-shape-the-hilavitkutin-api-revision.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:306-328"
+quote = '''
+#### Freeze
+
+  ```text
+  The 'frozen' test units and implementations (kept unedited to prove your property: if growing the plumbing forces an edit to one, a lint fails). When do they freeze?
+  ```
+
+Options offered:
+
+1. When their form locks (Recommended)
+
+   Edits are allowed but each one is logged in a ledger until the api form they use is locked; the check asks that the last two slices added no ledger row; append-only after. Both experts picked this.
+
+2. At first landing
+
+   Append-only from the first commit; any first-night mistake becomes a second form beside the old.
+
+3. When kaski's first unit lands
+
+   Ledgered until a real consumer exists, then frozen.
+
+Chosen:
+
+- When their form locks (Recommended)
+'''
+subject = "governance"
+keywords = ["frozen", "test units", "ledger", "append-only", "form locks"]
+related = ["question::who_counts_as_an_implementor_that_must_not_need_an_edit"]
+
+[[question]]
+id = "what_happens_to_the_recovered_rounds_on_the_recovery_branch"
+asks = "An open pull request holds 226 files the trunk lacks: recovered design rounds and benches from before the split. What happens to it?"
+options = [
+    "Review and land it: A fable reviewer reads it against `dev` as recovered history (rounds, research, benches); it lands if nothing in it contradicts what landed since. The api revision can then cite the recovered research.",
+    "Triage first: A helper lists what is in it by kind and age and what `dev` already superseded; you get the list and decide.",
+    "Leave it: It stays open and untouched; nothing reads it.",
+]
+state = "answered"
+answer = "Triage first"
+answered = "2026-11-13 05:39: .data/op-responses/202611130539_the-canon-walk-and-arvo-is-claimed-then-reworked.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:124-146"
+quote = '''
+#### PR #4
+
+  ```text
+  hilavitkutin has an open PR #4, `recover/unlanded-rounds-and-benches`: 226 files that `dev` lacks (recovered design rounds and benches from before the split). It was not opened tonight. What happens to it?
+  ```
+
+Options offered:
+
+1. Review and land it
+
+   A fable reviewer reads it against `dev` as recovered history (rounds, research, benches); it lands if nothing in it contradicts what landed since. The api revision can then cite the recovered research.
+
+2. Triage first
+
+   A helper lists what is in it by kind and age and what `dev` already superseded; you get the list and decide.
+
+3. Leave it
+
+   It stays open and untouched; nothing reads it.
+
+Chosen:
+
+- Triage first
+'''
+subject = "governance"
+keywords = ["recovered rounds", "recovery branch", "pull request 4", "triage", "benches"]
+
+[[question]]
+id = "whether_the_source_change_of_the_lost_round_is_recovered"
+asks = "The commit that r8 says deleted the N-way path is not on the trunk and may be among the recovered files. Should the triage look for it specifically and bring that round's source change back as its own branch for review?"
+options = [
+    "Yes, recover it for review: The triage looks for round 202607192410's source change; if found it is put on its own branch and reviewed against today's `dev`, landing only on your answer to the first question.",
+    "Only list it: The triage says whether it is there and what it changes; nothing is branched.",
+    "No, redo from the design: Whatever the first answer is gets implemented fresh against today's `dev`; old source is not recovered.",
+]
+state = "answered"
+answer = "Treat equal to rest in triage. Might be useful others and this too"
+answered = "2026-11-13 06:02: .data/op-responses/202611130602_convergence-is-measured-first.md"
+source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:377-399"
+quote = '''
+#### Lost round
+
+  ```text
+  The commit that r8 says deleted the N-way path ('round 202607192410') is not on `dev` and may be in PR #4's 226 recovered files. Should the PR #4 triage look for it specifically and, if it is there, bring that round's source change back as its own branch for review?
+  ```
+
+Options offered:
+
+1. Yes, recover it for review
+
+   The triage looks for round 202607192410's source change; if found it is put on its own branch and reviewed against today's `dev`, landing only on your answer to the first question.
+
+2. Only list it
+
+   The triage says whether it is there and what it changes; nothing is branched.
+
+3. No, redo from the design
+
+   Whatever the first answer is gets implemented fresh against today's `dev`; old source is not recovered.
+
+Answered in their own words:
+
+> Treat equal to rest in triage. Might be useful others and this too
+'''
+subject = "governance"
+keywords = ["lost round", "202607192410", "N-way", "triage", "recovered source"]
+related = ["question::what_happens_to_the_recovered_rounds_on_the_recovery_branch", "question::which_convergence_a_single_trunk_phase_uses"]
+
+[[question]]
+id = "which_copy_of_the_standalone_spec_stands"
+asks = "Two copies of the standalone spec stand in the tree. The one under the pre_seed directory carries the header addendum A2 corrected: a commissioned reading aid with no independent design authority. The one directly under the research directory still says that where it and any older document disagree, it is the design. Which copy stands?"
+options = ["The corrected copy under pre_seed, as addendum A2 rules.", "The copy directly under the research directory, with its own header."]
+state = "open"
+source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:37-39, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:18-26, mock/research/202606111800_canonical-spec-standalone.md:18-22"
+quote = '''
+3. The standalone spec: a commissioned reading aid with no independent design authority. Where
+   it conflicts with tiers 1 or 2, the conflict is a transcription defect in the standalone, to
+   be fixed there. Its header is corrected to state this (same commit as this file).
+---
+It consolidates, for reading convenience, the scattered set of prior
+documents: the founding consolidation spec, the chain of design-round
+amendments, and the reconciliation addendum A1. Per addendum A2
+(`202607193200`, ruling A2-1), this document is a commissioned reading aid
+with no independent design authority: it was commissioned by A1 to spare the
+reader cross-reading the chain, not to override it. Where this document and
+the consolidation spec or a registered amendment disagree, the disagreement
+is a transcription defect in this document, to be fixed here. It does not
+narrate the history of how the design was reached; it restates the design.
+---
+It supersedes, for the purpose of "what is the design," the scattered set of
+prior documents: a founding consolidation spec, a chain of design-round
+amendments, and a recent reconciliation addendum. Where this document and any
+older one disagree, this document is the design. It does not narrate the
+history of how the design was reached; it states the design.
+'''
+subject = "governance"
+keywords = ["standalone spec", "two copies", "header", "precedence", "reading aid", "A2-1", "pre_seed"]
+related = ["tenet::the_record_s_precedence_is_the_founding_spec_then_dated_amendments_then_the_reading_aid_then_the_rest", "tenet::the_standalone_spec_is_a_commissioned_reading_aid_by_its_own_corrected_header"]
+
+[[question]]
+id = "whether_the_maintainer_ratifies_s1_through_s7_of_the_swap_spec_as_the_swap_semantics_canon"
+asks = "Whether the maintainer ratifies S1 through S7 of the swap spec as the swap-semantics canon, which the evidence memo puts to him as its ask."
+options = ["ratify S1 through S7, after which the seed storage chapter replaces its open-question wording with the spec and #696 and #697 complete", "do not ratify"]
+state = "open"
+source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83"
+quote = '''
+## The ask
+
+Ratify S1 through S7 as the swap-semantics canon. On ratification, the
+seed storage chapter replaces its open-question wording with the spec,
+governance item 1 (and the A2-3 remainder in item 6) closes, and #696
+plus #697 complete. S3 and Swap-D remain #344-gated inside the ratified
+spec by name, not as open questions.
+'''
+subject = "governance"
+keywords = ["ratification", "swap spec", "S1 through S7", "swap-semantics canon", "seed storage chapter", "the ask"]
+related = ["tenet::ratifying_the_swap_spec_replaces_the_seed_chapter_s_open_question_wording_and_closes_the_governance_items_and_the_two_issues"]

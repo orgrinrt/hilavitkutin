@@ -1,0 +1,504 @@
+# What the record says about `execution`, part 2.
+
+[[tenet]]
+id = "morsel_ranges_are_partitioned_at_plan_time_without_an_atomic_fetch_add"
+subject = "execution"
+what = "Morsel ranges are partitioned ahead of time at plan time, so no atomic fetch-and-add is needed to hand them out."
+mechanism = "Pre-partitioned morsel ranges (no atomic `fetch_add`)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:870-870"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+- Pre-partitioned morsel ranges at plan time (no atomic fetch_add)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:870-870"]
+keywords = ["pre-partitioned", "morsel ranges", "plan time", "fetch_add", "dispatch"]
+
+[[tenet]]
+id = "morsel_boundaries_are_baked_into_the_compiled_per_core_programs"
+subject = "execution"
+what = "The morsel boundaries are baked into the compiled per-core programs."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:871-871"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+quote = '''
+- Morsel boundaries baked into compiled per-core programs (→ domain 17)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:871-871"]
+keywords = ["morsel boundaries", "compiled per-core programs", "domain 17", "dispatch", "baked"]
+
+[[tenet]]
+id = "llvm_auto_vectorisation_through_no_dyn_monomorphisation_is_the_vectorisation_contract"
+subject = "execution"
+what = "The design is the vectorisation contract: the compiler vectorises automatically because of the no-dyn monomorphisation, and a fiber of gravity updates becomes eight-wide stores on NEON without hand-written code."
+mechanism = "LLVM auto-vectorisation via no-dyn monomorphisation (T3 §Q3 1100-line analysis); NEON: gravity fiber → `dup.2d` + `stp q0,q0` (8-wide stores)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:887-888, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:896-897"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+- LLVM auto-vectorisation via no-dyn monomorphisation (the design IS
+  the vectorisation contract — T3 §Q3 1100-line analysis)
+---
+- NEON auto-vectorisation: gravity fiber → `dup.2d` + `stp q0,q0`
+  (8-wide stores, T6 L3901)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:887-888", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:896-897"]
+keywords = ["auto-vectorisation", "no-dyn", "monomorphisation", "NEON", "dup.2d", "stp q0", "vectorisation contract"]
+
+[[tenet]]
+id = "the_intrinsics_that_help_are_bit_scans_bulk_copy_and_fill_a_spin_loop_and_llvm_indexed_addressing"
+subject = "execution"
+what = "The bench-validated helpful intrinsics are the count-leading-and-trailing-zeros scans for virtual flags and bitmasks, bulk non-overlapping copy for slab columns, byte fill for flag reset and column initialisation, a minimal spin loop for phase synchronisation, and the indexed addressing that LLVM generates, which is better than hand-written pointer advances."
+mechanism = "`ctlz`/`cttz` (via arvo-bitmask iterate-set-bits); `copy_nonoverlapping` for bulk SlabColumn ops; `write_bytes` for virtual flag reset / column init; `isb` + `ldapr` spin loop for phase sync; LLVM indexed addressing `[reg, counter, lsl #3]` (T6 L1883-1947)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:886-886, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:889-895"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+**What HELPS (bench-validated by T6):**
+---
+- `ctlz`/`cttz` for virtual flag scan and bitmask scanning (provided
+  by arvo-bitmask iterate-set-bits)
+- `copy_nonoverlapping` for bulk SlabColumn ops
+- `write_bytes` for virtual flag reset / column init
+- `isb` + `ldapr` spin loop for phase sync (minimal, bench-confirmed)
+- LLVM indexed addressing `[reg, counter, lsl #3]` (better than
+  hand-written pointer advances — T6 L1883-1947)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:886-886", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:889-895"]
+keywords = ["ctlz", "cttz", "copy_nonoverlapping", "write_bytes", "isb", "ldapr", "indexed addressing", "intrinsics"]
+
+[[tenet]]
+id = "explicit_prefetch_is_removed_from_the_day_one_microkernels_because_it_hurts_sequential_scans_on_apple_silicon"
+subject = "execution"
+what = "The explicit L1 prefetch hint is about twice as slow on Apple Silicon, and even morsel-level pipelining is slower, so prefetch is removed from the day-one microkernels. It is reserved for random and pointer-chasing access such as hash lookups, never for sequential column scans, and is gated by target architecture and profiling."
+mechanism = "`prefetch_read_data` L1 hint ~2x slower (T6 L1254-1288); morsel-level pipelining 1.47x slower; `prfm` / `prefetcht0` REMOVED; `#[cfg(target_arch)]` + profiling-gated."
+because = "Explicit prefetch is bench-proven harmful: ~2x slower on Apple Silicon."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:899-901, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:919-922"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+**What HURTS (bench-validated by T6):**
+- Explicit `prefetch_read_data` L1 hint: ~2x SLOWER on Apple Silicon
+  (T6 L1254-1288). Even morsel-level pipelining 1.47x slower.
+---
+| ~~Explicit prefetch~~ | ~~`prfm`~~ | ~~`prefetcht0`~~ | **REMOVED** — hurts on Apple Silicon |
+
+Prefetch reserved for random/pointer-chasing access (hash lookups),
+NOT sequential column scans. `#[cfg(target_arch)]` + profiling-gated.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:899-901", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:919-922"]
+keywords = ["prefetch", "prefetch_read_data", "prfm", "prefetcht0", "Apple Silicon", "random access", "hash lookups", "removed"]
+
+[[tenet]]
+id = "likely_and_unlikely_are_not_used_in_the_morsel_dispatch_loop"
+subject = "execution"
+what = "Branch likelihood hints are not used in the morsel dispatch loop, because they prevent LLVM vectorisation and make the loop slower, and LLVM predicts branches better without them."
+mechanism = "`likely`/`unlikely` in dispatch loop: 1.40x slower (T6 L1386-1405)."
+because = "Prevents LLVM vectorisation (1.40x slower)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:902-903, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:924-925"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+- `likely`/`unlikely` in dispatch loop: 1.40x SLOWER — prevents LLVM
+  vectorisation (T6 L1386-1405)
+---
+likely/unlikely: do NOT use in morsel dispatch loop. LLVM handles
+branch prediction better without hints.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:902-903", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:924-925"]
+keywords = ["likely", "unlikely", "dispatch loop", "vectorisation", "1.40x slower", "branch prediction"]
+
+[[tenet]]
+id = "unchecked_indexing_is_neutral_because_llvm_already_removes_bounds_checks_for_range_iteration"
+subject = "execution"
+what = "Unchecked indexing gives no gain, because LLVM already eliminates the bounds checks for a start-to-end range iteration."
+mechanism = "`get_unchecked`: neutral (T6 L1394)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:904-905"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+- `get_unchecked`: neutral — LLVM already eliminates bounds checks
+  for `start..end` iteration (T6 L1394)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:904-905"]
+keywords = ["get_unchecked", "bounds checks", "neutral", "range iteration", "LLVM"]
+
+[[tenet]]
+id = "hand_written_aarch64_assembly_loses_to_what_llvm_produces"
+subject = "execution"
+what = "Hand-written aarch64 assembly loses to the code LLVM produces, which has indexed addressing and better scheduling."
+mechanism = "T6 L1922-1947."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:906-907"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+- Hand-written aarch64 ASM: LLVM produces better code (indexed
+  addressing, better scheduling — T6 L1922-1947)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:906-907"]
+keywords = ["hand-written ASM", "aarch64", "LLVM", "indexed addressing", "scheduling", "T6"]
+
+[[tenet]]
+id = "the_day_one_assembly_microkernels_are_zeroing_paired_access_atomics_non_temporal_stores_fences_parking_and_bit_scan"
+subject = "execution"
+what = "The day-one assembly microkernels are cache line zeroing, paired load and store, LSE atomics, non-temporal store, memory fences, worker parking and trailing-zero scan. Each has an aarch64 form; on x86_64 paired load and store and memory fences are not needed, and the others have an x86_64 form. Explicit prefetch is removed from the set."
+mechanism = "Cache line zero: `dc zva` / write_bytes. Paired load/store: `ldp`/`stp` / not needed. LSE atomics: `cas`/`swp`/`ldadd` / `lock cmpxchg`. Non-temporal store: `stnp` / `movntdq`. Memory fences: `dmb ishld`/`ishst` / not needed (TSO). Worker parking: `wfe`/`sev` / `pause` + futex. Trailing zeros: `rbit`+`clz` / `tzcnt`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:909-919"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+quote = '''
+**Day-one asm microkernels (T5 §Q12, CORRECTED by T6):**
+| Microkernel | aarch64 | x86_64 | Status |
+|---|---|---|---|
+| Cache line zero | `dc zva` | write_bytes | day-one |
+| Paired load/store | `ldp`/`stp` | not needed | day-one |
+| LSE atomics | `cas`/`swp`/`ldadd` | `lock cmpxchg` | day-one |
+| Non-temporal store | `stnp` | `movntdq` | day-one |
+| Memory fences | `dmb ishld`/`ishst` | not needed (TSO) | day-one |
+| Worker parking | `wfe`/`sev` | `pause` + futex | day-one |
+| Trailing zeros | `rbit`+`clz` | `tzcnt` | day-one |
+| ~~Explicit prefetch~~ | ~~`prfm`~~ | ~~`prefetcht0`~~ | **REMOVED** — hurts on Apple Silicon |
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:909-919"]
+keywords = ["microkernels", "dc zva", "ldp", "stp", "LSE atomics", "stnp", "dmb", "wfe", "tzcnt", "T5 Q12"]
+
+[[tenet]]
+id = "the_arena_needs_no_size_threshold_because_column_pointers_are_resolved_from_its_base_at_each_morsel_boundary"
+subject = "execution"
+what = "The concern that a co-located arena larger than the aarch64 immediate range would degrade code is a non-issue, and fiber formation needs no arena size threshold. The dispatcher resolves the column pointers from the arena base at each morsel boundary, and the inner loop is then pointer arithmetic."
+mechanism = "Precomputed model: `col_ptr = base + col * rows` resolved once at the morsel boundary, inner loop `col_ptr.add(i)`. Bench (arena_addressing.rs, 2-30 columns, 1M records, morsel=1024, 30 reps, fat LTO, codegen-units=1, Apple Silicon M1), precomputed vs separate ns/element: 2 cols 0.42 vs 0.63 (0.67x); 4 cols 1.36 vs 1.17 (1.17x); 8 cols 2.95 vs 2.89 (1.02x); 14 cols 5.94 vs 6.57 (0.90x); 20 cols 10.53 vs 11.00 (0.96x); 30 cols 24.58 vs 23.50 (1.05x). Dynamic column count: arena 6-15% faster (0.85-0.97x)."
+because = "No addressing mode cliff: at a 120 KB morsel arena (14 columns, four times the 32 KB immediate range) the precomputed model is 10% faster than separate pointers, and LLVM pre-computes column pointers from the arena base when offsets exceed the immediate range."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:977-983, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:988-1002, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1004-1016, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1023-1026, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1033-1038"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+**Arena addressing — RESOLVED (bench-validated, no constraint needed).**
+
+The concern was that co-located arenas exceeding the aarch64 12-bit
+scaled immediate range (~32KB for 8-byte accesses) would force LLVM
+to use extra offset registers, degrading codegen. Benchmarked three
+access patterns at 2-30 columns, 1M records, morsel=1024, 30 reps,
+fat LTO, codegen-units=1 (Apple Silicon M1):
+---
+- **precomputed**: resolve `col_ptr = base + col * rows` once at morsel
+  boundary, inner loop does `col_ptr.add(i)`. This IS the real fiber
+  model — the dispatcher resolves column pointers from the arena base
+  at each morsel boundary, then the inner loop is pointer arithmetic.
+
+**Results (pre-computed vs separate pointers, const-generic N):**
+
+| read_cols | precomp ns/el | separate ns/el | ratio | morsel arena |
+|---|---|---|---|---|
+| 2 | 0.42 | 0.63 | **0.67x** | 24 KB |
+| 4 | 1.36 | 1.17 | 1.17x | 40 KB |
+| 8 | 2.95 | 2.89 | 1.02x | 72 KB |
+| 14 | 5.94 | 6.57 | **0.90x** | 120 KB |
+| 20 | 10.53 | 11.00 | **0.96x** | 168 KB |
+| 30 | 24.58 | 23.50 | 1.05x | 248 KB |
+---
+**Key findings:**
+
+1. **No addressing mode cliff.** Performance varies ±17% across all
+   column counts with no sudden degradation. At 120 KB morsel arena
+   (14 cols, 4x the 32KB immediate range), the precomputed model is
+   10% FASTER than separate pointers. At 248 KB (30 cols, 8x the
+   range), it's only 5% slower.
+
+2. **LLVM handles it correctly.** When column offsets exceed the
+   immediate range, LLVM pre-computes column pointers from the arena
+   base and uses `ptr.add(i)` in the inner loop — exactly the
+   precomputed pattern. The addressing mode transition is invisible
+   at the performance level.
+---
+4. **Dynamic column count: arena always wins.** When LLVM cannot see
+   the exact column count (runtime loop), the arena model is 6-15%
+   faster at every column count tested (0.85-0.97x). This is because
+   `base + col * rows + i` compiles to one multiply-add vs loading a
+---
+**Resolution:** the arena addressing concern is a non-issue. The
+holistic feasibility check does NOT need an arena size threshold. The
+existing constraints (register file budget, L1 write budget, L1+L2
+total, fan-in, pipeline breakers) are sufficient. The co-located arena
+with pre-computed column pointers at morsel boundaries is the correct
+model. No additional fiber formation constraint needed.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:977-983", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:988-1002", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1004-1016", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1023-1026", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1033-1038"]
+keywords = ["arena addressing", "12-bit immediate", "precomputed column pointers", "no cliff", "arena size threshold", "bench", "co-location"]
+rejects = ["an arena size threshold as an additional fiber formation constraint"]
+related = ["tenet::storage_is_contiguous_and_a_fiber_s_columns_share_one_arena"]
+
+[[tenet]]
+id = "a_fiber_is_dispatched_through_a_local_slice_of_monomorphised_unit_functions_because_struct_field_arrays_do_not_devirtualise"
+subject = "execution"
+what = "Each fiber is dispatched through a monomorphised dispatch over a local slice of unit functions. Local slices of functions devirtualise and arrays held in struct fields do not. The absence of allocation is load-bearing and the expanded link-time optimisation is required."
+mechanism = "Local `&[fn]` slices devirtualise; struct-field arrays don't (12.6x). Each fiber → monomorphised dispatch with LOCAL `&[WuFn]` slice. ExpandedLto REQUIRED (domain 03)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1165-1167"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+- Local `&[fn]` slices devirtualise; struct-field arrays don't (12.6x).
+  No-alloc load-bearing. ExpandedLto REQUIRED (domain 03).
+- Each fiber → monomorphised dispatch with LOCAL `&[WuFn]` slice.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1165-1167"]
+keywords = ["local &[fn] slice", "devirtualise", "WuFn", "struct-field arrays", "12.6x", "no-alloc", "ExpandedLto"]
+related = ["tenet::expanded_lto_is_required_because_monomorphised_tuple_dispatch_does_not_devirtualise_without_it"]
+
+[[tenet]]
+id = "the_dispatch_form_depends_on_the_record_count_below_or_above_ten_thousand"
+subject = "execution"
+what = "Below ten thousand records the dispatch is indirect per fiber or one mega function per trunk, and above ten thousand records it is one mega function for the whole schedule."
+mechanism = "<10K records: `IndirectPerFiber` or `TrunkMega`; >10K: `ScheduleMega`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1168-1168"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+- <10K records: IndirectPerFiber or TrunkMega. >10K: ScheduleMega.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["IndirectPerFiber", "TrunkMega", "ScheduleMega", "10K records", "dispatch", "mega function"]
+
+[[tenet]]
+id = "a_deep_single_fiber_uses_the_flattener_and_dead_store_elimination"
+subject = "execution"
+what = "A deep single fiber is dispatched with the flattener and dead-store elimination, as the dispatch domain specifies."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1169-1169"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+- Deep single-fiber: flattener + DSE (rust-pipe, domain 17).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1169-1169"]
+keywords = ["deep single-fiber", "flattener", "DSE", "rust-pipe", "domain 17", "dispatch"]
+
+[[tenet]]
+id = "a_fiber_is_commutative_only_if_all_its_units_are_and_resource_accumulation_uses_per_thread_accumulators_merged_after"
+subject = "execution"
+what = "A fiber is commutative only if all its units are. Commutative fibers get head and tail convergence and multi-core morsel dispatch, and resource accumulation uses a per-thread stack-local accumulator that is merged afterwards, while non-commutative resource accumulation skips head and tail convergence."
+mechanism = "`COMMUTATIVE: bool` on WU; per-thread stack-local accumulator, merged after."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1171-1176"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+quote = '''
+**Commutativity (from domain 08):**
+
+`COMMUTATIVE: bool` on WU. Fiber is commutative only if ALL WUs are.
+Commutative fibers → head+tail convergence + multi-core morsel
+dispatch. Resource accumulation: per-thread stack-local accumulator,
+merged after. Non-commutative resource accumulation → skip head+tail.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1171-1176"]
+keywords = ["commutative fiber", "COMMUTATIVE", "head+tail convergence", "multi-core morsel dispatch", "accumulator", "resource accumulation"]
+related = ["tenet::a_unit_declares_whether_it_is_commutative"]
+
+[[tenet]]
+id = "local_slices_monomorphised_dispatch_and_unrolled_parameters_devirtualise_and_struct_field_function_pointer_arrays_do_not"
+subject = "execution"
+what = "Devirtualisation works for local slices of function pointers with known values, for monomorphised trait dispatch and for unrolled function parameters. It does not work for function pointer arrays in a struct field, for const-generic array reference parameters, for global mutable static slots (an indirect branch per call), or for a non-inlined run function taking a slice of unit functions; for the struct-field arrays and the non-inlined run function LLVM cannot prove the contents."
+mechanism = "Bench-validated. Works: local `&[fn]` slices with known values, monomorphised trait dispatch, unrolled function parameters. Fails: struct-field fn pointer arrays (12.6x penalty, LLVM cannot prove contents through a struct reference), `&[fn; N]` const-generic parameters (5.8x), global `static mut` slots (indirect `blr` per call), `run_fiber(&[WuFn], ...)` with `#[inline(never)]` (one function for all callers)."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1532-1545"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Devirtualisation rules (T6 L1024-1082, bench-validated):**
+
+What devirtualises:
+- Local `&[fn]` slices with known values
+- Monomorphised trait dispatch
+- Unrolled function parameters
+
+What does NOT:
+- Struct-field fn pointer arrays (12.6x penalty — LLVM can't prove
+  contents through struct reference)
+- `&[fn; N]` const-generic parameters (5.8x)
+- Global `static mut` SLOTS (indirect `blr` per call)
+- `run_fiber(&[WuFn], ...)` with `#[inline(never)]` (one fn for all
+  callers, LLVM can't prove slice contents)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1532-1545"]
+keywords = ["devirtualisation", "local slice", "struct-field function pointers", "monomorphised dispatch", "static mut", "blr", "12.6x", "inline(never)"]
+
+[[tenet]]
+id = "the_dispatch_approach_is_chosen_by_record_count_between_fiber_level_trunk_level_and_whole_schedule_functions"
+subject = "execution"
+what = "Dispatch is measured against hand-fused code in five approaches, and the choice among them follows the record count: below 10K records the indirect per-fiber or the trunk-level approach, whose smaller function bodies give better icache and register allocation, and above 10K records the whole-schedule function, where call setup is amortised over the morsel iterations."
+mechanism = "A: monomorphised tuple, per-fiber-type trait, LOCAL `&[WuFn]`, 1.0x. B: unrolled params, each fn as a separate parameter, 0.9x. C: indirect per fiber, one fn pointer per fiber per morsel, 1.17x. D: trunk mega, `#[inline(always)]` fibers into a trunk function, 1.02x. E: schedule mega, all trunks in one function, 0.97x. Struct-field fn pointers: 12.6x FAIL. Thresholds: <10K records C or D; >10K records E."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1547-1562"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Dispatch approaches (T6 L1084-1384, bench-validated):**
+
+| Approach | Pattern | vs hand-fused |
+|---|---|---|
+| A: mono tuple | per-fiber-type trait, LOCAL `&[WuFn]` | 1.0x |
+| B: unrolled params | each fn as separate parameter | 0.9x |
+| C: indirect per-fiber | one fn ptr per fiber per morsel | 1.17x |
+| D: trunk mega | `#[inline(always)]` fibers into trunk fn | 1.02x |
+| E: schedule mega | all trunks in one fn | 0.97x |
+| struct-field | fn ptrs in struct field | 12.6x FAIL |
+
+Row size determines approach (T6 L1507-1517):
+- <10K records: C or D (smaller function bodies, better icache — LLVM
+  makes better register allocation for separated functions)
+- \>10K records: E (full-schedule mega-dispatch, call setup amortised
+  over morsel iterations)
+'''
+origin = "stated"
+standing = "held"
+keywords = ["dispatch approaches", "mono tuple", "trunk mega", "schedule mega", "record count threshold", "10K records", "icache", "vs hand-fused"]
+
+[[tenet]]
+id = "the_flattener_emits_one_monomorphised_function_per_fiber_in_the_rust_pipe_pattern"
+subject = "execution"
+what = "For each fiber the codegen flattener emits a monomorphised function, and this is where the execution strategy for the units in a fiber is decided; the common case is a pipeline of fused units with resources cached on the stack, fiber input columns read at morsel start, pure functions on locals with no intermediate column stores, fiber-internal columns passed register to register so dead store elimination skips the memory operations, and all output stores grouped at the end of the loop body so the store buffer is used well."
+mechanism = "The rust-pipe pattern: (1) cache resources to a stack-local array, (2) read fiber-input columns at morsel start, (3) pure function pipeline with locals, no intermediate column stores, (4) fiber-internal columns register-to-register, DSE skips memory ops, (5) all output stores grouped at the end of the loop body, (6) resource accumulation via stack-cached pointers. 0.95-0.96x baseline, beating hand assembly."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1564-1581"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**The codegen flattener — rust-pipe pattern (T6 L1689-1976):**
+
+For each fiber, the flattener emits a monomorphised function. This
+is where the execution strategy for ops within a fiber is decided
+(domain 14 notes that fibers are the column co-location unit, not
+definitionally fused). The flattener chooses how to execute the
+fiber's WUs based on the fiber's properties:
+
+For the common case (ops that benefit from fusion — most fibers):
+1. Cache resources to stack-local array (domain 19)
+2. Read fiber-input columns at morsel start
+3. Pure function pipeline with locals — no intermediate column stores
+4. Fiber-internal columns → register-to-register, DSE skips memory ops
+5. All output stores grouped at end of loop body (store-buffer friendly)
+6. Resource accumulation via stack-cached pointers
+
+This is the `rust-pipe` pattern. 0.95-0.96x baseline (beats hand ASM
+— LLVM makes better instruction scheduling decisions).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1564-1581"]
+keywords = ["codegen flattener", "rust-pipe", "fiber function", "dead store elimination", "stores at end", "register-to-register", "stack-local resources"]
+related = ["tenet::a_deep_single_fiber_uses_the_flattener_and_dead_store_elimination"]
+
+[[tenet]]
+id = "fiber_dispatch_is_never_inlined_and_the_units_inside_a_fiber_are_always_inlined"
+subject = "execution"
+what = "Fiber dispatch is marked never-inline so that LLVM optimises each fiber as a separate compilation unit, the unit functions within their fiber are always inlined so that LLVM sees the full body, fuses the operations and vectorises, and the per-core program, which sequences fibers and phase sync, is never inlined."
+mechanism = "`#[inline(never)]` on fiber dispatch; `#[inline(always)]` on WU functions within their fiber; `#[inline(never)]` on the per-core program."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1588-1594"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Inlining discipline (T7 §3.1):**
+- `#[inline(never)]` on fiber dispatch: lets LLVM optimise each fiber
+  as a separate compilation unit
+- `#[inline(always)]` on WU functions within their fiber: LLVM sees
+  the full body, fuses ops, vectorises
+- `#[inline(never)]` on per-core program: the outer function that
+  sequences fibers and phase sync
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1588-1594"]
+keywords = ["inline(never)", "inline(always)", "fiber dispatch", "per-core program", "inlining discipline", "fusion", "vectorise"]
+
+[[tenet]]
+id = "each_physical_core_runs_one_monomorphised_function_that_encodes_its_whole_pipeline"
+subject = "execution"
+what = "Each physical core gets a monomorphised function encoding its entire pipeline: the phases it processes, its record ranges (the head half or the tail half for convergence), the unit sequence per fiber as devirtualised local slices, the morsel boundaries as compile-time constants, and the phase sync points. Every earlier optimisation is subsumed in it."
+mechanism = "Phase sync points: stack AtomicUsize plus spin loop. Subsumes: local `&[WuFn]` slices, resource caching as stack-local snapshots per fiber, DSE and stores-at-end, phase pipelining with compile-time sync points, head+tail ranges baked in, morsel sizing as compile-time constants, no dynamic dispatch."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1596-1613"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Compiled per-core dispatch (T6 L3203-3297, T7 §3.3):**
+
+Each physical core gets a monomorphised function encoding its entire
+pipeline:
+1. Which phases this core processes
+2. Which record ranges (head half or tail half for convergence)
+3. The WU sequence per fiber (devirtualised LOCAL slices)
+4. Morsel boundaries (compile-time constants from domain 12 formula)
+5. Phase sync points (stack AtomicUsize + spin loop)
+
+Every prior optimisation is subsumed:
+- Local `&[WuFn]` slices: baked into the per-core function
+- Resource caching: emitted as stack-local snapshots per fiber
+- DSE + stores-at-end: the flattener emits the optimal loop body
+- Phase pipelining: sync points are compile-time constants
+- Head+tail convergence: each core's record range is baked in
+- Morsel sizing: compile-time constants
+- No dynamic dispatch: the entire program is monomorphised
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1596-1613"]
+keywords = ["compiled per-core dispatch", "per-core program", "record range", "morsel boundaries", "phase sync points", "monomorphised", "head and tail"]
+
+[[tenet]]
+id = "at_run_time_the_engine_spawns_threads_that_run_their_compiled_programs_with_no_scheduler_loop_or_work_queues"
+subject = "execution"
+what = "At run time N threads are started, each runs its compiled program, and they are joined when complete. There is no scheduler loop, no work queue, and no atomics except at phase sync points."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1615-1617"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+Runtime: spawn N threads, each runs its compiled program, join when
+complete. No scheduler loop. No work queues. No atomics except at
+phase sync points.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["no scheduler loop", "no work queues", "spawn N threads", "join", "compiled program", "phase sync"]
+
+[[tenet]]
+id = "progress_counters_are_stack_atomics_with_a_release_store_by_the_producer_and_an_acquire_load_by_the_consumer"
+subject = "execution"
+what = "Each fiber has an atomic progress counter holding a monotonic record index. The producer publishes with a plain release store, which is a single store-release instruction on aarch64 and not a read-modify-write, and the consumer reads with an acquire load, a single load-acquire instruction; at phase boundaries a spin loop polls the counter. The counters live on the stack and are not reference-counted, which eliminates six heap allocations per pipeline execution."
+mechanism = "`AtomicUsize` per fiber. Producer `store(end, Release)`: single `stlr` on aarch64, not fetch_add or fetch_or. Consumer `load(Acquire)`: single `ldar`. Spin loop: `isb` + `ldapr` + `cmp` + branch. Stack AtomicUsize, not Arc; raw pointer (`as usize`) passed to the thread."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1619-1627"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+quote = '''
+**Progress counters and sync (T2 §7, T6 L2020-2024, T7 §3.3):**
+- AtomicUsize per fiber, monotonic record index
+- Producer: `store(end, Release)` — single `stlr` on aarch64. Not
+  RMW, cheapest atomic. (T2 L474-498: plain store, not fetch_add or
+  fetch_or)
+- Consumer: `load(Acquire)` — single `ldar`
+- Spin loop at phase boundaries: `isb` + `ldapr` + `cmp` + branch
+- Stack AtomicUsize, not Arc — eliminates 6 heap allocations per
+  pipeline execution. Raw pointer (`as usize`) passed to thread.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1619-1627"]
+keywords = ["progress counters", "AtomicUsize", "Release store", "Acquire load", "stlr", "ldar", "spin loop", "stack atomic", "no Arc"]

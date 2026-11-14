@@ -1,0 +1,495 @@
+# What the record says about `memory`, part 1.
+
+[[tenet]]
+id = "the_platform_has_three_tiers_no_os_os_and_std"
+subject = "memory"
+what = "There are three platform tiers: no_os for bare metal and WASM, os as the default for Linux and macOS, and std for Windows and other targets. The tiers differ in who provides memory, threads and clock and in how panics are handled."
+mechanism = "no_os: bare metal, WASM; memory, threads and clock provided by the consumer; panics abort. os (default): Linux, macOS; raw mmap / extern C, raw clone / pthread, raw clock_gettime; panics abort. std: Windows, other; std::alloc, std::thread, std::time::Instant; panics catch_unwind."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:275-280"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Three tiers:**
+| Tier | Target | Memory | Threads | Clock | Panics |
+|---|---|---|---|---|---|
+| `no_os` | bare metal, WASM | Consumer provides | Consumer provides | Consumer provides | abort |
+| `os` (default) | Linux, macOS | raw mmap / extern "C" | raw clone / pthread | raw clock_gettime | abort |
+| `std` | Windows, other | std::alloc | std::thread | std::time::Instant | catch_unwind |
+'''
+origin = "stated"
+standing = "held"
+keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
+
+[[tenet]]
+id = "the_os_and_std_tiers_are_mutually_exclusive_and_the_os_tier_gets_the_optimisation_investment"
+subject = "memory"
+what = "The os tier and the std tier are mutually exclusive, and the os tier gets the optimisation investment."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:282-282"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+- `os` and `std` mutually exclusive. `os` gets optimisation investment.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
+related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
+
+[[tenet]]
+id = "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"
+subject = "memory"
+what = "The no_os tier is trait contracts only, and the consumer provides all the platform implementations."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:283-283"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+- `no_os` = trait contracts only; consumer provides all platform impls.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:283-283"]
+keywords = ["no_os", "trait contracts", "consumer provides", "platform impls", "bare metal"]
+related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
+
+[[tenet]]
+id = "the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"
+subject = "memory"
+what = "The platform contracts live in the api crate as three traits: a memory provider that allocates, deallocates and protects memory, a thread pool that takes work and reports its worker count, and a clock that reports the time in nanoseconds."
+mechanism = "`pub trait MemoryProvider: Send + Sync { unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8; unsafe fn deallocate(&self, ptr: *mut u8, len: usize); unsafe fn protect(&self, ptr: *mut u8, len: usize, read: bool, write: bool); }`; `pub trait ThreadPool: Send + Sync { fn spawn(&self, f: impl FnOnce() + Send + 'static); fn worker_count(&self) -> usize; }`; `pub trait Clock: Send + Sync { fn now_ns(&self) -> u64; }`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:288-301"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Platform traits (in hilavitkutin-api):**
+```rust
+pub trait MemoryProvider: Send + Sync {
+    unsafe fn allocate(&self, len: usize, align: usize) -> *mut u8;
+    unsafe fn deallocate(&self, ptr: *mut u8, len: usize);
+    unsafe fn protect(&self, ptr: *mut u8, len: usize, read: bool, write: bool);
+}
+pub trait ThreadPool: Send + Sync {
+    fn spawn(&self, f: impl FnOnce() + Send + 'static);
+    fn worker_count(&self) -> usize;
+}
+pub trait Clock: Send + Sync {
+    fn now_ns(&self) -> u64;
+}
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:288-301"]
+keywords = ["MemoryProvider", "ThreadPool", "Clock", "platform traits", "hilavitkutin-api", "allocate", "worker_count", "now_ns"]
+
+[[tenet]]
+id = "each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"
+subject = "memory"
+what = "Each platform tier ships default implementations, and the consumer overrides them through the scheduler builder."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:303-303"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+Each tier ships defaults. Consumer overrides via scheduler builder.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["defaults", "override", "scheduler builder", "platform tier", "consumer"]
+related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
+
+[[tenet]]
+id = "platform_traits_are_taken_by_impl_trait_and_the_scheduler_is_generic_over_them_and_never_dyn"
+subject = "memory"
+what = "The platform traits are taken in argument position as anonymous generics, so each call site monomorphises, and the scheduler is generic over the platform types and never dynamically dispatched. Storing a dynamic memory provider object would violate the ban on dynamic dispatch."
+mechanism = "`impl Trait` in argument position; Scheduler generic over the platform types; no `dyn MemoryProvider`."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:304-306"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+Platform traits use `impl Trait` in argument position — each callsite
+monomorphises. The Scheduler is generic over the platform types (not
+`dyn`). Storing `dyn MemoryProvider` would violate the dyn ban.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:304-306"]
+keywords = ["impl Trait", "monomorphise", "no dyn", "Scheduler generic", "platform types", "MemoryProvider"]
+
+[[tenet]]
+id = "hardware_is_detected_once_at_startup_with_a_fallback_of_a_thirty_two_kilobyte_l1_and_one_core"
+subject = "memory"
+what = "Hardware detection runs once at startup, with a different mechanism per target, and falls back to a thirty-two kilobyte L1 cache and one core."
+mechanism = "CPUID (x86), sysctl (macOS ARM), sysfs (Linux ARM); fallback 32 KB L1, 1 core."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:312-313"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+quote = '''
+**Hardware detection:** CPUID (x86), sysctl (macOS ARM), sysfs (Linux ARM).
+Fallback: 32 KB L1, 1 core. Detection runs once at startup.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:312-313"]
+keywords = ["hardware detection", "CPUID", "sysctl", "sysfs", "L1 size", "fallback", "startup"]
+
+[[tenet]]
+id = "resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"
+subject = "memory"
+what = "Resource storage and column storage must have separate pointer provenance. Two raw pointers from the same struct may alias in LLVM's view, so it cannot prove that a column store does not affect a resource read, and without separation it reloads resources from memory every iteration instead of keeping them in registers. This is a pointer provenance issue and not the shared-reference versus exclusive-reference issue: the fix is pointer separation and not the reference type."
+mechanism = "Measured overhead without separation: 1.28-1.40x (T6 L1654-1658). `cw()` store to a column versus `ru()` read of a resource."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1693-1701, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1708-1712"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+**Pointer separation (T6 L1612-1687):**
+
+Resource storage and column storage must have separate pointer
+provenance. Two raw pointers from the same struct may alias in LLVM's
+view — LLVM cannot prove that a `cw()` store to one column doesn't
+affect a `ru()` read from a resource if both pointers originate from
+the same struct. Result without separation: LLVM reloads resources
+from memory every iteration instead of keeping them in registers.
+Measured: 1.28-1.40x overhead (T6 L1654-1658).
+---
+This is NOT the same issue as `&self` vs `&mut self` (the cu/cw
+noalias finding from domain 09). That prevents LLVM from reordering
+writes across fused WUs. This is a pointer provenance issue: two raw
+pointers from the same struct may alias. The fix is pointer
+separation, not reference type.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1693-1701", "founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1708-1712", "later: mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45, the_noalias_invariant_is_kept_as_an_architectural_guarantee_and_not_claimed_as_a_scalar_speedup"]
+keywords = ["pointer separation", "pointer provenance", "aliasing", "resource reload", "cw", "ru", "noalias", "registers"]
+related = ["tenet::the_context_is_taken_by_shared_reference_because_that_prevents_noalias_undefined_behaviour"]
+
+[[tenet]]
+id = "the_fiber_dispatcher_snapshots_resources_to_a_stack_local_array_before_the_morsel_loop_and_writes_mutable_ones_back_after"
+subject = "memory"
+what = "Resource data lives in a stack-local region that LLVM can prove does not alias the column pointers. Before the morsel loop the fiber dispatcher snapshots all accessed resources to a stack-local array and redirects the resource pointer to it; LLVM then promotes all resource accesses to registers, leaving zero resource memory operations in the hot loop, and after the loop the mutable resources are written back to the canonical storage."
+mechanism = "Write-back via `stp`. Bench on aarch64: without caching 21 memory operations per iteration with 6 resource reloads through `[x0, #N]` (res_ptr), read-only resources reloaded every iteration; with caching all 4 resources promoted to registers (x3, x9, x10, x13) and written back once."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1703-1706, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1714-1730"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+The fix: resource data lives in a stack-local region that LLVM can
+prove non-aliasing with column pointers. The fiber dispatcher handles
+this automatically — it knows the resource set from WU Read/Write
+declarations.
+---
+**Stack-local resource caching (T6 L1649-1687, T7 §6.1):**
+
+Before the morsel loop, the fiber dispatcher:
+1. Snapshots all accessed resources to a stack-local array
+2. Redirects res_ptr to the stack-local copy
+
+LLVM proves stack memory doesn't alias heap column data → promotes
+all resource accesses to registers. Zero resource memory ops in the
+hot loop. After the loop, mutable resources are written back to
+canonical storage via `stp`.
+
+Bench evidence (T6 L1660-1669, aarch64):
+- Without caching: 21 memory ops per iteration, 6 resource reloads
+  through `[x0, #N]` (res_ptr). Read-only resources reloaded every
+  iteration.
+- With caching: all 4 resources promoted to registers (x3, x9, x10,
+  x13). Zero resource memory ops in loop. Written back once via `stp`.
+'''
+origin = "stated"
+standing = "held"
+keywords = ["stack-local resource caching", "snapshot", "res_ptr", "register promotion", "write-back", "stp", "fiber dispatcher", "aarch64"]
+related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+
+[[tenet]]
+id = "resource_caching_is_mechanical_and_derived_from_the_unit_declarations_and_emitted_by_the_flattener"
+subject = "memory"
+what = "Resource caching is mechanical: it is derived from the resource read and write sets in the unit declarations, and the codegen flattener emits it automatically as part of the rust-pipe pattern."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1732-1734"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+The caching is mechanical — derived from the WU declarations' resource
+Read/Write sets. The codegen (domain 17 flattener) emits it
+automatically as part of the rust-pipe pattern.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1732-1734"]
+keywords = ["resource caching", "mechanical", "unit declarations", "flattener", "rust-pipe", "automatic"]
+
+[[tenet]]
+id = "the_pointer_separation_removes_the_loop_versioning_licm_concern_because_the_data_layout_fixes_aliasing"
+subject = "memory"
+what = "The earlier concern about the loop-versioning LICM pass is solved by pointer separation: no LLVM pass is needed, since the data layout itself fixes the aliasing."
+source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1773-1774"
+provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+quote = '''
+- T3 L746 LoopVersioningLICM concern → solved by pointer separation
+  (no LLVM pass needed, the data layout itself fixes aliasing)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1773-1774"]
+keywords = ["LoopVersioningLICM", "pointer separation", "data layout", "aliasing", "no LLVM pass"]
+
+[[tenet]]
+id = "platform_tiers_are_os_and_no_os_only_and_the_std_tier_is_deferred_indefinitely"
+subject = "memory"
+what = "The platform tiers are os and no_os only, and the std tier is deferred indefinitely, as a decision of the maintainer registered in workspace memory."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:165-166"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+6. Platform tiers are os and no_os only; the std tier is deferred
+   indefinitely (op decision, registered in workspace memory).
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["quote: mock/research/202606111400_canonical-design-addendum-a1.md:165-166", "quote: mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:20-32"]
+keywords = ["platform tiers", "os", "no_os", "std tier", "deferred", "workspace memory"]
+
+[[tenet]]
+id = "the_clock_is_a_builder_slot_provider_with_an_os_tier_default_and_a_null_clock_on_no_os"
+subject = "memory"
+what = "The clock is a builder-slot provider. It defaults to the os-tier monotonic clock under the default feature, and to a null clock on no_os until dependency injection supplies one. Platform inputs routed through the generic with call drop their values, so value-carrying providers get dedicated slots."
+mechanism = "`SchedulerBuilder::clock`; `.with(...)` drops platform input values."
+source = "mock/research/202606111400_canonical-design-addendum-a1.md:167-171"
+provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+quote = '''
+7. The clock is a builder-slot provider (`SchedulerBuilder::clock`),
+   defaulting to the os-tier monotonic clock under the default feature and
+   to a null clock on no_os until DI supplies one. Platform inputs routed
+   through `.with(...)` drop their values; value-carrying providers get
+   dedicated slots.
+'''
+origin = "proposed"
+written_by = "addendum A1 of 2026-06-11, constraint note 7, agent-written, elevated to canon by the addendum"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "no_os", "monotonic clock", ".with", "providers"]
+
+[[tenet]]
+id = "the_noalias_invariant_is_kept_as_an_architectural_guarantee_and_not_claimed_as_a_scalar_speedup"
+subject = "memory"
+what = "The handle store never aliases the value columns, and scalar members are snapshotted before the loop, so LLVM keeps them in registers across the morsel loop. The spec's figure of 1.28 to 1.40 times is a March 2026 distillation that the bench did not reproduce as a scalar wall-clock effect on M1, where scalars are L1-resident, but the mechanism is real and decisive for large collection members. The invariant is kept as an architectural guarantee and not as a claimed scalar speedup."
+mechanism = "Spec line 1698, figure 1.28-1.40x; not reproduced on M1 (hoist is wall-clock-nil); decisive for large collection members (axis D)."
+source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45"
+provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#the-model-stated-outright-bench-confirmed"]
+quote = '''
+5. **Noalias invariant (architectural).** The handle store never aliases the value columns
+   (separate provenance), and scalar members are snapshotted before the loop, so LLVM keeps them
+   in registers across the morsel loop. The spec's 1.28-1.40x figure (1698) is a March-2026
+   distillation; the bench did NOT reproduce it as a scalar wall-clock effect on M1 (scalars are
+   L1-resident, so the hoist is wall-clock-nil there), but the mechanism is real and it is
+   decisive for large collection members (axis D). Keep the invariant as an architectural
+   guarantee, not a claimed scalar speedup.
+'''
+origin = "proposed"
+written_by = "canonical addendum on the resource storage model, 2026-06-19, revised 2026-07-02 (bench-confirmed), agent-written; the text does not name its author"
+standing = "ratified"
+ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
+ratified_from = ["ruled: mock/research/202606210600_resource-storage-model-canonical-addendum.md:39-45", "ruled: mock/research/202606210600_storage-bench-findings.md:372-374"]
+keywords = ["noalias invariant", "architectural guarantee", "1.28-1.40x", "scalar speedup", "M1", "registers", "morsel loop", "axis D"]
+related = ["tenet::resource_and_column_pointers_must_have_separate_provenance_or_llvm_reloads_resources_every_iteration"]
+
+[[tenet]]
+id = "the_providers_crate_ships_default_resource_backed_providers_and_kit_impls_that_consumers_wire_in"
+subject = "memory"
+what = "The providers crate ships default providers, backed by resources, for the scheduler, and default kit implementations that consumers wire in. It depends on the api, string and kit crates and the foundations crates, with no dependency back on the engine."
+mechanism = "`hilavitkutin-providers`: consumes api + str + kit + the foundations crates; no reverse dep; standalone (no engine dep)."
+source = "mock/DESIGN.md.tmpl:24-24, mock/DESIGN.md.tmpl:32-32"
+provenance = ["mock::DESIGN::#crate-layout"]
+quote = '''
+| `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor) plus the declarative `InternerKit` (round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
+---
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of the workspace, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-providers", "default providers", "Resource-backed", "Kit impls", "standalone", "no engine dependency", "scheduler"]
+
+[[tenet]]
+id = "the_providers_crate_is_consumed_by_the_engine_through_kit_installation_or_direct_wiring_and_has_no_reverse_dependency"
+subject = "memory"
+what = "The providers crate ships default providers, backed by resources, for the scheduler. It is a standalone ecosystem crate that the engine consumes either by kit installation or by wiring a resource into the builder directly, with no dependency back."
+mechanism = "`builder.with(Resource::new(...))` direct wiring, or kit installation."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:3-6"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#hilavitkutin-providers"]
+quote = '''
+Default Resource-backed providers for the hilavitkutin scheduler.
+Standalone ecosystem crate: consumed by the engine via Kit
+installation or via direct `builder.with(Resource::new(...))`
+wiring, no reverse dep.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["hilavitkutin-providers", "Resource-backed providers", "standalone ecosystem crate", "kit installation", "direct wiring", "no reverse dependency"]
+related = ["tenet::the_providers_crate_ships_default_resource_backed_providers_and_kit_impls_that_consumers_wire_in"]
+
+[[tenet]]
+id = "the_interner_provider_trait_parallels_the_memory_and_clock_provider_traits_and_the_value_lives_in_a_resource_without_a_thread_safety_bound_in_the_first_version"
+subject = "memory"
+what = "The interner provider trait has the same shape as the memory provider and clock provider traits, with methods to intern a string into a handle and to resolve a handle back to a string if present. It is bound to live as long as the program so that the value can live in a resource, and the first version does not require it to be shareable between threads, because the engine's resource access is sequential during single-thread morsel dispatch. A synchronised arena variant is tracked in the backlog as the future generalisation."
+mechanism = "`InternerApi`: `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`; `'static` so it can live in a `Resource<T>`; v0 does not require `Send + Sync`; the Sync arena variant is in BACKLOG."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:20-20, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:37-41"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`. |
+---
+The trait carries `'static` so the value can live in a
+`Resource<T>`. v0 does not require `Send + Sync` on the provider
+because the engine's resource access pattern is sequential during
+single-thread morsel dispatch. The Sync arena variant in BACKLOG
+tracks the future generalisation.
+'''
+because = "The engine's resource access pattern is sequential during single-thread morsel dispatch."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["InternerApi", "intern", "resolve", "MemoryProviderApi", "ClockApi", "'static", "no Send + Sync", "single-thread morsel dispatch", "SyncArena"]
+
+[[tenet]]
+id = "a_unit_that_handles_interned_strings_declares_the_interner_accessor_in_its_context_bound_and_the_accessor_lives_in_providers_because_the_interner_is_opt_in"
+subject = "memory"
+what = "Units that handle interned strings, such as lexers, file walkers and diagnostic emitters, declare the interner accessor in the bound of their context tuple and intern and resolve through it from within execution. The accessor lives in the providers crate and not in the api crate, because the platform contracts in the api crate for memory, thread pool and clock are the surfaces the engine requires, while the interner is an opt-in provider and not an engine prerequisite."
+mechanism = "`pub trait HasInterner { type Provider: InternerApi; fn interner(&self) -> &Self::Provider; }`, mirroring `HasMemoryProvider` / `HasClock`; usage `ctx.interner().intern(s)` / `ctx.interner().resolve(handle)` inside `execute()`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:21-21, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:30-35, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:43-55"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `HasInterner` | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
+---
+### `InternerApi`
+
+The provider shape. WorkUnits that handle `Str` (lexers, file
+walkers, diagnostic emitters, etc.) declare `HasInterner` in their
+`Ctx` tuple bound and call `ctx.interner().intern(s)` /
+`ctx.interner().resolve(handle)` from within `execute()`.
+---
+### `HasInterner`
+
+```rust
+pub trait HasInterner {
+ type Provider: InternerApi;
+ fn interner(&self) -> &Self::Provider;
+}
+```
+
+The accessor lives in providers, not in api. The platform
+contracts in api (memory / threadpool / clock) are the
+engine-required surfaces; the interner is an opt-in provider, not
+an engine prerequisite.
+'''
+because = "The platform contracts in api (memory / threadpool / clock) are the engine-required surfaces; the interner is an opt-in provider, not an engine prerequisite."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["HasInterner", "Ctx tuple bound", "interner accessor", "opt-in provider", "platform contracts", "HasMemoryProvider", "HasClock", "execute", "Str"]
+related = ["tenet::the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"]
+
+[[tenet]]
+id = "the_memory_arena_is_an_inline_storage_interner_with_const_generic_byte_and_entry_caps_and_overflow_returns_a_sentinel_id"
+subject = "memory"
+what = "The default interner backing holds its bytes and its entry table inline, with the byte capacity and the entry capacity as const generics that a consumer tunes to its workload. Each runtime-interned string gets a sequential 28-bit identifier, which is its entry index, and when the arena runs out of bytes or entry slots the intern call returns a sentinel identifier."
+mechanism = "`MemoryArena<BYTES, ENTRIES>`: `[u8; BYTES]` plus `[Entry; ENTRIES]` where each entry records `(offset, len)`; interior mutability via `Cell` for the cursor and entry count and `UnsafeCell` for the buffer and table; `arena_resolve(id)` slices `[offset..offset+len]`; overflow returns sentinel id `u32::MAX` from `arena_intern`. It is the inline-storage `ArenaInterner` impl that backs the default `StringInterner`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:22-22, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:57-71"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
+---
+### `MemoryArena<BYTES, ENTRIES>`
+
+Inline-storage `ArenaInterner` impl. Holds `[u8; BYTES]` bytes plus
+an `[Entry; ENTRIES]` table where each entry records `(offset,
+len)` for a previously-interned string. Interior mutability via
+`Cell` for the cursor and entry count, `UnsafeCell` for the
+buffer and table.
+
+Each runtime-interned string gets a sequential 28-bit id (the
+entry index). `arena_resolve(id)` looks up the entry and slices
+`[offset..offset+len]` from the byte buffer.
+
+Capacity overflow (out of bytes or out of entry slots) returns
+sentinel id `u32::MAX` from `arena_intern`. Consumers tune
+`BYTES` and `ENTRIES` to their workload.
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["MemoryArena", "BYTES", "ENTRIES", "inline storage", "ArenaInterner", "28-bit id", "sentinel u32::MAX", "arena_intern", "arena_resolve", "capacity overflow"]
+
+[[tenet]]
+id = "the_default_interner_constructor_takes_two_const_generics_because_byte_capacity_and_entry_count_are_independent_dimensions"
+subject = "memory"
+what = "A constant function builds the default string interner over a memory arena. It takes two const generics, because the byte capacity and the entry count are independent dimensions that a consumer tunes, and consumers wire the result onto the scheduler as a resource."
+mechanism = "`pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>() -> StringInterner<MemoryArena<BYTES, ENTRIES>> { StringInterner::new(MemoryArena::new()) }`; wiring `builder.with(Resource::new(default_interner::<BYTES, ENTRIES>()))`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:23-23, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:78-91"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.with(Resource::new(...))` directly or implicitly through `InternerKit`. |
+---
+### `default_interner()` constructor
+
+```rust
+pub const fn default_interner<const BYTES: usize, const ENTRIES: usize>()
+ -> StringInterner<MemoryArena<BYTES, ENTRIES>>
+{
+ StringInterner::new(MemoryArena::new())
+}
+```
+
+Consumers wire it onto the scheduler with
+`builder.with(Resource::new(default_interner::<BYTES, ENTRIES>()))`.
+Two const generics because byte capacity and entry-count are
+independent dimensions a consumer tunes.
+'''
+because = "Byte capacity and entry-count are independent dimensions a consumer tunes."
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["default_interner", "const fn", "BYTES", "ENTRIES", "StringInterner", "two const generics", "Resource::new", "wiring building block"]
+
+[[tenet]]
+id = "the_default_column_storage_is_a_naive_arena_backed_placeholder_the_engine_stays_generic_over_and_the_columnar_engine_replaces_later"
+subject = "memory"
+what = "The default backing for the unified columnar store is a naive arena-backed implementation of the column storage contract. The engine stays generic over the column storage type, so consumers and the engine's own tests wire this one in as the concrete store, and the columnar engine replaces it later without touching any consumer of the contract. The allocator is a memory provider type, and a second parameter caps the number of distinct columns."
+mechanism = "`ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>>`; `D::Array<Maybe<ColumnSlot>>` fixed slot table recording each column's base / bytes / record count, indexed by `StoreId`; `Dim<256>` matches the engine's `Mask256` store ceiling; `hilavitkutin_api::ColumnStorage`; `CS: ColumnStorage`."
+source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:28-28, mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:147-163"
+provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+quote = '''
+| `ArenaColumnStorage<M, D>` | Naive arena-backed `ColumnStorage` impl: the default backing for the unified columnar store. `M: MemoryProviderApi` is the allocator; `D: Capacity = Dim<256>` caps the distinct-column count. Placeholder shape; the columnar engine replaces it later without touching any `CS: ColumnStorage` consumer. |
+---
+### `ArenaColumnStorage<M, D>`
+
+The default backing for the unified columnar store
+(`hilavitkutin_api::ColumnStorage`). A naive arena placeholder: the
+engine stays generic over `CS: ColumnStorage`, and consumers (and the
+engine's own tests) wire this in as the concrete store. The columnar
+engine replaces it later without touching any `CS: ColumnStorage`
+consumer.
+
+```rust
+pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
+    // M: the allocator. D: caps the distinct-column count (Dim<256>
+    // matches the engine's Mask256 store ceiling). A fixed slot table
+    // D::Array<Maybe<ColumnSlot>> records each column's base / bytes /
+    // record count, indexed by StoreId.
+}
+```
+'''
+origin = "proposed"
+written_by = "the design template of hilavitkutin-providers, agent-written, undated"
+standing = "provisional"
+stamped_by = "maintainer"
+stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+keywords = ["ArenaColumnStorage", "ColumnStorage", "CS: ColumnStorage", "placeholder", "MemoryProviderApi", "Capacity", "Dim<256>", "Mask256", "StoreId", "slot table"]
+related = ["tenet::the_consumer_provides_the_backing_memory_of_a_column"]

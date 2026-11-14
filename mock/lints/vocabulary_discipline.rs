@@ -3,12 +3,12 @@
 //! The engine's vocabulary is fixed (DESIGN.md "Vocabulary" section):
 //! `pipeline, core, phase, waist, trunk, fiber, branch, bridge,
 //! morsel, micro-morsel, entry, record`. The following terms are
-//! DEAD — they map onto canonical terms and must not be introduced:
+//! DEAD: they map onto canonical terms and must not be introduced:
 //!
 //! | Dead term    | Use instead           |
 //! |--------------|-----------------------|
 //! | chain        | fiber                 |
-//! | chain_group  | trunk                 |
+//! | chain_group  | trunk <!-- tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements --> |
 //! | partition    | phase                 |
 //! | archetype    | fiber                 |
 //! | entity       | record                |
@@ -30,6 +30,7 @@ pub fn lint() -> Box<dyn CrateLint> {
 struct VocabularyDiscipline;
 
 const DEAD_TERMS: &[(&str, &str)] = &[
+    // `chain_group` is a name tenet::the_dead_terms_chain_chain_group_partition_archetype_entity_row_and_order_have_named_replacements retires.
     (
         "chain_group",
         "use `trunk` (the canonical term for a group of fibers)",
@@ -103,7 +104,7 @@ impl CrateLint for VocabularyDiscipline {
                         line_idx + 1,
                         "vocabulary-discipline",
                         format!(
-                            "dead vocabulary term `{}` — {}: {}",
+                            "dead vocabulary term `{}`, {}: {}",
                             needle,
                             remedy,
                             trimmed.trim(),

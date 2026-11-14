@@ -516,7 +516,7 @@ pub extern "C" fn asm_gate_windowed_fibers() -> u64 {
 // Same two-chain carrier as fixture 5, driven through `run_parallel` instead of
 // `run`, so the A4 per-fiber window loop compiles and runs under the gate build.
 //
-// FIXME(35e2aa2b5329): this fixture does NOT yet prove the parallel dispatch body is
+// FIXME(placeholders_tagged_35e2aa2b5329): this fixture does NOT yet prove the parallel dispatch body is
 // devirtualised, and the gate's PASS must not be read as if it did. The
 // per-record work runs in `run_core_phase`, which emits no scannable symbol:
 // `nm` finds neither `run_core_phase` nor `worker_main` in the dylib, because

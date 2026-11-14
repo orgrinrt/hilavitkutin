@@ -1,0 +1,50 @@
+8b6bf0e chore: lock src changelist 202611131450
+00c092f chore: turn on the workflow pack and cite a task from each placeholder
+9594b53 chore: lock doc changelist 202611131444
+22f6bfa docs: name in one row the two it governs, and say so in the changelist
+d4932c1 chore: lock doc changelist 202611131444
+3898674 docs: count the placeholder markers on the merged tree
+3e633cf chore: lock doc changelist 202611131444
+89c4346 docs: write the doc changelist for the workflow pack round
+510088e docs: move the cited lines to where the trunk now has them
+f254a3d Merge remote-tracking branch 'origin/dev' into work/canon-registry
+bc4a2ad docs: shape the rows and declare the kinds the workflow pack reads
+311a2ae feat: install a swapped resource value under a provisional spec
+c490269 docs: audit hilavitkutin as part of the stack
+c5f337a docs: list both sides where two founding texts disagree
+e28c3cf docs: fill the rows as ratified by default, stamped or listed for op
+49ab344 feat: land the recovered engine source, tests and bench variants
+ab63d61 bench: measure single trunk convergence against hand written loops
+fcef2c4 docs: add the rows of the last three change lists of the rounds
+dc8c0fc docs: add the rows of the change lists of the plan and gate rounds
+dcf0666 docs: record that the engine benches so far are a baseline
+19306d5 docs: ask which dispatch holds below ten thousand records
+63745c1 docs: record what op said hilavitkutin is for
+2e57b81 docs: declare the fields a ratification by default is written in
+e2250eb docs: add the rows of the change list of the identity rounds
+a497873 docs: give the three states of the overflow rule in the answers
+3a3f2ea docs: add rows from what the rounds of july 2026 changed
+5f36cff docs: mark three statements about loimu as the founding record's
+bb12f7f docs: add the frame view sketch to the buffering answer
+a09b08f docs: record ikiuni on buffering and loimu as a reference
+ada51bb chore: port the lints to the one view of the tree
+d15e306 docs: revise the answers from the swap and adapt work
+8a087be docs: add rows from the adapt and snapshot topics of may 2026
+e323185 fix: call the lint context's sources as methods in the two local lints
+6e971d1 docs: keep the perf gate section under the corrected findings
+6524900 docs: land the unlanded bench results and their run history
+7697b52 docs: add rows from the amendments, principles and crate designs
+dea05de docs: record the four answers of 13 november as question rows
+6727a6a docs: add the ledger of the read as it stands
+ce0561b chore: close design round 202611130854
+6a4a28c chore: lock src changelist 202611131002
+de9bcd3 docs: state that the registry round changes no source
+ed5f615 chore: lock doc changelist 202611130854
+1bc70e0 docs: name the answers and the split files in the doc changelist
+fcb988b docs: answer the eight questions from the record
+6609491 docs: port the founding spec to registry rows
+daa957e docs: declare the registry kinds and port the first rows
+c1c6e9a docs: open the topic for a registry of the record
+c42d707 feat: make an append past capacity a refusal the consumer configures
+27abd8a research: sketch a branded index for exclusive column writes
+26e926b fix: spell the notko git source by https
