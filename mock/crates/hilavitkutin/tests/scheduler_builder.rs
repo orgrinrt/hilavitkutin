@@ -1,13 +1,12 @@
 //! SchedulerBuilder type-state tests.
 //!
-//! Round 4 reshape: Kit becomes declarative
-//! (`type Units; type Owned`), `add_kit` is type-level only,
-//! SchedulerBuilder loses cap const generics, `.build()` proves
-//! `Stores: HoldsAll<Wus::AccumRead> + HoldsAll<Wus::AccumWrite>`.
+//! A Kit is declarative (`type Units; type Owned`), and `.build()` proves
+//! the stores registered hold every store the units read and write.
 //!
 //! Two layers of tests:
 //!
-//! 1. Smoke tests with `Wus = Empty` exercising store accumulation.
+//! 1. Store-only tests that read back what each registration put in the
+//!    store list: a value, a column's records, a position.
 //! 2. WU-bearing tests with a Stub + TestCtx shim. These exercise
 //!    the load-bearing HoldsAll proof reduction.
 //!
@@ -130,12 +129,21 @@ pub struct Interner;
 pub struct Workspace;
 #[derive(Copy, Clone, Default)]
 pub struct FileInfo;
-// A column no kit owns, for the raw registration beside a kit.
+// A column no kit owns, for the raw registration beside a kit. It carries a
+// value so a smoke can read back what it registered.
 #[derive(Copy, Clone, Default)]
-pub struct Notes;
+pub struct Notes(u32);
 // A second one, registered after a kit.
 #[derive(Copy, Clone, Default)]
 pub struct Marks;
+// A resource no kit owns, with a value to read back.
+#[derive(Copy, Clone)]
+pub struct Tally(u32);
+
+// One scalar field, register-cached, so it adds nothing to the L1 morsel budget.
+impl hilavitkutin_api::footprint::ResourceFootprint for Tally {
+    const L1_BYTES: USize = USize(0);
+}
 
 // ---------------------------------------------------------------------
 // Kits (declarative shape).
@@ -170,44 +178,84 @@ impl Kit for WorkspaceKit {
 // ---------------------------------------------------------------------
 
 // An empty builder with a provider is the no-store base case: a scheduler
-// requires a memory provider, and nothing else.
+// requires a memory provider, and nothing else. Its plan and meta storage still
+// come from the provider, and a frame of it runs.
 #[test]
 fn empty_build() {
     let built = Scheduler::builder().build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+    let notko::Outcome::Ok(mut scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    assert!(matches!(scheduler.run::<(), _>(), notko::Outcome::Ok(())));
 }
 
 #[test]
 fn raw_resource_registration_builds() {
     let built = Scheduler::builder()
-        .with(Resource::new(Interner))
+        .with(Resource::new(Tally(7)))
         .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    // SAFETY: the binding holds the registered value; the scheduler is alive.
+    let tally = unsafe { *scheduler.__bindings().__ptr().as_ptr() };
+    assert_eq!(
+        tally.0, 7,
+        "the resource holds the value it was registered with"
+    );
 }
 
 #[test]
 fn raw_column_registration_builds() {
+    const RECORDS: usize = 4;
     let built = Scheduler::builder()
-        .with(Column::<FileInfo>::start())
-        .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+        .with(Column::<Notes>::start_from(Notes(5)))
+        .build(store(), USize(RECORDS));
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    let base = scheduler.__bindings().__ptr().as_ptr() as *const Notes;
+    for i in 0 .. RECORDS {
+        // SAFETY: the column holds RECORDS reserved records; the scheduler is alive.
+        let note = unsafe { *base.add(i) };
+        assert_eq!(note.0, 5, "record {i} starts from the registered value");
+    }
 }
 
+// A kit's stores have no binding node, so what a kit registers shows in the
+// position of a raw column registered ahead of it: past every store the kit
+// owns.
 #[test]
 fn kit_only_builds() {
     let built = Scheduler::builder()
+        .with(Column::<Notes>::start())
         .with(InternerKit)
         .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    assert_eq!(
+        scheduler.__bindings().__pos(),
+        USize(1),
+        "the kit's one store sits ahead of the column in the store list"
+    );
 }
 
 #[test]
 fn two_kits_chained_build() {
     let built = Scheduler::builder()
+        .with(Column::<Notes>::start())
         .with(InternerKit)
         .with(WorkspaceKit)
         .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    assert_eq!(
+        scheduler.__bindings().__pos(),
+        USize(3),
+        "both kits' three stores sit ahead of the column in the store list"
+    );
 }
 
 // The raw column is one the kit does not own. A column registered twice, once
@@ -216,12 +264,30 @@ fn two_kits_chained_build() {
 // type annotation.
 #[test]
 fn mixed_kit_and_raw_build() {
+    const RECORDS: usize = 4;
     let built = Scheduler::builder()
         .with(WorkspaceKit)
-        .with(Resource::new(Interner))
-        .with(Column::<Notes>::start())
-        .build(store(), USize(0));
-    assert!(built.is_ok(), "the builder must accept this registration");
+        .with(Resource::new(Tally(7)))
+        .with(Column::<Notes>::start_from(Notes(5)))
+        .build(store(), USize(RECORDS));
+    let notko::Outcome::Ok(scheduler) = built else {
+        panic!("the builder must accept this registration");
+    };
+    let notes = scheduler.__bindings();
+    assert_eq!(
+        notes.__pos(),
+        USize(0),
+        "the last store registered leads the list"
+    );
+    let base = notes.__ptr().as_ptr() as *const Notes;
+    for i in 0 .. RECORDS {
+        // SAFETY: the column holds RECORDS reserved records; the scheduler is alive.
+        let note = unsafe { *base.add(i) };
+        assert_eq!(note.0, 5, "record {i} starts from the registered value");
+    }
+    // SAFETY: the binding holds the registered value; the scheduler is alive.
+    let tally = unsafe { *notes.__tail().__ptr().as_ptr() };
+    assert_eq!(tally.0, 7, "the resource beside the kit holds its value");
 }
 
 // A kit's stores have a place in the store list and no value of their own,
@@ -456,17 +522,6 @@ fn two_wus_with_two_kits_build() {
         .with(DiscoverFiles)
         .build(store(), USize(0));
     assert!(built.is_ok(), "the builder must accept this registration");
-}
-
-// ---------------------------------------------------------------------
-// Type-state shape verification (declarative Kit).
-// ---------------------------------------------------------------------
-
-#[test]
-fn kit_declarative_shape_typechecks() {
-    fn _type_check_only<K: Kit>() {}
-    _type_check_only::<InternerKit>();
-    _type_check_only::<WorkspaceKit>();
 }
 
 // ---------------------------------------------------------------------
