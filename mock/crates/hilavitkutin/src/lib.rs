@@ -11,17 +11,19 @@
 
 #![no_std]
 #![allow(incomplete_features)]
-// generic_const_exprs is WATCH-tier per the unstable-feature soundness sweep
-// (task #626). Post the capacity-as-type migration (#652) the engine's own
-// plan/thread/dispatch arrays are sized by the arvo `Capacity` TYPE, so no
-// `cap_size` sits in an array-length position internally. The one residual GCE
-// use is `core_program::synthesise_core_programs`, which projects per-core
-// capacities into the unmigrated hilavitkutin-api `CoreProgram`'s `usize`
-// min-const-generic positions via `CoreProgram<{ cap_size(C::CAP) }, ...>`;
-// that const-argument expression keeps the gate live. `adt_const_params` is no
-// longer needed (no `Cap` const-generic params survive in the engine; the
-// remaining const generics are plain `usize` on the api `CoreProgram`).
+// FIXME(placeholders_tagged_2311ca65fd66): `generic_const_exprs` is not a feature this crate may
+// keep, and it stays enabled for one residual use. The engine's own plan,
+// thread and dispatch arrays are sized by the arvo `Capacity` type and need no
+// const expression. `core_program::synthesise_core_programs` still projects
+// the per-core capacities into the api's `CoreProgram`, whose const parameters
+// are `usize`, through `CoreProgram<{ cap_size(C::CAP) }, ...>`, and that const
+// argument expression keeps the gate live until `CoreProgram` takes the
+// capacity type.
 #![feature(generic_const_exprs)]
+// adt_const_params (vetted, unstable-features.md): the api's `Reach<C, N>`
+// carries its reach as a `Cap` const parameter, and the engine implements its
+// column walks for that member, which names the parameter.
+#![feature(adt_const_params)]
 // const_trait_impl (vetted WATCH, unstable-features.md): the dispatch-order
 // machinery (`plan::project::MaskProject`, `dispatch::order`) computes the
 // per-unit access masks and the topological dispatch order in a const context,

@@ -1,0 +1,25 @@
+# Sketch: one constructor name for a buffered column's start, whose meaning
+# follows the element type in a fixed sequence of tiers.
+# Its own workspace, so the repository's build never sees it.
+
+[workspace]
+
+[package]
+name = "buffered-start-by-type"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+# `refused-no-start` turns on one function that must not compile, so the
+# compiler's own words can be read again with `cargo build --features <it>`.
+# `mutant-no-inherent` takes the inherent tier away, and with it
+# `cargo test --features mutant-no-inherent` is red.
+[features]
+refused-no-start = []
+mutant-no-inherent = []

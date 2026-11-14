@@ -6,7 +6,7 @@
 //! the other cores own nothing in the phase. Head+tail convergence, which
 //! would let a second core take the tail of that range, is designed and not
 //! built, and the N-way record split that once stood in for it is deleted.
-//! The column is poisoned before the run, so a record left unwritten by a
+//! The column starts at u32::MAX, so a record left unwritten by a
 //! range gap, or written by more than one core, fails the per-record assert.
 //! The assertion is the one convergence has to keep when it lands.
 //!
@@ -34,7 +34,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -78,9 +78,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
 
 const N: usize = 256;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Fv(u32);
 
 type ColIn = Cons<Column<Inv>, Empty>;
@@ -133,23 +133,21 @@ impl WorkUnit<Always> for Filler {
 fn run_parallel_single_trunk_phase_covers_every_record_once() {
     let provider = BumpProvider::<8192>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Fv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Fv>::start_from(Fv(u32::MAX)))
         .with(Filler(None))
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));
 
-    // Host-populate In[i] = i (absolute) and poison Fv so an unwritten record (a
+    // Host-populate In[i] = i (absolute). Fv starts at u32::MAX so an unwritten record (a
     // range gap) is caught as garbage. Fv is the head column (last registered);
     // In sits one tail down.
     // SAFETY: both columns reserved for N records of u32; the scheduler (hence
     // arena) is alive; each slot is written once here before the run.
-    let fv_base = scheduler.__bindings().__ptr().as_ptr() as *mut u32;
     let in_base = scheduler.__bindings().__tail().__ptr().as_ptr() as *mut u32;
     for i in 0 .. N {
         unsafe {
             *in_base.add(i) = i as u32;
-            *fv_base.add(i) = u32::MAX;
         }
     }
 
@@ -160,11 +158,11 @@ fn run_parallel_single_trunk_phase_covers_every_record_once() {
 
     // Every record written exactly once with Fv = i*7: the owning core walked
     // the single trunk over windows covering [0,N). A gap leaves the
-    // poison value; a wrong window writes the wrong i.
-    let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const u32;
+    // start value; a wrong window writes the wrong i.
+    let base = scheduler.as_ref().__bindings().__ptr().as_ptr() as *const Fv;
     for i in 0 .. N {
         // SAFETY: Fv holds N reserved records; the scheduler is alive.
-        let v = unsafe { *base.add(i) };
+        let v = unsafe { (*base.add(i)).0 };
         assert_eq!(
             v,
             (i as u32) * 7,
@@ -184,8 +182,8 @@ fn a_single_trunk_phase_is_walked_from_head_and_tail() {
 
     let provider = BumpProvider::<8192>::new();
     let scheduler = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Fv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Fv>::start())
         .with(Filler(Some(&SEEN)))
         .build(store(provider), USize(N))
         .unwrap_or_else(|_| panic!("build should succeed"));

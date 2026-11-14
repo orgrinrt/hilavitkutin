@@ -54,7 +54,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use rcm_common::{HeapBump, fnv1a_u32_slice};
@@ -64,7 +64,7 @@ static ORDER: Mutex<Vec<usize>> = Mutex::new(Vec::new());
 
 macro_rules! def_col {
     ($($name:ident)*) => { $(
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         pub struct $name(pub u32);
     )* };
 }
@@ -196,35 +196,35 @@ macro_rules! mark_all_inputs_dirty {
 
 macro_rules! reg_columns {
     ($b:expr) => {
-        $b.with(Column::<O0>::new())
-            .with(Column::<O1>::new())
-            .with(Column::<O2>::new())
-            .with(Column::<O3>::new())
-            .with(Column::<O4>::new())
-            .with(Column::<O5>::new())
-            .with(Column::<O6>::new())
-            .with(Column::<O7>::new())
-            .with(Column::<O8>::new())
-            .with(Column::<O9>::new())
-            .with(Column::<O10>::new())
-            .with(Column::<O11>::new())
-            .with(Column::<E0>::new())
-            .with(Column::<E1>::new())
-            .with(Column::<E2>::new())
-            .with(Column::<E3>::new())
-            .with(Column::<E4>::new())
-            .with(Column::<E5>::new())
-            .with(Column::<E6>::new())
-            .with(Column::<E7>::new())
-            .with(Column::<E8>::new())
-            .with(Column::<E9>::new())
-            .with(Column::<E10>::new())
-            .with(Column::<E11>::new())
-            .with(Column::<E12>::new())
-            .with(Column::<E13>::new())
-            .with(Column::<E14>::new())
-            .with(Column::<E15>::new())
-            .with(Column::<E16>::new())
+        $b.with(Column::<O0>::start())
+            .with(Column::<O1>::start())
+            .with(Column::<O2>::start())
+            .with(Column::<O3>::start())
+            .with(Column::<O4>::start())
+            .with(Column::<O5>::start())
+            .with(Column::<O6>::start())
+            .with(Column::<O7>::start())
+            .with(Column::<O8>::start())
+            .with(Column::<O9>::start())
+            .with(Column::<O10>::start())
+            .with(Column::<O11>::start())
+            .with(Column::<E0>::start())
+            .with(Column::<E1>::start())
+            .with(Column::<E2>::start())
+            .with(Column::<E3>::start())
+            .with(Column::<E4>::start())
+            .with(Column::<E5>::start())
+            .with(Column::<E6>::start())
+            .with(Column::<E7>::start())
+            .with(Column::<E8>::start())
+            .with(Column::<E9>::start())
+            .with(Column::<E10>::start())
+            .with(Column::<E11>::start())
+            .with(Column::<E12>::start())
+            .with(Column::<E13>::start())
+            .with(Column::<E14>::start())
+            .with(Column::<E15>::start())
+            .with(Column::<E16>::start())
     };
 }
 

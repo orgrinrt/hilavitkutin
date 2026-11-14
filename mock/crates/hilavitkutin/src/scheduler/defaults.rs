@@ -62,6 +62,7 @@ impl<Cfg: RunCfg> Default for Scheduler<Cfg, WuNil, SvEmpty, NullColumnStorage> 
             read_masks:           <<DefaultPlanDims as PlanDims>::Units as Capacity>::filled(
                 AccessMask::empty(),
             ),
+            band_writes:          crate::plan::BandWrites::none(),
             store_dirty:          Cell::new(AccessMask::empty()),
             first_frame:          AtomicBool::new(true),
             plan_band:            AtomicBool::new(true),

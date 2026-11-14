@@ -7,7 +7,7 @@
 //! `Field`, `Seq`, and `Map` are access-and-intent views over this one
 //! store, not independent or arena-backed mechanisms.
 //!
-//! This is the contract surface (domain 07). The arena-backed default
+//! This is the contract surface. The arena-backed default
 //! impl ships separately; bespoke per-subsystem arenas are forbidden.
 
 use arvo::USize;

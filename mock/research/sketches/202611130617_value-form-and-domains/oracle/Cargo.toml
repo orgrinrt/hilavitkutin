@@ -1,0 +1,9 @@
+[package]
+name = "oracle"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+api.workspace = true
+plumb.workspace = true

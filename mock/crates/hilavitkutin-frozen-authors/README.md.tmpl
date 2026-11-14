@@ -1,0 +1,11 @@
+### hilavitkutin-frozen-authors
+
+Work units written the way a consumer writes them, beside a hand model of
+what a frame of them computes, and frozen: once landed, a file of this crate
+changes only through a line in its `BREAKS.toml`, and a lint fails when a
+file's content no longer matches its `LEDGER.toml` hash. The units are in the
+value form, one of them reads its neighbours on two axes, and between them
+they emit every kind of trigger. `no_std`, no alloc. Depends on
+`hilavitkutin-api` and on the engine for the context type a unit names. Its
+tests run the units under the reference runner and under each entry of the
+scheduler and hold the two to each other.

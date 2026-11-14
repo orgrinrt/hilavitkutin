@@ -110,6 +110,8 @@ pub const trait CarrierMasks<Stores, Witnesses, CS: Capacity> {
     const LEN: usize; // lint:allow(no-bare-numeric) reason: carrier-length const-generic root (no-bare-primitives.md exception 2); tracked: #649
 
     /// Write each unit's read/write mask at its carrier position, from `pos`.
+    /// The read mask holds the stores a read waits on, so a buffered column,
+    /// read at its frozen side, is left out of it.
     fn fill(reads: &mut [AccessMask<CS>], writes: &mut [AccessMask<CS>], pos: USize);
 }
 
@@ -137,7 +139,7 @@ where
     #[inline]
     fn fill(reads: &mut [AccessMask<CS>], writes: &mut [AccessMask<CS>], pos: USize) {
         let i = pos.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal array index; tracked: #121
-        reads[i] = <W::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
+        reads[i] = <W::Read as MaskProject<Stores, RI, CS>>::project_waits(AccessMask::empty());
         writes[i] = <W::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
         <T as CarrierMasks<Stores, WT, CS>>::fill(reads, writes, USize(i + 1)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: carrier-position successor; tracked: #121
     }
@@ -170,7 +172,7 @@ where
     #[inline]
     fn fill(reads: &mut [AccessMask<CS>], writes: &mut [AccessMask<CS>], pos: USize) {
         let i = pos.0; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal array index; tracked: #121
-        reads[i] = <W::Read as MaskProject<Stores, RI, CS>>::project_mask(AccessMask::empty());
+        reads[i] = <W::Read as MaskProject<Stores, RI, CS>>::project_waits(AccessMask::empty());
         writes[i] = <W::Write as MaskProject<Stores, WI, CS>>::project_mask(AccessMask::empty());
         <T as CarrierMasks<Stores, WT, CS>>::fill(reads, writes, USize(i + 1)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: carrier-position successor; tracked: #121
     }

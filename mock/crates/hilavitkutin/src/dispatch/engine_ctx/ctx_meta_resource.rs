@@ -8,10 +8,13 @@
 //! it reaches them without any visibility widening.
 
 use arvo::USize;
-use hilavitkutin_api::access::{AccessSet, Contains};
+use hilavitkutin_api::access::{AccessSet, Holds};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::context::{
+    AccumReaderApi,
     ColumnReaderApi,
+    HasAccumReader,
+    ResolveAccumRead,
     ResolveColumnRead,
     ResolveResource,
     ResourceProviderApi,
@@ -19,8 +22,9 @@ use hilavitkutin_api::context::{
 use hilavitkutin_api::meta::MetaAccess;
 use hilavitkutin_api::store::{Column, Resource};
 
-use super::selectors::{ColSelector, SnapSelector};
-use super::{EngineCtx, MetaRef};
+use super::col_select::ColSelector;
+use super::selectors::SnapSelector;
+use super::{AccSnap, EngineCtx, MetaRef};
 use crate::meta::MetaField;
 
 // E4 slice 3: the meta accessor, present ONLY on a Ctx carrying a `MetaRef`
@@ -59,6 +63,75 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt>
     }
 }
 
+// The accumulator reader, on a maintenance unit's context alone. An ordinary
+// unit's context has no `appended()`, so it cannot read an accumulator: the
+// records of one are whole only once the units that append have returned.
+
+/// A maintenance unit's context, seen as the reader of the pass's appends.
+///
+/// `appended()` hands this out and not the context itself. The reader's
+/// `each` and the context's own `each()` would otherwise be two methods of
+/// one name on one type, and a unit that imports both accessor traits could
+/// call neither without spelling the trait out.
+#[repr(transparent)]
+pub struct Appended<Ctx>(Ctx);
+
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt> AccumReaderApi<R>
+    for Appended<EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>>
+{
+}
+
+impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt> HasAccumReader<R>
+    for EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>
+{
+    type Provider = Appended<Self>;
+
+    #[inline(always)]
+    fn appended(&self) -> &Self::Provider {
+        // SAFETY: `Appended<Ctx>` is `repr(transparent)` over `Ctx`, so the
+        // two have one layout and a shared reference to the context is a
+        // shared reference to the view, for the same lifetime.
+        unsafe { &*(self as *const Self as *const Appended<Self>) }
+    }
+}
+
+// ResolveAccumRead: walk the prefix of the accumulator's buffer that was
+// populated when the context was bound, in the sequence it was appended in.
+//
+// SAFETY: `resolve_each` reads the records `[0, len)` of the buffer and no
+// other, where `len` is the accumulator's live length at the binding of the
+// context. Every one of them was written by an append, so each read is of an
+// initialised record inside the reservation.
+unsafe impl<
+    'frame,
+    R: AccessSet,
+    W: AccessSet,
+    RBundle,
+    RCols,
+    WCols,
+    WAccum,
+    WVirt,
+    T: ColumnValue,
+    I,
+> ResolveAccumRead<T, I>
+    for Appended<EngineCtx<'frame, R, W, RBundle, RCols, WCols, WAccum, WVirt, MetaRef<'frame>>>
+where
+    RBundle: SnapSelector<AccSnap<T>, I>,
+{
+    #[inline]
+    fn resolve_each<F: FnMut(T)>(&self, mut f: F) {
+        let acc = <RBundle as SnapSelector<AccSnap<T>, I>>::get(&self.0.reads);
+        let mut i = 0; // lint:allow(no-bare-numeric) reason: record index along the populated prefix; tracked: #121
+        while i < acc.len.0 {
+            // SAFETY: `i < len`, and the append rule wrote every record below
+            // the live length inside the reserved buffer. The units that
+            // append have returned, so nothing writes the buffer now.
+            f(unsafe { core::ptr::read(acc.base.as_ptr().add(i)) });
+            i += 1; // lint:allow(no-bare-numeric) reason: record index step; tracked: #121
+        }
+    }
+}
+
 // ResourceProviderApi: resolve `&T` via the resource bundle Selector.
 
 impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, MP>
@@ -67,7 +140,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     #[inline]
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         <Self as ResolveResource<T, I>>::resolve_resource(self)
@@ -100,7 +173,7 @@ impl<'frame, R: AccessSet, W: AccessSet, RBundle, RCols, WCols, WAccum, WVirt, M
     #[inline]
     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         // SAFETY: forwarded to the bridge; the caller's obligation (the
@@ -129,17 +202,16 @@ where
 {
     #[inline]
     unsafe fn resolve_read(&self, i: USize) -> T {
-        let ptr = <RCols as ColSelector<T, I>>::get(&self.read_cols);
+        let col = <RCols as ColSelector<T, I>>::get(&self.read_cols);
         let idx = USize(self.morsel.start.0 + i.0);
         // B3 treats the column buffer as `[T]`-shaped at stride
         // `size_of::<T>()`; sub-byte bitpacking (using `T::BIT_WIDTH`)
         // is a later round.
-        // SAFETY: the column bundle holds a `ColumnPtr<T>` at the
-        // witnessed index `I` only because `R: Contains<Column<T>>`
-        // placed it there. The caller (the engine, via plan-time DAG
-        // analysis) guarantees the slot at `idx` is initialised and the
-        // buffer is at least `start + len` records long. Valid for
-        // `'frame`.
-        unsafe { core::ptr::read(ptr.as_ptr().add(idx.0)) }
+        // SAFETY: the column bundle holds the plain column of `T` at the
+        // witnessed index `I` only because the unit's read list placed it
+        // there. The caller (the engine, via plan-time DAG analysis)
+        // guarantees the slot at `idx` is initialised and the buffer is at
+        // least `start + len` records long. Valid for `'frame`.
+        unsafe { core::ptr::read(col.read.as_ptr().add(idx.0)) }
     }
 }

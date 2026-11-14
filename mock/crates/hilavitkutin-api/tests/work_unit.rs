@@ -7,12 +7,46 @@
 #![no_std]
 
 use arvo::USize;
+use hilavitkutin_api::values::{RCons, RNil};
 use hilavitkutin_api::{
-    AccessSet, Always, Atomic, BatchApi, Column, ColumnReaderApi, ColumnValue, ColumnWriterApi,
-    Contains, EachApi, HasBatch, HasColumnReader, HasColumnWriter, HasEach, HasReduce,
-    HasResourceProvider, HasVirtualFirer, Immediate, Normal, BuilderInput, Plannable, ReduceApi,
-    ResolveColumnRead, ResolveColumnWrite, ResolveResource, ResolveVirtualFire, Resource,
-    ResourceProviderApi, UnitDispatch, Virtual, VirtualFirerApi, WorkUnit, read, write,
+    AccessSet,
+    Always,
+    Atomic,
+    BatchApi,
+    BuilderInput,
+    Column,
+    ColumnReaderApi,
+    ColumnValue,
+    ColumnWriterApi,
+    EachApi,
+    HasBatch,
+    HasColumnReader,
+    HasColumnWriter,
+    HasEach,
+    HasReduce,
+    HasResourceProvider,
+    HasVirtualFirer,
+    Holds,
+    Immediate,
+    Normal,
+    Plannable,
+    ReadVals,
+    RecordOp,
+    ReduceApi,
+    ResolveColumnRead,
+    ResolveColumnWrite,
+    ResolveResource,
+    ResolveVirtualFire,
+    Resource,
+    ResourceProviderApi,
+    UnitDispatch,
+    Virtual,
+    VirtualFirerApi,
+    WorkUnit,
+    WriteVals,
+    read,
+    rec,
+    write,
 };
 
 // --- Stub provider (all-in-one) --------------------------------------
@@ -22,7 +56,7 @@ struct Stub;
 impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     unsafe fn read<T: ColumnValue, I>(&self, _i: USize) -> T
     where
-        R: Contains<Column<T>>,
+        R: Holds<Column<T>>,
         Self: ResolveColumnRead<T, I>,
     {
         // Not actually called in this compile-only test; return a
@@ -33,19 +67,12 @@ impl<R: AccessSet> ColumnReaderApi<R> for Stub {
     }
 }
 
-impl<W: AccessSet> ColumnWriterApi<W> for Stub {
-    unsafe fn write<T: ColumnValue, I>(&self, _i: USize, _v: T)
-    where
-        W: Contains<Column<T>>,
-        Self: ResolveColumnWrite<T, I>,
-    {
-    }
-}
+impl<W: AccessSet> ColumnWriterApi<W> for Stub {}
 
 impl<R: AccessSet> ResourceProviderApi<R> for Stub {
     fn resource<T: 'static, I>(&self) -> &T
     where
-        R: Contains<Resource<T>>,
+        R: Holds<Resource<T>>,
         Self: ResolveResource<T, I>,
     {
         // SAFETY: compile-only test body does not invoke this path.
@@ -70,12 +97,16 @@ impl<T: ColumnValue, I> ResolveColumnRead<T, I> for Stub {
 
 impl<T: ColumnValue, I> ResolveColumnWrite<T, I> for Stub {
     unsafe fn resolve_write(&self, _i: USize, _v: T) {}
+
+    unsafe fn resolve_held(&self, _i: USize) -> T {
+        unsafe { core::mem::zeroed() }
+    }
 }
 
 impl<W: AccessSet> VirtualFirerApi<W> for Stub {
     fn fire<V: 'static, I>(&self)
     where
-        W: Contains<Virtual<V>>,
+        W: Holds<Virtual<V>>,
         Self: ResolveVirtualFire<V, I>,
     {
     }
@@ -119,6 +150,7 @@ struct Ctx {
 
 impl<R: AccessSet> HasColumnReader<R> for Ctx {
     type Provider = Stub;
+
     fn reader(&self) -> &Stub {
         &self.p
     }
@@ -126,6 +158,7 @@ impl<R: AccessSet> HasColumnReader<R> for Ctx {
 
 impl<W: AccessSet> HasColumnWriter<W> for Ctx {
     type Provider = Stub;
+
     fn writer(&self) -> &Stub {
         &self.p
     }
@@ -133,6 +166,7 @@ impl<W: AccessSet> HasColumnWriter<W> for Ctx {
 
 impl<R: AccessSet> HasResourceProvider<R> for Ctx {
     type Provider = Stub;
+
     fn resources(&self) -> &Stub {
         &self.p
     }
@@ -140,6 +174,7 @@ impl<R: AccessSet> HasResourceProvider<R> for Ctx {
 
 impl<W: AccessSet> HasVirtualFirer<W> for Ctx {
     type Provider = Stub;
+
     fn virtuals(&self) -> &Stub {
         &self.p
     }
@@ -147,6 +182,7 @@ impl<W: AccessSet> HasVirtualFirer<W> for Ctx {
 
 impl<R: AccessSet, W: AccessSet> HasEach<R, W> for Ctx {
     type Provider = Stub;
+
     fn each(&self) -> &Stub {
         &self.p
     }
@@ -154,6 +190,7 @@ impl<R: AccessSet, W: AccessSet> HasEach<R, W> for Ctx {
 
 impl<R: AccessSet, W: AccessSet> HasBatch<R, W> for Ctx {
     type Provider = Stub;
+
     fn batch(&self) -> &Stub {
         &self.p
     }
@@ -161,6 +198,7 @@ impl<R: AccessSet, W: AccessSet> HasBatch<R, W> for Ctx {
 
 impl<R: AccessSet, W: AccessSet> HasReduce<R, W> for Ctx {
     type Provider = Stub;
+
     fn reduce(&self) -> &Stub {
         &self.p
     }
@@ -175,15 +213,15 @@ struct GravFired;
 struct Integrate;
 
 impl BuilderInput for Integrate {
-    type Init = Self;
     type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
 }
 
 impl WorkUnit<Always> for Integrate {
+    type Ctx<'frame> = Ctx;
+    type Hint = (Immediate, Atomic, Normal);
     type Read = read![Column<Pos>, Column<Vel>];
     type Write = write![Column<Pos>, Virtual<GravFired>];
-    type Hint = (Immediate, Atomic, Normal);
-    type Ctx<'frame> = Ctx;
 
     fn execute<'frame>(&self, _ctx: &Ctx) {
         // Body is trivial: the test is that this compiles.
@@ -193,7 +231,9 @@ impl WorkUnit<Always> for Integrate {
 #[test]
 fn wu_compiles_and_executes() {
     let wu = Integrate;
-    let ctx = Ctx { p: Stub };
+    let ctx = Ctx {
+        p: Stub,
+    };
     wu.execute(&ctx);
 }
 
@@ -212,20 +252,53 @@ fn workunit_is_plannable_via_blanket() {
         A: SameAs<B>,
     {
     }
-    type_eq::<
-        <Integrate as Plannable<Always>>::Read,
-        <Integrate as WorkUnit<Always>>::Read,
-    >();
-    type_eq::<
-        <Integrate as Plannable<Always>>::Write,
-        <Integrate as WorkUnit<Always>>::Write,
-    >();
-    type_eq::<
-        <Integrate as Plannable<Always>>::Hint,
-        <Integrate as WorkUnit<Always>>::Hint,
-    >();
+    type_eq::<<Integrate as Plannable<Always>>::Read, <Integrate as WorkUnit<Always>>::Read>();
+    type_eq::<<Integrate as Plannable<Always>>::Write, <Integrate as WorkUnit<Always>>::Write>();
+    type_eq::<<Integrate as Plannable<Always>>::Hint, <Integrate as WorkUnit<Always>>::Hint>();
 }
 
 // Minimal reflexive same-type witness: `A: SameAs<B>` holds only when A == B.
 trait SameAs<B> {}
 impl<T> SameAs<T> for T {}
+
+// --- The value function under a name ---------------------------------
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+struct Level(u32);
+
+struct Double;
+
+impl BuilderInput for Double {
+    type Dispatch = UnitDispatch<Self>;
+    type Init = Self;
+}
+
+impl WorkUnit<Always> for Double {
+    type Ctx<'frame> = Ctx;
+    type Hint = (Immediate, Atomic, Normal);
+    type Read = read![Column<Level>];
+    type Write = write![Column<Level>];
+
+    fn execute<'frame>(&self, _ctx: &Ctx) {}
+}
+
+impl RecordOp<Always> for Double {
+    fn apply(
+        &self,
+        read: &ReadVals<'_, <Self as WorkUnit<Always>>::Read>,
+    ) -> WriteVals<<Self as WorkUnit<Always>>::Write> {
+        rec![Level(read.get(Column::<Level>::new()).0 * 2)]
+    }
+}
+
+// `RecordOp` reads the unit's own two lists and declares none of its own:
+// the function is applied to a read product and returns the write product.
+#[test]
+fn record_op_is_the_function_over_the_units_own_lists() {
+    let read = ReadVals::<read![Column<Level>]>(RCons {
+        head: Level(21),
+        tail: RNil,
+    });
+    let out = Double.apply(&read);
+    assert_eq!(out.get(Column::<Level>::new()), Level(42));
+}

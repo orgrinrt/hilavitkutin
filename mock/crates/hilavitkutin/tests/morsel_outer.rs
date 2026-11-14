@@ -52,7 +52,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -75,7 +75,7 @@ const CONSUMER_TAG: u8 = 1;
 // The payload exists only to give the producer something to write and the
 // consumer something to read (the RAW edge that orders them); the test asserts
 // dispatch order, not the value, so the field is intentionally not inspected.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)]
 struct Cv(u32);
 
@@ -148,9 +148,9 @@ impl WorkUnit<Always> for ConsumerWu {
 #[test]
 fn accumulator_free_pipeline_dispatches_morsel_outer() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(65536);
+    let provider = StableProvider::new(65536, 0);
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cv>::new())
+        .with(Column::<Cv>::start())
         .with(ProducerWu)
         .with(ConsumerWu)
         .build(store(provider), USize(RECORDS))
@@ -236,10 +236,10 @@ impl WorkUnit<Always> for AppenderA {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_A_TAG));
-        // SAFETY: `build` reserved the `Accum<Av>` buffer for the record count
+        // `build` reserved the `Accum<Av>` buffer for the record count
         // (>= the one append per dispatch) and the plan proved this unit the
         // exclusive appender; the append stays within the reservation.
-        unsafe { ctx.accums().append::<Av, _>(Av(1)) };
+        ctx.accums().append::<Av, _>(Av(1));
     }
 }
 
@@ -271,9 +271,9 @@ impl WorkUnit<Always> for AppenderB {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(APPENDER_B_TAG));
-        // SAFETY: as above, for the `Accum<Bv>` buffer this unit exclusively
+        // As above, for the `Accum<Bv>` buffer this unit exclusively
         // appends to.
-        unsafe { ctx.accums().append::<Bv, _>(Bv(1)) };
+        ctx.accums().append::<Bv, _>(Bv(1));
     }
 }
 
@@ -292,7 +292,7 @@ fn accumulator_pipeline_dispatches_unit_outer() {
     // post-GATE-1 Approach-A `FiberCons` nesting (#670); the flat walk cannot
     // slice the carrier per unit at a runtime morsel index.
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
-    let provider = StableProvider::new(131072);
+    let provider = StableProvider::new(131072, 0);
     let mut scheduler = Scheduler::builder()
         .with(Accum::<Av>::new())
         .with(Accum::<Bv>::new())

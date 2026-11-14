@@ -1,0 +1,90 @@
+error[E0277]: the trait bound `Column<Heat, Plane>: Committed` is not satisfied
+  --> tests/ui/fail/07_a_neighbour_read_names_a_column_written_in_place.rs:14:17
+   |
+14 |     type Read = Cons<Near<Field, East1, Cold>, Empty>;
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Committed` is not implemented for `Column<Heat, Plane>`
+   |
+help: the trait `Committed` is implemented for `Buffered<T, D>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | impl<T: Copy + 'static, D: Domain> Committed for Buffered<T, D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: required for `Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>` to implement `Member`
+   = note: required for `Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>` to implement `ReadList`
+note: required by a bound in `api::RecordOp::Read`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Read: ReadList;
+   |                ^^^^^^^^ required by this bound in `RecordOp::Read`
+
+error[E0277]: the trait bound `Column<Heat, Plane>: Committed` is not satisfied
+  --> tests/ui/fail/07_a_neighbour_read_names_a_column_written_in_place.rs:15:18
+   |
+15 |     type Write = Cons<Field, Empty>;
+   |                  ^^^^^^^^^^^^^^^^^^ the trait `Committed` is not implemented for `Column<Heat, Plane>`
+   |
+help: the trait `Committed` is implemented for `Buffered<T, D>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | impl<T: Copy + 'static, D: Domain> Committed for Buffered<T, D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: required for `Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>` to implement `Member`
+   = note: required for `Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>` to implement `ReadList`
+   = note: required for `Cons<Column<Heat, Plane>, api::Empty>` to implement `Along<Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>>`
+note: required by a bound in `api::RecordOp::Write`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   |     type Write: Along<Self::Read>;
+   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `RecordOp::Write`
+
+error[E0277]: `Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>` has no product
+   --> tests/ui/fail/07_a_neighbour_read_names_a_column_written_in_place.rs:17:5
+    |
+ 17 |     fn apply(&self, _: &Vals<Self::Read>) -> Vals<Self::Write> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Project` is not implemented for `Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>`
+    |
+    = note: A product is defined for lists built from `Empty` and `Cons<H, T>` whose every member implements `Elem`, so the usual cause is a member that names no value type, or a tail that is not a list.
+note: required by a bound in `Vals`
+   --> /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/has.rs:146:20
+    |
+146 | pub struct Vals<L: Project>(pub L::Prod<Val>);
+    |                    ^^^^^^^ required by this bound in `Vals`
+
+error[E0277]: the trait bound `Column<Heat, Plane>: Committed` is not satisfied
+  --> tests/ui/fail/07_a_neighbour_read_names_a_column_written_in_place.rs:14:22
+   |
+14 |     type Read = Cons<Near<Field, East1, Cold>, Empty>;
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Committed` is not implemented for `Column<Heat, Plane>`
+   |
+help: the trait `Committed` is implemented for `Buffered<T, D>`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | impl<T: Copy + 'static, D: Domain> Committed for Buffered<T, D> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required by a bound in `Near`
+  --> $WORKSPACE/api/src/lib.rs
+   |
+   | pub struct Near<C, O, E>(PhantomData<(C, O, E)>)
+   |            ---- required by a bound in this struct
+   | where
+   |     C: Committed,
+   |        ^^^^^^^^^ required by this bound in `Near`
+
+error[E0277]: the trait bound `Column<Heat, Plane>: Committed` is not satisfied
+   --> tests/ui/fail/07_a_neighbour_read_names_a_column_written_in_place.rs:17:25
+    |
+ 17 |     fn apply(&self, _: &Vals<Self::Read>) -> Vals<Self::Write> {
+    |                         ^^^^^^^^^^^^^^^^ the trait `Committed` is not implemented for `Column<Heat, Plane>`
+    |
+help: the trait `Committed` is implemented for `Buffered<T, D>`
+   --> $WORKSPACE/api/src/lib.rs
+    |
+    | impl<T: Copy + 'static, D: Domain> Committed for Buffered<T, D> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for `Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>` to implement `Elem`
+    = note: required for `Cons<Near<Column<Heat, Plane>, Cons<Shift<East, 1>, api::Empty>, Cold>, api::Empty>` to implement `Project`
+note: required by a bound in `Vals`
+   --> /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/has.rs:146:20
+    |
+146 | pub struct Vals<L: Project>(pub L::Prod<Val>);
+    |                    ^^^^^^^ required by this bound in `Vals`

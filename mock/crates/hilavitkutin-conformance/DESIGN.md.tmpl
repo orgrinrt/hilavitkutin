@@ -1,0 +1,184 @@
+# hilavitkutin-conformance Design Overview
+
+`#![no_std]`, no alloc. The instruments a runner of work units is held to: a
+one-thread reference runner that states what a frame means, a digest that
+writes a frame's stores down as one word, and the laws, which are functions
+over what runs wrote down. It depends on `hilavitkutin-api`, `arvo`,
+`arvo-hash`, `notko` and `notko-hlist`, and on nothing of the engine.
+
+## Purpose
+
+The engine has three entries that run a frame, `run`, `run_parallel` and
+`run_fused`, and a planner that is free to split the records into morsels,
+spread them over cores, fuse units into one loop and rest a unit whose inputs
+did not change. All of that is allowed only because none of it may change what
+a frame computes. This crate holds the other half of that sentence: what a
+frame computes, written once, in the plainest form there is, so that every
+entry and every plan can be compared with it.
+
+The reference runner takes value-form units through `RecordOp::apply` and
+nothing else of them. It never calls `execute`, so it needs no context type and
+no plan, and a unit written for the scheduler runs under it as it stands. It
+keeps its stores in storage the caller lends, which is what keeps it free of an
+allocator and lets the same code run on every target.
+
+It is one crate and not a crate for each instrument. The digest produces the
+words the laws compare and the runner produces the run they are compared with,
+so nothing takes one of the three without the others, and a crate each would
+put three entries in the layout for one kit.
+
+## The frame's meaning
+
+One frame, as the runner keeps it.
+
+1. Every virtual is unfired and every accumulator is empty.
+2. The units run in the sequence they are listed, each over every record of the
+   count the runner was built with.
+3. A unit with the schedule `On<V>` runs only when `V` was fired earlier in the
+   frame. A unit with the schedule `Always` runs in every frame.
+4. A read of a plain column sees what the column holds at that moment, so a unit
+   listed behind a writer of the column reads what the writer wrote.
+5. A read of a buffered column sees the frozen side, whatever the frame has
+   written. A write to a buffered column lands on the live side.
+6. An append lands behind the appends before it, so an accumulator holds its
+   values in the sequence of the units and, inside a unit, of the records.
+7. At the boundary, after the last unit, each buffered column that was written
+   in the frame brings its live side in: by a copy under `Snapshot`, by trading
+   the two sides under `Exchange`. A buffered column nobody wrote is left alone.
+
+Point 3 is where the runner differs from the engine on purpose. The engine may
+rest an `Always` unit under the incremental skip, and the engine's design says
+that this is sound because a unit whose input cone did not change produces
+identical output whether it runs or not. The runner rests nothing, so it is the
+thing a skip has to equal.
+
+A read with a reach is a `Window` over the same side an ordinary read of the
+store sees, with the runner's record count as its extent.
+
+## What the runner answers for
+
+The meaning above is stated for a unit list in which every unit that fires a
+virtual `V` stands ahead of every `On<V>` unit. The engine gives a virtual
+fired behind its consumer a meaning across passes, and the runner does not
+restate that. It refuses instead, with a value, and so does every other frame
+it cannot keep.
+
+| `Refusal` | When |
+|---|---|
+| `Short` | A lent column or side holds fewer records than the count the runner was built with. |
+| `Full` | An append found the lent accumulator full. |
+| `FiredBehind` | A unit fired a virtual after an `On` unit of that virtual had already been asked in the frame. |
+
+A refusal ends the frame where it was met. The stores are left as they were at
+that point and the runner is not meant to be used further.
+
+## The runner's surface
+
+`Oracle<W, K, V>` is the runner over a world `W`. A world is a nested pair of
+`Lent` stores ending in `()`, one for each store the units name, found by type
+the way the api finds a member of an access set. `K` is how the frame is kept
+and defaults to `Faithful`. `V` is the sequence the records are visited in and
+defaults to `Ascending`.
+
+```rust
+let world = (
+    Lent::<Column<Pos>>::over(&mut pos),
+    (Lent::<Buffered<Heat, Exchange>>::over(&mut frozen, &mut live), ()),
+);
+let mut oracle = Oracle::<_>::new(world, records)?;
+oracle.frame(&(Drift, (Spread, ())))?;
+let heat = oracle.of::<Buffered<Heat, Exchange>, _>().frozen();
+```
+
+`frame` is `units` followed by `boundary`. The two halves are public so that a
+caller can read the stores between the last unit and the boundary, which is
+what the isolation law is recorded from.
+
+Each store kind has its lent form, and each form gives back what a frame left
+in it.
+
+| Store | Lent as | Read back |
+|---|---|---|
+| `Column<T>` | `Plain`, one slice | `values` |
+| `Buffered<T, M>` | `Sides`, a frozen and a live slice | `frozen` |
+| `Accum<T>` | `Events`, a slice and a count | `appended` |
+| `Virtual<V>` | `Flag` | `fired` |
+| `Resource<T>` | `Held`, one shared reference | nothing, a frame never writes it |
+
+The traits under the surface are the type-level walk and are public because
+the bounds of `frame` name them: `Kept` ties a store marker to its lent form,
+`Find` finds a store in a world, `Reads` and `Writes` say what one member of a
+read or write set does at one record, `Gather` and `Scatter` do that for a
+whole set, `Due` says whether a schedule runs, `Units` walks a unit list, and
+`Brings` is the boundary of one buffer mode.
+
+## Visiting
+
+`Ascending` visits record zero first and is the reference. `Descending` visits
+the last record first. For every unit list the engine admits, the two leave the
+same columns and the same flags behind, which is what the split law is checked
+with on the runner itself. An accumulator's appends come out in the sequence of
+the visiting, so a comparison across visitings records them sorted.
+
+`Visiting` is sealed. A third sequence is a change to this crate.
+
+## Mutants
+
+A law that cannot fail holds nothing. `Keeping` is the trait `Faithful`
+implements, and beside it stand the mutants: each keeps a frame wrongly in one
+named way, and each is there to be run through the same laws and seen to fail.
+They ship in the crate, under `oracle::mutant`, so that a consumer who holds a
+runner of its own to the laws has the failing cases to hand as well.
+
+| Mutant | What it gets wrong | Law it fails |
+|---|---|---|
+| `ReadsLive` | A read of a buffered column sees the live side. | model, isolation |
+| `WritesFrozen` | A write to a buffered column lands on the frozen side, in place. | model, split, isolation |
+| `BringsUnwritten` | The boundary brings in a live side nobody wrote. | model, isolation |
+| `SkipsLast` | The last record visited is left out. | model |
+| `KeepsAppends` | An accumulator is not emptied at the start of a frame. | model |
+| `KeepsFlags` | A virtual stays fired across the boundary. | model |
+| `RunsUntriggered` | An `On` unit runs whether its virtual fired or not. | model |
+
+`Keeping` is sealed, and its members are constants a frame folds over, so the
+faithful runner carries no branch a mutant would take.
+
+## The digest
+
+`Word` is 64 bits, `arvo::Bits<64, Hot>`, and is what every recorded run is made
+of. `Fold` folds words into one: FNV-1a over 64 bits, from `arvo-hash`, over
+each word's bytes least significant first, so neither the host's byte sequence
+nor its pointer width enters. A digest of a frame is the fold of the frame's
+recorded words, and a digest stream is one such word a frame.
+
+How a store's values become words is the caller's to say, since the values are
+the unit author's types. The crate asks only that the same stores are recorded
+in the same sequence on both sides of a comparison.
+
+## The laws
+
+A law is a function over recorded words that returns a `Verdict`: `Holds`, or
+`Fails` with the `Law` and a `Breach` that says where it first failed. A law
+runs nothing. The caller runs, records and hands the records over, so a law
+reads the same over any runner.
+
+| Function | `Law` | It holds when |
+|---|---|---|
+| `model` | `Model` | The run's words equal the model's, in the same sequence. |
+| `split` | `Split` | Every stream equals the first. The streams are runs that differ only in how the records were split and visited: the entry, the worker count, the morsel size, the visiting. |
+| `isolation` | `Isolation` | The frozen sides before the boundary equal the frozen sides the frame began with, and the committed sides of runs that began with different live sides are equal. |
+
+A `Breach` is `Differs` with the stream and the word, `Length` with the stream
+where two records are not of one length, or `TooFew` where a law that compares
+runs with each other was handed fewer than two. Streams are counted from zero:
+for `model` stream zero is the run; for `split` the first stream is the
+reference and the rest count from one; for `isolation` stream zero is the
+frozen sides before the boundary and the poisoned runs count from one, the
+first of them being the reference for the rest.
+
+## What is not here
+
+The crate holds no units and no model of any. The author units the engine is
+held with, and the hand model beside them, are `hilavitkutin-frozen-authors`.
+The comparison of the host's digest stream with another target's is a tool of
+the repository, not of this crate.

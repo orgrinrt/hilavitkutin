@@ -1,0 +1,24 @@
+[package]
+name = "hilavitkutin-conformance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The reference runner, the digest and the laws a runner of hilavitkutin work units is held to."
+repository.workspace = true
+readme = "README.md"
+
+[dependencies]
+hilavitkutin-api.workspace = true
+arvo.workspace = true
+arvo-hash.workspace = true
+notko.workspace = true
+notko-hlist.workspace = true
+
+[dev-dependencies]
+# The test units name the engine's context type, as every unit does. Dev-dep
+# only: the library is written against the api and never against the engine.
+hilavitkutin.workspace = true
+arvo-tensor.workspace = true
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

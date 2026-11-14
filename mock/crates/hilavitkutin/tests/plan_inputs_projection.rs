@@ -15,19 +15,29 @@
 // (`Dim<N>`), so no `generic_const_exprs` gate is needed: the store
 // capacity is a type, not a `Cap` const generic.
 
-use arvo::{Bool, USize};
+use arvo::{Bool, Cap, USize};
 use arvo_tensor::Dim;
-use hilavitkutin::plan::project::project_access_set;
 use hilavitkutin::plan::AccessMask;
+use hilavitkutin::plan::project::project_access_set;
 use hilavitkutin_api::access::{Cons, Empty};
+use hilavitkutin_api::store::{Accum, Buffered, Column, Resource};
+use hilavitkutin_api::{Differs, Reach, Written};
 
 type Stores8 = Dim<8>; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test store capacity; Dim<N> array-length root; tracked: #649
 
-// Store marker types. Their position in `Stores` is their bit index.
-struct SA;
-struct SB;
-struct SC;
-struct SD;
+const ONE: Cap = arvo_tensor::cap(1);
+
+#[derive(Copy, Clone, PartialEq)]
+struct Va(u32);
+#[derive(Copy, Clone, PartialEq)]
+struct Vd(u32);
+
+// The stores, one of each kind a mask has a bit for. Their position in
+// `Stores` is their bit index.
+type SA = Column<Va>;
+type SB = Resource<u16>;
+type SC = Accum<u8>;
+type SD = Buffered<Vd>;
 
 // Global store list: SA=0, SB=1, SC=2, SD=3.
 type Stores = Cons<SA, Cons<SB, Cons<SC, Cons<SD, Empty>>>>;
@@ -64,7 +74,11 @@ fn same_store_lands_on_same_bit_across_sets() {
     let r: AccessMask<Stores8> = project_access_set::<ReadSet, Stores, _, Stores8>();
     assert_eq!(w.contains(B1), Bool::TRUE);
     assert_eq!(r.contains(B1), Bool::TRUE);
-    assert_eq!(w.overlaps(&r), Bool::TRUE, "shared store SB => overlap (dep edge)");
+    assert_eq!(
+        w.overlaps(&r),
+        Bool::TRUE,
+        "shared store SB => overlap (dep edge)"
+    );
 }
 
 #[test]
@@ -80,4 +94,54 @@ fn distinct_sets_project_to_distinct_masks() {
     assert_eq!(a.contains(B0), Bool::TRUE);
     assert_eq!(a.contains(B3), Bool::FALSE);
     assert_eq!(d.overlaps(&a), Bool::FALSE, "disjoint stores => no overlap");
+}
+
+// A wrapper names its column's store, so it sets the column's bit: a reader
+// listing the column with a reach and a writer listing it under `Written` or
+// `Differs` meet the unit listing it bare at one bit, and the plan sees the
+// edge between them.
+#[test]
+fn a_wrapper_projects_to_the_bit_of_its_column() {
+    let bare: AccessMask<Stores8> = project_access_set::<Cons<SA, Empty>, Stores, _, Stores8>();
+    let reach: AccessMask<Stores8> =
+        project_access_set::<Cons<Reach<SA, ONE>, Empty>, Stores, _, Stores8>();
+    let written: AccessMask<Stores8> =
+        project_access_set::<Cons<Written<SA>, Empty>, Stores, _, Stores8>();
+    let differs: AccessMask<Stores8> =
+        project_access_set::<Cons<Differs<SA>, Empty>, Stores, _, Stores8>();
+    assert_eq!(bare.contains(B0), Bool::TRUE);
+    assert_eq!(
+        reach.raw(),
+        bare.raw(),
+        "Reach<Column<_>> sets the column's bit and no other"
+    );
+    assert_eq!(
+        written.raw(),
+        bare.raw(),
+        "Written<Column<_>> sets the column's bit and no other"
+    );
+    assert_eq!(
+        differs.raw(),
+        bare.raw(),
+        "Differs<Column<_>> sets the column's bit and no other"
+    );
+}
+
+// The same over a buffered column, which sits at bit 3 here. The mask of a
+// wrapped member differs from the plain column's, so the wrapper is read
+// through to its own store and not to a fixed position.
+#[test]
+fn a_wrapper_over_a_buffered_column_projects_to_its_bit() {
+    let bare: AccessMask<Stores8> = project_access_set::<Cons<SD, Empty>, Stores, _, Stores8>();
+    let reach: AccessMask<Stores8> =
+        project_access_set::<Cons<Reach<SD, ONE>, Empty>, Stores, _, Stores8>();
+    let written: AccessMask<Stores8> =
+        project_access_set::<Cons<Written<SD>, Empty>, Stores, _, Stores8>();
+    let differs: AccessMask<Stores8> =
+        project_access_set::<Cons<Differs<SD>, Empty>, Stores, _, Stores8>();
+    assert_eq!(bare.contains(B3), Bool::TRUE);
+    assert_eq!(bare.contains(B0), Bool::FALSE);
+    assert_eq!(reach.raw(), bare.raw());
+    assert_eq!(written.raw(), bare.raw());
+    assert_eq!(differs.raw(), bare.raw());
 }

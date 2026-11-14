@@ -1,0 +1,50 @@
+87d997d chore: lock src changelist 202611131925
+cbcae6b fix: port the bench crates to the revised contract
+e10410a chore: lock doc changelist 202611131924
+392a4c2 docs: open a round for the bench crates the revised contract broke
+0b27a5d chore: close design round 202611130617-h6mb
+0f6e500 chore: lock src changelist 202611131627
+08fa26a docs: say in the source changelist when the generated pages landed
+efb7a71 docs: regenerate the bench pages with the buffered column's swap
+0367b57 docs: say what ships in the readme and the api and kit comments
+866cc26 test: record the run of a buffered column's swap and what it decides
+5e6887f Merge remote-tracking branch 'origin/dev' into work/api-revision
+ca50084 test: add the arms of a buffered column's swap beside the resource ones
+c35ef2b test: hold the edge rules, both unit bodies and the store positions
+271909e feat: build every crate through `hilavitkutin-build`
+c191bca feat: run a band once on one core and let ranks order registration
+99196ba feat: order by rank, cut phases at a reach and bring changes in
+44f7de2 bench: add the frame_wide member and the wide bench matrix
+eed30b2 feat: port the engine to members and add the value function
+852694e feat!: revise `hilavitkutin-api` for members and value functions
+f8371b3 chore: lock doc changelist 202611130617-h6mb
+7d23d52 Merge remote-tracking branch 'origin/dev' into work/api-revision
+81c5c58 docs: land the record from every unmerged branch
+311a2ae feat: install a swapped resource value under a provisional spec
+c490269 docs: audit hilavitkutin as part of the stack
+e2becf2 docs: restate the frame-start read on a buffered column
+5a2c531 research: sketch a column in two sides and the write members
+49ab344 feat: land the recovered engine source, tests and bench variants
+ab63d61 bench: measure single trunk convergence against hand written loops
+94abd16 docs: name the phase-loop meta dispatch among what changes
+1a64269 fix: call the lint context's sources as methods in the local lints
+419aec4 docs: ground the close in the record and ticket what stays open
+91d6758 docs: take the first review's findings into the api revision
+ada51bb chore: port the lints to the one view of the tree
+3581ac4 Merge remote-tracking branch 'origin/dev' into work/api-revision
+23972f6 docs: say where the swap spec, its benches and its source each sit
+6e971d1 docs: keep the perf gate section under the corrected findings
+2892566 docs: drop column counts and give rotation to the close unit
+6524900 docs: land the unlanded bench results and their run history
+845c92d docs: name the members of the value table in words
+06626b4 docs: restate the api revision on what the founding record designs
+288811a docs: make `append` safe with no index and settle the trunk merge
+a32fa32 Merge remote-tracking branch 'origin/dev' into work/api-revision
+c0bb6a0 research: record the registration binding bench and what it decides
+83f6f25 refactor: split the registration bench kernels into a module an arm
+8f1e976 test: bench typed registration against a run-time binding table
+22e342b research: move the binding table sketch's tests to their own file
+673963b research: sketch a binding table filled from data
+c42d707 feat: make an append past capacity a refusal the consumer configures
+8af52de docs: declare what changed means on a `Buffered` store
+f2c80f2 docs: revise the api's design in place for what kaski's engine needs

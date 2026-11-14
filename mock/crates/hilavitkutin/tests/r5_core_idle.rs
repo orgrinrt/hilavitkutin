@@ -51,7 +51,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::{ClockApi, MemoryProviderApi, Nanos, ThreadPoolApi};
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -87,13 +87,13 @@ const N: usize = 4;
 // the reserved capacity, which equals the record count at build, is refused).
 const RECORDS: usize = 64;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Av(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Bv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Combiner, never read back (the test reads idle, not Zv)
 struct Zv(u32);
 
@@ -202,17 +202,17 @@ impl WorkUnit<Always> for Combiner {
 // dependent unit forces a real interior waist, which is the park point the
 // core-idle axis measures. This is the same shape the engine's barrier-reuse
 // test uses; it yields nphases > 1.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct P2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Mv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q1v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Q2v(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written by Sink, never read back (the test reads idle, not Sv)
 struct Sv(u32);
 
@@ -395,13 +395,13 @@ macro_rules! two_waist {
     ($provider:expr) => {{
         let scheduler = Scheduler::builder()
             .clock(CounterClock::new())
-            .with(Column::<Inv>::new())
-            .with(Column::<P1v>::new())
-            .with(Column::<P2v>::new())
-            .with(Column::<Mv>::new())
-            .with(Column::<Q1v>::new())
-            .with(Column::<Q2v>::new())
-            .with(Column::<Sv>::new())
+            .with(Column::<Inv>::start())
+            .with(Column::<P1v>::start())
+            .with(Column::<P2v>::start())
+            .with(Column::<Mv>::start())
+            .with(Column::<Q1v>::start())
+            .with(Column::<Q2v>::start())
+            .with(Column::<Sv>::start())
             .with(P1)
             .with(P2)
             .with(Mid)
@@ -436,10 +436,10 @@ macro_rules! fan_in {
     ($provider:expr) => {{
         let scheduler = Scheduler::builder()
             .clock(CounterClock::new())
-            .with(Column::<Inv>::new())
-            .with(Column::<Av>::new())
-            .with(Column::<Bv>::new())
-            .with(Column::<Zv>::new())
+            .with(Column::<Inv>::start())
+            .with(Column::<Av>::start())
+            .with(Column::<Bv>::start())
+            .with(Column::<Zv>::start())
             .with(ProducerA)
             .with(ProducerB)
             .with(Combiner)
@@ -464,7 +464,7 @@ macro_rules! fan_in {
 // --- Invariant: single-core `run` crosses no waist barrier, so idle is zero. ---
 #[test]
 fn single_core_run_no_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let mut scheduler = fan_in!(provider);
     let r = scheduler.run();
     assert!(matches!(r, Outcome::Ok(())));
@@ -500,14 +500,14 @@ impl WorkUnit<Always> for AccumWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (RECORDS) with headroom over this frame's appends.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(7)) };
+        // Mark reserved (RECORDS) with headroom over this frame's appends.
+        ctx.accums().append::<Mark, _>(Mark(7));
     }
 }
 
 #[test]
 fn accum_unit_outer_no_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .clock(CounterClock::new())
         .with(Accum::<Mark>::new())
@@ -529,7 +529,7 @@ fn accum_unit_outer_no_idle() {
 // --- Measurement: an imbalanced multi-core column pipeline parks a follower. ---
 #[test]
 fn imbalanced_parallel_records_idle() {
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = two_waist!(provider);
 
     let pool = TestExecutor::new();

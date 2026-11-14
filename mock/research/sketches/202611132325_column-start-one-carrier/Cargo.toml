@@ -1,0 +1,29 @@
+# Sketch: one carrier for the start of a column, plain or buffered, and one
+# arm of the engine's store list that takes it.
+# Its own workspace, so the repository's build never sees it.
+
+[workspace]
+
+[package]
+name = "column-start-one-carrier"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+# `refused-no-start` and `refused-bare-marker` each turn on one function that
+# must not compile, so the compiler's own words can be read again with
+# `cargo build --features <it>`. `mutant-no-inherent` takes the inherent tier
+# away, and with it `cargo test --features mutant-no-inherent` is red.
+# `mutant-plain-twice` gives the plain column the kind of a buffered one, and
+# with it the test of the drain is red.
+[features]
+refused-no-start = []
+refused-bare-marker = []
+mutant-no-inherent = []
+mutant-plain-twice = []

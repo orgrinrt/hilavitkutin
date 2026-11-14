@@ -1,0 +1,17 @@
+# A root of its own, the shape `mock test` reaches a tool in: a member of the
+# workspace beside it would put this crate and what it builds on into that
+# workspace's graph.
+[workspace]
+
+[package]
+name = "cross-target"
+description = "Builds the frozen units under the reference runner for the host and for another target, runs both, and compares the digest streams."
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+publish = false
+
+[dependencies]
+# the trait crate under the name the generated collector gives it; the engine
+# patches every spelling of it to the one it is built from
+mockspace = { package = "mockspace-lint-rules", git = "https://github.com/hiisi-digital/mockspace.git", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }

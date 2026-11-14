@@ -30,7 +30,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -71,9 +71,9 @@ impl<const N: usize> MemoryProviderApi for BumpProvider<N> {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: arvo::Bool, _write: arvo::Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Inv(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Outv(u32);
 
 type OneIn = Cons<Column<Inv>, Empty>;
@@ -114,8 +114,8 @@ impl WorkUnit<Always> for Copyer {
 fn single_fiber_morsel_size_is_plan_per_fiber_value() {
     let provider = BumpProvider::<16384>::new();
     let s = Scheduler::builder()
-        .with(Column::<Inv>::new())
-        .with(Column::<Outv>::new())
+        .with(Column::<Inv>::start())
+        .with(Column::<Outv>::start())
         .with(Copyer)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));

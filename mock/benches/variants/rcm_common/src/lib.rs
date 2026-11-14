@@ -37,7 +37,7 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -46,7 +46,7 @@ static ORDER: Mutex<Vec<usize>> = Mutex::new(Vec::new());
 
 macro_rules! def_col {
     ($name:ident) => {
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone, Default)]
         pub struct $name(pub u32);
     };
 }
@@ -200,23 +200,23 @@ macro_rules! mark_all_inputs_dirty {
 
 macro_rules! reg_columns {
     ($b:expr) => {
-        $b.with(Column::<O0>::new())
-            .with(Column::<O1>::new())
-            .with(Column::<O2>::new())
-            .with(Column::<O3>::new())
-            .with(Column::<O4>::new())
-            .with(Column::<O5>::new())
-            .with(Column::<O6>::new())
-            .with(Column::<O7>::new())
-            .with(Column::<C0>::new())
-            .with(Column::<C1>::new())
-            .with(Column::<C2>::new())
-            .with(Column::<C3>::new())
-            .with(Column::<C4>::new())
-            .with(Column::<C5>::new())
-            .with(Column::<C6>::new())
-            .with(Column::<C7>::new())
-            .with(Column::<C8>::new())
+        $b.with(Column::<O0>::start())
+            .with(Column::<O1>::start())
+            .with(Column::<O2>::start())
+            .with(Column::<O3>::start())
+            .with(Column::<O4>::start())
+            .with(Column::<O5>::start())
+            .with(Column::<O6>::start())
+            .with(Column::<O7>::start())
+            .with(Column::<C0>::start())
+            .with(Column::<C1>::start())
+            .with(Column::<C2>::start())
+            .with(Column::<C3>::start())
+            .with(Column::<C4>::start())
+            .with(Column::<C5>::start())
+            .with(Column::<C6>::start())
+            .with(Column::<C7>::start())
+            .with(Column::<C8>::start())
     };
 }
 

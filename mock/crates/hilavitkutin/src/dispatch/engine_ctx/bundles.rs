@@ -6,12 +6,14 @@
 
 use hilavitkutin_api::Always;
 use hilavitkutin_api::access::{Cons, Empty};
-use hilavitkutin_api::store::{Accum, Column, Resource, Virtual};
+use hilavitkutin_api::store::{Accum, Resource, Virtual};
 
+use super::col_select::ColMember;
 use super::selectors::MetaPtrFor;
 use super::{
     AccPtrCons,
     AccPtrNil,
+    AccSnap,
     ColPtrCons,
     ColPtrNil,
     EngineCtx,
@@ -30,7 +32,9 @@ use super::{
 // access sets and its schedule. Four fold traits compute them by per-store-kind
 // dispatch over the cons-list, the same disjoint kind dispatch the `Project` /
 // `ColProject` / `AccumProject` / `VirtualProject` value projections use (no
-// specialization). Each contributing kind conses its projected node; the other
+// specialization). The column kind is every `ColMember`: a `Column`, a
+// `Buffered`, and either under a wrapper. Each contributing kind conses its
+// projected node; the other
 // three pass the tail, so the output is the kind-filtered subsequence of set
 // order, matching the runtime projection value order node for node. The meta
 // pointer keys off the schedule via the shipped `MetaPtrFor`. A consumer then
@@ -49,11 +53,13 @@ impl ResourceBundleOf for Empty {
 impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Resource<T>, Tail> {
     type Out = SnapCons<T, Tail::Out>;
 }
-impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Column<T>, Tail> {
+impl<C: ColMember, Tail: ResourceBundleOf> ResourceBundleOf for Cons<C, Tail> {
     type Out = Tail::Out;
 }
+// An accumulator in a read list is carried as its base and its length at
+// the binding of the context. A maintenance unit's context reads it.
 impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Accum<T>, Tail> {
-    type Out = Tail::Out;
+    type Out = SnapCons<AccSnap<T>, Tail::Out>;
 }
 impl<T, Tail: ResourceBundleOf> ResourceBundleOf for Cons<Virtual<T>, Tail> {
     type Out = Tail::Out;
@@ -67,8 +73,8 @@ pub trait ColBundleOf {
 impl ColBundleOf for Empty {
     type Out = ColPtrNil;
 }
-impl<T, Tail: ColBundleOf> ColBundleOf for Cons<Column<T>, Tail> {
-    type Out = ColPtrCons<T, Tail::Out>;
+impl<C: ColMember, Tail: ColBundleOf> ColBundleOf for Cons<C, Tail> {
+    type Out = ColPtrCons<C::T, Tail::Out, C::K>;
 }
 impl<T, Tail: ColBundleOf> ColBundleOf for Cons<Resource<T>, Tail> {
     type Out = Tail::Out;
@@ -96,7 +102,7 @@ impl<'frame, T, Tail: AccumBundleOf<'frame>> AccumBundleOf<'frame> for Cons<Accu
 impl<'frame, T, Tail: AccumBundleOf<'frame>> AccumBundleOf<'frame> for Cons<Resource<T>, Tail> {
     type Out = Tail::Out;
 }
-impl<'frame, T, Tail: AccumBundleOf<'frame>> AccumBundleOf<'frame> for Cons<Column<T>, Tail> {
+impl<'frame, C: ColMember, Tail: AccumBundleOf<'frame>> AccumBundleOf<'frame> for Cons<C, Tail> {
     type Out = Tail::Out;
 }
 impl<'frame, T, Tail: AccumBundleOf<'frame>> AccumBundleOf<'frame> for Cons<Virtual<T>, Tail> {
@@ -119,7 +125,7 @@ impl<'frame, V, Tail: VirtBundleOf<'frame>> VirtBundleOf<'frame> for Cons<Virtua
 impl<'frame, T, Tail: VirtBundleOf<'frame>> VirtBundleOf<'frame> for Cons<Resource<T>, Tail> {
     type Out = Tail::Out;
 }
-impl<'frame, T, Tail: VirtBundleOf<'frame>> VirtBundleOf<'frame> for Cons<Column<T>, Tail> {
+impl<'frame, C: ColMember, Tail: VirtBundleOf<'frame>> VirtBundleOf<'frame> for Cons<C, Tail> {
     type Out = Tail::Out;
 }
 impl<'frame, T, Tail: VirtBundleOf<'frame>> VirtBundleOf<'frame> for Cons<Accum<T>, Tail> {

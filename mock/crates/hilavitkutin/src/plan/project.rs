@@ -24,10 +24,21 @@ use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::access::{Cons, Empty};
 use hilavitkutin_api::column_value::ColumnValue;
 use hilavitkutin_api::footprint::ResourceFootprint;
-use hilavitkutin_api::store::{Accum, Column, Resource, StagedResource, Virtual};
+use hilavitkutin_api::member::Member;
+use hilavitkutin_api::store::{
+    Accum,
+    BufferMode,
+    Buffered,
+    Column,
+    Resource,
+    StagedResource,
+    Virtual,
+};
+use hilavitkutin_api::work_unit::Lifecycle;
 use hilavitkutin_api::{HasSchedule, WorkUnit};
 
 use super::inputs::MorselBudget;
+use super::member::PlanMember;
 use super::{AccessMask, PlanInputs};
 use crate::dispatch::engine_ctx::{Here, There};
 
@@ -91,6 +102,13 @@ impl<Target, Head, Tail, I> Locate<Target, There<I>> for Cons<Head, Tail> where
 pub const trait MaskProject<Stores, Indices, CS: Capacity> {
     /// Set this access set's bits into `mask`, returning the result.
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS>;
+
+    /// Set the bits of the stores a read of this set waits for the writers
+    /// of: every member's but those over a buffered column.
+    fn project_waits(mask: AccessMask<CS>) -> AccessMask<CS>;
+
+    /// Set the bits of the plain columns this set reads with a reach.
+    fn project_reaches(mask: AccessMask<CS>) -> AccessMask<CS>;
 }
 
 const impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
@@ -98,12 +116,25 @@ const impl<Stores, CS: Capacity> MaskProject<Stores, Empty, CS> for Empty {
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {
         mask
     }
+
+    #[inline]
+    fn project_waits(mask: AccessMask<CS>) -> AccessMask<CS> {
+        mask
+    }
+
+    #[inline]
+    fn project_reaches(mask: AccessMask<CS>) -> AccessMask<CS> {
+        mask
+    }
 }
 
-const impl<Stores, M, Tail, I, ITail, CS: Capacity> MaskProject<Stores, Cons<I, ITail>, CS>
-    for Cons<M, Tail>
+// A member sets the bit of the store it names: a wrapper (`Reach`, `Written`,
+// `Differs`) sets its column's, so a unit listing a column under one meets
+// the units listing it bare at the same bit.
+const impl<Stores, M: PlanMember, Tail, I, ITail, CS: Capacity>
+    MaskProject<Stores, Cons<I, ITail>, CS> for Cons<M, Tail>
 where
-    Stores: Locate<M, I>,
+    Stores: Locate<<M as Member>::Store, I>,
     I: WitnessIndex,
     Tail: [const] MaskProject<Stores, ITail, CS>,
 {
@@ -111,6 +142,18 @@ where
     fn project_mask(mask: AccessMask<CS>) -> AccessMask<CS> {
         let mask = mask.set(I::INDEX);
         <Tail as MaskProject<Stores, ITail, CS>>::project_mask(mask)
+    }
+
+    #[inline]
+    fn project_waits(mask: AccessMask<CS>) -> AccessMask<CS> {
+        let mask = if <M as PlanMember>::WAITS.0 { mask.set(I::INDEX) } else { mask };
+        <Tail as MaskProject<Stores, ITail, CS>>::project_waits(mask)
+    }
+
+    #[inline]
+    fn project_reaches(mask: AccessMask<CS>) -> AccessMask<CS> {
+        let mask = if <M as PlanMember>::REACHES.0 { mask.set(I::INDEX) } else { mask };
+        <Tail as MaskProject<Stores, ITail, CS>>::project_reaches(mask)
     }
 }
 
@@ -154,11 +197,18 @@ where
             WI,
             CS,
         >>::project_mask(AccessMask::empty());
+        let waits = <<W as WorkUnit<<W as HasSchedule>::Sched>>::Read as MaskProject<
+            Stores,
+            RI,
+            CS,
+        >>::project_waits(AccessMask::empty());
         let mut access = reads;
         access.union_with(&writes);
         inputs.reads.as_mut()[i] = reads;
+        inputs.frozen.as_mut()[i] = reads.without(&waits);
         inputs.writes.as_mut()[i] = writes;
         inputs.access.as_mut()[i] = access;
+        inputs.ranks.as_mut()[i] = <<W as HasSchedule>::Sched as Lifecycle>::RANK;
         inputs.commutative.as_mut()[i] = <W as WorkUnit<<W as HasSchedule>::Sched>>::COMMUTATIVE;
         let next = USize(i + 1); // lint:allow(no-bare-numeric) reason: unit-count successor; tracked: #121
         inputs.unit_count = next;
@@ -173,7 +223,7 @@ pub fn project_access_set<Set, Stores, Indices, CS: Capacity>() -> AccessMask<CS
 where
     Set: MaskProject<Stores, Indices, CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     <Set as MaskProject<Stores, Indices, CS>>::project_mask(AccessMask::empty())
 }
 
@@ -193,6 +243,10 @@ impl<T> StoreAccumKind for Accum<T> {
 }
 
 impl<T> StoreAccumKind for Column<T> {
+    const IS_ACCUM: Bool = Bool::FALSE;
+}
+
+impl<T, M: BufferMode> StoreAccumKind for Buffered<T, M> {
     const IS_ACCUM: Bool = Bool::FALSE;
 }
 
@@ -247,7 +301,7 @@ pub fn accum_stores_mask<Stores, CS: Capacity>() -> AccessMask<CS>
 where
     Stores: AccumStoresMask<CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     <Stores as AccumStoresMask<CS>>::accum_mask(
         AccessMask::empty(),
         <USize as Identity<Additive>>::IDENTITY,
@@ -273,6 +327,11 @@ const fn bytes_of_bits(bits: USize) -> USize {
 }
 
 impl<T: ColumnValue> StoreElemBytes for Column<T> {
+    const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
+}
+// A buffered column's writer stores one record of `T` on the live side, so
+// its share of a morsel's write bytes is a plain column's.
+impl<T: ColumnValue, M: BufferMode> StoreElemBytes for Buffered<T, M> {
     const BYTES: USize = bytes_of_bits(<T as ColumnValue>::BIT_WIDTH);
 }
 // A resource value's L1-morsel contribution is its Seq/Map collection
@@ -329,7 +388,7 @@ where
     Stores: StoreSizes<CS>,
     <CS as Capacity>::Array<USize>: Copy,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     let mut arr = <CS as Capacity>::filled(<USize as Identity<Additive>>::IDENTITY);
     <Stores as StoreSizes<CS>>::fill_sizes(arr.as_mut(), <USize as Identity<Additive>>::IDENTITY);
     arr
@@ -354,7 +413,7 @@ where
     Stores: AccumStoresMask<CS>,
     Stores: StoreSizes<CS>,
 {
-    StoreCeiling::<CS>::ASSERT_FITS;
+    let () = StoreCeiling::<CS>::ASSERT_FITS;
     let mut inputs = PlanInputs::new();
     inputs.record_count = record_count;
     inputs.accum_stores = accum_stores_mask::<Stores, CS>();

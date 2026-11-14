@@ -128,8 +128,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (RECORDS); appends stay within the per-core region.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (RECORDS); appends stay within the per-core region.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 
@@ -151,9 +151,9 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let pc = ctx.meta::<SchedulerMetrics>().pass_count.get();
-        // SAFETY: Mark reserved (RECORDS); the epilogue append lands at the merged
+        // Mark reserved (RECORDS); the epilogue append lands at the merged
         // live end.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(pc.0 as u32)) };
+        ctx.accums().append::<Mark, _>(Mark(pc.0 as u32));
     }
 }
 
@@ -223,7 +223,7 @@ fn carrier_band_bounds() {
 #[test]
 fn unit_outer_meta_bands_run_once_per_frame_ordered() {
     PASS_STARTS.store(0, Ordering::Relaxed);
-    let provider = StableProvider::new(16384);
+    let provider = StableProvider::new(16384, 0);
     let scheduler = Scheduler::builder()
         .with(Accum::<Mark>::new())
         .with(StartWu)

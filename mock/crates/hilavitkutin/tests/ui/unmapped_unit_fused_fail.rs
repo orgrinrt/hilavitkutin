@@ -4,8 +4,8 @@
 // a chain of `RecordOp` maps, so the carrier is refused at compile time, and
 // that missing implementation is the only error. The twin
 // `unmapped_unit_fused_pass.rs` differs only in the `impl RecordOp` block. The
-// gap in the other direction, an accumulator-writing unit that does implement
-// `RecordOp` and is accepted, is recorded by `tests/fused_append.rs`.
+// refusal in the other direction, a unit that declares its map and also
+// appends, is the pair `appending_unit_fused_{fail,pass}.rs`.
 
 use core::cell::Cell;
 
@@ -23,7 +23,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::Column;
+use hilavitkutin_api::store::{Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 
@@ -52,10 +52,10 @@ impl MemoryProviderApi for Provider {
     unsafe fn protect(&self, _ptr: *mut u8, _len: USize, _read: Bool, _write: Bool) {}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 struct Xa(u32);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Default)]
 struct Ya(u32);
 
 type ReadX = Cons<Column<Xa>, Empty>;
@@ -108,8 +108,8 @@ fn main() {
         used: Cell::new(0),
     };
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Xa>::new())
-        .with(Column::<Ya>::new())
+        .with(Column::<Xa>::start())
+        .with(Column::<Ya>::start())
         .with(MapWu)
         .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));

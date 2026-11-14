@@ -18,9 +18,16 @@ path = "src/lib.rs"
 name = "benches"
 path = "src/main.rs"
 
+# The bench driver is the one binary a plain build of this package makes, which
+# is what `cargo mock bench run` asks of it. The gate is built on request:
+# `cargo run --bin asm_gate --features asm-gate`.
 [[bin]]
 name = "asm_gate"
 path = "src/bin/asm_gate.rs"
+required-features = ["asm-gate"]
+
+[features]
+asm-gate = []
 
 [dependencies]
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "a81e1956361a205261b90e5214dde932db4f1913", features = ["std"] }

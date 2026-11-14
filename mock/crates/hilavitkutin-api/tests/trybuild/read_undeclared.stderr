@@ -1,0 +1,15 @@
+error[E0277]: the read list `Cons<Column<Temp>, Cons<Column<Damp>, hilavitkutin_api::Empty>>` has no value for `Column<Wind>`
+  --> tests/trybuild/read_undeclared.rs:13:7
+   |
+13 |     r.get(Column::<Wind>::new())
+   |       ^^^ the trait `ReadAt<Column<Wind>, There<There<_>>>` is not implemented for `Cons<Column<Temp>, Cons<Column<Damp>, hilavitkutin_api::Empty>>`
+   |
+   = note: A value function reads the members its unit declared in `type Read`, each named as it is written there (a `Reach` is read as the `Reach`). If the compiler reports `type annotations needed` instead, the list names the member twice.
+note: required by a bound in `ReadVals::<'a, R>::get`
+  --> src/values.rs
+   |
+   |     pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
+   |            --- required by a bound in this associated function
+   |     where
+   |         R: ReadAt<M, P>,
+   |            ^^^^^^^^^^^^ required by this bound in `ReadVals::<'a, R>::get`

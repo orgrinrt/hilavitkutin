@@ -120,8 +120,8 @@ impl WorkUnit<Always> for ConsumerWu {
     type Write = AccW;
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-        // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(9)) };
+        // Mark reserved (CAP); one append per frame stays in capacity.
+        ctx.accums().append::<Mark, _>(Mark(9));
     }
 }
 
@@ -142,8 +142,8 @@ impl WorkUnit<OnMeta<ScheduleEnd>> for EndWu {
 
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         let rc = ctx.meta::<SchedulerMetrics>().last_record_count.get();
-        // SAFETY: Mark reserved (CAP); one append per frame stays in capacity.
-        unsafe { ctx.accums().append::<Mark, _>(Mark(rc.0 as u32)) };
+        // Mark reserved (CAP); one append per frame stays in capacity.
+        ctx.accums().append::<Mark, _>(Mark(rc.0 as u32));
     }
 }
 

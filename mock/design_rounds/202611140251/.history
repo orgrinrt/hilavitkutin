@@ -1,0 +1,50 @@
+1b85820b chore: lock src changelist 202611140253
+9582563b fix: satisfy the lints the branch had suppressed
+d562703a chore: lock doc changelist 202611140251
+5268b8fb docs: write a frame down from one state, cite the registry's tickets
+b9ef0962 docs: open a round that takes the branch's suppressions out
+2624920c Merge remote-tracking branch 'origin/dev' into work/api-revision
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e01a42d9 chore: merge dev into the api revision
+e6375fb9 chore: close design round 202611140040
+fc21d55d chore: lock src changelist 202611140042
+51618b84 fix: name the registration where a bare column marker is refused
+163e5cac chore: lock doc changelist 202611140040
+35db22c0 docs: give the conformance crate a readme, close the frozen perimeter
+844170a3 docs: record the third review of the api revision
+d45093ea chore: close design round 202611140020
+1ed236e9 chore: lock src changelist 202611140021
+a9778808 docs: write the source changelist of the builder design correction
+07339b00 chore: lock doc changelist 202611140020
+968de06a docs: register a column with its start in the engine's builder design
+93d4f658 chore: close design round 202611132307
+89b9794b chore: lock src changelist 202611132324
+1660f787 docs: say which bench crates the source changelist's claim covers
+41e6167a docs: write the source changelist of the column start round
+e220414b docs: say how a column starts and name the conformance crate
+65ba6cb9 refactor: fold a carrier's reach cuts into constants of its types
+57b8006c test: register a seeded column's value as its start
+966e81c3 test: hold a close's compared write to a plain column's start
+219649ee chore: regenerate generated files after merge
+0703fa50 chore: merge the sweep that registers every column with its start
+aac94e6c refactor: register every plain column with its start
+ed0ae511 fix: hold a frozen edit to the trunk's ledger and a whole attribute
+7de9a674 test: hold the frozen lints to a broken attribute and a break's hash
+970c3a43 fix: write a plain column's start to every record at the drain
+7adf0b9e feat: carry a column's start in one `Started<S>` for both kinds
+c3b8d69d chore: lock doc changelist 202611132307
+de7f30b9 docs: give a plain column its start on the buffered one's carrier
+e99af156 docs: record the load-time units panel and its sketches
+98cdc637 docs: keep review two with the research
+1a219430 Merge remote-tracking branch 'origin/dev' into work/api-revision
+23989117 docs: open the topic on what a plain column starts from
+d2711d87 docs: keep review one and the first-pass reading with the research
+21e11daf chore: close design round 202611132230
+08beef97 chore: lock src changelist 202611132233
+2b50b5be docs: say what a buffered column is registered with
+77d64d10 fix: write a buffered column's start to both of its sides
+559f3933 feat!: register a buffered column with its start value
+5d693514 chore: lock doc changelist 202611132230
+ecd50010 docs: design a buffered column registered with its start value
+192933f6 docs: file the topic of what a buffered column starts from
+d312b4e7 docs: sketch a buffered column's start chosen by its element type

@@ -1,0 +1,19 @@
+# Sketch: a binding table filled from data, beside the typed contract.
+# Its own workspace, so the repository's build never sees it.
+
+[workspace]
+
+[package]
+name = "data-bound-registration"
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[lib]
+path = "src/lib.rs"
+
+# Each feature turns on one module that must not compile, so the compiler's
+# own words for the refusal can be read again: `cargo build --features <one>`.
+[features]
+refused-bool-view = []
+refused-constant-plan = []

@@ -19,6 +19,7 @@ use arvo_tensor::ConstCapacity;
 use hilavitkutin_api::ColumnStorage;
 use hilavitkutin_api::run_cfg::RunCfg;
 use hilavitkutin_api::store_values::StoreValues;
+use notko::Maybe;
 
 use super::{Scheduler, WorkerCtx};
 use crate::dispatch::fiber_run::RunFiber;
@@ -34,9 +35,20 @@ use crate::plan::grouping::{
     plan_phase_count,
     pre_consumer_phase_count,
 };
+use crate::plan::reach_cut::{CarrierCuts, cut_segments};
 use crate::resource::bindings::{BindingsFor, CollectAccumCounts, RebaseBindings, accum_slice};
 use crate::thread::barrier::waist_barrier;
 use crate::thread::frame::{frame_await, frame_done_arrive, frame_exit_arrive};
+
+/// The cuts of the carrier `Wus` at the plan dimensions `D`.
+type Cuts<Wus, Stores, GW, D> = CarrierCuts<
+    Wus,
+    Stores,
+    GW,
+    <D as PlanDims>::Units,
+    <D as PlanDims>::Stores,
+    <D as PlanDims>::AdjRow,
+>;
 
 /// Persistent-pool worker mainloop (GATE-2 R4c). Spawned once per core at the
 /// first `run_parallel`; parks on the frame `seq` between phases, runs its core's
@@ -65,9 +77,9 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
             <D as PlanDims>::AdjRow,
             0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
         >,
-    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-    <D as PlanDims>::Units: ConstCapacity,
-    <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+    WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: const ConstCapacity,
+    <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
     <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     // SAFETY: `ctx` points into the pinned scheduler's `worker_ctxs`, valid until
@@ -111,8 +123,9 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
             // dispatches the whole carrier ONCE over a per-core bindings copy
             // whose accumulators are offset into the core's region with fresh
             // cells, then publishes its per-accumulator live counts for the
-            // main-thread merge. No phase loop or waist barrier: cores are
-            // independent over disjoint record ranges, joined only by the merge.
+            // main-thread merge. No phase loop: the cores walk disjoint record
+            // ranges and are joined by the merge, and they meet at a barrier
+            // only ahead of a unit that reads with a reach behind a writer.
             worker_accum_unit_outer::<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
                 s,
                 USize(core_id),
@@ -157,6 +170,10 @@ pub(super) fn worker_main<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
 /// `frame_done_arrive` Release that follows publishes them to the merge). The
 /// core's row is zeroed first so a non-participating core (surplus, or a
 /// record-less frame's non-zero cores) contributes zeros to the merge.
+///
+/// A carrier whose consumer units include a read with a reach behind a writer
+/// is walked in segments cut ahead of each such reader, with the phase barrier
+/// crossed by every core between two segments.
 fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>(
     s: &Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>,
     core: USize,
@@ -169,9 +186,9 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     D: PlanDims,
     Clk: hilavitkutin_api::platform::ClockApi,
     WuVals: RunFiber<<Vals as BindingsFor>::Bindings, Witnesses>,
-    WuVals: BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
-    <D as PlanDims>::Units: ConstCapacity,
-    <D as PlanDims>::AdjRow: BitAccess + Identity<Additive>,
+    WuVals: const BundleMasks<Stores, GW, <D as PlanDims>::Stores>,
+    <D as PlanDims>::Units: const ConstCapacity,
+    <D as PlanDims>::AdjRow: const BitAccess + Identity<Additive>,
     <Vals as BindingsFor>::Bindings: RebaseBindings + CollectAccumCounts,
 {
     let total0 = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
@@ -193,6 +210,45 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
     // unit must run exactly once, not once per core). With records, a surplus
     // core (an empty region) appends nothing and is skipped.
     let run_this = if total0 == 0 { core.0 == 0 } else { region.0 > 0 }; // lint:allow(no-bare-numeric) reason: participation guard; tracked: #121
+    // The reach boundary on this path: where a consumer unit reads a plain
+    // column with a reach behind a writer of it, the walk is cut ahead of that
+    // unit and every core meets at a barrier there, so the writer's whole
+    // range has landed on every slice before any core starts the reader. The
+    // cuts are a fold over the registered units, so a carrier with no such
+    // reader takes the uncut walk below and crosses nothing. They are
+    // constants of the carrier's types, evaluated once when those are fixed.
+    let (cuts, cut) = Cuts::<WuVals, Stores, GW, D>::CUTS;
+    if cut.0 {
+        let consumers = Cuts::<WuVals, Stores, GW, D>::CONSUMERS;
+        let units = Cuts::<WuVals, Stores, GW, D>::UNITS;
+        // A core that walks nothing still meets the others at every barrier:
+        // the barrier counts every core, and the segments are the same on each.
+        let per_core = if run_this {
+            Maybe::Is(s.bindings.rebase_accums(lo, region))
+        } else {
+            Maybe::Isnt
+        };
+        let epoch = USize(s.virtual_epoch.load(Ordering::Relaxed));
+        cut_segments(cuts, consumers, units, |segment, last| {
+            if let Maybe::Is(per_core) = &per_core {
+                s.wu_values.run_gated(
+                    per_core,
+                    &s.meta_block,
+                    MorselRange::new(lo, region),
+                    segment,
+                    <USize as Identity<Additive>>::IDENTITY,
+                    epoch,
+                );
+            }
+            if !last.0 {
+                waist_barrier(&s.pool, core, ncores, || s.clock.now_ns());
+            }
+        });
+        if let Maybe::Is(per_core) = &per_core {
+            publish_accum_counts(s, core, per_core);
+        }
+        return;
+    }
     if !run_this {
         return;
     }
@@ -250,8 +306,24 @@ fn worker_accum_unit_outer<Cfg, WuVals, Vals, CS, D, Stores, Clk, Witnesses, GW>
             USize(s.virtual_epoch.load(Ordering::Relaxed)),
         );
     }
-    // Publish this core's per-accumulator live and `wanted` counts. Only this
-    // worker writes its row, and only before its `frame_done_arrive`.
+    publish_accum_counts(s, core, &per_core);
+}
+
+/// Publish one core's per-accumulator live and `wanted` counts from its
+/// per-core bindings copy. Only this worker writes its row, and only before
+/// its `frame_done_arrive`.
+fn publish_accum_counts<Cfg, WuVals, Vals, CS, D, Stores, Clk>(
+    s: &Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>,
+    core: USize,
+    per_core: &<Vals as BindingsFor>::Bindings,
+) where
+    Cfg: RunCfg,
+    Vals: StoreValues + BindingsFor,
+    CS: ColumnStorage,
+    D: PlanDims,
+    Clk: hilavitkutin_api::platform::ClockApi,
+    <Vals as BindingsFor>::Bindings: CollectAccumCounts,
+{
     let mut live = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
     let mut wanted = [<USize as Identity<Additive>>::IDENTITY; GATE2_MAX_ACCUMS];
     let mut idx = <USize as Identity<Additive>>::IDENTITY;
@@ -304,6 +376,49 @@ impl<
         // happens-before).
         let epoch = USize(self.virtual_epoch.load(Ordering::Relaxed));
         let total = total.0; // lint:allow(no-bare-numeric) reason: frame record count; tracked: #121
+        // A meta band is dispatched once in a frame by one core over the whole
+        // record range, with no consumer unit beside it. Core 0 runs the band's
+        // phase as the owner of every trunk in it (`ncores = 1`), and the other
+        // cores go straight on to the waist barrier, so a maintenance unit does
+        // not ride the per-core trunk split or the morsel windows. The band
+        // bounds are const, so a carrier with no meta unit folds the test away.
+        let pre = pre_consumer_phase_count::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) reason: leading-band bound; tracked: #121
+        let cend = consumer_phase_end::<
+            WuVals,
+            Stores,
+            GW,
+            <D as PlanDims>::Units,
+            <D as PlanDims>::Stores,
+            <D as PlanDims>::AdjRow,
+        >()
+        .0; // lint:allow(no-bare-numeric) reason: trailing-band start; tracked: #121
+        if p.0 < pre || p.0 >= cend {
+            if core.0 == 0 {
+                let all = <<D as PlanDims>::AdjRow as Identity<Additive>>::IDENTITY.bitnot();
+                let mut rank = <USize as Identity<Additive>>::IDENTITY;
+                self.wu_values.dispatch_core(
+                    &self.wu_values,
+                    p,
+                    <USize as Identity<Additive>>::IDENTITY,
+                    USize(1), // lint:allow(no-bare-numeric) reason: designated core owns every trunk; tracked: #121
+                    &mut rank,
+                    &self.bindings,
+                    &self.meta_block,
+                    MorselRange::new(<USize as Identity<Additive>>::IDENTITY, USize(total)),
+                    all,
+                    epoch,
+                );
+            }
+            return;
+        }
         if total == 0 {
             // Record-less frame: one empty-morsel dispatch_core so a resource-only
             // trunk this core owns runs exactly once. All-ones dirty:

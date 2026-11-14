@@ -77,6 +77,22 @@ impl<C: Capacity> AccessMask<C> {
         self.bits = USize(self.bits.0 | other.bits.0);
     }
 
+    /// This mask with every store of `other` added.
+    pub const fn union(self, other: &Self) -> Self {
+        Self {
+            bits: USize(self.bits.0 | other.bits.0),
+            _cap: PhantomData,
+        }
+    }
+
+    /// This mask with every store of `other` taken out.
+    pub const fn without(self, other: &Self) -> Self {
+        Self {
+            bits: USize(self.bits.0 & !other.bits.0),
+            _cap: PhantomData,
+        }
+    }
+
     /// Raw bit pattern accessor for downstream rounds that need it.
     pub const fn raw(&self) -> USize {
         self.bits

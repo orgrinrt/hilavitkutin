@@ -47,7 +47,7 @@ use hilavitkutin_api::context::{
     HasEach,
 };
 use hilavitkutin_api::platform::MemoryProviderApi;
-use hilavitkutin_api::store::{Accum, Column};
+use hilavitkutin_api::store::{Accum, Column, StartsFromDefault};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_providers::ArenaColumnStorage;
 use notko::Outcome;
@@ -107,10 +107,10 @@ const WIDE_TAG: u8 = 1;
 
 // Disjoint column values: a 4-byte and an 8-byte record, so the two pipelines
 // land in separate fibers with different L1 windows.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Narrow(u32);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Wide(u64);
 
@@ -175,8 +175,8 @@ fn fibers_window_by_their_own_plan_baked_size() {
     // 7000 * (4 + 8) bytes of column data plus plan columns.
     let provider = BumpProvider::<131072>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Narrow>::new())
-        .with(Column::<Wide>::new())
+        .with(Column::<Narrow>::start())
+        .with(Column::<Wide>::start())
         .with(NarrowWu)
         .with(WideWu)
         .build(store(provider), USize(RECORDS))
@@ -225,7 +225,7 @@ fn fibers_window_by_their_own_plan_baked_size() {
 const COL_TAG: u8 = 10;
 const ACC_TAG: u8 = 11;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 #[allow(dead_code)] // written for the record footprint; the test observes call tags
 struct Cm(u32);
 #[derive(Copy, Clone)]
@@ -286,9 +286,9 @@ impl WorkUnit<Always> for AccWu {
     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
         DISPATCH_ORDER.with(|o| o.borrow_mut().push(ACC_TAG));
         ctx.each().run(|_i| {
-            // SAFETY: append advances live-length under the reserved capacity
+            // The append advances the live length under the reserved capacity
             // (= record count); the frame reset zeroed it.
-            unsafe { ctx.accums().append::<Ov, _>(Ov(1)) };
+            ctx.accums().append::<Ov, _>(Ov(1));
         });
     }
 }
@@ -298,7 +298,7 @@ fn clean_frame_skips_column_fiber_but_reruns_accumulator_fiber() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Cm>::new())
+        .with(Column::<Cm>::start())
         .with(Accum::<Ov>::new())
         .with(ColWu)
         .with(AccWu)
@@ -343,8 +343,8 @@ fn record_less_frame_runs_each_fiber_exactly_once() {
     DISPATCH_ORDER.with(|o| o.borrow_mut().clear());
     let provider = BumpProvider::<32768>::new();
     let mut scheduler = Scheduler::builder()
-        .with(Column::<Narrow>::new())
-        .with(Column::<Wide>::new())
+        .with(Column::<Narrow>::start())
+        .with(Column::<Wide>::start())
         .with(NarrowWu)
         .with(WideWu)
         .build(store(provider), USize(0))

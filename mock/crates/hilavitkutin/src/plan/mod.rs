@@ -20,25 +20,31 @@ use arvo_bitmask::NodeId;
 use arvo_tensor::Capacity;
 
 pub mod access;
+pub mod bundle_masks;
 pub mod column;
 pub mod core_program;
 pub mod dims;
 pub mod dirty;
+pub mod edge;
 pub mod fiber;
 pub mod graph;
 pub mod grouping;
 pub mod inputs;
 pub mod laplacian;
+pub mod member;
 pub mod phase;
 pub mod project;
+pub mod reach_cut;
 pub mod steps;
 pub mod trunk;
 pub mod unit;
+mod unit_masks;
 
 pub use access::AccessMask;
 pub use column::{ColumnClassMap, ColumnClassification};
 pub use dims::{DefaultPlanDims, PlanDims};
 pub use dirty::{DirtyMask, DirtyMasks};
+pub use edge::BandWrites;
 pub use fiber::{AccumSlot, AccumType, Fiber, FiberGrouping, HeadTailConvergence, MergeOp};
 pub use graph::{DependencyGraph, EdgeKind};
 pub use grouping::{
@@ -109,6 +115,10 @@ pub struct ExecutionPlan<D: PlanDims> {
     /// seeds the dirty set by intersecting the changed-store mask against
     /// each unit's reads.
     pub read_masks:        <D::Units as Capacity>::Array<AccessMask<D::Stores>>,
+    /// The stores the maintenance units of the leading bands write. A pass
+    /// takes them as changed before its first band, so their readers dispatch
+    /// in the pass the writer runs.
+    pub band_writes:       BandWrites<D::Stores>,
 }
 
 impl<D: PlanDims> ExecutionPlan<D>
@@ -137,6 +147,7 @@ where
             rcm_order:         <D::Units as Capacity>::filled(UnitId::ZERO),
             predecessor_masks: <D::Units as Capacity>::filled(D::AdjRow::default()),
             read_masks:        <D::Units as Capacity>::filled(AccessMask::empty()),
+            band_writes:       BandWrites::none(),
         }
     }
 }
@@ -454,6 +465,7 @@ where
             u += 1;
         }
     }
+    plan.band_writes = BandWrites::of(inputs);
 
     // Steps 12 + 13 (core assignment + per-core program synthesis)
     // happen on the dispatch stage entry; not part of this runner.
