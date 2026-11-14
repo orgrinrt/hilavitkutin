@@ -10,8 +10,11 @@
 //! is held to the same history, the same model and the same cone.
 //!
 //! The worker counts are 1, 2, 3, 4 and `MAX_CORES`, each through
-//! `FixedWorkers`, never the host's count: trunk ownership is round-robin over
-//! the cores, so an odd count and the widest one place the units differently.
+//! `FixedWorkers`, never the host's count. The fixture has at most two trunk
+//! roots in a phase and one window of records, so from two workers up every
+//! count places its units alike and walks one path;
+//! `tests/run_parallel_wide_differential.rs` holds the windowed, record-less
+//! and unit-outer walks over six roots.
 //!
 //! Today the workers ask no dirty mask, so every unit runs every frame under
 //! `run_parallel`. The executed-set test and the unmarked-change twin fail on
