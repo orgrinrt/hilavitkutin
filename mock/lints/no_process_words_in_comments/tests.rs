@@ -81,6 +81,40 @@ fn a_round_led_by_a_noun_word_is_refused() {
 }
 
 #[test]
+fn a_round_with_any_leader_is_refused() {
+    for text in [
+        "/// lands in a following round\n",
+        "/// the downstream rounds read it\n",
+        "// split along its seams in a later\n// round.\n",
+        "/// Round (file-size lint): split into modules.\n",
+        "/// fixed in round-2b\n",
+    ] {
+        assert!(!lines(text).is_empty(), "{text}");
+    }
+}
+
+#[test]
+fn a_block_opened_after_code_is_read_on_later_lines() {
+    assert_eq!(
+        lines("let x = 1; /* opens here\n  written in round 4\n*/\n"),
+        vec![2]
+    );
+}
+
+#[test]
+fn code_after_a_block_close_is_not_read() {
+    assert!(lines("/* a note\n*/ let round = 4;\n").is_empty());
+}
+
+#[test]
+fn nested_blocks_close_at_the_outer_close() {
+    assert_eq!(
+        lines("/* outer /* inner */\n  still in round 4\n*/\nlet round = 1;\n"),
+        vec![2]
+    );
+}
+
+#[test]
 fn a_wrapped_multiplication_is_code() {
     assert!(lines("let y = width\n    * x.round()\n    * last round;\n").is_empty());
 }
