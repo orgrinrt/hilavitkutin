@@ -92,7 +92,9 @@ pub fn configure<S: AsRef<str>, W: Write>(env: impl Env<S>, out: &mut W) -> core
 /// and cargo names no workspace wrapper whose path ends with
 /// `hilavitkutin-rustc-wrapper` (`RUSTC_WORKSPACE_WRAPPER`, which cargo
 /// sets for a build script only where its configuration names one;
-/// `cargo clippy` names `clippy-driver`), a `cargo::warning` says the
+/// `cargo clippy` names `clippy-driver`, and a check loses nothing
+/// without the flags, which only steer code generation), a
+/// `cargo::warning` says the
 /// flags are dropped.
 ///
 /// A crate whose own code must not take fast float math passes
@@ -110,7 +112,10 @@ pub fn configure_with<S: AsRef<str>, W: Write>(
     cfg.pragmas = tune(cfg.pragmas).coherent();
     write_directives(&cfg, out)?;
     let wrapped = match env("RUSTC_WORKSPACE_WRAPPER") {
-        Maybe::Is(path) => path.as_ref().ends_with("hilavitkutin-rustc-wrapper"),
+        Maybe::Is(path) => {
+            let path = path.as_ref();
+            path.ends_with("hilavitkutin-rustc-wrapper") || path.ends_with("clippy-driver")
+        },
         Maybe::Isnt => false,
     };
     if !wrapped && writes_flags(cfg.pragmas) {
