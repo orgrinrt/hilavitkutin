@@ -1,6 +1,6 @@
 # The single-trunk convergence bench member: head-and-tail against the N-way
 # ceil slice on one commutative fiber. Each arm is its own cdylib under
-# variants/, run in its own worker subprocess by the driver `mock bench run`
+# arms/, run in its own worker subprocess by the driver `mock bench run`
 # generates, with validation across arms before any timing. The routine of each
 # section is in the bench tree's hooks library, and the support crate is
 # `support/stc-support` at the bench root. std and alloc are allowed here: this

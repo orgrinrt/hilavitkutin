@@ -1,3 +1,8 @@
+# Topic 4 Axis A of the runtime round 202605101036: dispatch shapes LLVM cannot
+# devirtualise. The direct call (baseline) against an opaque fn pointer, which a
+# volatile load hides from LLVM, and a table indexed by the data at run time.
+# The runtime table picks one of four mixers per chunk, so outputs may differ.
+
 title = "Dynamic dispatch shapes: direct vs opaque fn pointer vs runtime table"
 workload = "realistic"
 master_seed = 0x40ff_ee15_d34d_b33f
