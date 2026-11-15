@@ -120,30 +120,60 @@ impl<'a> Insn<'a> {
         is_reg.then(|| register_family(first))
     }
 
-    /// Whether this instruction may write registers it does not name: a call
-    /// (the callee may clobber every caller-saved register) and the x86_64
-    /// instructions with implicit destinations.
-    pub fn clobbers_implicitly(&self) -> bool {
+    /// Whether this is a direct call to a function that never returns: a panic
+    /// of `core` or `std`, or `abort`. Nothing after it runs on its path, so the
+    /// instruction after it is reached only by a jump, from code that never
+    /// called it.
+    pub fn calls_no_return(&self) -> bool {
         self.is_call()
-            || self.mnemonic.starts_with("rep")
-            || matches!(
-                self.mnemonic,
-                "mul"
-                    | "div"
-                    | "idiv"
-                    | "cqto"
-                    | "cltq"
-                    | "cltd"
-                    | "cpuid"
-                    | "rdtsc"
-                    | "rdtscp"
-                    | "syscall"
-                    | "xchg"
-                    | "cmpxchg"
-                    | "xadd"
-            )
-            || self.mnemonic.starts_with("lock")
-            || self.mnemonic == "imul" && !self.operands.contains(',')
+            && !self.operands.starts_with(['*', '%', 'x'])
+            && symbol_in(self.operands).is_some_and(|s| {
+                s.contains("panicking") || s.contains("panic_fmt") || s.starts_with("abort")
+            })
+    }
+
+    /// Whether this instruction may write register `family` without naming it
+    /// as its destination: a call that returns writes every caller-saved
+    /// register; an x86_64 instruction with implicit destinations writes those
+    /// (`div` writes `%rax` and `%rdx`, `syscall` `%rax`, `%rcx` and `%r11`); an
+    /// exchange writes every register it names. Anything else writes only what
+    /// [`Self::written_register`] reports, so a `lock add` to memory or a `div`
+    /// leaves `%r10` as it was.
+    pub fn clobbers(&self, family: &str) -> bool {
+        if self.is_call() {
+            return !self.calls_no_return() && caller_saved(family);
+        }
+        // `lock` and `rep` print as the mnemonic, the instruction they prefix
+        // as the first word of the operands.
+        let (m, ops) = match self.mnemonic {
+            "lock" | "rep" | "repz" | "repe" | "repnz" | "repne" => {
+                let rest = self.operands.trim_start();
+                rest.split_once(char::is_whitespace).unwrap_or((rest, ""))
+            },
+            m => (m, self.operands),
+        };
+        let implicit: &[&str] = match m {
+            _ if self.mnemonic.starts_with("rep") => &["%rax", "%rcx", "%rdi", "%rsi"],
+            "mul" | "div" | "idiv" => &["%rax", "%rdx"],
+            "imul" if !ops.contains(',') => &["%rax", "%rdx"],
+            "cqto" | "cltd" | "cwtd" => &["%rdx"],
+            "cltq" | "cwtl" | "cbtw" => &["%rax"],
+            "cpuid" => &["%rax", "%rbx", "%rcx", "%rdx"],
+            "rdtsc" => &["%rax", "%rdx"],
+            "rdtscp" => &["%rax", "%rcx", "%rdx"],
+            "syscall" => &["%rax", "%rcx", "%r11"],
+            _ if m.starts_with("cmpxchg") => &["%rax", "%rdx"],
+            _ => &[],
+        };
+        if implicit.contains(&family) {
+            return true;
+        }
+        let exchanges = m.starts_with("xchg") || m.starts_with("xadd") || m.starts_with("cmpxchg");
+        exchanges
+            && ops
+                .split(',')
+                .map(str::trim)
+                .any(|o| o.starts_with('%') && register_family(o) == family)
     }
 }
 
@@ -292,9 +322,7 @@ pub fn indirect_calls(disasm: &str) -> IndirectCalls {
                 (false, None) => out.unresolved.push(location(line, base)),
             }
         }
-        if insn.clobbers_implicitly() {
-            holds.retain(|(r, _)| !caller_saved(r));
-        }
+        holds.retain(|(r, _)| !insn.clobbers(r));
         let Some(reg) = insn.written_register() else { continue };
         let source = if insn.mnemonic == "mov"
             && names_import(insn.comment)
@@ -421,6 +449,64 @@ mod tests {
         let calls = indirect_calls(across_call);
         assert_eq!(calls.to_imports, ["memset"]);
         assert_eq!(calls.unresolved, ["1c9b0"]);
+    }
+
+    #[test]
+    fn a_call_that_never_returns_keeps_the_import() {
+        // The shape the accumulator fixture's body takes: the GOT slot is
+        // loaded, a cold bounds-check panic sits between, and the slot's
+        // register is called after it.
+        let across_panic = "\
+   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
+   23b07:\tcall   2c933 <_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check>
+   23bcd:\tmov    %r10,%r12
+   23bd0:\tcall   *%r10
+   23be2:\tcall   *%r12
+";
+        assert_eq!(indirect_calls(across_panic).to_imports, [
+            "memset", "memset"
+        ]);
+        // The case that must still fail: a call that returns forgets r10.
+        let across_return = "\
+   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
+   23b07:\tcall   2c933 <_RNvNtCslfAf2Mv2Tp5_4core3fmt5write>
+   23bd0:\tcall   *%r10
+";
+        assert_eq!(indirect_calls(across_return).unresolved, ["23bd0"]);
+    }
+
+    #[test]
+    fn an_implicit_destination_forgets_only_the_registers_it_writes() {
+        // The run_parallel worker body's shape: a memset slot in r10 across a
+        // `lock add`, a `lock xadd` and a `div`, none of which write r10.
+        let kept = "\
+   1eeb7:\tmov    0x497a2(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
+   1eee6:\tlock add %rcx,0x14120(%rbx,%r14,8)
+   1eefe:\tlock xadd %eax,(%rcx)
+   1ef28:\tdiv    %ecx
+   1efca:\tmov    %r10,%r15
+   1efcd:\tcall   *%r10
+   1efd0:\tcall   *%r15
+";
+        assert_eq!(indirect_calls(kept).to_imports, ["memset", "memset"]);
+        // The cases that must still fail: each instruction forgets the register
+        // it does write.
+        for (between, reg) in [
+            ("div    %ecx", "%rdx"),
+            ("lock xadd %r10d,(%rcx)", "%r10"),
+            ("syscall", "%r11"),
+            ("rep stos %rax,%es:(%rdi)", "%rdi"),
+        ] {
+            let disasm = format!(
+                "   1000:\tmov    0x497a2(%rip),{reg}        # 68660 <memset@GLIBC_2.2.5>\n   \
+                 1004:\t{between}\n   1008:\tcall   *{reg}\n"
+            );
+            assert_eq!(
+                indirect_calls(&disasm).unresolved,
+                ["1008"],
+                "{between} keeps {reg}"
+            );
+        }
     }
 
     #[test]
