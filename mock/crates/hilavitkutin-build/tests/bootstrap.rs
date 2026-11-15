@@ -232,7 +232,7 @@ fn configure_reads_profile_features_and_wrapper_through_the_closure() {
 /// nothing.
 #[test]
 fn a_missing_wrapper_is_warned_of_when_there_are_flags() {
-    for wrapper in [Maybe::Isnt, Maybe::Is(String::new()), Maybe::Is(String::from("clippy-driver"))]
+    for wrapper in [Maybe::Isnt, Maybe::Is(String::new()), Maybe::Is(String::from("rustc-wrapper"))]
     {
         let mut out = String::new();
         configure(
@@ -400,4 +400,32 @@ fn a_failing_writer_is_reported_not_swallowed() {
     let dev = BuildConfig::from_cargo(Maybe::Is("debug"), Maybe::Isnt);
     assert!(write_directives(&dev, &mut Refusing).is_err());
     assert!(write_wrapper(&mut Refusing).is_err());
+}
+
+/// `cargo clippy` names `clippy-driver` as the workspace wrapper; a check
+/// generates no code, so the dropped flags cost it nothing and the build
+/// script says nothing, where a wrapper of any other name is still warned of.
+#[test]
+fn clippy_driver_as_the_wrapper_is_not_warned_of() {
+    let run = |name: &'static str| {
+        let mut out = String::new();
+        configure(
+            |key| {
+                match key {
+                    "RUSTC_WORKSPACE_WRAPPER" => Maybe::Is(String::from(name)),
+                    _ => release_env(key),
+                }
+            },
+            &mut out,
+        )
+        .expect("writing to a String cannot fail");
+        out
+    };
+    let clippy = run("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
+    assert!(!clippy.contains("cargo::warning"), "{clippy}");
+    let other = run("/usr/bin/sccache");
+    assert!(
+        other.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
+        "{other}"
+    );
 }
