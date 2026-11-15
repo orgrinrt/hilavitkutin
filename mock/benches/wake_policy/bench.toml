@@ -1,0 +1,20 @@
+# swap_band: the next-frame cost asymmetry on one carrier (producer to
+# consumer cone off a Replaceable value, an unrelated chain, an
+# OnMeta plan unit with fixed synthetic recompute cost). sb_none times
+# the all-clean skip frame; sb_value pays the Replaceable dirty cone;
+# sb_plan pays the PlanAffecting cone plus the leading plan band.
+# Records = n x 1024. Frames are microseconds-to-milliseconds, so the
+# timing override replaces the nanosecond-calibrated global knobs.
+title = "frame wake policy: park-immediately vs bounded spin pre-roll"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0003"
+may_differ = false
+
+arms = ["wp_park", "wp_spin", "wp_lp0", "wp_isb8", "wp_nh128", "wp_nh2k", "wp_nh8k"]
+points = [64, 1024, 8192]
+
+[timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2

@@ -1,0 +1,8 @@
+# --- prior-design benches (option-3 fallback per overnight protocol) ---
+
+title = "Popcount lowering: std count_ones vs Kernighan loop vs SWAR"
+workload = "realistic"
+master_seed = 0x2468_0123_4567_89ab
+
+arms = ["popcount_std", "popcount_handrolled", "popcount_swar"]
+points = [64, 256, 1024, 4096, 16384]

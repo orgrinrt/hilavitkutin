@@ -6,13 +6,12 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-# Axis C (column-count capacity) and axis E (cross-core false-sharing) for the
-# resource-storage-model round. These are NOT latency benches (which all run
-# through the mockspace bench harness in ../); they are a capacity ASSERTION and
-# a contention measurement, expressed as tests. C reserves into the real
+# Axis C (column-count capacity) for the resource-storage-model round, a
+# capacity assertion expressed as a test: it reserves into the real
 # `ArenaColumnStorage<_, Dim<256>>` to show the per-member-column layouts (V2/V5)
-# cross the 256-store cap while the per-resource layouts (V0/V1/V3/V4) do not. E
-# uses real threads to measure the V3 shared-column false-sharing penalty.
+# cross the 256-store cap while the per-resource layouts (V0/V1/V3/V4) do not.
+# Axis E, the false-sharing measurement, is the `false_sharing` sweep of the
+# `resource_storage` bench.
 [lib]
 name = "rsb_axis_ce"
 path = "src/lib.rs"

@@ -1,0 +1,6 @@
+title = "Fn-pointer table vs match dispatch for 16-variant hot loop"
+workload = "realistic"
+master_seed = 0x478a_b261_e0d9_f352
+
+arms = ["fpt_match_16", "fpt_table_16"]
+points = [256, 1024, 4096, 16384]

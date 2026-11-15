@@ -1,0 +1,7 @@
+title = "Fixed-point mul: Precise (i128 intermediate) vs Hot (i64 truncate)"
+workload = "realistic"
+master_seed = 0x5555_6666_7777_0007
+may_differ = true
+
+arms = ["fxpmul_precise", "fxpmul_hot"]
+points = [64, 256, 1024, 4096, 16384]

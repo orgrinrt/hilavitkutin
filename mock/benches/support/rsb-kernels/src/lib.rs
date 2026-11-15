@@ -183,6 +183,8 @@ pub fn member_fill(c: usize, input: &[u8]) -> u32 {
 // markers. Returning the column pointer + record count from the build lets the
 // cdylib place the build in setup and the loop in run.
 
+pub mod false_sharing;
+
 pub mod v0 {
     //! V0: one-record opaque blob, read LIVE every iteration (shipped status quo).
     use super::*;

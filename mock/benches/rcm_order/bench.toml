@@ -1,0 +1,25 @@
+# A1-1 dispatch-order oracle: four valid topological orders of the same
+# wide fan-out DAG, driven against the real engine, graded by how many of
+# the seven consecutive dispatch transitions share an input column.
+# rcm_adj (7/7, the RCM row order) and rcm_rev (7/7 reversed, the control
+# proving adjacency and not numbering is the mechanism) against rcm_half
+# (4/7, the dose-response midpoint) and rcm_scr (0/7, the stride-4
+# scramble). The harness size `n` is seed-material length; the variants
+# run `n * 1024` records (64 -> 64K records / 256 KiB columns, 256 ->
+# 256K / 1 MiB, 1024 -> 1M / 4 MiB, 2048 -> 2M / 8 MiB at the M1 SLC
+# edge, 4096 -> 4M / 16 MiB past it). Byte-exact outputs across all
+# orders. Frames are milliseconds, so the timing override replaces the
+# nanosecond-calibrated global knobs.
+title = "A1-1 dispatch order: column-adjacency dose response across valid topo orders"
+workload = "realistic"
+master_seed = "0x51C3_04D3_1234_5678"
+
+arms = ["rcm_adj", "rcm_rev", "rcm_half", "rcm_scr"]
+points = [64, 256, 1024, 2048, 4096, 8192, 16384]
+
+[timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]

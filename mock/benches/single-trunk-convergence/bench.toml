@@ -15,6 +15,8 @@
 # append's output sequence must match byte for byte. `threaded = true` keeps
 # the harness from pinning the worker subprocess to one core.
 
+title = "Single-trunk convergence: head-and-tail against the N-way slice"
+
 [timing]
 passes = 3
 runs_per_pass = 60
@@ -26,7 +28,7 @@ determinism_check_seeds = 1
 
 # ---------------------------------------------------------------- W = 1
 
-[bench.short_w1]
+[sweep.short_w1]
 title = "fold_light, short fiber (1 to 4 morsels), W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -34,11 +36,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16, 64, 256, 1024]
 timing = { runs_per_pass = 150, batch_size = 25 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16, 64, 256, 1024]
 
-[bench.fold_light_w1]
+[sweep.fold_light_w1]
 title = "fold_light, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -46,10 +48,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.fold_light_w1_big]
+[sweep.fold_light_w1_big]
 title = "fold_light, far above cache, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -57,11 +59,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216, 134217728]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216, 134217728]
 
-[bench.fold_heavy_w1]
+[sweep.fold_heavy_w1]
 title = "fold_heavy, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -69,10 +71,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536]
 
-[bench.fold_heavy_w1_big]
+[sweep.fold_heavy_w1_big]
 title = "fold_heavy, frames of tens of milliseconds, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -80,11 +82,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [1048576]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [1048576]
 
-[bench.append_w1]
+[sweep.append_w1]
 title = "append, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -92,10 +94,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.append_w1_big]
+[sweep.append_w1_big]
 title = "append, far above cache, W = 1"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -103,13 +105,13 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216]
 
 # ---------------------------------------------------------------- W = 2
 
-[bench.short_w2]
+[sweep.short_w2]
 title = "fold_light, short fiber (1 to 4 morsels), W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -117,11 +119,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16, 64, 256, 1024]
 timing = { runs_per_pass = 150, batch_size = 25 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16, 64, 256, 1024]
 
-[bench.fold_light_w2]
+[sweep.fold_light_w2]
 title = "fold_light, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -129,10 +131,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.fold_light_w2_big]
+[sweep.fold_light_w2_big]
 title = "fold_light, far above cache, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -140,11 +142,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216, 134217728]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216, 134217728]
 
-[bench.fold_heavy_w2]
+[sweep.fold_heavy_w2]
 title = "fold_heavy, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -152,10 +154,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536]
 
-[bench.fold_heavy_w2_big]
+[sweep.fold_heavy_w2_big]
 title = "fold_heavy, frames of tens of milliseconds, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -163,11 +165,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [1048576]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [1048576]
 
-[bench.append_w2]
+[sweep.append_w2]
 title = "append, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -175,10 +177,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.append_w2_big]
+[sweep.append_w2_big]
 title = "append, far above cache, W = 2"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -186,13 +188,13 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216]
 
 # ---------------------------------------------------------------- W = 4 (the machine's maximum)
 
-[bench.short_w4]
+[sweep.short_w4]
 title = "fold_light, short fiber (1 to 4 morsels), W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -200,11 +202,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16, 64, 256, 1024]
 timing = { runs_per_pass = 150, batch_size = 25 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16, 64, 256, 1024]
 
-[bench.fold_light_w4]
+[sweep.fold_light_w4]
 title = "fold_light, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -212,10 +214,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.fold_light_w4_big]
+[sweep.fold_light_w4_big]
 title = "fold_light, far above cache, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -223,11 +225,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216, 134217728]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216, 134217728]
 
-[bench.fold_heavy_w4]
+[sweep.fold_heavy_w4]
 title = "fold_heavy, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -235,10 +237,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536]
 
-[bench.fold_heavy_w4_big]
+[sweep.fold_heavy_w4_big]
 title = "fold_heavy, frames of tens of milliseconds, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -246,11 +248,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [1048576]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [1048576]
 
-[bench.append_w4]
+[sweep.append_w4]
 title = "append, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -258,10 +260,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.append_w4_big]
+[sweep.append_w4_big]
 title = "append, far above cache, W = 4"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -269,13 +271,13 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216]
 
 # ---------------------------------------------------------------- W = 8 (oversubscribed)
 
-[bench.short_w8]
+[sweep.short_w8]
 title = "fold_light, short fiber (1 to 4 morsels), W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -283,11 +285,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16, 64, 256, 1024]
 timing = { runs_per_pass = 150, batch_size = 25 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16, 64, 256, 1024]
 
-[bench.fold_light_w8]
+[sweep.fold_light_w8]
 title = "fold_light, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -295,10 +297,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.fold_light_w8_big]
+[sweep.fold_light_w8_big]
 title = "fold_light, far above cache, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -306,11 +308,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216, 134217728]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216, 134217728]
 
-[bench.fold_heavy_w8]
+[sweep.fold_heavy_w8]
 title = "fold_heavy, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -318,10 +320,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536]
 
-[bench.fold_heavy_w8_big]
+[sweep.fold_heavy_w8_big]
 title = "fold_heavy, frames of tens of milliseconds, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -329,11 +331,11 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [1048576]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [1048576]
 
-[bench.append_w8]
+[sweep.append_w8]
 title = "append, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -341,10 +343,10 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [4096, 65536, 1048576]
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [4096, 65536, 1048576]
 
-[bench.append_w8_big]
+[sweep.append_w8_big]
 title = "append, far above cache, W = 8"
 workload = "light"
 master_seed = 0x5EED_0000_0000_0001
@@ -352,6 +354,7 @@ threaded = true
 may_differ = false
 required = true
 baseline = "stc_sequential"
-variants = ["target/release/stc_sequential", "target/release/stc_nway", "target/release/stc_head_tail", "target/release/stc_head_tail_dyn", "target/release/stc_kernel_seq", "target/release/stc_kernel_nway", "target/release/stc_std_parallel"]
-sizes = [16777216]
 timing = { runs_per_pass = 8, batch_size = 4 }
+arms = ["stc_sequential", "stc_nway", "stc_head_tail", "stc_head_tail_dyn", "stc_kernel_seq", "stc_kernel_nway", "stc_std_parallel"]
+points = [16777216]
+

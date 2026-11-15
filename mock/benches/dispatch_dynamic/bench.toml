@@ -1,0 +1,7 @@
+title = "Dynamic dispatch shapes: direct vs opaque fn pointer vs runtime table"
+workload = "realistic"
+master_seed = 0x40ff_ee15_d34d_b33f
+may_differ = true
+
+arms = ["dispatch_direct", "dispatch_volatile", "dispatch_runtime"]
+points = [64, 256, 1024, 4096, 16384]

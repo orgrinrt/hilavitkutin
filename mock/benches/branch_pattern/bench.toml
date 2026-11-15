@@ -1,0 +1,6 @@
+title = "Branchful if/else vs branchless cmov/csel under data-dependent input"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+
+arms = ["branch_if", "branch_cmov"]
+points = [64, 256, 1024, 4096, 16384]

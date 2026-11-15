@@ -1,0 +1,7 @@
+title = "Fold ILP: sequential single-acc vs paired 2-way vs quad 4-way"
+workload = "realistic"
+master_seed = 0x239f_b805_47ae_61c2
+may_differ = true
+
+arms = ["fold_sequential", "fold_paired", "fold_quad"]
+points = [256, 1024, 4096, 16384]

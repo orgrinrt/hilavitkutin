@@ -1,0 +1,14 @@
+title = "next-frame asymmetry: clean skip vs value-swap cone vs plan band"
+workload = "realistic"
+master_seed = "0x51C3_5107_0000_0002"
+may_differ = true
+
+arms = ["sb_none", "sb_value", "sb_plan"]
+points = [64, 1024, 8192]
+
+[timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]

@@ -1,0 +1,6 @@
+title = "Overflow strategy: wrapping_add vs saturating_add vs checked_add"
+workload = "realistic"
+master_seed = 0x52b9_de7c_318f_a064
+
+arms = ["sat_wrap", "sat_saturate", "sat_checked"]
+points = [256, 1024, 4096, 16384]

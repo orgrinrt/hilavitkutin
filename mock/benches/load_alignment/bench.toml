@@ -1,0 +1,6 @@
+title = "Load alignment strategy: aligned ptr cast vs read_unaligned vs from_le_bytes pack"
+workload = "realistic"
+master_seed = 0x2c8a_f491_06b7_ed53
+
+arms = ["load_aligned", "load_unaligned", "load_byte_pack"]
+points = [256, 1024, 4096, 16384]

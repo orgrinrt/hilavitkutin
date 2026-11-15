@@ -6,7 +6,7 @@
 # One workspace for every arm, so they share one lockfile, one release profile
 # and one build of the engine.
 [workspace]
-members = ["variants/*"]
+members = ["arms/*"]
 resolver = "2"
 
 [profile.release]

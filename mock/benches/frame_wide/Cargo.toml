@@ -9,7 +9,7 @@
 # links the same `mockspace-bench-core` revision, which the harness checks
 # through `bench_abi_hash` before it loads one.
 [workspace]
-members = [".", "variants/*"]
+members = [".", "arms/*"]
 resolver = "2"
 
 [package]

@@ -1,0 +1,6 @@
+title = "Accumulator typing cost: plain u64 vs AtomicU64 Relaxed vs AtomicU64 SeqCst"
+workload = "realistic"
+master_seed = 0x4823_d765_19be_f0a3
+
+arms = ["acc_plain", "acc_atomic_relaxed", "acc_atomic_seqcst"]
+points = [256, 1024, 4096, 16384]

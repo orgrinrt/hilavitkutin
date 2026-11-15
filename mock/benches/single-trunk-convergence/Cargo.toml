@@ -7,7 +7,7 @@
 # is a standalone bench workspace, outside the no_std / no_alloc members of
 # mock/.
 [workspace]
-members = ["variants/*"]
+members = ["arms/*"]
 resolver = "2"
 
 # The pinned arvo crates name notko by its `ssh` spelling; the patch points
