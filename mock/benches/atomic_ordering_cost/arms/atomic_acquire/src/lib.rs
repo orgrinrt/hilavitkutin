@@ -21,7 +21,9 @@ fn run_atomic_acquire<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> 
                 let chunk = unsafe { (p.add(i * 8) as *const u64).read_unaligned() };
                 let observed = counter.load(Ordering::Acquire);
                 let prev = counter.fetch_add(chunk, Ordering::Release);
-                acc = (acc ^ prev ^ observed).wrapping_mul(0x100000001b3);
+                // One thread, so `observed` equals `prev` and their difference folds in as
+                // zero: the digest is the other arms', and the acquire load stays used.
+                acc = (acc ^ prev).wrapping_mul(0x100000001b3) ^ observed.wrapping_sub(prev);
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }
