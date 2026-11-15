@@ -2,7 +2,15 @@
 
 Hypothesis: a work unit in the block form can be built and run under the engine when its crate takes no engine crate as a dependency and its source names no context type. The context is derived from the unit's declared `Read` and `Write` lists, and a twin that reads or writes an undeclared column does not compile.
 
-**Outcome:** WORKS
+**Outcome:** INCONCLUSIVE. The three conditions are met, but only by a vehicle the canon rules out, so the step is not proven in a shape that may ship.
+
+## The canon and this shape
+
+The first version of this file said WORKS and did not ask the canon about the vehicle. A later reader did. The shape below erases the runner's context to a pointer and reaches every column through a table of function pointers, one indirect call per access per record. Two ratified rows of hilavitkutin's registry forbid that: `std_any_is_banned_so_there_is_no_type_id_and_no_type_erasure`, and `the_monomorphised_function_is_the_type_identity_of_a_unit_and_llvm_devirtualises_the_fused_pipeline_into_straight_line_code`, which links to it and to `dyn_is_banned_entirely_with_no_exceptions`. A table of thunks is dynamic dispatch built by hand. The sketch bought an unedited engine with it, and that is not a trade the canon allows.
+
+What still carries, read for what it proved: the unit crate's dependency set, the two refusals by list position, attempt a1's wall (the keyed witness sits on the provider and not on the list) and attempt a3's E0210 (a blanket over a block form must live in the crate that defines `WorkUnit`). The sentence below that an api-owned blanket "could be written there" was not built, and a reader has since argued it fails as written, since the bridge names the engine's `CtxFor` and carries witnesses no part of the implementing type constrains. The route still owed a sketch is the monomorphic one: an api trait bounded by list membership, implemented by the engine on its own context, a unit body generic over it, with the emitted code read for indirect branches.
+
+## What was built
 
 The sketch was written unattended on 15 November 2026 by a dispatched seat, and the dispatcher reran `cargo +nightly-2026-05-28 test -q -p check` before writing this file (fixtures 2 passed, run 1 passed). Nothing here is authority. It is one instance of proof for the three conditions below, inside the predicate at the end.
 
