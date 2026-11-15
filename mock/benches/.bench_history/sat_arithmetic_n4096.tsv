@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794698676	266650fb	sat_arithmetic_n4096	sat_checked	4096	warm	2748.1	2748.1	2750.6
+1794698676	266650fb	sat_arithmetic_n4096	sat_saturate	4096	warm	2661.8	2661.8	2667.1
+1794698676	266650fb	sat_arithmetic_n4096	sat_wrap	4096	warm	1343.8	1343.8	1349.0

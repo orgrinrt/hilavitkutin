@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794690797	266650fb	iter_patterns_n16384	iter_gather	16384	warm	4728.4	4728.4	4832.9
+1794690797	266650fb	iter_patterns_n16384	iter_seq	16384	warm	2628.6	2628.6	2684.4
+1794690797	266650fb	iter_patterns_n16384	iter_strided	16384	warm	278.8	278.8	284.6

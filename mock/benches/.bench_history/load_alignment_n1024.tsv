@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794690835	266650fb	load_alignment_n1024	load_aligned	1024	warm	112.9	112.9	115.0
+1794690835	266650fb	load_alignment_n1024	load_byte_pack	1024	warm	115.0	115.0	117.1
+1794690835	266650fb	load_alignment_n1024	load_unaligned	1024	warm	120.8	120.8	121.9
