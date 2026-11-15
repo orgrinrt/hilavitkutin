@@ -1,0 +1,2 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794698423	266650fb	registration_binding_n65536	reg_typed_twin	65536	warm	4361.0	4361.0	4372.5

@@ -1,11 +1,11 @@
-//! The harness side of `frame_wide`: which routine a cell resolves to, which
-//! workload program wraps a call, and the worker dispatch every binary that
-//! the harness re-executes needs.
+//! The harness side of `frame_wide`'s negative control: which routine a cell
+//! resolves to, which workload program wraps a call, and the worker dispatch
+//! the control needs when validation re-executes it.
 //!
-//! Two binaries are re-executed as workers: the driver, by the orchestrator and
-//! by validation, and the negative-control test, by validation. Both have to
-//! answer `--worker` the same way, so the answer is here once and each `main`
-//! is a call into `worker_main`.
+//! The timed runs go through the driver `mock bench run` generates, whose hooks
+//! library takes the routine from `frame-wide-support` as this crate does. The
+//! negative control is a test binary of its own, re-executed by validation as
+//! its worker, so it answers `--worker` through `worker_main` here.
 //!
 //! The workload itself, the arms and the routine type are in
 //! `frame-wide-support`; nothing here knows what a frame computes.
@@ -13,49 +13,12 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use frame_wide_support::{FrameHeavy, FrameLight};
-use mockspace_bench_core::routine_bridge;
-use mockspace_bench_harness::{
-    self as harness,
-    BenchError,
-    BenchResult,
-    HarnessTuning,
-    RoutineSpec,
-    Workload,
-};
+pub use frame_wide_support::is_heavy;
+use mockspace_bench_harness::{self as harness, BenchError, HarnessTuning, RoutineSpec, Workload};
 
-/// The regime a bench name selects. A section's name is the sweep, and in a
-/// composed tree the key is `<member>/<sweep>`, so the last segment decides.
-pub fn is_heavy(bench: &str) -> Option<bool> {
-    match bench.rsplit('/').next().unwrap_or(bench) {
-        "heavy" => Some(true),
-        "light" => Some(false),
-        _ => None,
-    }
-}
-
-/// The routine one cell resolves to: one monomorphisation per record count
-/// and regime.
-///
-/// The record counts here are the counts a bench section may name. Each
-/// variant's `#[bench_variant]` attribute lists the same literals, and a size
-/// missing from one of them is refused at preflight by the harness's
-/// output-size check rather than run.
+/// The routine one cell resolves to, from `frame_wide_support::bridge_for`.
 pub fn routine_for(n: usize, bench: &str) -> Option<RoutineSpec> {
-    macro_rules! pick {
-        ($heavy:expr, $($n:literal),*) => {
-            match n {
-                $( $n => if $heavy {
-                    routine_bridge!(FrameHeavy<$n>)
-                } else {
-                    routine_bridge!(FrameLight<$n>)
-                }, )*
-                _ => return None,
-            }
-        };
-    }
-    let heavy = is_heavy(bench)?;
-    let bridge = pick!(heavy, 4096, 65536, 1048576, 4194304, 16777216);
+    let bridge = frame_wide_support::bridge_for(n, is_heavy(bench)?)?;
     Some(RoutineSpec {
         name: bench.to_string(),
         bridge,
@@ -72,92 +35,6 @@ pub fn workload_for(bench: &str) -> Workload {
         b.stage(vec![harness::algo_call()]);
     });
     w
-}
-
-/// The arm every delta in a generated report is taken against.
-///
-/// Not an engine arm. The harness frames each row as a delta from the
-/// baseline and writes stock lines calling a large delta a reason to switch;
-/// with `engine` as the baseline those lines read as a verdict on the engine,
-/// which is the one reading op's words rule out. `hand` is the hand-written
-/// fused path, which the bench matrix names as the bar the engine is measured
-/// against, so a row against it says how far an arm is from what a person
-/// writes for this workload.
-const REPORT_BASELINE: &str = "hand";
-
-/// What a reader opening a generated findings file alone has to see first.
-///
-/// The research note disclaims these numbers, and a findings file does not
-/// travel with the note. Without this the file is a verdict sheet.
-const FINDINGS_CAVEAT: &str = "\
-## Before the numbers
-
-Nothing in this file is a verdict on any arm, and no delta below is a reason to
-use one arm over another.
-
-The engine arms measure the engine without its headline features. Op, on 13
-November: the engine arms measure something that \"doesn't yet include any of
-the actual headline features like fusing and the adaptive trunk/fiber/morsel
-crunching on the datadlow-ish schedule. It's bare bones, barely lowers to
-anything interesting yet. So no calls should be made based on those yet, they
-are a baseline to compare against then.\" An engine number here is a baseline
-for a later comparison and decides nothing.
-
-Every delta below is taken against `hand`, the hand-written fused path, rather
-than against an engine arm. The bench matrix names `hand` as the bar the engine
-is measured against, so a row against it says how far an arm is from what a
-person writes for this workload. Where the report says the baseline is the
-slowest variant and reads as picked by accident, it was not: it is set in this
-member's driver, on purpose, and is meant to be the bar whether it wins or
-loses. Do not re-baseline on whichever arm happens to be fastest.
-
-The harness writes a `Why it matters` line under each highlight, calling a large
-delta a reason to switch and a dominant winner a safe default pick. Those lines
-are its stock phrasing for any dataset, they are judgements this file has no
-standing to make, and they are stripped before it is written. What is left under
-each highlight is the shape of the numbers.
-
-A median here is wall-clock time and carries nothing about how many cores an
-arm used to reach it. Two arms with the same median are not the same cost if
-one of them ran on one core and the other on two. The occupancy of every
-parallel arm is measured separately and stated beside these medians in
-`mock/research/202611131400_frame-wide-first-run.md`. Read the two together or
-neither.
-
-The generated report follows.
-
-";
-
-/// Write a findings file: the caveat, then the harness's report with `hand` as
-/// the baseline.
-///
-/// `harness::write_report_for_routine` is the one-call form and it takes
-/// neither a baseline nor a preamble, so the dataset is built, pointed at
-/// `REPORT_BASELINE` and rendered here instead. The baseline is checked rather
-/// than assumed: `with_baseline` ignores a name it does not find, and silently
-/// falling back to the first variant is how the report comes out framed on
-/// `engine` again.
-pub fn write_findings(
-    result: &BenchResult,
-    routine: &RoutineSpec,
-    mode: &str,
-    path: &str,
-) -> Result<(), String> {
-    let ds = result
-        .dataset_for_routine(routine, mode)
-        .with_baseline(REPORT_BASELINE);
-    let chosen = ds.baseline().name.clone();
-    if chosen != REPORT_BASELINE {
-        return Err(format!(
-            "the report baseline is `{chosen}`, not `{REPORT_BASELINE}`: no arm of this cell is \
-             named `{REPORT_BASELINE}`, so every delta would be framed on an arm nobody chose"
-        ));
-    }
-    let md = format!(
-        "{FINDINGS_CAVEAT}{}",
-        bench_arm::findings::plain(&harness::generate_report(&ds, &result.title))
-    );
-    std::fs::write(path, md).map_err(|e| format!("writing {path}: {e}"))
 }
 
 /// Whether this process was started as a harness worker.

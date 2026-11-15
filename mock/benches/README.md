@@ -1,31 +1,48 @@
 # benches
 
-Canonical mockspace bench framework. Consumer-side scaffolding generated
-by `mock bench init`.
+Canonical mockspace bench framework. `mock bench run` generates the
+driver from `bench.toml`, builds the arms and runs the harness; the tree
+holds configuration, the measured code and the hooks library, and no
+runner of its own.
 
 ## Layout
 
-- `Cargo.toml` + `src/main.rs`: the bench binary. Defines `Routine`
-  impls, builds a workload program, dispatches to the harness.
-- `bench.toml`: per-bench config (sizes, timing, variant cdylib paths).
-- `variants/<name>/`: one workspace per variant. Each compiles to a
-  cdylib that exports `bench_entry`, `bench_name`, `bench_abi_hash`.
-- `target/release/benches`: the built bench binary.
-- `target/release/lib<variant>.{dylib,so,dll}`: the built variant cdylibs.
+- `bench.toml`: the root benches, the byte dispatch's points under
+  `[dispatch]`, every workload program under `[workload.*]`, timing.
+- `<member>/bench.toml`: a member's own sections, composed under
+  `<member>/<section>`: `engine_vs_std`, `single-trunk-convergence`,
+  `resource_storage`, `frame_wide`. A member's arms build in its own
+  workspace under `<member>/variants/`.
+- `variants/<name>/`: the root benches' arms, one cdylib per variant,
+  exporting `bench_entry`, `bench_name`, `bench_abi_hash`.
+- `support/`: the library crates the arms and the generated driver
+  share: the routine types, the kernels, the five-check disassembly
+  checker and the design's ceilings, each with its own tests.
+- `src/lib.rs`: the hooks library the generated driver compiles in. It
+  serves the routines that are not byte routines and runs what follows a
+  cell: the five checks over `dispatch_*`, the ceilings over
+  `engine_vs_std`, and `frame_wide`'s report framed on `hand`.
+- `asm_gate_fixtures/`: the D6 ASM-dispatch gate, a cdylib of fixtures
+  and the test in `tests/asm_gate.rs` that holds their dispatch bodies to
+  the five checks.
+- `results/<bench>/<sweep>_n<point>/<machine class>/<run>/`: one run of
+  one cell, holding `samples.csv`, `meta.json`, `report.md` and
+  `summary.tsv`. A run is written once; runs on other machines sit
+  beside it.
 
 ## Workflow
 
-1. Edit `src/main.rs`: replace `IdentityAdd` with the Routine you
-   want to benchmark. The trait specifies what is computed (input
-   shape, output shape, validation, scoring, ops count).
-2. Edit `bench.toml`: set sizes and the cdylib path for each
-   variant.
-3. Add a variant under `variants/<name>/` for each implementation.
-   Each variant exports `bench_entry` calling its own algorithm via
-   the `timed!` macro.
-4. `mock bench run` builds everything and runs the harness.
-5. `mock bench report` regenerates `findings.md` from the CSV cache
-   without re-running.
+1. Edit `bench.toml` or a member's: the sizes and variants of each
+   bench, and the workload it names.
+2. Add a variant under `variants/<name>/`, or a member's own, for each
+   implementation. Each exports `bench_entry` calling its own algorithm
+   via the `timed!` macro.
+3. A routine that is not plain bytes goes in a support crate, and
+   `routine_for` in `src/lib.rs` reaches it.
+4. `mock bench run` generates the driver, builds everything and runs
+   the harness; `mock bench test` runs the tests of every crate in the
+   tree.
+5. `mock bench report` renders `report.md` for any run that has none.
 
 ## Status
 
@@ -34,8 +51,9 @@ variant isolation via subprocess + dlopen, hardware counter timing
 (`CNTVCT_EL0` / `rdtsc`), CSV cache with drift correction, validation
 across variants (byte-exact / approximate / per-variant validity),
 analysis (quintile + bootstrap CI + sign test + Pareto + multi-N
-scaling), findings.md generator, history log with regression
-detection, optional perf counter integration, asm dedup check.
+scaling), report generator, per-run summaries with regression detection
+within a machine class, optional perf counter integration, asm dedup
+check.
 
 ## References
 

@@ -1,0 +1,15 @@
+[workspace]
+
+# The platform-aware disassembly checker: the five checks a dispatch body is
+# held to on aarch64 and x86_64. The hooks library runs them after every
+# `dispatch_*` cell, and the ASM-dispatch gate in `asm_gate_fixtures` runs them
+# over the fixtures; both take this one implementation.
+[package]
+name = "bench-disasm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "bench_disasm"
+path = "src/lib.rs"
