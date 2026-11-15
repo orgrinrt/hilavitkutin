@@ -1,0 +1,45 @@
+The search for the fourth condition, and its control.
+
+Emitted code: x86-64 linux, AT&T syntax, rustc 1.98.0-nightly (57d06900f
+2026-05-27), profile release with opt-level 3, lto "fat", codegen-units 1.
+
+command, from the sketch root:
+cargo +nightly-2026-05-28 rustc -q -p probe --release --lib -- --emit asm,llvm-ir
+kept as `probe.s` and `probe.ll`.
+
+command, from `control/`:
+cargo +nightly-2026-05-28 rustc -q -p control-probe --release --lib -- --emit asm,llvm-ir
+kept as `control-probe.s` and `control-probe.ll`.
+
+An indirect call or jump in this syntax is `call` or `jmp` with a `*` operand.
+
+pattern 1, indirect only:   ^\s*(call|jmp)q?\s+\*
+pattern 2, any call or jmp: ^\s*(call|jmp)
+
+probe.s (this sketch: block bodies, the same through `Blk`, native bodies)
+  pattern 1: 0 lines
+  pattern 2: 0 lines
+  Every body is a loop of loads, an add or compare, stores, conditional
+  branches and `retq`.
+
+control-probe.s (the first sketch's bodies over its `Cx`)
+  pattern 1: 6 lines, all in the bodies
+    control_body_drift  line 127  callq *(%r13)
+    control_body_drift  line 132  callq *8(%r13)
+    control_body_drift  line 139  callq *(%rax)
+    control_body_stamp  line 199  callq *(%r13)
+    control_body_warm   line 260  callq *(%r13)
+    control_body_warm   line 267  callq *(%rbp)
+  The `control_blk_*` symbols, where the thunk tables are built on the frame
+  and the body is inlined into the wrapper, show none: the optimiser folded
+  the stored pointers there. The body as its own instantiation keeps them.
+
+probe-before-native-inline.s (the first emission of this sketch's probe)
+  pattern 1: 3 lines, 180, 193 and 206, each `jmpq *..@GOTPCREL(%rip)`
+  These are the three native units' `execute` reached as tail calls across a
+  crate boundary, not column accesses. The native executes were then marked
+  `#[inline]` and the probe emitted again as `probe.s`. The file is kept as a
+  second showing that the search finds what it looks for.
+
+probe.ll
+  The only `call` instructions are to `llvm.experimental.noalias.scope.decl`.
