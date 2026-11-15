@@ -4,6 +4,18 @@ Generated from the runs under `results/`, one directory per run at `<bench>/<cel
 
 ## atomic_inc_strategy/atomic_inc_strategy_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T020533Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inc_cas_loop | 8.34 us | 801.46x |
+| inc_fetch_add | 4.69 us | 450.56x |
+| inc_load_store | 10 ns | 1.00x |
+
+- [20261115T020533Z-266650fb-dirty](atomic_inc_strategy/atomic_inc_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T020533Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T205811Z-266650fb-dirty`
@@ -19,6 +31,18 @@ Latest: `20261114T205811Z-266650fb-dirty`
 
 ## atomic_inc_strategy/atomic_inc_strategy_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T021047Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inc_cas_loop | 146.50 us | 13952.07x |
+| inc_fetch_add | 82.17 us | 7825.81x |
+| inc_load_store | 10 ns | 1.00x |
+
+- [20261115T021047Z-266650fb-dirty](atomic_inc_strategy/atomic_inc_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T021047Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 3 run(s)
 
 Latest: `20261114T205820Z-266650fb`
@@ -31,6 +55,18 @@ Latest: `20261114T205820Z-266650fb`
 - [20261114T205819Z-266650fb-dirty](atomic_inc_strategy/atomic_inc_strategy_n16384/macos-aarch64-c8-bare-apple/20261114T205819Z-266650fb-dirty/report.md)
 
 ## atomic_inc_strategy/atomic_inc_strategy_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T020258Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| inc_cas_loop | 1.88 us | 221.12x |
+| inc_fetch_add | 1.06 us | 125.16x |
+| inc_load_store | 8 ns | 1.00x |
+
+- [20261115T020258Z-266650fb](atomic_inc_strategy/atomic_inc_strategy_n256/linux-x86_64-c16-bare-intel/20261115T020258Z-266650fb/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -46,6 +82,18 @@ Latest: `20261114T205809Z-266650fb`
 - [20261114T205809Z-266650fb](atomic_inc_strategy/atomic_inc_strategy_n256/macos-aarch64-c8-bare-apple/20261114T205809Z-266650fb/report.md)
 
 ## atomic_inc_strategy/atomic_inc_strategy_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T020807Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inc_cas_loop | 29.96 us | 2880.84x |
+| inc_fetch_add | 16.82 us | 1617.45x |
+| inc_load_store | 10 ns | 1.00x |
+
+- [20261115T020807Z-266650fb-dirty](atomic_inc_strategy/atomic_inc_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T020807Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -92,6 +140,16 @@ Latest: `20261114T205814Z-266650fb-dirty`
 
 ## atomic_vs_plain/atomic_vs_plain_n1024
 
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T021656Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| acc_plain | 1.15 us | 1.00x |
+
+- [20261115T021655Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n1024/linux-x86_64-c16-bare-intel/20261115T021655Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T205932Z-266650fb-dirty`
@@ -106,6 +164,18 @@ Latest: `20261114T205932Z-266650fb-dirty`
 - [20261114T205932Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n1024/macos-aarch64-c8-bare-apple/20261114T205932Z-266650fb-dirty/report.md)
 
 ## atomic_vs_plain/atomic_vs_plain_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T022201Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| acc_atomic_relaxed | 18.27 us | 1.00x |
+| acc_atomic_seqcst | 18.27 us | 1.00x |
+| acc_plain | 18.27 us | 1.00x |
+
+- [20261115T022201Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n16384/linux-x86_64-c16-bare-intel/20261115T022201Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -122,6 +192,18 @@ Latest: `20261114T205940Z-266650fb-dirty`
 
 ## atomic_vs_plain/atomic_vs_plain_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T021420Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| acc_atomic_relaxed | 292 ns | 1.00x |
+| acc_atomic_seqcst | 292 ns | 1.00x |
+| acc_plain | 292 ns | 1.00x |
+
+- [20261115T021420Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n256/linux-x86_64-c16-bare-intel/20261115T021420Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T205930Z-266650fb-dirty`
@@ -136,6 +218,18 @@ Latest: `20261114T205930Z-266650fb-dirty`
 - [20261114T205930Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n256/macos-aarch64-c8-bare-apple/20261114T205930Z-266650fb-dirty/report.md)
 
 ## atomic_vs_plain/atomic_vs_plain_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T021927Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| acc_atomic_relaxed | 4.57 us | 1.00x |
+| acc_atomic_seqcst | 4.57 us | 1.00x |
+| acc_plain | 4.57 us | 1.00x |
+
+- [20261115T021927Z-266650fb-dirty](atomic_vs_plain/atomic_vs_plain_n4096/linux-x86_64-c16-bare-intel/20261115T021927Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -152,6 +246,18 @@ Latest: `20261114T205935Z-266650fb-dirty`
 
 ## bit_count_ops/bit_count_ops_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T022738Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ctz_debruijn | 52 ns | 1.00x |
+| ctz_intrinsic | 52 ns | 1.00x |
+| ctz_loop | 124 ns | 2.39x |
+
+- [20261115T022738Z-266650fb-dirty](bit_count_ops/bit_count_ops_n1024/linux-x86_64-c16-bare-intel/20261115T022738Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210018Z-266650fb-dirty`
@@ -166,6 +272,18 @@ Latest: `20261114T210018Z-266650fb-dirty`
 - [20261114T210018Z-266650fb-dirty](bit_count_ops/bit_count_ops_n1024/macos-aarch64-c8-bare-apple/20261114T210018Z-266650fb-dirty/report.md)
 
 ## bit_count_ops/bit_count_ops_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T023242Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ctz_debruijn | 621 ns | 1.00x |
+| ctz_intrinsic | 620 ns | 1.00x |
+| ctz_loop | 2.47 us | 3.99x |
+
+- [20261115T023242Z-266650fb-dirty](bit_count_ops/bit_count_ops_n16384/linux-x86_64-c16-bare-intel/20261115T023242Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -182,6 +300,18 @@ Latest: `20261114T210022Z-266650fb-dirty`
 
 ## bit_count_ops/bit_count_ops_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T022503Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ctz_debruijn | 20 ns | 1.21x |
+| ctz_intrinsic | 16 ns | 1.00x |
+| ctz_loop | 38 ns | 2.28x |
+
+- [20261115T022503Z-266650fb-dirty](bit_count_ops/bit_count_ops_n256/linux-x86_64-c16-bare-intel/20261115T022503Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210015Z-266650fb-dirty`
@@ -196,6 +326,18 @@ Latest: `20261114T210015Z-266650fb-dirty`
 - [20261114T210015Z-266650fb-dirty](bit_count_ops/bit_count_ops_n256/macos-aarch64-c8-bare-apple/20261114T210015Z-266650fb-dirty/report.md)
 
 ## bit_count_ops/bit_count_ops_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T023010Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ctz_debruijn | 180 ns | 1.00x |
+| ctz_intrinsic | 180 ns | 1.00x |
+| ctz_loop | 671 ns | 3.73x |
+
+- [20261115T023010Z-266650fb-dirty](bit_count_ops/bit_count_ops_n4096/linux-x86_64-c16-bare-intel/20261115T023010Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -212,6 +354,18 @@ Latest: `20261114T210020Z-266650fb-dirty`
 
 ## bounds_check/bounds_check_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T023819Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bc_index | 152 ns | 1.00x |
+| bc_iter | 152 ns | 1.00x |
+| bc_unchecked | 153 ns | 1.00x |
+
+- [20261115T023819Z-266650fb-dirty](bounds_check/bounds_check_n1024/linux-x86_64-c16-bare-intel/20261115T023819Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210100Z-266650fb-dirty`
@@ -226,6 +380,18 @@ Latest: `20261114T210100Z-266650fb-dirty`
 - [20261114T210100Z-266650fb-dirty](bounds_check/bounds_check_n1024/macos-aarch64-c8-bare-apple/20261114T210100Z-266650fb-dirty/report.md)
 
 ## bounds_check/bounds_check_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T024323Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bc_index | 2.29 us | 1.00x |
+| bc_iter | 2.29 us | 1.00x |
+| bc_unchecked | 2.29 us | 1.00x |
+
+- [20261115T024323Z-266650fb-dirty](bounds_check/bounds_check_n16384/linux-x86_64-c16-bare-intel/20261115T024323Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -242,6 +408,16 @@ Latest: `20261114T210104Z-266650fb-dirty`
 
 ## bounds_check/bounds_check_n256
 
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T023548Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| bc_unchecked | 37 ns | 1.00x |
+
+- [20261115T023544Z-266650fb-dirty](bounds_check/bounds_check_n256/linux-x86_64-c16-bare-intel/20261115T023544Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210058Z-266650fb-dirty`
@@ -256,6 +432,18 @@ Latest: `20261114T210058Z-266650fb-dirty`
 - [20261114T210058Z-266650fb-dirty](bounds_check/bounds_check_n256/macos-aarch64-c8-bare-apple/20261114T210058Z-266650fb-dirty/report.md)
 
 ## bounds_check/bounds_check_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T024051Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bc_index | 580 ns | 1.00x |
+| bc_iter | 580 ns | 1.00x |
+| bc_unchecked | 580 ns | 1.00x |
+
+- [20261115T024051Z-266650fb-dirty](bounds_check/bounds_check_n4096/linux-x86_64-c16-bare-intel/20261115T024051Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -272,6 +460,17 @@ Latest: `20261114T210102Z-266650fb-dirty`
 
 ## branch_pattern/branch_pattern_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T024902Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| branch_cmov | 1.71 us | 1.99x |
+| branch_if | 861 ns | 1.00x |
+
+- [20261115T024902Z-266650fb-dirty](branch_pattern/branch_pattern_n1024/linux-x86_64-c16-bare-intel/20261115T024902Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210137Z-266650fb-dirty`
@@ -285,6 +484,17 @@ Latest: `20261114T210137Z-266650fb-dirty`
 - [20261114T210137Z-266650fb-dirty](branch_pattern/branch_pattern_n1024/macos-aarch64-c8-bare-apple/20261114T210137Z-266650fb-dirty/report.md)
 
 ## branch_pattern/branch_pattern_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T025232Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| branch_cmov | 27.44 us | 1.00x |
+| branch_if | 29.93 us | 1.09x |
+
+- [20261115T025232Z-266650fb-dirty](branch_pattern/branch_pattern_n16384/linux-x86_64-c16-bare-intel/20261115T025232Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -300,6 +510,17 @@ Latest: `20261114T210143Z-266650fb-dirty`
 
 ## branch_pattern/branch_pattern_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T024719Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| branch_cmov | 429 ns | 1.94x |
+| branch_if | 221 ns | 1.00x |
+
+- [20261115T024719Z-266650fb-dirty](branch_pattern/branch_pattern_n256/linux-x86_64-c16-bare-intel/20261115T024719Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210136Z-266650fb-dirty`
@@ -313,6 +534,17 @@ Latest: `20261114T210136Z-266650fb-dirty`
 - [20261114T210136Z-266650fb-dirty](branch_pattern/branch_pattern_n256/macos-aarch64-c8-bare-apple/20261114T210136Z-266650fb-dirty/report.md)
 
 ## branch_pattern/branch_pattern_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T025046Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| branch_cmov | 6.29 us | 2.00x |
+| branch_if | 3.15 us | 1.00x |
+
+- [20261115T025046Z-266650fb-dirty](branch_pattern/branch_pattern_n4096/linux-x86_64-c16-bare-intel/20261115T025046Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -328,6 +560,17 @@ Latest: `20261114T210139Z-266650fb-dirty`
 
 ## branch_pattern/branch_pattern_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T024533Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| branch_cmov | 112 ns | 1.79x |
+| branch_if | 63 ns | 1.00x |
+
+- [20261115T024533Z-266650fb-dirty](branch_pattern/branch_pattern_n64/linux-x86_64-c16-bare-intel/20261115T024533Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210134Z-266650fb-dirty`
@@ -341,6 +584,18 @@ Latest: `20261114T210134Z-266650fb-dirty`
 - [20261114T210134Z-266650fb-dirty](branch_pattern/branch_pattern_n64/macos-aarch64-c8-bare-apple/20261114T210134Z-266650fb-dirty/report.md)
 
 ## branch_predictability/branch_predictability_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T025809Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bp_balanced | 1.15 us | 1.00x |
+| bp_skew_high | 1.15 us | 1.00x |
+| bp_skew_low | 1.15 us | 1.00x |
+
+- [20261115T025809Z-266650fb-dirty](branch_predictability/branch_predictability_n1024/linux-x86_64-c16-bare-intel/20261115T025809Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -357,6 +612,18 @@ Latest: `20261114T210220Z-266650fb-dirty`
 
 ## branch_predictability/branch_predictability_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T030315Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bp_balanced | 18.27 us | 1.00x |
+| bp_skew_high | 18.27 us | 1.00x |
+| bp_skew_low | 18.27 us | 1.00x |
+
+- [20261115T030315Z-266650fb-dirty](branch_predictability/branch_predictability_n16384/linux-x86_64-c16-bare-intel/20261115T030315Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210227Z-266650fb-dirty`
@@ -371,6 +638,18 @@ Latest: `20261114T210227Z-266650fb-dirty`
 - [20261114T210227Z-266650fb-dirty](branch_predictability/branch_predictability_n16384/macos-aarch64-c8-bare-apple/20261114T210227Z-266650fb-dirty/report.md)
 
 ## branch_predictability/branch_predictability_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T025534Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bp_balanced | 292 ns | 1.00x |
+| bp_skew_high | 292 ns | 1.00x |
+| bp_skew_low | 292 ns | 1.00x |
+
+- [20261115T025534Z-266650fb-dirty](branch_predictability/branch_predictability_n256/linux-x86_64-c16-bare-intel/20261115T025534Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -387,6 +666,18 @@ Latest: `20261114T210218Z-266650fb-dirty`
 
 ## branch_predictability/branch_predictability_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T030041Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| bp_balanced | 4.57 us | 1.22x |
+| bp_skew_high | 3.75 us | 1.00x |
+| bp_skew_low | 4.57 us | 1.22x |
+
+- [20261115T030041Z-266650fb-dirty](branch_predictability/branch_predictability_n4096/linux-x86_64-c16-bare-intel/20261115T030041Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210223Z-266650fb-dirty`
@@ -402,6 +693,17 @@ Latest: `20261114T210223Z-266650fb-dirty`
 
 ## cache_layout/cache_layout_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T030857Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| layout_aos | 28 ns | 1.00x |
+| layout_soa | 28 ns | 1.00x |
+
+- [20261115T030857Z-266650fb-dirty](cache_layout/cache_layout_n1024/linux-x86_64-c16-bare-intel/20261115T030857Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210300Z-266650fb-dirty`
@@ -415,6 +717,17 @@ Latest: `20261114T210300Z-266650fb-dirty`
 - [20261114T210300Z-266650fb-dirty](cache_layout/cache_layout_n1024/macos-aarch64-c8-bare-apple/20261114T210300Z-266650fb-dirty/report.md)
 
 ## cache_layout/cache_layout_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T031223Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| layout_aos | 333 ns | 1.00x |
+| layout_soa | 333 ns | 1.00x |
+
+- [20261115T031223Z-266650fb-dirty](cache_layout/cache_layout_n16384/linux-x86_64-c16-bare-intel/20261115T031223Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -430,6 +743,17 @@ Latest: `20261114T210303Z-266650fb-dirty`
 
 ## cache_layout/cache_layout_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T030714Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| layout_aos | 12 ns | 1.01x |
+| layout_soa | 12 ns | 1.00x |
+
+- [20261115T030714Z-266650fb-dirty](cache_layout/cache_layout_n256/linux-x86_64-c16-bare-intel/20261115T030714Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210259Z-266650fb-dirty`
@@ -443,6 +767,17 @@ Latest: `20261114T210259Z-266650fb-dirty`
 - [20261114T210259Z-266650fb-dirty](cache_layout/cache_layout_n256/macos-aarch64-c8-bare-apple/20261114T210259Z-266650fb-dirty/report.md)
 
 ## cache_layout/cache_layout_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T031040Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| layout_aos | 90 ns | 1.01x |
+| layout_soa | 89 ns | 1.00x |
+
+- [20261115T031040Z-266650fb-dirty](cache_layout/cache_layout_n4096/linux-x86_64-c16-bare-intel/20261115T031040Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -458,6 +793,17 @@ Latest: `20261114T210301Z-266650fb-dirty`
 
 ## cache_layout/cache_layout_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T030527Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| layout_aos | 10 ns | 1.00x |
+| layout_soa | 10 ns | 1.00x |
+
+- [20261115T030527Z-266650fb-dirty](cache_layout/cache_layout_n64/linux-x86_64-c16-bare-intel/20261115T030527Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210257Z-266650fb-dirty`
@@ -471,6 +817,18 @@ Latest: `20261114T210257Z-266650fb-dirty`
 - [20261114T210257Z-266650fb-dirty](cache_layout/cache_layout_n64/macos-aarch64-c8-bare-apple/20261114T210257Z-266650fb-dirty/report.md)
 
 ## dep_graph_csr_9/dep_graph_csr_9_n128
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T032537Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 746 ns | 1.02x |
+| dep_graph_dense | 23.42 us | 31.93x |
+| dep_graph_hybrid | 734 ns | 1.00x |
+
+- [20261115T032537Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n128/linux-x86_64-c16-bare-intel/20261115T032537Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -487,6 +845,18 @@ Latest: `20261114T210349Z-266650fb-dirty`
 
 ## dep_graph_csr_9/dep_graph_csr_9_n16
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T031800Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 89 ns | 1.00x |
+| dep_graph_dense | 439 ns | 4.93x |
+| dep_graph_hybrid | 447 ns | 5.02x |
+
+- [20261115T031800Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n16/linux-x86_64-c16-bare-intel/20261115T031800Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210341Z-266650fb-dirty`
@@ -501,6 +871,18 @@ Latest: `20261114T210341Z-266650fb-dirty`
 - [20261114T210341Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n16/macos-aarch64-c8-bare-apple/20261114T210341Z-266650fb-dirty/report.md)
 
 ## dep_graph_csr_9/dep_graph_csr_9_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T032812Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 1.49 us | 1.02x |
+| dep_graph_dense | 92.67 us | 63.39x |
+| dep_graph_hybrid | 1.46 us | 1.00x |
+
+- [20261115T032812Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n256/linux-x86_64-c16-bare-intel/20261115T032812Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -517,6 +899,18 @@ Latest: `20261114T210355Z-266650fb-dirty`
 
 ## dep_graph_csr_9/dep_graph_csr_9_n32
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T032032Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 193 ns | 1.00x |
+| dep_graph_dense | 1.60 us | 8.29x |
+| dep_graph_hybrid | 208 ns | 1.08x |
+
+- [20261115T032032Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n32/linux-x86_64-c16-bare-intel/20261115T032032Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210343Z-266650fb-dirty`
@@ -531,6 +925,18 @@ Latest: `20261114T210343Z-266650fb-dirty`
 - [20261114T210343Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n32/macos-aarch64-c8-bare-apple/20261114T210343Z-266650fb-dirty/report.md)
 
 ## dep_graph_csr_9/dep_graph_csr_9_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T032304Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 377 ns | 1.00x |
+| dep_graph_dense | 6.02 us | 15.96x |
+| dep_graph_hybrid | 404 ns | 1.07x |
+
+- [20261115T032304Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n64/linux-x86_64-c16-bare-intel/20261115T032304Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -547,6 +953,18 @@ Latest: `20261114T210346Z-266650fb-dirty`
 
 ## dep_graph_csr_9/dep_graph_csr_9_n8
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T031525Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dep_graph_csr | 43 ns | 1.00x |
+| dep_graph_dense | 124 ns | 2.88x |
+| dep_graph_hybrid | 125 ns | 2.89x |
+
+- [20261115T031525Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n8/linux-x86_64-c16-bare-intel/20261115T031525Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210339Z-266650fb-dirty`
@@ -561,6 +979,18 @@ Latest: `20261114T210339Z-266650fb-dirty`
 - [20261114T210339Z-266650fb-dirty](dep_graph_csr_9/dep_graph_csr_9_n8/macos-aarch64-c8-bare-apple/20261114T210339Z-266650fb-dirty/report.md)
 
 ## dispatch_dynamic/dispatch_dynamic_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T033621Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_direct | 150 ns | 1.00x |
+| dispatch_runtime | 193 ns | 1.29x |
+| dispatch_volatile | 182 ns | 1.22x |
+
+- [20261115T033621Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n1024/linux-x86_64-c16-bare-intel/20261115T033621Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -577,6 +1007,18 @@ Latest: `20261114T210435Z-266650fb-dirty`
 
 ## dispatch_dynamic/dispatch_dynamic_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T034125Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_direct | 2.29 us | 1.00x |
+| dispatch_runtime | 11.44 us | 5.00x |
+| dispatch_volatile | 2.85 us | 1.25x |
+
+- [20261115T034125Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n16384/linux-x86_64-c16-bare-intel/20261115T034125Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210440Z-266650fb-dirty`
@@ -591,6 +1033,18 @@ Latest: `20261114T210440Z-266650fb-dirty`
 - [20261114T210440Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n16384/macos-aarch64-c8-bare-apple/20261114T210440Z-266650fb-dirty/report.md)
 
 ## dispatch_dynamic/dispatch_dynamic_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T033349Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_direct | 43 ns | 1.05x |
+| dispatch_runtime | 41 ns | 1.00x |
+| dispatch_volatile | 46 ns | 1.13x |
+
+- [20261115T033349Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n256/linux-x86_64-c16-bare-intel/20261115T033349Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -607,6 +1061,18 @@ Latest: `20261114T210433Z-266650fb-dirty`
 
 ## dispatch_dynamic/dispatch_dynamic_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T033853Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_direct | 578 ns | 1.00x |
+| dispatch_runtime | 741 ns | 1.28x |
+| dispatch_volatile | 718 ns | 1.24x |
+
+- [20261115T033853Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n4096/linux-x86_64-c16-bare-intel/20261115T033853Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210437Z-266650fb-dirty`
@@ -621,6 +1087,18 @@ Latest: `20261114T210437Z-266650fb-dirty`
 - [20261114T210437Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n4096/macos-aarch64-c8-bare-apple/20261114T210437Z-266650fb-dirty/report.md)
 
 ## dispatch_dynamic/dispatch_dynamic_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T033114Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_direct | 16 ns | 1.02x |
+| dispatch_runtime | 16 ns | 1.00x |
+| dispatch_volatile | 16 ns | 1.03x |
+
+- [20261115T033114Z-266650fb-dirty](dispatch_dynamic/dispatch_dynamic_n64/linux-x86_64-c16-bare-intel/20261115T033114Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -637,6 +1115,18 @@ Latest: `20261114T210430Z-266650fb-dirty`
 
 ## dispatch_static/dispatch_static_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T034930Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_const_ptr | 150 ns | 1.00x |
+| dispatch_direct | 150 ns | 1.00x |
+| dispatch_trait | 150 ns | 1.00x |
+
+- [20261115T034930Z-266650fb-dirty](dispatch_static/dispatch_static_n1024/linux-x86_64-c16-bare-intel/20261115T034930Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 3 run(s)
 
 Latest: `20261114T210516Z-266650fb`
@@ -649,6 +1139,18 @@ Latest: `20261114T210516Z-266650fb`
 - [20261114T210515Z-266650fb-dirty](dispatch_static/dispatch_static_n1024/macos-aarch64-c8-bare-apple/20261114T210515Z-266650fb-dirty/report.md)
 
 ## dispatch_static/dispatch_static_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T035434Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_const_ptr | 2.29 us | 1.00x |
+| dispatch_direct | 2.29 us | 1.00x |
+| dispatch_trait | 2.29 us | 1.00x |
+
+- [20261115T035434Z-266650fb-dirty](dispatch_static/dispatch_static_n16384/linux-x86_64-c16-bare-intel/20261115T035434Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -665,6 +1167,18 @@ Latest: `20261114T210520Z-266650fb-dirty`
 
 ## dispatch_static/dispatch_static_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T034658Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_const_ptr | 43 ns | 1.00x |
+| dispatch_direct | 43 ns | 1.00x |
+| dispatch_trait | 43 ns | 1.00x |
+
+- [20261115T034658Z-266650fb-dirty](dispatch_static/dispatch_static_n256/linux-x86_64-c16-bare-intel/20261115T034658Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210513Z-266650fb-dirty`
@@ -679,6 +1193,18 @@ Latest: `20261114T210513Z-266650fb-dirty`
 - [20261114T210513Z-266650fb-dirty](dispatch_static/dispatch_static_n256/macos-aarch64-c8-bare-apple/20261114T210513Z-266650fb-dirty/report.md)
 
 ## dispatch_static/dispatch_static_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T035202Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_const_ptr | 578 ns | 1.00x |
+| dispatch_direct | 578 ns | 1.00x |
+| dispatch_trait | 578 ns | 1.00x |
+
+- [20261115T035202Z-266650fb-dirty](dispatch_static/dispatch_static_n4096/linux-x86_64-c16-bare-intel/20261115T035202Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -695,6 +1221,18 @@ Latest: `20261114T210517Z-266650fb-dirty`
 
 ## dispatch_static/dispatch_static_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T034423Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| dispatch_const_ptr | 16 ns | 1.00x |
+| dispatch_direct | 16 ns | 1.00x |
+| dispatch_trait | 16 ns | 1.00x |
+
+- [20261115T034423Z-266650fb-dirty](dispatch_static/dispatch_static_n64/linux-x86_64-c16-bare-intel/20261115T034423Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210511Z-266650fb-dirty`
@@ -709,6 +1247,18 @@ Latest: `20261114T210511Z-266650fb-dirty`
 - [20261114T210511Z-266650fb-dirty](dispatch_static/dispatch_static_n64/macos-aarch64-c8-bare-apple/20261114T210511Z-266650fb-dirty/report.md)
 
 ## ema_axis_h/ema_axis_h_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T040242Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_autovec | 196 ns | 1.66x |
+| ema_neon | 197 ns | 1.67x |
+| ema_scalar | 118 ns | 1.00x |
+
+- [20261115T040242Z-266650fb-dirty](ema_axis_h/ema_axis_h_n1024/linux-x86_64-c16-bare-intel/20261115T040242Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -725,6 +1275,18 @@ Latest: `20261114T210600Z-266650fb-dirty`
 
 ## ema_axis_h/ema_axis_h_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T040747Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_autovec | 2.93 us | 1.66x |
+| ema_neon | 2.94 us | 1.67x |
+| ema_scalar | 1.76 us | 1.00x |
+
+- [20261115T040747Z-266650fb-dirty](ema_axis_h/ema_axis_h_n16384/linux-x86_64-c16-bare-intel/20261115T040747Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 3 run(s)
 
 Latest: `20261114T210606Z-266650fb`
@@ -737,6 +1299,18 @@ Latest: `20261114T210606Z-266650fb`
 - [20261114T210605Z-266650fb-dirty](ema_axis_h/ema_axis_h_n16384/macos-aarch64-c8-bare-apple/20261114T210605Z-266650fb-dirty/report.md)
 
 ## ema_axis_h/ema_axis_h_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T040011Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_autovec | 59 ns | 1.62x |
+| ema_neon | 59 ns | 1.62x |
+| ema_scalar | 36 ns | 1.00x |
+
+- [20261115T040011Z-266650fb-dirty](ema_axis_h/ema_axis_h_n256/linux-x86_64-c16-bare-intel/20261115T040011Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -753,6 +1327,18 @@ Latest: `20261114T210558Z-266650fb-dirty`
 
 ## ema_axis_h/ema_axis_h_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T040514Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_autovec | 742 ns | 1.66x |
+| ema_neon | 744 ns | 1.67x |
+| ema_scalar | 446 ns | 1.00x |
+
+- [20261115T040514Z-266650fb-dirty](ema_axis_h/ema_axis_h_n4096/linux-x86_64-c16-bare-intel/20261115T040514Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210602Z-266650fb-dirty`
@@ -767,6 +1353,18 @@ Latest: `20261114T210602Z-266650fb-dirty`
 - [20261114T210602Z-266650fb-dirty](ema_axis_h/ema_axis_h_n4096/macos-aarch64-c8-bare-apple/20261114T210602Z-266650fb-dirty/report.md)
 
 ## ema_axis_h/ema_axis_h_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T035736Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_autovec | 13 ns | 1.06x |
+| ema_neon | 12 ns | 1.00x |
+| ema_scalar | 15 ns | 1.20x |
+
+- [20261115T035736Z-266650fb-dirty](ema_axis_h/ema_axis_h_n64/linux-x86_64-c16-bare-intel/20261115T035736Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -783,6 +1381,18 @@ Latest: `20261114T210556Z-266650fb-dirty`
 
 ## ema_formulation/ema_formulation_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T041327Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_form_float | 2.00 us | 2.32x |
+| ema_form_intshift | 863 ns | 1.00x |
+| ema_form_q32 | 1.43 us | 1.66x |
+
+- [20261115T041327Z-266650fb-dirty](ema_formulation/ema_formulation_n1024/linux-x86_64-c16-bare-intel/20261115T041327Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210643Z-266650fb-dirty`
@@ -797,6 +1407,18 @@ Latest: `20261114T210643Z-266650fb-dirty`
 - [20261114T210643Z-266650fb-dirty](ema_formulation/ema_formulation_n1024/macos-aarch64-c8-bare-apple/20261114T210643Z-266650fb-dirty/report.md)
 
 ## ema_formulation/ema_formulation_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T041834Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_form_float | 31.96 us | 2.33x |
+| ema_form_intshift | 13.70 us | 1.00x |
+| ema_form_q32 | 22.83 us | 1.67x |
+
+- [20261115T041834Z-266650fb-dirty](ema_formulation/ema_formulation_n16384/linux-x86_64-c16-bare-intel/20261115T041834Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -813,6 +1435,18 @@ Latest: `20261114T210651Z-266650fb-dirty`
 
 ## ema_formulation/ema_formulation_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T041052Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_form_float | 509 ns | 2.29x |
+| ema_form_intshift | 222 ns | 1.00x |
+| ema_form_q32 | 363 ns | 1.64x |
+
+- [20261115T041052Z-266650fb-dirty](ema_formulation/ema_formulation_n256/linux-x86_64-c16-bare-intel/20261115T041052Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210641Z-266650fb-dirty`
@@ -827,6 +1461,18 @@ Latest: `20261114T210641Z-266650fb-dirty`
 - [20261114T210641Z-266650fb-dirty](ema_formulation/ema_formulation_n256/macos-aarch64-c8-bare-apple/20261114T210641Z-266650fb-dirty/report.md)
 
 ## ema_formulation/ema_formulation_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T041559Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| ema_form_float | 8.00 us | 2.33x |
+| ema_form_intshift | 3.43 us | 1.00x |
+| ema_form_q32 | 5.72 us | 1.67x |
+
+- [20261115T041559Z-266650fb-dirty](ema_formulation/ema_formulation_n4096/linux-x86_64-c16-bare-intel/20261115T041559Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -963,6 +1609,17 @@ Latest: `20261114T210646Z-266650fb-dirty`
 
 ## fiber_theory/fiber_theory_n16
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T042302Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fib_greedy | 95 ns | 1.00x |
+| fib_spectral | 72.54 us | 761.22x |
+
+- [20261115T042302Z-266650fb-dirty](fiber_theory/fiber_theory_n16/linux-x86_64-c16-bare-intel/20261115T042302Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210756Z-266650fb-dirty`
@@ -975,6 +1632,17 @@ Latest: `20261114T210756Z-266650fb-dirty`
 - [20261114T210756Z-266650fb-dirty](fiber_theory/fiber_theory_n16/macos-aarch64-c8-bare-apple/20261114T210756Z-266650fb-dirty/report.md)
 
 ## fiber_theory/fiber_theory_n32
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T042449Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fib_greedy | 191 ns | 1.00x |
+| fib_spectral | 86.81 us | 455.22x |
+
+- [20261115T042449Z-266650fb-dirty](fiber_theory/fiber_theory_n32/linux-x86_64-c16-bare-intel/20261115T042449Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -989,6 +1657,17 @@ Latest: `20261114T210800Z-266650fb-dirty`
 
 ## fiber_theory/fiber_theory_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T042637Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fib_greedy | 401 ns | 1.00x |
+| fib_spectral | 113.57 us | 282.93x |
+
+- [20261115T042637Z-266650fb-dirty](fiber_theory/fiber_theory_n64/linux-x86_64-c16-bare-intel/20261115T042637Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210807Z-266650fb-dirty`
@@ -1002,6 +1681,17 @@ Latest: `20261114T210807Z-266650fb-dirty`
 
 ## fiber_theory/fiber_theory_n8
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T042113Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fib_greedy | 50 ns | 1.00x |
+| fib_spectral | 16.08 us | 320.29x |
+
+- [20261115T042113Z-266650fb-dirty](fiber_theory/fiber_theory_n8/linux-x86_64-c16-bare-intel/20261115T042113Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210752Z-266650fb-dirty`
@@ -1014,6 +1704,18 @@ Latest: `20261114T210752Z-266650fb-dirty`
 - [20261114T210752Z-266650fb-dirty](fiber_theory/fiber_theory_n8/macos-aarch64-c8-bare-apple/20261114T210752Z-266650fb-dirty/report.md)
 
 ## float_width/float_width_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T043214Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| float_f32 | 2.57 us | 4.44x |
+| float_f64 | 2.53 us | 4.38x |
+| float_i64_scaled | 578 ns | 1.00x |
+
+- [20261115T043214Z-266650fb-dirty](float_width/float_width_n1024/linux-x86_64-c16-bare-intel/20261115T043214Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1030,6 +1732,18 @@ Latest: `20261114T210846Z-266650fb-dirty`
 
 ## float_width/float_width_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T043721Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| float_f32 | 40.51 us | 4.43x |
+| float_f64 | 40.51 us | 4.43x |
+| float_i64_scaled | 9.14 us | 1.00x |
+
+- [20261115T043721Z-266650fb-dirty](float_width/float_width_n16384/linux-x86_64-c16-bare-intel/20261115T043721Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210851Z-266650fb-dirty`
@@ -1044,6 +1758,18 @@ Latest: `20261114T210851Z-266650fb-dirty`
 - [20261114T210851Z-266650fb-dirty](float_width/float_width_n16384/macos-aarch64-c8-bare-apple/20261114T210851Z-266650fb-dirty/report.md)
 
 ## float_width/float_width_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T042939Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| float_f32 | 527 ns | 3.49x |
+| float_f64 | 532 ns | 3.52x |
+| float_i64_scaled | 151 ns | 1.00x |
+
+- [20261115T042939Z-266650fb-dirty](float_width/float_width_n256/linux-x86_64-c16-bare-intel/20261115T042939Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1060,6 +1786,18 @@ Latest: `20261114T210843Z-266650fb-dirty`
 
 ## float_width/float_width_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T043446Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| float_f32 | 10.41 us | 4.55x |
+| float_f64 | 10.55 us | 4.61x |
+| float_i64_scaled | 2.29 us | 1.00x |
+
+- [20261115T043446Z-266650fb-dirty](float_width/float_width_n4096/linux-x86_64-c16-bare-intel/20261115T043446Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210848Z-266650fb-dirty`
@@ -1075,6 +1813,16 @@ Latest: `20261114T210848Z-266650fb-dirty`
 
 ## fnptr_table_dispatch/fnptr_table_dispatch_n1024
 
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T044118Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| fpt_table_16 | 178 ns | 1.00x |
+
+- [20261115T044117Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n1024/linux-x86_64-c16-bare-intel/20261115T044117Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210922Z-266650fb-dirty`
@@ -1088,6 +1836,17 @@ Latest: `20261114T210922Z-266650fb-dirty`
 - [20261114T210922Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n1024/macos-aarch64-c8-bare-apple/20261114T210922Z-266650fb-dirty/report.md)
 
 ## fnptr_table_dispatch/fnptr_table_dispatch_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T044445Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fpt_match_16 | 12.99 us | 1.00x |
+| fpt_table_16 | 15.12 us | 1.16x |
+
+- [20261115T044445Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n16384/linux-x86_64-c16-bare-intel/20261115T044445Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1103,6 +1862,17 @@ Latest: `20261114T210926Z-266650fb-dirty`
 
 ## fnptr_table_dispatch/fnptr_table_dispatch_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T043931Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fpt_match_16 | 34 ns | 1.13x |
+| fpt_table_16 | 30 ns | 1.00x |
+
+- [20261115T043931Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n256/linux-x86_64-c16-bare-intel/20261115T043931Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210920Z-266650fb-dirty`
@@ -1117,6 +1887,17 @@ Latest: `20261114T210920Z-266650fb-dirty`
 
 ## fnptr_table_dispatch/fnptr_table_dispatch_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T044301Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fpt_match_16 | 590 ns | 1.00x |
+| fpt_table_16 | 1.99 us | 3.36x |
+
+- [20261115T044301Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n4096/linux-x86_64-c16-bare-intel/20261115T044301Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T210923Z-266650fb-dirty`
@@ -1130,6 +1911,18 @@ Latest: `20261114T210923Z-266650fb-dirty`
 - [20261114T210923Z-266650fb-dirty](fnptr_table_dispatch/fnptr_table_dispatch_n4096/macos-aarch64-c8-bare-apple/20261114T210923Z-266650fb-dirty/report.md)
 
 ## fold_strategy/fold_strategy_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T045022Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fold_paired | 79 ns | 1.76x |
+| fold_quad | 45 ns | 1.00x |
+| fold_sequential | 150 ns | 3.31x |
+
+- [20261115T045022Z-266650fb-dirty](fold_strategy/fold_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T045022Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1146,6 +1939,18 @@ Latest: `20261114T211005Z-266650fb-dirty`
 
 ## fold_strategy/fold_strategy_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T045526Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fold_paired | 1.15 us | 1.98x |
+| fold_quad | 580 ns | 1.00x |
+| fold_sequential | 2.29 us | 3.94x |
+
+- [20261115T045526Z-266650fb-dirty](fold_strategy/fold_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T045526Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211009Z-266650fb-dirty`
@@ -1161,6 +1966,18 @@ Latest: `20261114T211009Z-266650fb-dirty`
 
 ## fold_strategy/fold_strategy_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T044747Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fold_paired | 26 ns | 1.23x |
+| fold_quad | 21 ns | 1.00x |
+| fold_sequential | 43 ns | 2.03x |
+
+- [20261115T044747Z-266650fb-dirty](fold_strategy/fold_strategy_n256/linux-x86_64-c16-bare-intel/20261115T044747Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211003Z-266650fb-dirty`
@@ -1175,6 +1992,18 @@ Latest: `20261114T211003Z-266650fb-dirty`
 - [20261114T211003Z-266650fb-dirty](fold_strategy/fold_strategy_n256/macos-aarch64-c8-bare-apple/20261114T211003Z-266650fb-dirty/report.md)
 
 ## fold_strategy/fold_strategy_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T045253Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fold_paired | 294 ns | 1.93x |
+| fold_quad | 152 ns | 1.00x |
+| fold_sequential | 578 ns | 3.79x |
+
+- [20261115T045253Z-266650fb-dirty](fold_strategy/fold_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T045253Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1203,6 +2032,17 @@ Latest: `20261114T211007Z-266650fb-dirty`
 
 ## fxpmul_strategy/fxpmul_strategy_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T050123Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fxpmul_hot | 97 ns | 1.00x |
+| fxpmul_precise | 151 ns | 1.55x |
+
+- [20261115T050123Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T050123Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211059Z-266650fb-dirty`
@@ -1216,6 +2056,17 @@ Latest: `20261114T211059Z-266650fb-dirty`
 - [20261114T211059Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n1024/macos-aarch64-c8-bare-apple/20261114T211059Z-266650fb-dirty/report.md)
 
 ## fxpmul_strategy/fxpmul_strategy_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T050449Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fxpmul_hot | 1.43 us | 1.00x |
+| fxpmul_precise | 2.29 us | 1.60x |
+
+- [20261115T050449Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T050449Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1231,6 +2082,17 @@ Latest: `20261114T211102Z-266650fb-dirty`
 
 ## fxpmul_strategy/fxpmul_strategy_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T045940Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fxpmul_hot | 30 ns | 1.00x |
+| fxpmul_precise | 44 ns | 1.44x |
+
+- [20261115T045940Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n256/linux-x86_64-c16-bare-intel/20261115T045940Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211058Z-266650fb-dirty`
@@ -1244,6 +2106,17 @@ Latest: `20261114T211058Z-266650fb-dirty`
 - [20261114T211058Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n256/macos-aarch64-c8-bare-apple/20261114T211058Z-266650fb-dirty/report.md)
 
 ## fxpmul_strategy/fxpmul_strategy_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T050306Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fxpmul_hot | 364 ns | 1.00x |
+| fxpmul_precise | 578 ns | 1.59x |
+
+- [20261115T050306Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T050306Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1259,6 +2132,17 @@ Latest: `20261114T211101Z-266650fb-dirty`
 
 ## fxpmul_strategy/fxpmul_strategy_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T045753Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| fxpmul_hot | 14 ns | 1.00x |
+| fxpmul_precise | 17 ns | 1.25x |
+
+- [20261115T045753Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n64/linux-x86_64-c16-bare-intel/20261115T045753Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211056Z-266650fb-dirty`
@@ -1272,6 +2156,18 @@ Latest: `20261114T211056Z-266650fb-dirty`
 - [20261114T211056Z-266650fb-dirty](fxpmul_strategy/fxpmul_strategy_n64/macos-aarch64-c8-bare-apple/20261114T211056Z-266650fb-dirty/report.md)
 
 ## hash_algos/hash_algos_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T051258Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| hash_fnv1a | 1.15 us | 6.03x |
+| hash_sip | 202 ns | 1.06x |
+| hash_xxh | 190 ns | 1.00x |
+
+- [20261115T051258Z-266650fb-dirty](hash_algos/hash_algos_n1024/linux-x86_64-c16-bare-intel/20261115T051258Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1288,6 +2184,18 @@ Latest: `20261114T211142Z-266650fb-dirty`
 
 ## hash_algos/hash_algos_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T051803Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| hash_fnv1a | 18.27 us | 6.39x |
+| hash_sip | 3.07 us | 1.07x |
+| hash_xxh | 2.86 us | 1.00x |
+
+- [20261115T051803Z-266650fb-dirty](hash_algos/hash_algos_n16384/linux-x86_64-c16-bare-intel/20261115T051803Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211148Z-266650fb-dirty`
@@ -1302,6 +2210,18 @@ Latest: `20261114T211148Z-266650fb-dirty`
 - [20261114T211148Z-266650fb-dirty](hash_algos/hash_algos_n16384/macos-aarch64-c8-bare-apple/20261114T211148Z-266650fb-dirty/report.md)
 
 ## hash_algos/hash_algos_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T051026Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| hash_fnv1a | 292 ns | 5.65x |
+| hash_sip | 58 ns | 1.13x |
+| hash_xxh | 52 ns | 1.00x |
+
+- [20261115T051026Z-266650fb-dirty](hash_algos/hash_algos_n256/linux-x86_64-c16-bare-intel/20261115T051026Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1318,6 +2238,18 @@ Latest: `20261114T211140Z-266650fb-dirty`
 
 ## hash_algos/hash_algos_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T051530Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| hash_fnv1a | 4.57 us | 6.30x |
+| hash_sip | 782 ns | 1.08x |
+| hash_xxh | 725 ns | 1.00x |
+
+- [20261115T051530Z-266650fb-dirty](hash_algos/hash_algos_n4096/linux-x86_64-c16-bare-intel/20261115T051530Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211145Z-266650fb-dirty`
@@ -1332,6 +2264,18 @@ Latest: `20261114T211145Z-266650fb-dirty`
 - [20261114T211145Z-266650fb-dirty](hash_algos/hash_algos_n4096/macos-aarch64-c8-bare-apple/20261114T211145Z-266650fb-dirty/report.md)
 
 ## hash_algos/hash_algos_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T050751Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| hash_fnv1a | 78 ns | 4.19x |
+| hash_sip | 22 ns | 1.21x |
+| hash_xxh | 19 ns | 1.00x |
+
+- [20261115T050751Z-266650fb-dirty](hash_algos/hash_algos_n64/linux-x86_64-c16-bare-intel/20261115T050751Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1348,6 +2292,18 @@ Latest: `20261114T211138Z-266650fb-dirty`
 
 ## inline_strategy/inline_strategy_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T052342Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inline_always | 1.15 us | 1.00x |
+| inline_default | 1.15 us | 1.00x |
+| inline_never | 1.15 us | 1.00x |
+
+- [20261115T052342Z-266650fb-dirty](inline_strategy/inline_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T052342Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 3 run(s)
 
 Latest: `20261114T211227Z-266650fb`
@@ -1361,6 +2317,18 @@ Latest: `20261114T211227Z-266650fb`
 - [20261114T211226Z-266650fb-dirty](inline_strategy/inline_strategy_n1024/macos-aarch64-c8-bare-apple/20261114T211226Z-266650fb-dirty/report.md)
 
 ## inline_strategy/inline_strategy_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T052848Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inline_always | 18.27 us | 1.00x |
+| inline_default | 18.27 us | 1.00x |
+| inline_never | 18.27 us | 1.00x |
+
+- [20261115T052848Z-266650fb-dirty](inline_strategy/inline_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T052848Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1377,6 +2345,18 @@ Latest: `20261114T211234Z-266650fb-dirty`
 
 ## inline_strategy/inline_strategy_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T052107Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| inline_always | 292 ns | 1.00x |
+| inline_default | 292 ns | 1.00x |
+| inline_never | 293 ns | 1.00x |
+
+- [20261115T052107Z-266650fb-dirty](inline_strategy/inline_strategy_n256/linux-x86_64-c16-bare-intel/20261115T052107Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211224Z-266650fb-dirty`
@@ -1391,6 +2371,16 @@ Latest: `20261114T211224Z-266650fb-dirty`
 - [20261114T211224Z-266650fb-dirty](inline_strategy/inline_strategy_n256/macos-aarch64-c8-bare-apple/20261114T211224Z-266650fb-dirty/report.md)
 
 ## inline_strategy/inline_strategy_n4096
+
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T052615Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| inline_never | 4.57 us | 1.00x |
+
+- [20261115T052614Z-266650fb-dirty](inline_strategy/inline_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T052614Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1407,6 +2397,18 @@ Latest: `20261114T211229Z-266650fb-dirty`
 
 ## iter_patterns/iter_patterns_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T053425Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| iter_gather | 297 ns | 11.80x |
+| iter_seq | 150 ns | 5.93x |
+| iter_strided | 25 ns | 1.00x |
+
+- [20261115T053425Z-266650fb-dirty](iter_patterns/iter_patterns_n1024/linux-x86_64-c16-bare-intel/20261115T053425Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211312Z-266650fb-dirty`
@@ -1421,6 +2423,18 @@ Latest: `20261114T211312Z-266650fb-dirty`
 - [20261114T211312Z-266650fb-dirty](iter_patterns/iter_patterns_n1024/macos-aarch64-c8-bare-apple/20261114T211312Z-266650fb-dirty/report.md)
 
 ## iter_patterns/iter_patterns_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T053929Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| iter_gather | 4.63 us | 15.86x |
+| iter_seq | 2.29 us | 7.83x |
+| iter_strided | 292 ns | 1.00x |
+
+- [20261115T053929Z-266650fb-dirty](iter_patterns/iter_patterns_n16384/linux-x86_64-c16-bare-intel/20261115T053929Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1437,6 +2451,18 @@ Latest: `20261114T211316Z-266650fb-dirty`
 
 ## iter_patterns/iter_patterns_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T053150Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| iter_gather | 82 ns | 7.10x |
+| iter_seq | 43 ns | 3.71x |
+| iter_strided | 12 ns | 1.00x |
+
+- [20261115T053150Z-266650fb-dirty](iter_patterns/iter_patterns_n256/linux-x86_64-c16-bare-intel/20261115T053150Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211310Z-266650fb-dirty`
@@ -1451,6 +2477,18 @@ Latest: `20261114T211310Z-266650fb-dirty`
 - [20261114T211310Z-266650fb-dirty](iter_patterns/iter_patterns_n256/macos-aarch64-c8-bare-apple/20261114T211310Z-266650fb-dirty/report.md)
 
 ## iter_patterns/iter_patterns_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T053657Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| iter_gather | 1.16 us | 14.85x |
+| iter_seq | 577 ns | 7.36x |
+| iter_strided | 78 ns | 1.00x |
+
+- [20261115T053657Z-266650fb-dirty](iter_patterns/iter_patterns_n4096/linux-x86_64-c16-bare-intel/20261115T053657Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1467,6 +2505,18 @@ Latest: `20261114T211314Z-266650fb-dirty`
 
 ## load_alignment/load_alignment_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T054506Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| load_aligned | 150 ns | 1.00x |
+| load_byte_pack | 150 ns | 1.00x |
+| load_unaligned | 150 ns | 1.00x |
+
+- [20261115T054506Z-266650fb-dirty](load_alignment/load_alignment_n1024/linux-x86_64-c16-bare-intel/20261115T054506Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211354Z-266650fb-dirty`
@@ -1481,6 +2531,18 @@ Latest: `20261114T211354Z-266650fb-dirty`
 - [20261114T211354Z-266650fb-dirty](load_alignment/load_alignment_n1024/macos-aarch64-c8-bare-apple/20261114T211354Z-266650fb-dirty/report.md)
 
 ## load_alignment/load_alignment_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T055010Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| load_aligned | 2.29 us | 1.00x |
+| load_byte_pack | 2.29 us | 1.00x |
+| load_unaligned | 2.29 us | 1.00x |
+
+- [20261115T055010Z-266650fb-dirty](load_alignment/load_alignment_n16384/linux-x86_64-c16-bare-intel/20261115T055010Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1497,6 +2559,18 @@ Latest: `20261114T211359Z-266650fb-dirty`
 
 ## load_alignment/load_alignment_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T054231Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| load_aligned | 43 ns | 1.00x |
+| load_byte_pack | 43 ns | 1.00x |
+| load_unaligned | 43 ns | 1.00x |
+
+- [20261115T054231Z-266650fb-dirty](load_alignment/load_alignment_n256/linux-x86_64-c16-bare-intel/20261115T054231Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211352Z-266650fb-dirty`
@@ -1511,6 +2585,18 @@ Latest: `20261114T211352Z-266650fb-dirty`
 - [20261114T211352Z-266650fb-dirty](load_alignment/load_alignment_n256/macos-aarch64-c8-bare-apple/20261114T211352Z-266650fb-dirty/report.md)
 
 ## load_alignment/load_alignment_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T054738Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| load_aligned | 578 ns | 1.00x |
+| load_byte_pack | 578 ns | 1.00x |
+| load_unaligned | 578 ns | 1.00x |
+
+- [20261115T054738Z-266650fb-dirty](load_alignment/load_alignment_n4096/linux-x86_64-c16-bare-intel/20261115T054738Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1527,6 +2613,18 @@ Latest: `20261114T211357Z-266650fb-dirty`
 
 ## match_arm_count/match_arm_count_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T055547Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| match_2_arms | 106 ns | 1.00x |
+| match_64_arms | 181 ns | 1.70x |
+| match_8_arms | 161 ns | 1.51x |
+
+- [20261115T055547Z-266650fb-dirty](match_arm_count/match_arm_count_n1024/linux-x86_64-c16-bare-intel/20261115T055547Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211437Z-266650fb-dirty`
@@ -1541,6 +2639,18 @@ Latest: `20261114T211437Z-266650fb-dirty`
 - [20261114T211437Z-266650fb-dirty](match_arm_count/match_arm_count_n1024/macos-aarch64-c8-bare-apple/20261114T211437Z-266650fb-dirty/report.md)
 
 ## match_arm_count/match_arm_count_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T060052Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| match_2_arms | 1.58 us | 1.00x |
+| match_64_arms | 11.31 us | 7.17x |
+| match_8_arms | 11.37 us | 7.21x |
+
+- [20261115T060052Z-266650fb-dirty](match_arm_count/match_arm_count_n16384/linux-x86_64-c16-bare-intel/20261115T060052Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1557,6 +2667,18 @@ Latest: `20261114T211443Z-266650fb-dirty`
 
 ## match_arm_count/match_arm_count_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T055312Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| match_2_arms | 33 ns | 1.08x |
+| match_64_arms | 39 ns | 1.29x |
+| match_8_arms | 30 ns | 1.00x |
+
+- [20261115T055312Z-266650fb-dirty](match_arm_count/match_arm_count_n256/linux-x86_64-c16-bare-intel/20261115T055312Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211435Z-266650fb-dirty`
@@ -1571,6 +2693,18 @@ Latest: `20261114T211435Z-266650fb-dirty`
 - [20261114T211435Z-266650fb-dirty](match_arm_count/match_arm_count_n256/macos-aarch64-c8-bare-apple/20261114T211435Z-266650fb-dirty/report.md)
 
 ## match_arm_count/match_arm_count_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T055819Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| match_2_arms | 404 ns | 1.00x |
+| match_64_arms | 747 ns | 1.85x |
+| match_8_arms | 663 ns | 1.64x |
+
+- [20261115T055819Z-266650fb-dirty](match_arm_count/match_arm_count_n4096/linux-x86_64-c16-bare-intel/20261115T055819Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1587,6 +2721,18 @@ Latest: `20261114T211439Z-266650fb-dirty`
 
 ## memcpy_patterns/memcpy_patterns_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T060900Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| memcpy_intrinsic | 1.23 us | 1.00x |
+| memcpy_naive | 1.23 us | 1.00x |
+| memcpy_unrolled | 1.23 us | 1.00x |
+
+- [20261115T060900Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n1024/linux-x86_64-c16-bare-intel/20261115T060900Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211523Z-266650fb-dirty`
@@ -1601,6 +2747,18 @@ Latest: `20261114T211523Z-266650fb-dirty`
 - [20261114T211523Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n1024/macos-aarch64-c8-bare-apple/20261114T211523Z-266650fb-dirty/report.md)
 
 ## memcpy_patterns/memcpy_patterns_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T061407Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| memcpy_intrinsic | 18.27 us | 1.00x |
+| memcpy_naive | 18.27 us | 1.00x |
+| memcpy_unrolled | 18.27 us | 1.00x |
+
+- [20261115T061407Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n16384/linux-x86_64-c16-bare-intel/20261115T061407Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1617,6 +2775,18 @@ Latest: `20261114T211530Z-266650fb-dirty`
 
 ## memcpy_patterns/memcpy_patterns_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T060629Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| memcpy_intrinsic | 376 ns | 1.00x |
+| memcpy_naive | 375 ns | 1.00x |
+| memcpy_unrolled | 376 ns | 1.00x |
+
+- [20261115T060629Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n256/linux-x86_64-c16-bare-intel/20261115T060629Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211521Z-266650fb-dirty`
@@ -1631,6 +2801,18 @@ Latest: `20261114T211521Z-266650fb-dirty`
 - [20261114T211521Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n256/macos-aarch64-c8-bare-apple/20261114T211521Z-266650fb-dirty/report.md)
 
 ## memcpy_patterns/memcpy_patterns_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T061133Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| memcpy_intrinsic | 4.25 us | 1.00x |
+| memcpy_naive | 4.66 us | 1.10x |
+| memcpy_unrolled | 4.66 us | 1.10x |
+
+- [20261115T061133Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n4096/linux-x86_64-c16-bare-intel/20261115T061133Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1647,6 +2829,18 @@ Latest: `20261114T211526Z-266650fb-dirty`
 
 ## memcpy_patterns/memcpy_patterns_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T060354Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| memcpy_intrinsic | 78 ns | 1.00x |
+| memcpy_naive | 78 ns | 1.00x |
+| memcpy_unrolled | 78 ns | 1.00x |
+
+- [20261115T060354Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n64/linux-x86_64-c16-bare-intel/20261115T060354Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211518Z-266650fb-dirty`
@@ -1661,6 +2855,18 @@ Latest: `20261114T211518Z-266650fb-dirty`
 - [20261114T211518Z-266650fb-dirty](memcpy_patterns/memcpy_patterns_n64/macos-aarch64-c8-bare-apple/20261114T211518Z-266650fb-dirty/report.md)
 
 ## minmax_strategy/minmax_strategy_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T061944Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| minmax_branch | 51 ns | 1.01x |
+| minmax_branchless | 50 ns | 1.00x |
+| minmax_intrinsic | 52 ns | 1.02x |
+
+- [20261115T061944Z-266650fb-dirty](minmax_strategy/minmax_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T061944Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1677,6 +2883,18 @@ Latest: `20261114T211609Z-266650fb-dirty`
 
 ## minmax_strategy/minmax_strategy_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T062448Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| minmax_branch | 720 ns | 1.08x |
+| minmax_branchless | 670 ns | 1.00x |
+| minmax_intrinsic | 720 ns | 1.07x |
+
+- [20261115T062448Z-266650fb-dirty](minmax_strategy/minmax_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T062448Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211613Z-266650fb-dirty`
@@ -1691,6 +2909,18 @@ Latest: `20261114T211613Z-266650fb-dirty`
 - [20261114T211613Z-266650fb-dirty](minmax_strategy/minmax_strategy_n16384/macos-aarch64-c8-bare-apple/20261114T211613Z-266650fb-dirty/report.md)
 
 ## minmax_strategy/minmax_strategy_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T061709Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| minmax_branch | 34 ns | 1.00x |
+| minmax_branchless | 34 ns | 1.00x |
+| minmax_intrinsic | 34 ns | 1.00x |
+
+- [20261115T061709Z-266650fb-dirty](minmax_strategy/minmax_strategy_n256/linux-x86_64-c16-bare-intel/20261115T061709Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1707,6 +2937,18 @@ Latest: `20261114T211607Z-266650fb-dirty`
 
 ## minmax_strategy/minmax_strategy_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T062215Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| minmax_branch | 185 ns | 1.00x |
+| minmax_branchless | 188 ns | 1.01x |
+| minmax_intrinsic | 188 ns | 1.01x |
+
+- [20261115T062215Z-266650fb-dirty](minmax_strategy/minmax_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T062215Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211611Z-266650fb-dirty`
@@ -1721,6 +2963,18 @@ Latest: `20261114T211611Z-266650fb-dirty`
 - [20261114T211611Z-266650fb-dirty](minmax_strategy/minmax_strategy_n4096/macos-aarch64-c8-bare-apple/20261114T211611Z-266650fb-dirty/report.md)
 
 ## modulo_strategy/modulo_strategy_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T063029Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| mod_npow2_const | 2.93 us | 2.41x |
+| mod_pow2_const | 1.22 us | 1.00x |
+| mod_var | 6.29 us | 5.16x |
+
+- [20261115T063029Z-266650fb-dirty](modulo_strategy/modulo_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T063029Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1737,6 +2991,18 @@ Latest: `20261114T211652Z-266650fb-dirty`
 
 ## modulo_strategy/modulo_strategy_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T063541Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| mod_npow2_const | 57.06 us | 2.94x |
+| mod_pow2_const | 19.41 us | 1.00x |
+| mod_var | 100.43 us | 5.18x |
+
+- [20261115T063541Z-266650fb-dirty](modulo_strategy/modulo_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T063541Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211705Z-266650fb-dirty`
@@ -1751,6 +3017,18 @@ Latest: `20261114T211705Z-266650fb-dirty`
 - [20261114T211705Z-266650fb-dirty](modulo_strategy/modulo_strategy_n16384/macos-aarch64-c8-bare-apple/20261114T211705Z-266650fb-dirty/report.md)
 
 ## modulo_strategy/modulo_strategy_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T062754Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| mod_npow2_const | 898 ns | 2.90x |
+| mod_pow2_const | 310 ns | 1.00x |
+| mod_var | 1.58 us | 5.09x |
+
+- [20261115T062754Z-266650fb-dirty](modulo_strategy/modulo_strategy_n256/linux-x86_64-c16-bare-intel/20261115T062754Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1767,6 +3045,18 @@ Latest: `20261114T211650Z-266650fb-dirty`
 
 ## modulo_strategy/modulo_strategy_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T063303Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| mod_npow2_const | 14.27 us | 2.94x |
+| mod_pow2_const | 4.85 us | 1.00x |
+| mod_var | 25.11 us | 5.18x |
+
+- [20261115T063303Z-266650fb-dirty](modulo_strategy/modulo_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T063303Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211656Z-266650fb-dirty`
@@ -1781,6 +3071,18 @@ Latest: `20261114T211656Z-266650fb-dirty`
 - [20261114T211656Z-266650fb-dirty](modulo_strategy/modulo_strategy_n4096/macos-aarch64-c8-bare-apple/20261114T211656Z-266650fb-dirty/report.md)
 
 ## popcount_strategy/popcount_strategy_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T064350Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| popcount_handrolled | 1.80 us | 19.36x |
+| popcount_std | 93 ns | 1.00x |
+| popcount_swar | 189 ns | 2.03x |
+
+- [20261115T064350Z-266650fb-dirty](popcount_strategy/popcount_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T064350Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1797,6 +3099,18 @@ Latest: `20261114T211746Z-266650fb-dirty`
 
 ## popcount_strategy/popcount_strategy_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T064856Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| popcount_handrolled | 37.29 us | 29.04x |
+| popcount_std | 1.28 us | 1.00x |
+| popcount_swar | 2.73 us | 2.13x |
+
+- [20261115T064856Z-266650fb-dirty](popcount_strategy/popcount_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T064856Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211751Z-266650fb-dirty`
@@ -1811,6 +3125,18 @@ Latest: `20261114T211751Z-266650fb-dirty`
 - [20261114T211751Z-266650fb-dirty](popcount_strategy/popcount_strategy_n16384/macos-aarch64-c8-bare-apple/20261114T211751Z-266650fb-dirty/report.md)
 
 ## popcount_strategy/popcount_strategy_n256
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T064118Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| popcount_handrolled | 354 ns | 10.83x |
+| popcount_std | 33 ns | 1.00x |
+| popcount_swar | 67 ns | 2.05x |
+
+- [20261115T064118Z-266650fb-dirty](popcount_strategy/popcount_strategy_n256/linux-x86_64-c16-bare-intel/20261115T064118Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -1827,6 +3153,18 @@ Latest: `20261114T211744Z-266650fb-dirty`
 
 ## popcount_strategy/popcount_strategy_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T064622Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| popcount_handrolled | 8.04 us | 24.30x |
+| popcount_std | 331 ns | 1.00x |
+| popcount_swar | 693 ns | 2.09x |
+
+- [20261115T064622Z-266650fb-dirty](popcount_strategy/popcount_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T064622Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T211749Z-266650fb-dirty`
@@ -1841,6 +3179,18 @@ Latest: `20261114T211749Z-266650fb-dirty`
 - [20261114T211749Z-266650fb-dirty](popcount_strategy/popcount_strategy_n4096/macos-aarch64-c8-bare-apple/20261114T211749Z-266650fb-dirty/report.md)
 
 ## popcount_strategy/popcount_strategy_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T063843Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| popcount_handrolled | 91 ns | 5.96x |
+| popcount_std | 15 ns | 1.00x |
+| popcount_swar | 22 ns | 1.42x |
+
+- [20261115T063843Z-266650fb-dirty](popcount_strategy/popcount_strategy_n64/linux-x86_64-c16-bare-intel/20261115T063843Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2072,6 +3422,21 @@ Latest: `20260719T170734Z-2c337b67-dirty`
 
 ## registration_binding/registration_binding_n16384
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T090031Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| reg_bound_columns | 2.79 us | 1.10x |
+| reg_bound_record | 18.11 us | 7.16x |
+| reg_bound_strided | 5.62 us | 2.22x |
+| reg_bound_units | 2.77 us | 1.10x |
+| reg_typed | 3.02 us | 1.19x |
+| reg_typed_twin | 2.53 us | 1.00x |
+
+- [20261115T090031Z-266650fb-dirty](registration_binding/registration_binding_n16384/linux-x86_64-c16-bare-intel/20261115T090031Z-266650fb-dirty/report.md)
+
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
 - [20261113T080428Z-83f6f25-dirty](registration_binding/registration_binding_n16384/linux-x86_64-c4-container-intel/20261113T080428Z-83f6f25-dirty/report.md)
@@ -2093,6 +3458,21 @@ Latest: `20261114T231941Z-266650fb`
 
 ## registration_binding/registration_binding_n262144
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T091356Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| reg_bound_columns | 48.57 us | 1.02x |
+| reg_bound_record | 292.09 us | 6.12x |
+| reg_bound_strided | 72.48 us | 1.52x |
+| reg_bound_units | 48.12 us | 1.01x |
+| reg_typed | 47.70 us | 1.00x |
+| reg_typed_twin | 47.69 us | 1.00x |
+
+- [20261115T091356Z-266650fb-dirty](registration_binding/registration_binding_n262144/linux-x86_64-c16-bare-intel/20261115T091356Z-266650fb-dirty/report.md)
+
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
 - [20261113T081835Z-83f6f25-dirty](registration_binding/registration_binding_n262144/linux-x86_64-c4-container-intel/20261113T081835Z-83f6f25-dirty/report.md)
@@ -2113,6 +3493,21 @@ Latest: `20261114T232255Z-266650fb`
 
 ## registration_binding/registration_binding_n4096
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T085521Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| reg_bound_columns | 761 ns | 1.23x |
+| reg_bound_record | 5.53 us | 8.91x |
+| reg_bound_strided | 1.14 us | 1.83x |
+| reg_bound_units | 629 ns | 1.01x |
+| reg_typed | 620 ns | 1.00x |
+| reg_typed_twin | 620 ns | 1.00x |
+
+- [20261115T085521Z-266650fb-dirty](registration_binding/registration_binding_n4096/linux-x86_64-c16-bare-intel/20261115T085521Z-266650fb-dirty/report.md)
+
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
 - [20261113T075919Z-83f6f25-dirty](registration_binding/registration_binding_n4096/linux-x86_64-c4-container-intel/20261113T075919Z-83f6f25-dirty/report.md)
@@ -2131,6 +3526,21 @@ Latest: `20261114T231928Z-266650fb`
 - [20261114T231927Z-266650fb-dirty](registration_binding/registration_binding_n4096/macos-aarch64-c8-bare-apple/20261114T231927Z-266650fb-dirty/report.md)
 
 ## registration_binding/registration_binding_n65536
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T090613Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| reg_bound_columns | 12.35 us | 1.03x |
+| reg_bound_record | 89.13 us | 7.46x |
+| reg_bound_strided | 22.09 us | 1.85x |
+| reg_bound_units | 12.21 us | 1.02x |
+| reg_typed | 11.96 us | 1.00x |
+| reg_typed_twin | 11.95 us | 1.00x |
+
+- [20261115T090613Z-266650fb-dirty](registration_binding/registration_binding_n65536/linux-x86_64-c16-bare-intel/20261115T090613Z-266650fb-dirty/report.md)
 
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
@@ -2260,6 +3670,18 @@ Latest: `20261114T232023Z-266650fb`
 
 ## rotate_strategy/rotate_strategy_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T091951Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| rot_intrinsic_const | 65 ns | 1.00x |
+| rot_manual_shifts | 79 ns | 1.22x |
+| rot_variable_amount | 181 ns | 2.80x |
+
+- [20261115T091951Z-266650fb-dirty](rotate_strategy/rotate_strategy_n1024/linux-x86_64-c16-bare-intel/20261115T091951Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232350Z-266650fb-dirty`
@@ -2274,6 +3696,18 @@ Latest: `20261114T232350Z-266650fb-dirty`
 - [20261114T232350Z-266650fb-dirty](rotate_strategy/rotate_strategy_n1024/macos-aarch64-c8-bare-apple/20261114T232350Z-266650fb-dirty/report.md)
 
 ## rotate_strategy/rotate_strategy_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T092455Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| rot_intrinsic_const | 1.15 us | 1.00x |
+| rot_manual_shifts | 1.15 us | 1.00x |
+| rot_variable_amount | 3.43 us | 2.99x |
+
+- [20261115T092455Z-266650fb-dirty](rotate_strategy/rotate_strategy_n16384/linux-x86_64-c16-bare-intel/20261115T092455Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2290,6 +3724,18 @@ Latest: `20261114T232355Z-266650fb-dirty`
 
 ## rotate_strategy/rotate_strategy_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T091717Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| rot_intrinsic_const | 21 ns | 1.00x |
+| rot_manual_shifts | 25 ns | 1.22x |
+| rot_variable_amount | 59 ns | 2.81x |
+
+- [20261115T091717Z-266650fb-dirty](rotate_strategy/rotate_strategy_n256/linux-x86_64-c16-bare-intel/20261115T091717Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232348Z-266650fb-dirty`
@@ -2304,6 +3750,17 @@ Latest: `20261114T232348Z-266650fb-dirty`
 - [20261114T232348Z-266650fb-dirty](rotate_strategy/rotate_strategy_n256/macos-aarch64-c8-bare-apple/20261114T232348Z-266650fb-dirty/report.md)
 
 ## rotate_strategy/rotate_strategy_n4096
+
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T092224Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| rot_manual_shifts | 293 ns | 1.00x |
+| rot_variable_amount | 862 ns | 2.94x |
+
+- [20261115T092223Z-266650fb-dirty](rotate_strategy/rotate_strategy_n4096/linux-x86_64-c16-bare-intel/20261115T092223Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2320,6 +3777,17 @@ Latest: `20261114T232352Z-266650fb-dirty`
 
 ## sat_arithmetic/sat_arithmetic_n1024
 
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T093033Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| sat_saturate | 504 ns | 1.71x |
+| sat_wrap | 295 ns | 1.00x |
+
+- [20261115T093032Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n1024/linux-x86_64-c16-bare-intel/20261115T093032Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232433Z-266650fb-dirty`
@@ -2334,6 +3802,18 @@ Latest: `20261114T232433Z-266650fb-dirty`
 - [20261114T232433Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n1024/macos-aarch64-c8-bare-apple/20261114T232433Z-266650fb-dirty/report.md)
 
 ## sat_arithmetic/sat_arithmetic_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T093537Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sat_checked | 7.80 us | 1.71x |
+| sat_saturate | 7.80 us | 1.71x |
+| sat_wrap | 4.57 us | 1.00x |
+
+- [20261115T093537Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n16384/linux-x86_64-c16-bare-intel/20261115T093537Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2350,6 +3830,18 @@ Latest: `20261114T232439Z-266650fb-dirty`
 
 ## sat_arithmetic/sat_arithmetic_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T092757Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sat_checked | 140 ns | 1.72x |
+| sat_saturate | 140 ns | 1.72x |
+| sat_wrap | 81 ns | 1.00x |
+
+- [20261115T092757Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n256/linux-x86_64-c16-bare-intel/20261115T092757Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232431Z-266650fb-dirty`
@@ -2364,6 +3856,18 @@ Latest: `20261114T232431Z-266650fb-dirty`
 - [20261114T232431Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n256/macos-aarch64-c8-bare-apple/20261114T232431Z-266650fb-dirty/report.md)
 
 ## sat_arithmetic/sat_arithmetic_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T093304Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sat_checked | 1.97 us | 1.71x |
+| sat_saturate | 1.97 us | 1.72x |
+| sat_wrap | 1.15 us | 1.00x |
+
+- [20261115T093304Z-266650fb-dirty](sat_arithmetic/sat_arithmetic_n4096/linux-x86_64-c16-bare-intel/20261115T093304Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2380,6 +3884,18 @@ Latest: `20261114T232435Z-266650fb-dirty`
 
 ## shift_amount_origin/shift_amount_origin_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T094114Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| shr_const | 19 ns | 1.00x |
+| shr_loop_invariant | 20 ns | 1.03x |
+| shr_per_iter | 94 ns | 4.90x |
+
+- [20261115T094114Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n1024/linux-x86_64-c16-bare-intel/20261115T094114Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232517Z-266650fb-dirty`
@@ -2394,6 +3910,18 @@ Latest: `20261114T232517Z-266650fb-dirty`
 - [20261114T232517Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n1024/macos-aarch64-c8-bare-apple/20261114T232517Z-266650fb-dirty/report.md)
 
 ## shift_amount_origin/shift_amount_origin_n16384
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T094618Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| shr_const | 131 ns | 1.00x |
+| shr_loop_invariant | 203 ns | 1.56x |
+| shr_per_iter | 1.33 us | 10.22x |
+
+- [20261115T094618Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n16384/linux-x86_64-c16-bare-intel/20261115T094618Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2410,6 +3938,18 @@ Latest: `20261114T232522Z-266650fb-dirty`
 
 ## shift_amount_origin/shift_amount_origin_n256
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T093839Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| shr_const | 12 ns | 1.00x |
+| shr_loop_invariant | 13 ns | 1.06x |
+| shr_per_iter | 26 ns | 2.14x |
+
+- [20261115T093839Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n256/linux-x86_64-c16-bare-intel/20261115T093839Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232515Z-266650fb-dirty`
@@ -2424,6 +3964,18 @@ Latest: `20261114T232515Z-266650fb-dirty`
 - [20261114T232515Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n256/macos-aarch64-c8-bare-apple/20261114T232515Z-266650fb-dirty/report.md)
 
 ## shift_amount_origin/shift_amount_origin_n4096
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T094346Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| shr_const | 50 ns | 1.00x |
+| shr_loop_invariant | 61 ns | 1.23x |
+| shr_per_iter | 342 ns | 6.89x |
+
+- [20261115T094346Z-266650fb-dirty](shift_amount_origin/shift_amount_origin_n4096/linux-x86_64-c16-bare-intel/20261115T094346Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2840,6 +4392,18 @@ Latest: `20261114T232519Z-266650fb-dirty`
 
 ## swap_band/swap_band_n1024
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T095229Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sb_none | 9.90 us | 1.00x |
+| sb_plan | 12.61 us | 1.27x |
+| sb_value | 235.25 us | 23.77x |
+
+- [20261115T095229Z-266650fb-dirty](swap_band/swap_band_n1024/linux-x86_64-c16-bare-intel/20261115T095229Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
 Latest: `20261114T232820Z-266650fb-dirty`
@@ -2853,6 +4417,18 @@ Latest: `20261114T232820Z-266650fb-dirty`
 - [20261114T232820Z-266650fb-dirty](swap_band/swap_band_n1024/macos-aarch64-c8-bare-apple/20261114T232820Z-266650fb-dirty/report.md)
 
 ## swap_band/swap_band_n64
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T095023Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sb_none | 7.90 us | 1.00x |
+| sb_plan | 10.11 us | 1.28x |
+| sb_value | 16.20 us | 2.05x |
+
+- [20261115T095023Z-266650fb-dirty](swap_band/swap_band_n64/linux-x86_64-c16-bare-intel/20261115T095023Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 2 run(s)
 
@@ -2868,6 +4444,18 @@ Latest: `20261114T232808Z-266650fb-dirty`
 
 ## swap_band/swap_band_n8192
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T095526Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sb_none | 11.02 us | 1.00x |
+| sb_plan | 13.92 us | 1.26x |
+| sb_value | 5.17 ms | 468.55x |
+
+- [20261115T095526Z-266650fb-dirty](swap_band/swap_band_n8192/linux-x86_64-c16-bare-intel/20261115T095526Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 3 run(s)
 
 Latest: `20261114T232949Z-266650fb-dirty`
@@ -2881,6 +4469,19 @@ Latest: `20261114T232949Z-266650fb-dirty`
 - [20261114T232949Z-266650fb-dirty](swap_band/swap_band_n8192/macos-aarch64-c8-bare-apple/20261114T232949Z-266650fb-dirty/report.md)
 
 ## swap_column/swap_column_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T100307Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| cs_exch | 707.51 us | 1.57x |
+| cs_plain | 451.50 us | 1.00x |
+| cs_snap | 952.53 us | 2.11x |
+| cs_snap_twin | 1.02 ms | 2.26x |
+
+- [20261115T100307Z-266650fb-dirty](swap_column/swap_column_n1024/linux-x86_64-c16-bare-intel/20261115T100307Z-266650fb-dirty/report.md)
 
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
@@ -2909,6 +4510,18 @@ Latest: `20261114T233320Z-266650fb-dirty`
 
 ## swap_column/swap_column_n64
 
+### linux-x86_64-c16-bare-intel, 2 run(s)
+
+Latest: `20261115T100024Z-266650fb`
+
+| variant | median | vs best |
+|---|---|---|
+| cs_plain | 16.47 us | 1.00x |
+| cs_snap | 21.77 us | 1.32x |
+| cs_snap_twin | 22.61 us | 1.37x |
+
+- [20261115T100020Z-266650fb-dirty](swap_column/swap_column_n64/linux-x86_64-c16-bare-intel/20261115T100020Z-266650fb-dirty/report.md)
+
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
 Latest: `20261113T190204Z-5e6887f`
@@ -2935,6 +4548,19 @@ Latest: `20261114T233303Z-266650fb-dirty`
 - [20261114T233303Z-266650fb-dirty](swap_column/swap_column_n64/macos-aarch64-c8-bare-apple/20261114T233303Z-266650fb-dirty/report.md)
 
 ## swap_column/swap_column_n8192
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T100719Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| cs_exch | 7.15 ms | 1.14x |
+| cs_plain | 6.29 ms | 1.00x |
+| cs_snap | 9.09 ms | 1.45x |
+| cs_snap_twin | 9.11 ms | 1.45x |
+
+- [20261115T100719Z-266650fb-dirty](swap_column/swap_column_n8192/linux-x86_64-c16-bare-intel/20261115T100719Z-266650fb-dirty/report.md)
 
 ### linux-x86_64-c4-container-intel, 1 run(s)
 
@@ -2963,6 +4589,18 @@ Latest: `20261114T233524Z-266650fb-dirty`
 
 ## swap_cost/swap_cost_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T101140Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| sc_v1k | 16 ns | 1.62x |
+| sc_v64b | 10 ns | 1.00x |
+| sc_v64k | 2.16 us | 213.46x |
+
+- [20261115T101140Z-266650fb-dirty](swap_cost/swap_cost_n64/linux-x86_64-c16-bare-intel/20261115T101140Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 4 run(s)
 
 Latest: `20261114T233754Z-266650fb`
@@ -2974,6 +4612,22 @@ Latest: `20261114T233754Z-266650fb`
 - [20261114T233753Z-266650fb-dirty](swap_cost/swap_cost_n64/macos-aarch64-c8-bare-apple/20261114T233753Z-266650fb-dirty/report.md)
 
 ## wake_policy/wake_policy_n1024
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T102359Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| wp_isb8 | 27.39 us | 1.25x |
+| wp_lp0 | 30.51 us | 1.39x |
+| wp_nh128 | 25.51 us | 1.16x |
+| wp_nh2k | 41.44 us | 1.89x |
+| wp_nh8k | 24.03 us | 1.10x |
+| wp_park | 24.76 us | 1.13x |
+| wp_spin | 21.94 us | 1.00x |
+
+- [20261115T102359Z-266650fb-dirty](wake_policy/wake_policy_n1024/linux-x86_64-c16-bare-intel/20261115T102359Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 5 run(s)
 
@@ -2993,6 +4647,22 @@ Latest: `20261114T234250Z-266650fb-dirty`
 
 ## wake_policy/wake_policy_n64
 
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T101936Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| wp_isb8 | 30.45 us | 2.10x |
+| wp_lp0 | 23.89 us | 1.64x |
+| wp_nh128 | 19.72 us | 1.36x |
+| wp_nh2k | 24.34 us | 1.67x |
+| wp_nh8k | 17.19 us | 1.18x |
+| wp_park | 16.44 us | 1.13x |
+| wp_spin | 14.53 us | 1.00x |
+
+- [20261115T101936Z-266650fb-dirty](wake_policy/wake_policy_n64/linux-x86_64-c16-bare-intel/20261115T101936Z-266650fb-dirty/report.md)
+
 ### macos-aarch64-c8-bare-apple, 5 run(s)
 
 Latest: `20261114T234248Z-266650fb-dirty`
@@ -3010,6 +4680,22 @@ Latest: `20261114T234248Z-266650fb-dirty`
 - [20261114T234248Z-266650fb-dirty](wake_policy/wake_policy_n64/macos-aarch64-c8-bare-apple/20261114T234248Z-266650fb-dirty/report.md)
 
 ## wake_policy/wake_policy_n8192
+
+### linux-x86_64-c16-bare-intel, 1 run(s)
+
+Latest: `20261115T102820Z-266650fb-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| wp_isb8 | 59.65 us | 1.05x |
+| wp_lp0 | 70.14 us | 1.24x |
+| wp_nh128 | 67.90 us | 1.20x |
+| wp_nh2k | 78.82 us | 1.39x |
+| wp_nh8k | 70.17 us | 1.24x |
+| wp_park | 65.03 us | 1.15x |
+| wp_spin | 56.73 us | 1.00x |
+
+- [20261115T102820Z-266650fb-dirty](wake_policy/wake_policy_n8192/linux-x86_64-c16-bare-intel/20261115T102820Z-266650fb-dirty/report.md)
 
 ### macos-aarch64-c8-bare-apple, 5 run(s)
 

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794723888	266650fb	minmax_strategy_n16384	minmax_branch	16384	warm	720.2	720.2	721.8
+1794723888	266650fb	minmax_strategy_n16384	minmax_branchless	16384	warm	669.9	669.9	671.5
+1794723888	266650fb	minmax_strategy_n16384	minmax_intrinsic	16384	warm	720.1	720.1	721.4
