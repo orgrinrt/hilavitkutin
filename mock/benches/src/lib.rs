@@ -188,9 +188,12 @@ fn after_cell(cell: &AfterCell<'_>) -> CellVerdict {
 }
 
 /// The axis-A LLVM-transparency gate: the five checks over every arm of a
-/// `dispatch_*` cell, the report written into the cell's run directory. A
-/// `dispatch_static` failure fails the cell; `dispatch_dynamic` failures are
-/// the expected counter-example and are only recorded.
+/// `dispatch_*` cell, the report written into the cell's run directory. An
+/// indirect call kept in a `dispatch_static` arm fails the cell, since that
+/// bench is the shapes LLVM can devirtualise; `dispatch_dynamic` failures are
+/// the expected counter-example and are only recorded. Checks 2 to 5 state the
+/// engine's morsel loop, which these arms do not run, so they are recorded and
+/// gate nothing here, as in the `asm_gate_fixtures` gate.
 fn five_check(cell: &AfterCell<'_>) -> CellVerdict {
     let config = cell.config;
     match disasm_5check::run_and_write(
@@ -200,14 +203,17 @@ fn five_check(cell: &AfterCell<'_>) -> CellVerdict {
         &[config.n as u64],
         cell.out_dir,
     ) {
-        Ok(report) if report.any_fail() && config.bench.starts_with("dispatch_static") => {
+        Ok(report) if report.any_indirect_call() && config.bench.starts_with("dispatch_static") => {
             CellVerdict::Fail(format!(
-                "5-check failed on `{}` n={}: the axis-A LLVM-transparency invariant regressed",
+                "5-check failed on `{}` n={}: an arm kept an indirect call through a stored \
+                 pointer, so the axis-A devirtualisation regressed",
                 config.bench_name, config.n
             ))
         },
         Ok(report) if report.any_fail() => {
-            CellVerdict::Note("5-check report written, counter-example FAILs expected".into())
+            CellVerdict::Note(
+                "5-check report written; its FAILs are recorded and gate nothing".into(),
+            )
         },
         Ok(_) => CellVerdict::Pass,
         Err(e) => CellVerdict::Note(format!("5-check skipped: {e}")),

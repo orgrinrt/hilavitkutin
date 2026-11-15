@@ -45,6 +45,13 @@ impl CheckReport {
     pub fn all_pass(&self) -> bool {
         self.outcomes.iter().all(|o| o.pass)
     }
+
+    /// Whether check 1 passed: no indirect call through a stored pointer, so
+    /// the call was devirtualised. Checks 2 to 5 are statements about the
+    /// engine's morsel loop and are shape-dependent on any other body.
+    pub fn devirtualised(&self) -> bool {
+        self.outcomes.first().is_some_and(|o| o.pass)
+    }
 }
 
 /// Consolidated report across all variants of one bench / N pair.
@@ -58,6 +65,11 @@ pub struct BenchReport {
 impl BenchReport {
     pub fn any_fail(&self) -> bool {
         self.reports.iter().any(|r| !r.all_pass())
+    }
+
+    /// Whether any variant kept an indirect call through a stored pointer.
+    pub fn any_indirect_call(&self) -> bool {
+        self.reports.iter().any(|r| !r.devirtualised())
     }
 }
 
@@ -332,4 +344,59 @@ pub fn run_and_write(
     fs::write(&path, bench_report.to_string())
         .map_err(|e| format!("write 5check report {}: {e}", path.display()))?;
     Ok(bench_report)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn report(passes: [bool; 5]) -> CheckReport {
+        CheckReport {
+            variant:  "v".into(),
+            dylib:    PathBuf::from("libv.so"),
+            symbol:   "bench_entry".into(),
+            outcomes: passes
+                .iter()
+                .map(|&pass| {
+                    CheckOutcome {
+                        name: "c",
+                        pass,
+                        detail: String::new(),
+                    }
+                })
+                .collect(),
+        }
+    }
+
+    fn bench(reports: Vec<CheckReport>) -> BenchReport {
+        BenchReport {
+            bench: "dispatch_static".into(),
+            n: 64,
+            reports,
+        }
+    }
+
+    #[test]
+    fn a_failed_shape_check_leaves_the_call_devirtualised() {
+        let b = bench(vec![report([true, false, false, false, true])]);
+        assert!(b.any_fail());
+        assert!(!b.any_indirect_call());
+    }
+
+    #[test]
+    fn a_kept_indirect_call_is_reported_whatever_the_rest_say() {
+        // The case the gate exists for: check 1 failing on one arm of several.
+        let b = bench(vec![
+            report([true; 5]),
+            report([false, true, true, true, true]),
+        ]);
+        assert!(b.any_indirect_call());
+    }
+
+    #[test]
+    fn a_report_with_no_outcomes_is_not_devirtualised() {
+        let mut r = report([true; 5]);
+        r.outcomes.clear();
+        assert!(!r.devirtualised());
+    }
 }
