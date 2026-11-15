@@ -1,27 +1,13 @@
 # The `engine_vs_std` bench member: the engine against optimal std over four
-# workloads, timed by the bench harness. See `bench.toml` for the sections.
+# workloads. See `bench.toml` for the sections. The generated driver runs it;
+# the routine of each section is in the bench tree's hooks library, and the
+# support crate is `support/evs-support` at the bench root.
 #
-# One workspace for the driver, the support crate and every arm, so they share
-# one lockfile, one release profile and one build of the engine.
+# One workspace for every arm, so they share one lockfile, one release profile
+# and one build of the engine.
 [workspace]
-members = [".", "support", "variants/*"]
+members = ["variants/*"]
 resolver = "2"
-
-[package]
-name = "engine_vs_std"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-[[bin]]
-name = "engine_vs_std"
-path = "src/main.rs"
-
-[dependencies]
-evs-support = { path = "support" }
-bench-arm = { path = "../bench-arm" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["stage-link"] }
 
 [profile.release]
 opt-level = 3

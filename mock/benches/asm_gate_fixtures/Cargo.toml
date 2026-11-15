@@ -7,11 +7,11 @@ edition = "2021"
 publish = false
 
 # The D6 ASM-dispatch-gate fixtures. Each export wraps one representative GATE-1
-# dispatch shape in an `#[inline(never)] #[no_mangle]` entry so the gate binary
-# has a stable, objdump-addressable symbol while the dispatch body below it fully
-# inlines. Built in release (fat LTO, codegen-units = 1) so the emitted asm
-# matches the shipping engine profile. cdylib so the exports survive as kept,
-# objdumpable symbols.
+# dispatch shape in an `#[inline(never)] #[no_mangle]` entry so the gate in
+# `tests/asm_gate.rs` has a stable, objdump-addressable symbol while the
+# dispatch body below it fully inlines. Built in release (fat LTO,
+# codegen-units = 1) so the emitted asm matches the shipping engine profile.
+# cdylib so the exports survive as kept, objdumpable symbols.
 [lib]
 name = "asm_gate_fixtures"
 path = "src/lib.rs"
@@ -21,9 +21,14 @@ crate-type = ["cdylib"]
 hilavitkutin = { path = "../../crates/hilavitkutin" }
 hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
 hilavitkutin-providers = { path = "../../crates/hilavitkutin-providers" }
-evs-support = { path = "../engine_vs_std/support" }
+evs-support = { path = "../support/evs-support" }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+
+# The gate in `tests/asm_gate.rs` disassembles the built fixtures with the
+# checker the hooks library also runs.
+[dev-dependencies]
+bench-disasm = { path = "../support/bench-disasm" }
 
 [profile.release]
 opt-level = 3

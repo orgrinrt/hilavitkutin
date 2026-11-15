@@ -6,14 +6,12 @@
 # The engine arms measure the engine as it stands, without fusion or the
 # adaptive trunk, fiber and morsel scheduling. They are a baseline to compare
 # against later, and nothing here decides anything about the engine. The
-# ceilings in `support/src/expected.rs` say where the design means each
-# workload to land; `--verdict` holds a run's medians to them.
+# ceilings in `support/evs-support/src/expected.rs` say where the design means
+# each workload to land; after every cell the hooks library holds the run's
+# medians to them and writes the judgement beside the run as `verdict.md`.
 #
-# Run from this directory, from a stage:
-#   ../stage.sh .
-#   <stage>/release/engine_vs_std            # every section
-#   <stage>/release/engine_vs_std --verdict  # the ceilings, over results/
-# `./run-checks.sh` first: the build and every arm against the reference.
+# `mock bench run engine_vs_std` runs every section; `mock bench test` runs
+# every arm against the reference first.
 
 [timing]
 passes = 2

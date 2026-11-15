@@ -2,12 +2,14 @@
 # three-stage pipelines, a fan-in joining them and two independent
 # transforms, timed across seven arms. See `bench.toml` for the sweeps.
 #
-# One workspace for the driver, the support crate and every arm, so they share
-# one lockfile, one release profile and one build of the engine. Every arm
+# The generated driver runs the sweeps, taking the routine from
+# `support/frame-wide-support` at the bench root. This crate holds the negative
+# control and the grouping test, and is one workspace with every arm, so they
+# share one lockfile, one release profile and one build of the engine. Every arm
 # links the same `mockspace-bench-core` revision, which the harness checks
 # through `bench_abi_hash` before it loads one.
 [workspace]
-members = [".", "support/frame-wide-support", "variants/*"]
+members = [".", "variants/*"]
 resolver = "2"
 
 [package]
@@ -19,10 +21,6 @@ publish = false
 [lib]
 name = "frame_wide"
 path = "src/lib.rs"
-
-[[bin]]
-name = "frame_wide"
-path = "src/main.rs"
 
 # The committed negative control. `harness = false` because the harness
 # re-executes this binary as its validation worker, so `main` has to answer
@@ -39,16 +37,9 @@ harness = false
 name = "engine_grouping"
 path = "tests/engine_grouping.rs"
 
-# The driver run from the target directory rather than a stage is refused.
-[[test]]
-name = "unstaged_driver"
-path = "tests/unstaged_driver.rs"
-
 [dependencies]
-frame-wide-support = { path = "support/frame-wide-support" }
-bench-arm = { path = "../bench-arm" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41" }
+frame-wide-support = { path = "../support/frame-wide-support" }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
 
 # `engine_grouping` reaches the engine's grouping directly. The arms reach it
 # only through `frame-wide-support`, so these are test-only.

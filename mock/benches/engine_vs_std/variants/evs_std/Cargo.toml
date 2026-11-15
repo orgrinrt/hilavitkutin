@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-evs-support = { path = "../../support" }
-bench-arm = { path = "../../../bench-arm" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41" }
+evs-support = { path = "../../../support/evs-support" }
+bench-arm = { path = "../../../support/bench-arm" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
