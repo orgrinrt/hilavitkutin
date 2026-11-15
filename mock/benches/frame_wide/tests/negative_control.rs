@@ -18,13 +18,13 @@
 //! would count zero, so the one number carries both the negative and the
 //! positive half.
 //!
-//! Run with `cargo test --release` after `cargo build --release --workspace`:
-//! the arms are found beside the build, and the harness re-executes this
+//! It builds the member's arms first, with the profile and into the target
+//! directory it was built with itself, so the arms it loads are the ones of
+//! this tree and are found beside the build. The harness re-executes this
 //! binary as its validation worker, which is why `main` answers `--worker`.
-//! `./run-checks.sh` from the member directory does both and the unit tests.
 
 use std::path::Path;
-use std::process::ExitCode;
+use std::process::{Command, ExitCode};
 
 use frame_wide::{is_worker, locate_arm, routine_for, validate_every_arm, worker_main};
 use mockspace_bench_harness::{BenchError, HarnessTuning};
@@ -33,6 +33,37 @@ use mockspace_bench_harness::{BenchError, HarnessTuning};
 /// it the harness's per-worker counter calibration.
 const N: usize = 4096;
 const SEEDS: usize = 3;
+
+/// Build every arm of the member with the profile this binary was built with,
+/// into the target directory it was built into, where `locate_arm` finds them.
+fn build_arms() -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| format!("cannot read current_exe: {e}"))?;
+    // A test binary sits in `<target>/<profile>/deps/`.
+    let profile = exe
+        .parent()
+        .and_then(Path::parent)
+        .ok_or_else(|| format!("`{}` sits in no profile directory", exe.display()))?;
+    let target = profile
+        .parent()
+        .ok_or_else(|| format!("`{}` sits in no target directory", profile.display()))?;
+    let mut build = Command::new(std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into()));
+    build
+        .args(["build", "--workspace", "--lib", "--manifest-path"])
+        .arg(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"))
+        .arg("--target-dir")
+        .arg(target);
+    if profile.file_name().is_some_and(|n| n == "release") {
+        build.arg("--release");
+    }
+    let status = build
+        .status()
+        .map_err(|e| format!("could not run cargo: {e}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("building the arms failed ({status})"))
+    }
+}
 
 fn arm(stem: &str) -> String {
     let file = format!(
@@ -85,6 +116,10 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
     if is_worker(&args) {
         return worker_main(&args);
+    }
+    if let Err(e) = build_arms() {
+        eprintln!("FAIL {e}");
+        return ExitCode::FAILURE;
     }
     let mut failed = false;
     for bench in ["frame_wide/heavy", "frame_wide/light"] {

@@ -16,4 +16,4 @@ name = "registration_kernels"
 path = "src/lib.rs"
 
 [dependencies]
-rsb-kernels = { path = "../../resource_storage/kernels-shared" }
+rsb-kernels = { path = "../rsb-kernels" }

@@ -1,27 +1,14 @@
+# The single-trunk convergence bench member: head-and-tail against the N-way
+# ceil slice on one commutative fiber. Each arm is its own cdylib under
+# variants/, run in its own worker subprocess by the driver `mock bench run`
+# generates, with validation across arms before any timing. The routine of each
+# section is in the bench tree's hooks library, and the support crate is
+# `support/stc-support` at the bench root. std and alloc are allowed here: this
+# is a standalone bench workspace, outside the no_std / no_alloc members of
+# mock/.
 [workspace]
-members = ["support", "variants/*"]
+members = ["variants/*"]
 resolver = "2"
-
-# Orchestrator for the single-trunk convergence bench: head-and-tail against
-# the N-way ceil slice on one commutative fiber. Each arm is its own cdylib
-# under variants/, run in its own worker subprocess by the mockspace bench
-# harness (`driver::drive`), with validation across arms before any timing.
-# std and alloc are allowed here: this is a standalone bench workspace,
-# outside the no_std / no_alloc members of mock/.
-[package]
-name = "single-trunk-convergence"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-[[bin]]
-name = "single-trunk-convergence"
-path = "src/main.rs"
-
-[dependencies]
-stc-support = { path = "support" }
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "5a775f3ea7f969a7589ce970e16e55b2ba856f41", features = ["stage-link"] }
 
 # The pinned arvo crates name notko by its `ssh` spelling; the patch points
 # that spelling at the `https` source the engine names, so the graph holds one
@@ -33,8 +20,3 @@ notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-
-# The correctness tests drive every arm on real worker threads; an
-# unoptimised engine makes the large sizes needlessly slow.
-[profile.test]
-opt-level = 2

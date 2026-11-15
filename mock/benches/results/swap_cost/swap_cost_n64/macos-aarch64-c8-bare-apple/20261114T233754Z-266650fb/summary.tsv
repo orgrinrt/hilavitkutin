@@ -1,0 +1,2 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794699474	266650fb	swap_cost_n64	sc_v64k	64	warm	1711.9	1711.9	1721.2

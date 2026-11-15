@@ -157,35 +157,35 @@ definition of "the single-core engine is complete". It was `#[ignore]` tests in
 `tests/perf_gate.rs` with a timing loop of its own, and since 13 November 2026
 it is the bench harness: every workload is a section of `bench.toml`, every arm
 is a variant cdylib validated against the reference digest before it is timed,
-and `engine_vs_std --verdict` holds the medians a run promoted into `results/`
-to the ceilings in `support/src/expected.rs`. It is RED until Phase D (#340)
+and the hooks library holds every cell's medians to the ceilings in
+`support/evs-support/src/expected.rs`, writing the judgement beside the run
+as `verdict.md`. It is RED until Phase D (#340)
 lands the two load-bearing mechanisms (dispatch devirtualisation and
 within-fiber stage fusion) and the engine reaches the designed 0.95x to 1.02x
-parity. Run it deliberately, from a stage:
+parity. Run it deliberately:
 
 ```text
-../stage.sh .
-<stage>/release/engine_vs_std
-<stage>/release/engine_vs_std --verdict
+mock bench run engine_vs_std
 ```
 
 A cell's arms are held to the reference digest by the harness before any
 timing counts, so a red verdict is unambiguously "engine slower" (the gate
 working) and never "the arms diverged" (a broken bench). The comparison also
-runs in `./run-checks.sh`, at a small size, and `../stage.sh` runs those
-checks before it builds anything for timing.
+runs at a small size in `support/evs-support`'s tests, which `mock bench test`
+runs.
 
 ### The first harness run, 14 November 2026
 
 The engine these sections time has no fusing yet and no adaptive trunk, fiber
 and morsel work, so the numbers are a baseline to compare against once those
 exist, and no design call rests on them. The run was staged from commit
-c894a779 with nothing dirty, and every cell's `.build.txt` records that; it
+c894a779 with nothing dirty, and every cell's `build.txt`, now beside its run
+in `results/engine_vs_std/`, records that; it
 is the record of what was timed, since the stage was checksummed when it was
 written and verified against that after the last cell. Their `profile:` line
 names the manifest by the clone's absolute path, as `stage.sh` wrote it
 then; the records are kept as written. The harness's own `git_commit` in
-each `.meta.json` reads the clone's head when the cell is written, and that
+each `meta.json` reads the clone's head when the cell is written, and that
 moved to 23953983 at 01:34 UTC, while the run timed from 01:33 to 02:00, so
 19 of the 20 cells name it. That commit changes one research note; whether the
 clone's hooks built anything on it is not recorded. `engine_vs_std --verdict`

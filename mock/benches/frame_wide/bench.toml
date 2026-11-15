@@ -15,20 +15,18 @@
 # baseline to compare against later, and nothing here decides anything about
 # the engine.
 #
-# Run from this directory, after building the member:
-#   CARGO_INCREMENTAL=0 cargo build --release --workspace
-#   <target-dir>/release/frame_wide --n 65536
-# `--n` restricts the run to one record count and `--only <sweep>` to one
-# sweep. With neither, every configured cell runs, which at the large counts is
-# hours of machine time.
+# `mock bench run frame_wide/heavy` runs one sweep; `mock bench run frame_wide`
+# runs both, which at the large counts is hours of machine time. The hooks
+# library refuses a cell whose arms validation dropped, and frames its report on
+# `hand` under the caveat every report here carries.
 #
-# Correctness first, every time: `./run-checks.sh` builds the member and runs
-# the grouping test, the support crate's unit tests and the negative controls.
-# A timing taken without it has not been shown to compute the frame.
+# Correctness first, every time: `mock bench test` runs the grouping test, the
+# support crate's unit tests and the negative controls. A timing taken without
+# it has not been shown to compute the frame.
 #
 # A median says how long a frame took, not how much machine it took.
-# `./occupancy.sh <arm>` prints the cores one arm actually runs on, and the
-# parallel arms are read with both numbers or neither.
+# `occupancy.txt` holds the cores each arm actually ran on, and the parallel
+# arms are read with both numbers or neither.
 
 # Sized for a frame measured in milliseconds, not nanoseconds: a sample is the
 # mean of `batch_size` calls, a worker yields `runs_per_pass / batch_size`
