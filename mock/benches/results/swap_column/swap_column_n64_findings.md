@@ -7,41 +7,17 @@ Baseline: **cs_plain**
 
 Baseline for all deltas below: **cs_plain**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### cs_plain dominates: 11% faster than the next best (cs_exch)
+### Top two (cs_exch, cs_plain) are a dead heat (<1%)
 
-cs_plain (22.78 us) leads cs_exch (25.26 us) by 11%, a clear separation rather than a photo finish. CV 6.7%.
+cs_exch (21.75 us) and cs_plain (21.80 us) differ by 0.26%, inside the noise, even though the wider field spreads 26.3%.
 
-_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
-
-### cs_snap is an outlier: 2.2x slower than the field
-
-cs_snap (49.87 us) is 2.2x the fastest (22.78 us), well off the pack.
-
-_Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
-
-### No variant beats the baseline (cs_plain)
-
-The baseline cs_plain is the fastest (22.78 us median); no rival improves on it (all deltas are >= 0).
-
-_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
-
-### Two tiers: {cs_plain, cs_exch, cs_snap_twin} vs {cs_snap} (66% apart)
-
-The field splits into a fast tier {cs_plain, cs_exch, cs_snap_twin} and a slow tier {cs_snap} with a 66% jump between them - a qualitative difference, not a gradient.
-
-_Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
-
-### cs_snap_twin is inconsistent: worst-20% is 2.3x its best-20%
-
-cs_snap_twin's best 20% of batches run at 24.42 us but its worst 20% at 56.70 us (2.3x) - a bimodal or bursty profile the median hides.
-
-_Why it matters:_ A fat tail matters for latency budgets even when the median looks fine; a steadier variant may serve better under load.
+_Why it matters:_ Do not over-fit to the nominal leader when the runner-up is within measurement noise; either is a fine pick.
 
 ## Key findings
 
-- **Baseline (cs_plain) is the fastest** at 22779.3 ns median
+- **Fastest: cs_exch** at 21747.9 ns median (-0.3% vs baseline)
 - 2 variants significantly slower than baseline
-- Spread: 2.19x (fastest 22779.3 ns, slowest 49874.4 ns)
+- Spread: 1.26x (fastest 21747.9 ns, slowest 27460.5 ns)
 
 ## Methodology
 
@@ -54,26 +30,26 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 | Harness runs | 2 |
 | Cooldown schedule | 0ms |
 | Master seed | 0x51c3510700000004 |
-| Counter frequency | 2100370818 Hz |
+| Counter frequency | 24000000 Hz |
 | Drift correction | none |
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| cs_exch | 31239ns | 28556ns | 20893ns | 27233ns | 42422ns | +24.28% |
-| cs_plain | 25136ns | 25026ns | 22765ns | 24818ns | 26799ns | base |
-| cs_snap | 51806ns | 53253ns | 28993ns | 49742ns | 66309ns | +106.10% |
-| cs_snap_twin | 40117ns | 32622ns | 26378ns | 31626ns | 59722ns | +59.60% |
+| cs_exch | 24324ns | 24298ns | 23199ns | 24158ns | 25137ns | -0.37% |
+| cs_plain | 24414ns | 24235ns | 23599ns | 24157ns | 25208ns | base |
+| cs_snap | 29632ns | 29677ns | 28747ns | 29460ns | 30333ns | +21.37% |
+| cs_snap_twin | 30200ns | 30131ns | 28721ns | 29724ns | 31653ns | +23.70% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| cs_exch | 28567ns | 19002ns | 39344ns | +24.76% | 0.002 |
-| cs_plain | 22898ns | 20758ns | 24436ns | base | 0.003 |
-| cs_snap | 48212ns | 26773ns | 61600ns | +110.56% | 0.001 |
-| cs_snap_twin | 37494ns | 24419ns | 56697ns | +63.75% | 0.002 |
+| cs_exch | 21882ns | 21049ns | 22628ns | -0.47% | 0.003 |
+| cs_plain | 21986ns | 21225ns | 22701ns | base | 0.003 |
+| cs_snap | 27203ns | 26457ns | 27911ns | +23.73% | 0.002 |
+| cs_snap_twin | 27553ns | 26521ns | 28601ns | +25.32% | 0.002 |
 
 ## Performance model
 
@@ -82,52 +58,52 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| cs_exch | 0.003 | 75.2% |
-| cs_plain | 0.003 | 83.4% |
-| cs_snap | 0.001 | 38.1% |
-| cs_snap_twin | 0.002 | 63.2% |
+| cs_exch | 0.003 | 96.8% |
+| cs_plain | 0.003 | 96.5% |
+| cs_snap | 0.002 | 77.8% |
+| cs_snap_twin | 0.002 | 76.7% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| cs_exch | 31239ns | 31239ns | +24.28% |
-| cs_plain | 25136ns | 25136ns | base |
-| cs_snap | 51806ns | 51806ns | +106.10% |
-| cs_snap_twin | 40117ns | 40117ns | +59.60% |
+| cs_exch | 24324ns | 24324ns | -0.37% |
+| cs_plain | 24414ns | 24414ns | base |
+| cs_snap | 29632ns | 29632ns | +21.37% |
+| cs_snap_twin | 30200ns | 30200ns | +23.70% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| cs_plain | 22779ns | base | --- | [22090, 23586] | --- | --- | --- | --- |
-| cs_exch | 25263ns | no significant difference | [-286, +6886]ns | [22868, 29430] | no | 0.2379 | 0.2379 | 0 |
-| cs_snap | 49874ns | +27709.3ns (+121.6%) | [+19339, +31455]ns | [40801, 52634] | YES | 0.0000 | 0.0000 | 0 |
-| cs_snap_twin | 30051ns | +6454.9ns (+28.3%) | [+4765, +16193]ns | [28029, 39449] | YES | 0.0000 | 0.0000 | 0 |
+| cs_plain | 21804ns | base | --- | [21675, 22142] | --- | --- | --- | --- |
+| cs_exch | 21748ns | no significant difference | [-723, +306]ns | [21485, 22008] | no | 0.8145 | 0.8145 | 0 |
+| cs_snap | 27069ns | +5260.4ns (+24.1%) | [+4875, +5535]ns | [26773, 27494] | YES | 0.0000 | 0.0000 | 0 |
+| cs_snap_twin | 27460ns | +5366.6ns (+24.6%) | [+4960, +6085]ns | [26694, 28340] | YES | 0.0000 | 0.0000 | 0 |
 
 ## Per-pass consistency (nonstop algo, Δ vs baseline)
 
 | Run | Pass | cs_plain | cs_exch | cs_snap | cs_snap_twin |
 |---|---|---|---|---|---|
-| 1 | 1 | 23511ns | +10.6% | +193.3% | +29.0% |
-| 1 | 2 | 21271ns | +8.2% | +135.8% | +153.9% |
-| 1 | 3 | 21836ns | +135.0% | +80.5% | +180.7% |
-| 2 | 1 | 23968ns | -20.9% | +15.7% | +17.1% |
-| 2 | 2 | 23596ns | +3.4% | +141.5% | +27.0% |
-| 2 | 3 | 22237ns | +26.2% | +128.2% | +18.8% |
+| 1 | 1 | 21733ns | -0.8% | +23.5% | +22.9% |
+| 1 | 2 | 21817ns | -0.3% | +22.6% | +21.6% |
+| 1 | 3 | 21192ns | +1.6% | +26.4% | +32.8% |
+| 2 | 1 | 21792ns | +3.2% | +25.6% | +22.9% |
+| 2 | 2 | 22112ns | -0.4% | +23.8% | +26.3% |
+| 2 | 3 | 22171ns | -4.8% | +19.7% | +29.3% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| cs_exch | -0.434 | moderate- |
-| cs_plain | -0.049 | ok |
-| cs_snap | 0.059 | ok |
-| cs_snap_twin | 0.159 | ok |
+| cs_exch | -0.116 | ok |
+| cs_plain | 0.177 | ok |
+| cs_snap | -0.011 | ok |
+| cs_snap_twin | -0.039 | ok |
 
 **Consistency summary:**
 
-- **cs_exch**: won 1/6, lost 5/6
+- **cs_exch**: won 4/6, lost 2/6
 - **cs_snap**: won 0/6, lost 6/6
 - **cs_snap_twin**: won 0/6, lost 6/6
 
@@ -135,114 +111,111 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| cs_exch | 312602.0ns | 28566.7ns | 1094.3% | HIGH |
-| cs_plain | 309033.4ns | 22897.6ns | 1349.6% | HIGH |
-| cs_snap | 324571.0ns | 48212.1ns | 673.2% | HIGH |
-| cs_snap_twin | 296714.1ns | 37494.2ns | 791.4% | HIGH |
+| cs_exch | 352677.1ns | 21881.9ns | 1611.7% | HIGH |
+| cs_plain | 353111.6ns | 21986.1ns | 1606.1% | HIGH |
+| cs_snap | 353233.3ns | 27203.0ns | 1298.5% | HIGH |
+| cs_snap_twin | 355674.5ns | 27553.3ns | 1290.9% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-cs_exch (n=18, range 19002.1-39344.4 ns)
-  19002.1 |#############
-  20019.2 |
-  21036.4 |
-  22053.5 |########################################
-  23070.6 |#############
-  24087.7 |##########################
-  25104.8 |#############
-  26121.9 |#############
-  27139.1 |#############
-  28156.2 |
-  29173.3 |##########################
-  30190.4 |
-  31207.5 |
-  32224.6 |
-  33241.7 |
-  34258.9 |#############
-  35276.0 |
-  36293.1 |
-  37310.2 |#############
-  38327.3 |
-  (2 below, 2 above range)
-
-cs_plain (n=18, range 20758.1-24436.4 ns)
-  20758.1 |
-  20942.0 |
-  21125.9 |####################
-  21309.8 |
-  21493.7 |
-  21677.6 |########################################
-  21861.6 |####################
-  22045.5 |####################
-  22229.4 |####################
-  22413.3 |####################
-  22597.2 |####################
-  22781.1 |####################
-  22965.0 |
-  23149.0 |
-  23332.9 |########################################
-  23516.8 |########################################
-  23700.7 |
-  23884.6 |########################################
-  24068.5 |
-  24252.4 |
+cs_exch (n=18, range 21048.6-22628.5 ns)
+  21048.6 |########################################
+  21127.6 |
+  21206.6 |
+  21285.6 |
+  21364.6 |########################################
+  21443.6 |
+  21522.6 |########################################
+  21601.5 |####################
+  21680.5 |########################################
+  21759.5 |
+  21838.5 |####################
+  21917.5 |########################################
+  21996.5 |####################
+  22075.5 |
+  22154.5 |####################
+  22233.5 |
+  22312.5 |
+  22391.5 |
+  22470.5 |####################
+  22549.5 |
   (1 below, 2 above range)
 
-cs_snap (n=18, range 26773.4-61599.9 ns)
-  26773.4 |####################
-  28514.8 |
-  30256.1 |
-  31997.4 |
-  33738.7 |
-  35480.0 |
-  37221.4 |##########
-  38962.7 |##########
-  40704.0 |##########
-  42445.3 |
-  44186.7 |
-  45928.0 |
-  47669.3 |####################
-  49410.6 |########################################
-  51151.9 |##########
-  52893.3 |##########
-  54634.6 |
-  56375.9 |##########
-  58117.2 |
-  59858.6 |
-  (1 below, 3 above range)
+cs_plain (n=18, range 21225.0-22700.7 ns)
+  21225.0 |
+  21298.8 |####################
+  21372.6 |
+  21446.4 |####################
+  21520.1 |
+  21593.9 |####################
+  21667.7 |########################################
+  21741.5 |########################################
+  21815.3 |########################################
+  21889.1 |
+  21962.8 |####################
+  22036.6 |
+  22110.4 |########################################
+  22184.2 |
+  22258.0 |
+  22331.8 |####################
+  22405.5 |
+  22479.3 |
+  22553.1 |
+  22626.9 |
+  (2 below, 3 above range)
 
-cs_snap_twin (n=18, range 24418.7-56697.5 ns)
-  24418.7 |####################
-  26032.6 |##########
-  27646.6 |########################################
-  29260.5 |########################################
-  30874.5 |
-  32488.4 |##########
-  34102.3 |
-  35716.3 |
-  37330.2 |
-  38944.1 |
-  40558.1 |
-  42172.0 |
-  43786.0 |##########
-  45399.9 |
-  47013.8 |
-  48627.8 |
-  50241.7 |
-  51855.6 |
-  53469.6 |##########
-  55083.5 |
+cs_snap (n=18, range 26457.0-27911.1 ns)
+  26457.0 |#############
+  26529.7 |#############
+  26602.4 |
+  26675.1 |
+  26747.8 |########################################
+  26820.5 |########################################
+  26893.2 |
+  26965.9 |
+  27038.6 |
+  27111.3 |
+  27184.0 |#############
+  27256.7 |
+  27329.4 |########################################
+  27402.2 |
+  27474.9 |
+  27547.6 |#############
+  27620.3 |
+  27693.0 |
+  27765.7 |
+  27838.4 |
+  (1 below, 4 above range)
+
+cs_snap_twin (n=18, range 26520.8-28600.7 ns)
+  26520.8 |##########################
+  26624.8 |########################################
+  26728.8 |#############
+  26832.8 |
+  26936.8 |#############
+  27040.8 |
+  27144.8 |#############
+  27248.8 |
+  27352.8 |
+  27456.8 |
+  27560.8 |
+  27664.8 |#############
+  27768.8 |
+  27872.8 |#############
+  27976.8 |
+  28080.7 |#############
+  28184.7 |
+  28288.7 |##########################
+  28392.7 |#############
+  28496.7 |
   (1 below, 3 above range)
 
 ```
 
 ## Diagnostics
 
-- **cs_exch**: CV=34.2% (high variance, measurements may be unstable)
-- **cs_exch**: bridge=1262.3% of algo (FFI overhead may distort results)
-- **cs_plain**: bridge=1360.1% of algo (FFI overhead may distort results)
-- **cs_snap**: CV=27.1% (high variance, measurements may be unstable)
-- **cs_snap**: bridge=672.2% of algo (FFI overhead may distort results)
-- **cs_snap_twin**: CV=42.7% (high variance, measurements may be unstable)
-- **cs_snap_twin**: bridge=1046.7% of algo (FFI overhead may distort results)
+- **cs_exch**: bridge=1621.6% of algo (FFI overhead may distort results)
+- **cs_plain**: bridge=1625.1% of algo (FFI overhead may distort results)
+- **cs_snap**: bridge=1297.3% of algo (FFI overhead may distort results)
+- **cs_snap_twin**: bridge=1283.7% of algo (FFI overhead may distort results)

@@ -3,175 +3,211 @@
 3 variants, 18 samples per variant.
 Baseline: **sb_none**
 
+## Highlights
+
+Baseline for all deltas below: **sb_none**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
+
+### sb_none dominates: 18% faster than the next best (sb_plan)
+
+sb_none (12.92 us) leads sb_plan (15.24 us) by 18%, a clear separation rather than a photo finish. CV 5.1%.
+
+_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
+
+### sb_value is an outlier: 196.7x slower than the field
+
+sb_value (2.54 ms) is 196.7x the fastest (12.92 us), well off the pack.
+
+_Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
+
+### sb_none is fastest but the noisiest (CV 5.1%)
+
+sb_none wins on median (12.92 us) yet has the highest variance (CV 5.1%), while sb_value is the steadiest (CV 1.3%, 2.54 ms).
+
+_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
+
+### No variant beats the baseline (sb_none)
+
+The baseline sb_none is the fastest (12.92 us median); no rival improves on it (all deltas are >= 0).
+
+_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
+
+### Wide spread: slowest is 196.7x the fastest
+
+Fastest sb_none (12.92 us) to slowest sb_value (2.54 ms): 196.7x. The strategy choice matters a lot for this workload.
+
+_Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
+
 ## Key findings
 
-- **Baseline (sb_none) is the fastest** at 10895.9 ns median
+- **Baseline (sb_none) is the fastest** at 12920.8 ns median
 - 2 variants significantly slower than baseline
-- Spread: 238.71x (fastest 10895.9 ns, slowest 2600983.4 ns)
+- Spread: 196.70x (fastest 12920.8 ns, slowest 2541525.0 ns)
+
+## Methodology
+
+| Parameter | Value |
+|---|---|
+| Workload | next-frame asymmetry: clean skip vs value-swap cone vs plan band |
+| Passes | 3 |
+| Runs per pass | 30 |
+| Batch size | 10 |
+| Harness runs | 2 |
+| Cooldown schedule | 0ms |
+| Master seed | 0x51c3510700000002 |
+| Counter frequency | 24000000 Hz |
+| Drift correction | none |
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| sb_none | 17022ns | 16885ns | 16354ns | 16804ns | 17683ns | base |
-| sb_plan | 20493ns | 20408ns | 19483ns | 20271ns | 21331ns | +20.39% |
-| sb_value | 2656854ns | 2606554ns | 2526847ns | 2597099ns | 2811489ns | +15508.58% |
+| sb_none | 19281ns | 19231ns | 17421ns | 18775ns | 20969ns | base |
+| sb_plan | 21460ns | 21262ns | 19828ns | 21055ns | 22883ns | +11.30% |
+| sb_value | 2549407ns | 2548475ns | 2509732ns | 2536510ns | 2588589ns | +13122.52% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| sb_none | 10933ns | 10539ns | 11242ns | base | 0.749 |
-| sb_plan | 14362ns | 13818ns | 14696ns | +31.37% | 0.570 |
-| sb_value | 2650918ns | 2520807ns | 2805291ns | +24147.73% | 0.003 |
+| sb_none | 12975ns | 12071ns | 13734ns | base | 0.631 |
+| sb_plan | 15184ns | 14443ns | 15760ns | +17.03% | 0.539 |
+| sb_value | 2542734ns | 2503185ns | 2582569ns | +19496.83% | 0.003 |
 
 ## Performance model
 
-- Peak throughput: **0.777 Gops/s** (sb_none; best 20% batches)
+- Peak throughput: **0.679 Gops/s** (sb_none; best 20% batches)
 - Ops per call: 8192
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| sb_none | 0.752 | 96.7% |
-| sb_plan | 0.571 | 73.5% |
-| sb_value | 0.003 | 0.4% |
+| sb_none | 0.634 | 93.4% |
+| sb_plan | 0.538 | 79.2% |
+| sb_value | 0.003 | 0.5% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| sb_none | 17022ns | 17022ns | base |
-| sb_plan | 20493ns | 20493ns | +20.39% |
-| sb_value | 2656854ns | 2656854ns | +15508.58% |
+| sb_none | 19281ns | 19281ns | base |
+| sb_plan | 21460ns | 21460ns | +11.30% |
+| sb_value | 2549407ns | 2549407ns | +13122.52% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| sb_none | 10896ns | base | --- | [10725, 11131] | --- | --- | --- | --- |
-| sb_plan | 14335ns | +3495.9ns (+32.1%) | [+3329, +3688]ns | [14258, 14465] | YES | 0.0000 | 0.0000 | 0 |
-| sb_value | 2600983ns | +2589983.4ns (+23770.4%) | [+2550625, +2677292]ns | [2562717, 2688138] | YES | 0.0000 | 0.0000 | 0 |
+| sb_none | 12921ns | base | --- | [12519, 13390] | --- | --- | --- | --- |
+| sb_plan | 15240ns | +2241.7ns (+17.3%) | [+1983, +2685]ns | [14812, 15342] | YES | 0.0000 | 0.0000 | 0 |
+| sb_value | 2541525ns | +2527720.8ns (+19563.2%) | [+2501452, +2548238]ns | [2514031, 2560869] | YES | 0.0000 | 0.0000 | 0 |
 
-## Per-pass consistency (nonstop e2e, Δ vs baseline)
+## Per-pass consistency (nonstop algo, Δ vs baseline)
 
-| Pass | sb_none | sb_plan | sb_value |
-|---|---|---|---|
-| 1 | 10900ns | +30.8% | +23151.5% |
-| 2 | 10875ns | +31.9% | +23465.2% |
-| 3 | 10854ns | +29.4% | +23935.6% |
-| 4 | 11146ns | +31.6% | +23165.3% |
-| 5 | 11388ns | +29.3% | +21949.5% |
-| 6 | 11050ns | +33.1% | +24372.2% |
-| 7 | 10692ns | +33.4% | +23634.6% |
-| 8 | 10642ns | +35.6% | +25009.7% |
-| 9 | 11008ns | +26.1% | +23159.0% |
-| 10 | 10892ns | +31.3% | +23547.8% |
-| 11 | 10725ns | +33.6% | +24593.5% |
-| 12 | 10554ns | +37.3% | +23749.5% |
-| 13 | 11117ns | +29.8% | +23035.2% |
-| 14 | 11229ns | +27.6% | +26313.7% |
-| 15 | 10721ns | +34.7% | +24746.4% |
-| 16 | 11292ns | +34.1% | +24515.6% |
-| 17 | 11283ns | +19.9% | +25057.0% |
-| 18 | 10421ns | +36.3% | +27454.1% |
+| Run | Pass | sb_none | sb_plan | sb_value |
+|---|---|---|---|---|
+| 1 | 1 | 12467ns | +17.6% | +20622.5% |
+| 1 | 2 | 12500ns | +19.7% | +20012.5% |
+| 1 | 3 | 12796ns | +23.2% | +19551.9% |
+| 2 | 1 | 14129ns | +7.2% | +17861.8% |
+| 2 | 2 | 13492ns | +17.2% | +18797.4% |
+| 2 | 3 | 13067ns | +17.3% | +19227.2% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| sb_none | 0.028 | ok |
-| sb_plan | -0.172 | ok |
-| sb_value | 0.236 | moderate+ |
+| sb_none | 0.316 | moderate+ |
+| sb_plan | -0.065 | ok |
+| sb_value | -0.199 | ok |
 
 **Consistency summary:**
 
-- **sb_plan**: won 0/18, lost 18/18
-- **sb_value**: won 0/18, lost 18/18
+- **sb_plan**: won 0/6, lost 6/6
+- **sb_value**: won 0/6, lost 6/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| sb_none | 45111072.9ns | 10932.6ns | 412627.3% | HIGH |
-| sb_plan | 45125010.4ns | 14362.0ns | 314196.3% | HIGH |
-| sb_value | 45123146.8ns | 2650918.1ns | 1702.2% | HIGH |
+| sb_none | 44891354.2ns | 12975.2ns | 345977.2% | HIGH |
+| sb_plan | 45039674.1ns | 15184.5ns | 296616.2% | HIGH |
+| sb_value | 44891168.5ns | 2542734.2ns | 1765.5% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-sb_none (n=18, range 10538.9-11242.4 ns)
-  10538.9 |####################
-  10574.1 |
-  10609.2 |####################
-  10644.4 |
-  10679.6 |####################
-  10714.8 |########################################
-  10749.9 |
-  10785.1 |
-  10820.3 |####################
-  10855.5 |####################
-  10890.6 |########################################
-  10925.8 |
-  10961.0 |
-  10996.2 |####################
-  11031.3 |####################
-  11066.5 |
-  11101.7 |####################
-  11136.8 |####################
-  11172.0 |
-  11207.2 |####################
+sb_none (n=18, range 12070.8-13734.1 ns)
+  12070.8 |####################
+  12154.0 |
+  12237.2 |
+  12320.3 |####################
+  12403.5 |####################
+  12486.6 |########################################
+  12569.8 |
+  12653.0 |####################
+  12736.1 |####################
+  12819.3 |####################
+  12902.4 |
+  12985.6 |########################################
+  13068.8 |####################
+  13151.9 |
+  13235.1 |####################
+  13318.2 |
+  13401.4 |####################
+  13484.6 |####################
+  13567.7 |
+  13650.9 |
   (1 below, 3 above range)
 
-sb_plan (n=18, range 13818.1-14695.8 ns)
-  13818.1 |
-  13862.0 |##########
-  13905.8 |
-  13949.7 |
-  13993.6 |
-  14037.5 |##########
-  14081.4 |
-  14125.3 |
-  14169.2 |##########
-  14213.1 |
-  14257.0 |####################
-  14300.8 |########################################
-  14344.7 |
-  14388.6 |
-  14432.5 |##############################
-  14476.4 |##########
-  14520.3 |
-  14564.2 |
-  14608.1 |
-  14652.0 |##########
-  (1 below, 3 above range)
+sb_plan (n=18, range 14443.1-15759.8 ns)
+  14443.1 |#############
+  14508.9 |
+  14574.7 |#############
+  14640.6 |#############
+  14706.4 |#############
+  14772.2 |
+  14838.1 |#############
+  14903.9 |#############
+  14969.7 |
+  15035.6 |
+  15101.4 |#############
+  15167.2 |
+  15233.1 |########################################
+  15298.9 |########################################
+  15364.7 |
+  15430.6 |
+  15496.4 |
+  15562.2 |
+  15628.1 |
+  15693.9 |
+  (1 below, 4 above range)
 
-sb_value (n=18, range 2520806.9-2805291.0 ns)
-  2520806.9 |####################
-  2535031.1 |####################
-  2549255.3 |########################################
-  2563479.5 |########################################
-  2577703.7 |
-  2591927.9 |####################
-  2606152.1 |####################
-  2620376.3 |
-  2634600.5 |####################
-  2648824.7 |
-  2663049.0 |########################################
-  2677273.2 |
-  2691497.4 |####################
-  2705721.6 |
-  2719945.8 |
-  2734170.0 |
-  2748394.2 |
-  2762618.4 |
-  2776842.6 |####################
-  2791066.8 |
-  (2 below, 3 above range)
+sb_value (n=18, range 2503184.7-2582568.8 ns)
+  2503184.7 |
+  2507153.9 |##########
+  2511123.1 |########################################
+  2515092.3 |
+  2519061.5 |
+  2523030.7 |##########
+  2526999.9 |
+  2530969.1 |
+  2534938.3 |##########
+  2538907.5 |
+  2542876.7 |##########
+  2546845.9 |##########
+  2550815.1 |##########
+  2554784.3 |##########
+  2558753.5 |
+  2562722.7 |##########
+  2566691.9 |
+  2570661.1 |
+  2574630.3 |
+  2578599.5 |
+  (2 below, 4 above range)
 
 ```
 
 ## Diagnostics
 
-- **sb_none**: bridge=413474.4% of algo (FFI overhead may distort results)
-- **sb_plan**: bridge=314396.4% of algo (FFI overhead may distort results)
-- **sb_value**: bridge=1734.2% of algo (FFI overhead may distort results)
+- **sb_none**: bridge=346404.8% of algo (FFI overhead may distort results)
+- **sb_plan**: bridge=293753.2% of algo (FFI overhead may distort results)
+- **sb_value**: bridge=1762.3% of algo (FFI overhead may distort results)
