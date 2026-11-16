@@ -1,0 +1,50 @@
+# What a build of the static form of a program of many crates costs, per edit
+# site, with incremental compilation on and off. The workload is the generated
+# fixture of `support/build-fixture`: twelve domains in three tiers, each a
+# contract crate and implementation crates behind it, and a facade binary that
+# composes every implementation, at 25, 97 and 169 crates. The point is the
+# crate count.
+#
+# The arms are the toolchain's own default for the target: its LLVM backend,
+# its default linker, rlib edges, the fixture's `dev` profile (opt-level 1, no
+# debug information). They differ only in cargo's incremental switch. The
+# linker, backend, edge form and C compiler arms wait on the hilavitkutin-build
+# design round that gives those axes an owner.
+#
+# A sweep is a scenario: `clean` builds every crate into an empty target
+# directory; `leaf`, `mid` and `root` change the content of one function body
+# in a leaf implementation, a mid contract and a root contract, after an
+# untimed build that brings the cell's target directory up to date, then build
+# the workspace. A call is one cargo build, timed by the harness; what cargo
+# compiled, the sizes of the executable, the target directory and its
+# incremental state go into the call record the hooks library copies into the
+# run directory as `calls.tsv` and holds to the crate count the generator
+# predicts. Both arms answer that count, so the harness holds them to agreeing.
+#
+# Six passes, so the sign test over the pairs can reach p = 0.031; with the
+# three passes the first cells ran under it could not go below 0.25.
+
+title = "build-static: the fixture built per edit site, incremental on and off"
+workload = "build"
+master_seed = 0x6276_626c_7374_0001
+arms = ["llvm_incremental", "llvm_non_incremental"]
+baseline = "llvm_non_incremental"
+may_differ = false
+required = true
+timing = { passes = 6, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], validation_seeds = 1, determinism_check_seeds = 1 }
+
+[sweep.clean]
+title = "build-static: every crate built into an empty target directory"
+points = [25, 97]
+
+[sweep.leaf]
+title = "build-static: rebuilt after an edit to one leaf implementation crate"
+points = [25, 97]
+
+[sweep.mid]
+title = "build-static: rebuilt after an edit to one mid contract crate"
+points = [25, 97]
+
+[sweep.root]
+title = "build-static: rebuilt after an edit to one root contract crate"
+points = [25, 97]
