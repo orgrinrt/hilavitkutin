@@ -24,6 +24,9 @@ use std::{fmt, fs};
 
 use crate::disasm::{self, Insn};
 
+/// The name of check 1, the indirect-call check, which the gate selects by.
+pub const INDIRECT_CALL: &str = "1. zero indirect call in inner body";
+
 /// One check's outcome.
 #[derive(Debug, Clone)]
 pub struct CheckOutcome {
@@ -46,11 +49,18 @@ impl CheckReport {
         self.outcomes.iter().all(|o| o.pass)
     }
 
-    /// Whether check 1 passed: no indirect call through a stored pointer, so
-    /// the call was devirtualised. Checks 2 to 5 are statements about the
-    /// engine's morsel loop and are shape-dependent on any other body.
+    /// The outcome of the indirect-call check, found by its name rather than
+    /// by its place in the list.
+    pub fn indirect_call(&self) -> Option<&CheckOutcome> {
+        self.outcomes.iter().find(|o| o.name == INDIRECT_CALL)
+    }
+
+    /// Whether the indirect-call check passed: no indirect call through a
+    /// stored pointer, so the call was devirtualised. Checks 2 to 5 are
+    /// statements about the engine's morsel loop and are shape-dependent on
+    /// any other body. A report without the check is not devirtualised.
     pub fn devirtualised(&self) -> bool {
-        self.outcomes.first().is_some_and(|o| o.pass)
+        self.indirect_call().is_some_and(|o| o.pass)
     }
 }
 
@@ -169,7 +179,7 @@ fn check_no_indirect_call(disasm: &str) -> CheckOutcome {
         )
     };
     CheckOutcome {
-        name: "1. zero indirect call in inner body",
+        name: INDIRECT_CALL,
         pass: calls.unresolved.is_empty(),
         detail,
     }
@@ -357,9 +367,10 @@ mod tests {
             symbol:   "bench_entry".into(),
             outcomes: passes
                 .iter()
-                .map(|&pass| {
+                .enumerate()
+                .map(|(i, &pass)| {
                     CheckOutcome {
-                        name: "c",
+                        name: if i == 0 { INDIRECT_CALL } else { "c" },
                         pass,
                         detail: String::new(),
                     }
@@ -398,5 +409,28 @@ mod tests {
         let mut r = report([true; 5]);
         r.outcomes.clear();
         assert!(!r.devirtualised());
+    }
+
+    #[test]
+    fn the_indirect_call_check_is_found_wherever_it_sits() {
+        // A report whose indirect-call outcome is last and failing, behind four
+        // passing checks, is not devirtualised: the first outcome is not read.
+        let mut r = report([false, true, true, true, true]);
+        r.outcomes.rotate_left(1);
+        assert!(r.outcomes[0].pass);
+        assert!(!r.devirtualised());
+        assert_eq!(r.indirect_call().map(|o| o.pass), Some(false));
+    }
+
+    #[test]
+    fn the_checklist_names_the_indirect_call_check() {
+        let r = run_checks_on_disasm("", Path::new("libv.so"), "bench_entry", &[]);
+        assert_eq!(
+            r.outcomes
+                .iter()
+                .filter(|o| o.name == INDIRECT_CALL)
+                .count(),
+            1
+        );
     }
 }
