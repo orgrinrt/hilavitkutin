@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794835713	07a9e9a3	popcount_strategy_n16384	popcount_handrolled	16384	warm	1947.1	1947.1	1948.8
+1794835713	07a9e9a3	popcount_strategy_n16384	popcount_std	16384	warm	271.2	271.2	272.1
+1794835713	07a9e9a3	popcount_strategy_n16384	popcount_swar	16384	warm	1948.1	1948.1	1949.6
