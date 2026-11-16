@@ -7,11 +7,14 @@
 //!
 //! This binary sets its own process environment, so it holds one test.
 
+mod common;
+
 use std::path::Path;
 use std::process::Command;
 
 use build_call::record::{self, Line};
 use build_call::{Arm, Call, Dirs, Profile, Scenario, cargo, root, toolchain};
+use common::Removed;
 
 const BENCH: &str = "test-environment";
 const ARM: &str = "default_relink";
@@ -48,6 +51,7 @@ fn failed(mut c: Command, what: &str) -> String {
 
 #[test]
 fn an_inherited_environment_and_configuration_do_not_reach_the_fixture_build() {
+    let _gone = Removed::bench(BENCH);
     let tc = toolchain::get();
     let bench_dir = root().join(BENCH);
     put(
@@ -78,7 +82,6 @@ fn an_inherited_environment_and_configuration_do_not_reach_the_fixture_build() {
         }
     }
 
-    record::reset(&root(), BENCH);
     let input = [Scenario::Link.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
     let mut call = Call::ready(BENCH, ARM, Arm::Relink, &input, N);
     let out = call.run();

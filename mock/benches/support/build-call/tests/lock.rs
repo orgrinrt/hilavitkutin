@@ -2,6 +2,8 @@
 //! and refused: the cell's build locks are held here while the call starts,
 //! and let go once cargo says it is waiting.
 
+mod common;
+
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::process::Output;
@@ -9,6 +11,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use build_call::{Arm, Call, Dirs, Profile, Scenario, record, root};
+use common::Removed;
 
 const BENCH: &str = "test-lock";
 const ARM: &str = "control";
@@ -16,7 +19,7 @@ const N: usize = 25;
 
 #[test]
 fn a_call_that_waited_on_a_lock_is_recorded_as_waiting_and_refused() {
-    record::reset(&root(), BENCH);
+    let _gone = Removed::bench(BENCH);
     let input = [Scenario::Leaf.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
     let arm = Arm::Build {
         incremental: false,

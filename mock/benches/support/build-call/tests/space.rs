@@ -2,8 +2,11 @@
 //! before anything is built; the cell's own target directory counts as free,
 //! since the call reuses or removes it.
 
+mod common;
+
 use build_call::space::{MARGIN, budget, free_bytes, free_of_df, refusal};
 use build_call::{Arm, Call, Control, Profile, Scenario};
+use common::Removed;
 
 #[test]
 fn a_disk_under_the_budget_and_the_margin_is_refused_and_one_that_holds_them_is_not() {
@@ -40,6 +43,7 @@ fn the_free_space_is_read_from_df_and_a_missing_path_is_an_error() {
 #[test]
 #[should_panic(expected = "refused before anything was built")]
 fn a_call_on_a_disk_with_no_room_is_refused_in_its_setup() {
+    let _gone = Removed::bench("test-space");
     let input = [Scenario::Clean.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
     let _ = Call::ready_with(
         "test-space",

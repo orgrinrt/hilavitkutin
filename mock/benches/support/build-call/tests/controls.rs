@@ -4,10 +4,13 @@
 //! time only, and a link that leaves the executable in place.
 //!
 //! Each test uses a bench name of its own, so their records and directories
-//! never meet.
+//! never meet, and removes its state when it ends.
+
+mod common;
 
 use build_call::record::{self, Line};
 use build_call::{Arm, Call, Control, Profile, Scenario, root, toolchain};
+use common::Removed;
 
 const N: usize = 25;
 
@@ -47,7 +50,7 @@ const OFF: Arm = Arm::Build {
 #[test]
 fn every_scenario_compiles_what_the_generator_predicts_offline_and_locked() {
     let bench = "test-scenarios";
-    record::reset(&root(), bench);
+    let _gone = Removed::bench(bench);
     for s in [Scenario::Clean, Scenario::Leaf, Scenario::Mid, Scenario::Root] {
         let line = call(bench, "honest", OFF, s, None);
         let verdict = checked(bench, s, std::slice::from_ref(&line));
@@ -65,7 +68,7 @@ fn every_scenario_compiles_what_the_generator_predicts_offline_and_locked() {
 #[test]
 fn a_clean_that_removes_nothing_is_refused() {
     let bench = "test-skip-clean";
-    record::reset(&root(), bench);
+    let _gone = Removed::bench(bench);
     call(bench, "control", OFF, Scenario::Clean, None);
     let line = call(
         bench,
@@ -83,7 +86,7 @@ fn a_clean_that_removes_nothing_is_refused() {
 #[test]
 fn an_edit_by_file_time_only_is_refused() {
     let bench = "test-time-only";
-    record::reset(&root(), bench);
+    let _gone = Removed::bench(bench);
     let line = call(
         bench,
         "control",
@@ -100,7 +103,7 @@ fn an_edit_by_file_time_only_is_refused() {
 fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the_executable_is_refused()
  {
     let bench = "test-relink";
-    record::reset(&root(), bench);
+    let _gone = Removed::bench(bench);
     let first = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
     let second = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
     assert_eq!(
@@ -112,10 +115,9 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
     let want = toolchain::get()
         .default_mark()
         .expect("this host's default linker has a mark");
-    assert!(
-        first.mark.starts_with(&format!("{want} ")) || first.mark == want,
-        "the mark worked out from the toolchain, `{want}`, is the one the default linker wrote: {}",
-        first.mark
+    assert_eq!(
+        first.mark, want,
+        "the mark worked out from the toolchain's own rust-lld is the one the default linker wrote"
     );
     let kept = call(
         bench,
@@ -136,7 +138,7 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
 #[test]
 fn the_recorded_link_line_replays_to_the_same_program() {
     let bench = "test-replay";
-    record::reset(&root(), bench);
+    let _gone = Removed::bench(bench);
     let relinked = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
     let replayed = call(bench, "default_replay", Arm::Replay, Scenario::Link, None);
     let again = call(bench, "default_replay", Arm::Replay, Scenario::Link, None);
