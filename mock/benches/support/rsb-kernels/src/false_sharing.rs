@@ -17,12 +17,29 @@ pub const LINE: usize = 64;
 /// The most threads a pass runs: sixteen `u32` slots fill one line.
 pub const MAX_THREADS: usize = LINE / 4;
 
-/// How many threads a pass runs on this machine.
+/// The fewest threads a pass runs: one thread has no other writer to share
+/// its line with, so the two layouts would measure the same thing.
+pub const MIN_THREADS: usize = 2;
+
+/// How many threads a pass runs on this machine, never fewer than
+/// [`MIN_THREADS`].
 pub fn threads() -> usize {
-    std::thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(4)
-        .min(MAX_THREADS)
+    threads_for(
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4),
+    )
+}
+
+/// How many threads a pass runs on a machine of `parallelism` cores.
+pub const fn threads_for(parallelism: usize) -> usize {
+    if parallelism < MIN_THREADS {
+        MIN_THREADS
+    } else if parallelism > MAX_THREADS {
+        MAX_THREADS
+    } else {
+        parallelism
+    }
 }
 
 /// One pass: every thread writes its slot `iters_per` times. Returns the sum
@@ -72,6 +89,16 @@ mod tests {
         let want = threads() as u64 * 1000;
         assert_eq!(pass(true, 1000), want);
         assert_eq!(pass(false, 1000), want);
+    }
+
+    #[test]
+    fn a_pass_always_has_two_writers_to_contend() {
+        // On a one-core machine the parallelism is one; the pass still runs
+        // two threads, or packed and padded would measure the same thing.
+        assert_eq!(threads_for(1), MIN_THREADS);
+        assert_eq!(threads_for(0), MIN_THREADS);
+        assert_eq!(threads_for(4), 4);
+        assert_eq!(threads_for(64), MAX_THREADS);
     }
 
     #[test]
