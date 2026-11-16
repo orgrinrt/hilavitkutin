@@ -1533,3 +1533,9 @@ maintainer_names = ["op", "lead designer"]
 [tools.tickets]
 maintainer_words = "../.data/op-responses"
 maintainer_names = ["op", "lead designer"]
+
+# The commit types this repository uses, beyond mockspace's defaults (feat, fix, refactor, docs,
+# test, chore, bench, release). The builtin `commit-subject` gate refuses a type that is not listed, so a new
+# type is added here and nowhere else.
+[lints.commit-subject]
+extra_types = "research,plan"
