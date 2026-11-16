@@ -204,7 +204,7 @@ impl Call {
             .lines()
             .filter(|l| l.trim_start().starts_with("Compiling fx_"))
             .count();
-        let kept = self.dirs.dir().join("link-line.txt");
+        let kept = self.dirs.link_line(self.profile);
         if let Some(line) = linkline::find(&String::from_utf8_lossy(&caught_up.stdout)) {
             std::fs::write(&kept, line.to_text())
                 .unwrap_or_else(|e| panic!("{}: {e}", kept.display()));
@@ -213,7 +213,9 @@ impl Call {
             .ok()
             .and_then(|t| LinkLine::from_text(&t))
             .unwrap_or_else(|| panic!("{}: no recorded link line", kept.display()));
-        let exe = PathBuf::from(line.output().expect("`-o` in the link line"));
+        let exe = line
+            .output_under(&self.dirs.target().join(self.profile.dir()))
+            .unwrap_or_else(|e| panic!("build-call: {}: {e}", kept.display()));
         if control != Some(Control::KeepOutput) && exe.exists() {
             std::fs::remove_file(&exe).unwrap_or_else(|e| panic!("{}: {e}", exe.display()));
         }

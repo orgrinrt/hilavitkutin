@@ -213,6 +213,12 @@ impl Dirs {
         self.dir.join("home")
     }
 
+    /// Where a replay keeps the link line rustc printed for `profile`. One
+    /// file per profile, since both profiles of a point share the cell.
+    pub fn link_line(&self, profile: Profile) -> PathBuf {
+        self.dir.join(format!("link-line-{}.txt", profile.label()))
+    }
+
     /// Every directory a call needs, made where missing.
     pub fn make(&self) -> Result<(), String> {
         for d in [self.ws(), self.tmp(), self.home()] {

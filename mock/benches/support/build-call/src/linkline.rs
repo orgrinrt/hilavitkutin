@@ -6,6 +6,7 @@
 //! for each one set, then the program and every argument as a quoted string
 //! with Rust's escapes.
 
+use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
 /// One link command: where it runs, what it sets and takes out, and its words.
@@ -25,6 +26,27 @@ impl LinkLine {
             .position(|a| a == "-o")
             .and_then(|i| self.argv.get(i + 1))
             .map(String::as_str)
+    }
+
+    /// The file the link writes, held to `profile_dir`, the target directory
+    /// of the profile the replay is for: the `-o` path, resolved against the
+    /// line's working directory where it is relative, must lie under it with
+    /// no `..` in it, or the line is another profile's or another cell's.
+    pub fn output_under(&self, profile_dir: &Path) -> Result<PathBuf, String> {
+        let out = self.output().ok_or("the link line has no `-o`")?;
+        let out = match &self.cwd {
+            Some(dir) if Path::new(out).is_relative() => Path::new(dir).join(out),
+            _ => PathBuf::from(out),
+        };
+        let climbs = out.components().any(|c| c == Component::ParentDir);
+        if climbs || !out.starts_with(profile_dir) {
+            return Err(format!(
+                "the link line writes {}, which is not under {}",
+                out.display(),
+                profile_dir.display()
+            ));
+        }
+        Ok(out)
     }
 
     /// The command, ready to run.
