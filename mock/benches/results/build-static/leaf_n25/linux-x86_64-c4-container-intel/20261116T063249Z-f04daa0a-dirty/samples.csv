@@ -1,0 +1,13 @@
+run,pass,cooldown_ms,mode,variant,batch_idx,e2e_ns,algo_ns,bridge_ns,batch_count,score,input_tag,instructions,cycles,setup_ns,first_ns,digest
+1,1,0,warm,llvm_incremental,0,3366595444.8,3366584144.0,60353295.8,1,,,0,0,0.0,0.0,0
+1,1,0,warm,llvm_non_incremental,0,5232521421.8,5232509842.6,73336598.4,1,,,0,0,0.0,0.0,0
+1,1,0,cold,llvm_incremental,0,3599492015.4,3599475259.2,76256380.7,1,,,0,0,0.0,0.0,0
+1,1,0,cold,llvm_non_incremental,0,5444282804.8,5444264112.9,71021530.3,1,,,0,0,0.0,0.0,0
+1,2,0,warm,llvm_non_incremental,0,5451350701.4,5451340308.1,58651172.2,1,,,0,0,0.0,0.0,0
+1,2,0,warm,llvm_incremental,0,3379895049.7,3379876754.1,72846594.3,1,,,0,0,0.0,0.0,0
+1,2,0,cold,llvm_non_incremental,0,5331573900.0,5331558736.2,70773451.0,1,,,0,0,0.0,0.0,0
+1,2,0,cold,llvm_incremental,0,3477128285.6,3477120539.8,58679439.7,1,,,0,0,0.0,0.0,0
+1,3,0,warm,llvm_incremental,0,3530134750.6,3530125869.2,57668352.4,1,,,0,0,0.0,0.0,0
+1,3,0,warm,llvm_non_incremental,0,5662148253.4,5662132322.4,70913274.0,1,,,0,0,0.0,0.0,0
+1,3,0,cold,llvm_incremental,0,3393028120.0,3393017808.5,59977797.9,1,,,0,0,0.0,0.0,0
+1,3,0,cold,llvm_non_incremental,0,5449369261.2,5449360667.1,57109132.7,1,,,0,0,0.0,0.0,0

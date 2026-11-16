@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794811531	f04daa0a-dirty	leaf_n25	llvm_incremental	25	warm	3379876754.1	3379876754.1	3530125869.2
+1794811531	f04daa0a-dirty	leaf_n25	llvm_non_incremental	25	warm	5451340308.1	5451340308.1	5662132322.4

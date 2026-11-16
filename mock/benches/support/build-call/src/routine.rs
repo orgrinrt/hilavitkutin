@@ -27,12 +27,42 @@ impl<const SCENARIO: u8, const PROFILE: u8> Routine for Cell<SCENARIO, PROFILE> 
     }
 }
 
+/// The first timed call measured at a cell, in whole seconds rounded up, the
+/// slower of the bench's two arms: scenario code, profile code, point, seconds.
+/// Each row names the run it was read from.
+const FIRST_CALL_S: [(u8, u8, usize, u64); 4] = [
+    // build-static, run 20261116T063249Z-f04daa0a-dirty, first warm pass
+    (0, 0, 25, 17),
+    (1, 0, 25, 6),
+    (2, 0, 25, 6),
+    (3, 0, 25, 15),
+];
+
 /// The bound on one call, in microseconds: three times the first timed call
-/// measured at that cell, rounded up to whole seconds. `None` leaves the
-/// harness's fallback of 300 s per worker.
+/// measured at that cell. A point with no row of its own takes the row of the
+/// largest measured point below it, scaled by the ratio of the crate counts,
+/// until a run measures it. `None` leaves the harness's fallback of 300 s per
+/// worker.
 pub const fn bound_us(scenario: u8, profile: u8, n: usize) -> Option<u64> {
-    let _ = (scenario, profile, n);
-    None
+    let mut best: Option<(usize, u64)> = None;
+    let mut i = 0;
+    while i < FIRST_CALL_S.len() {
+        let (s, p, at, secs) = FIRST_CALL_S[i];
+        if s == scenario && p == profile && at <= n {
+            best = match best {
+                Some((b, _)) if b >= at => best,
+                _ => Some((at, secs)),
+            };
+        }
+        i += 1;
+    }
+    match best {
+        Some((at, secs)) => {
+            let scaled = (secs * n as u64).div_ceil(at as u64);
+            Some(3 * scaled * 1_000_000)
+        },
+        None => None,
+    }
 }
 
 /// The bridge of the cell `scenario` in `profile`.

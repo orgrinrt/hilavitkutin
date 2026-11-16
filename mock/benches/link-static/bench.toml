@@ -26,11 +26,11 @@ arms = ["default_relink", "default_replay"]
 baseline = "default_relink"
 may_differ = false
 required = true
-points = [25, 97]
 timing = { passes = 3, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], validation_seeds = 1, determinism_check_seeds = 1 }
 
 [sweep.dev]
 title = "link-static: the fixture's dev profile"
+points = [25, 97]
 
 [sweep.release]
 title = "link-static: the fixture's release profile"
