@@ -9,9 +9,11 @@
 use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
+// The hand-written shifts are the idiom this arm measures; clippy would rewrite them to `rotate_left`.
+#[allow(clippy::manual_rotate)]
 #[inline(always)]
 fn rotl_manual(v: u64, k: u32) -> u64 {
-    v.rotate_left(k)
+    (v << k) | (v >> (64 - k))
 }
 
 #[bench_variant("rot_manual_shifts", sizes = [256, 1024, 4096, 16384])]

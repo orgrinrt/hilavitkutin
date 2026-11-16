@@ -12,6 +12,8 @@
 use mockspace_bench_core::{FfiBenchCall, timed};
 use mockspace_bench_macro::bench_variant;
 
+// The checked match is the idiom this arm measures; clippy would fold it into `saturating_add`.
+#[allow(clippy::manual_unwrap_or, clippy::manual_saturating_arithmetic)]
 #[bench_variant("sat_checked", sizes = [256, 1024, 4096, 16384])]
 fn run_sat_checked<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     timed! {
@@ -19,7 +21,10 @@ fn run_sat_checked<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> Ffi
             let mut acc: u64 = 0;
             for &byte in input.iter() {
                 let term = (byte as u64).wrapping_mul(0x100000001b3);
-                acc = acc.saturating_add(term);
+                acc = match acc.checked_add(term) {
+                    Some(v) => v,
+                    None => u64::MAX,
+                };
             }
             output.copy_from_slice(&acc.to_le_bytes());
         }

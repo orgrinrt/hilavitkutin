@@ -126,6 +126,15 @@ commit = "error"
 build = "error"
 push = "error"
 
+# The `rot_manual_shifts` and `sat_checked` arms measure hand-written idioms
+# clippy autofix rewrites into the intrinsics their siblings time; the port
+# did so once and both arms went on reporting under their own names. Repo
+# lint, `mock/lints/`.
+[lints.a-bench-arm-keeps-the-idiom-it-measures]
+commit = "error"
+build = "error"
+push = "error"
+
 # A frozen crate is written as a consumer would write it: no feature gate and
 # no raised recursion limit, each of which would hide what the api makes an
 # author do. A frozen crate also changes only through its ledger: every file
