@@ -46,6 +46,9 @@ pub fn get() -> &'static Toolchain {
     TOOLCHAIN.get_or_init(|| resolve().unwrap_or_else(|e| panic!("build-call: {e}")))
 }
 
+// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
+// toolchain is resolved here by hand through rustup, and `channel` reads the
+// pin by hand. Both come from hilavitkutin-build once its round gives it them.
 fn resolve() -> Result<Toolchain, String> {
     let channel = channel();
     let mut proxy = Command::new("rustc");

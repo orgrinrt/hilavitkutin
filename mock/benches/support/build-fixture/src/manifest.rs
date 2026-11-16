@@ -9,6 +9,10 @@
 use crate::graph::{Graph, Role, dir, name};
 
 /// The workspace manifest.
+///
+/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
+/// two profiles are written here by hand, and `dev` is not hilavitkutin's
+/// `dev`. They come from hilavitkutin-build once its round gives it them.
 pub fn workspace() -> String {
     "[workspace]\nmembers = [\"crates/*\", \"facade\"]\nresolver = \"3\"\n\n\
      [workspace.package]\nversion = \"0.0.0\"\nedition = \"2024\"\npublish = false\n\n\
