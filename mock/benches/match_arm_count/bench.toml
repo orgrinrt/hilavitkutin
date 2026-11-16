@@ -1,4 +1,4 @@
-title = "Match arm count: 2 vs 8 vs 64 — jump-table dispatch scaling"
+title = "Match arm count: 2 vs 8 vs 64, jump-table dispatch scaling"
 workload = "realistic"
 master_seed = 0x3c87_15d9_a4b6_82f1
 may_differ = true
