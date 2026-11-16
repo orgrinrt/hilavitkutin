@@ -1,11 +1,12 @@
 //! An arm is held to the mark its named linker leaves: the default arm to the
-//! toolchain's own lld at the toolchain's LLVM version, read from the
-//! toolchain at run time. A missing mark, another linker's mark, the same
-//! linker at another version, and an arm naming a linker the bench has no mark
-//! for are each refused.
+//! version line of the toolchain's own `rust-lld`, read at run time. A missing
+//! mark, another linker's mark, another build of the same lld, a second
+//! linker's string joined after the right one, and an arm naming a linker the
+//! bench has no mark for are each refused. Whether that mark is the one the
+//! default linker really writes is shown by a real link in `controls.rs`.
 
 use build_call::record::{self, Line};
-use build_call::{Profile, Scenario, linker, toolchain};
+use build_call::{Profile, Scenario, toolchain};
 
 const N: usize = 25;
 
@@ -46,19 +47,23 @@ fn default_mark() -> String {
 }
 
 #[test]
-fn the_default_arms_pass_on_the_toolchains_own_lld_with_and_without_the_build_note() {
+fn the_default_arms_pass_on_the_toolchains_own_lld_and_on_nothing_more_or_less() {
     let want = default_mark();
     for arm in ["default_relink", "default_replay"] {
         assert!(checked(link_line(arm, &want)).is_ok(), "{arm}");
-        let noted = format!("{want} (/checkout/src/llvm-project/llvm 08c84e69)");
-        assert!(checked(link_line(arm, &noted)).is_ok(), "{arm}: {noted}");
+        let joined = format!("{want} | mold 2.30.0 (compatible with GNU ld)");
+        assert!(
+            checked(link_line(arm, &joined)).is_err(),
+            "{arm}: a second linker's string joined after the right one: {joined}"
+        );
+        let without_build = want
+            .split_once(" (")
+            .map_or_else(|| format!("{want}x"), |(v, _)| v.to_string());
+        assert!(
+            checked(link_line(arm, &without_build)).is_err(),
+            "{arm}: the same version with no build of the toolchain's own: {without_build}"
+        );
     }
-}
-
-#[test]
-fn the_default_mark_names_the_toolchains_llvm_version() {
-    let tc = toolchain::get();
-    assert_eq!(default_mark(), format!("Linker: LLD {}", tc.llvm));
 }
 
 #[test]
@@ -73,7 +78,12 @@ fn a_missing_mark_is_refused() {
 
 #[test]
 fn another_linkers_mark_on_the_default_arm_is_refused() {
-    for other in ["mold 2.30.0 (compatible with GNU ld)", "Wild 0.10.0", "Linker: LLD 18.1.3"] {
+    for other in [
+        "mold 2.30.0 (compatible with GNU ld)",
+        "Wild 0.10.0",
+        "Linker: LLD 18.1.3",
+        "Linker: LLD 22.1.6 (/usr/src/llvm 0000000)",
+    ] {
         let why = checked(link_line("default_relink", other))
             .expect_err("the default arm linked by another linker must be refused");
         assert!(why.contains(other), "{why}");
@@ -87,11 +97,6 @@ fn the_same_linker_at_a_version_that_only_starts_alike_is_refused() {
         checked(link_line("default_relink", &longer)).is_err(),
         "{longer}"
     );
-    assert!(!linker::holds("Linker: LLD 22.1.60", "Linker: LLD 22.1.6"));
-    assert!(linker::holds(
-        "Linker: LLD 22.1.6 (x)",
-        "Linker: LLD 22.1.6"
-    ));
 }
 
 #[test]
@@ -102,17 +107,32 @@ fn an_arm_named_for_a_linker_with_no_known_mark_is_refused_whatever_it_carries()
 }
 
 #[test]
-fn a_target_whose_default_is_not_the_toolchains_own_lld_has_no_mark() {
+fn the_default_mark_is_the_own_lld_version_line_and_nothing_else_has_one() {
     let own = r#"{ "link-self-contained": { "components": [ "linker" ] }, "linker-flavor": "gnu-lld-cc" }"#;
+    let said =
+        "LLD 22.1.6 (/checkout/src/llvm-project/llvm 08c84e69) (compatible with GNU linkers)";
     assert_eq!(
-        toolchain::default_mark(own, "22.1.6", "h"),
-        Ok("Linker: LLD 22.1.6".to_string())
+        toolchain::default_mark(own, Some(said), "h"),
+        Ok("Linker: LLD 22.1.6 (/checkout/src/llvm-project/llvm 08c84e69)".to_string())
+    );
+    assert!(
+        toolchain::default_mark(own, None, "h").is_err(),
+        "a toolchain whose rust-lld said nothing"
+    );
+    assert!(
+        toolchain::default_mark(own, Some("LLD 22.1.6"), "h").is_err(),
+        "a version line in a form this bench does not know"
+    );
+    assert!(
+        toolchain::default_mark(own, Some("mold 2.30.0 (compatible with GNU linkers)"), "h")
+            .is_err(),
+        "a rust-lld that is not lld"
     );
     let cc = r#"{ "linker-flavor": "gnu-cc" }"#;
-    assert!(toolchain::default_mark(cc, "22.1.6", "h").is_err());
+    assert!(toolchain::default_mark(cc, Some(said), "h").is_err());
     let system_lld = r#"{ "linker-flavor": "gnu-lld-cc" }"#;
     assert!(
-        toolchain::default_mark(system_lld, "22.1.6", "h").is_err(),
-        "an lld the toolchain does not carry has a version the toolchain cannot tell"
+        toolchain::default_mark(system_lld, Some(said), "h").is_err(),
+        "an lld the toolchain does not carry is not the one rust-lld describes"
     );
 }

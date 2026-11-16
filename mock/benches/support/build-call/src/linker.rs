@@ -14,6 +14,10 @@ use std::process::Command;
 use crate::{elf, toolchain};
 
 /// The linker an arm's name names: the part before its last `_`.
+///
+/// FIXME(a_link_static_arm_carries_its_linker_and_quantity_in_a_type): the
+/// linker is parsed back from the arm's name, which is written in three places;
+/// the arm's type should carry it.
 pub fn named(arm: &str) -> Option<&str> {
     arm.rsplit_once('_').map(|(linker, _)| linker)
 }
@@ -33,18 +37,13 @@ pub fn expected_mark(arm: &str) -> Result<String, String> {
     }
 }
 
-/// Whether the recorded `mark` is `expected`: the same text, or the same text
-/// followed by what the linker adds after a space (lld adds the commit of the
-/// LLVM it was built from). `Linker: LLD 22.1.60` is not `Linker: LLD 22.1.6`.
-pub fn holds(mark: &str, expected: &str) -> bool {
-    mark.strip_prefix(expected)
-        .is_some_and(|rest| rest.is_empty() || rest.starts_with(' '))
-}
-
-/// Why `mark` on a link by `arm` fails, or `None` where it holds.
+/// Why `mark` on a link by `arm` fails, or `None` where it holds. The mark
+/// must be exactly the expected one: the expected mark carries the linker's
+/// whole version line, so a longer version, another build of the same version
+/// or a second linker's string joined after it are each refused.
 pub fn refusal(arm: &str, mark: &str) -> Option<String> {
     match expected_mark(arm) {
-        Ok(want) if holds(mark, &want) => None,
+        Ok(want) if mark == want => None,
         Ok(want) => {
             Some(format!(
                 "the output carries the mark `{mark}`, and arm `{arm}` must carry `{want}`"

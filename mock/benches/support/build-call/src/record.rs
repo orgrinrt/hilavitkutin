@@ -171,6 +171,9 @@ pub fn expected(scenario: Scenario, n: usize) -> Option<usize> {
 }
 
 /// Whether a line was written by an arm that replays a link line.
+///
+/// FIXME(a_link_static_arm_carries_its_linker_and_quantity_in_a_type): the
+/// quantity is parsed back from the arm's name; the arm's type should carry it.
 pub fn is_replay(arm: &str) -> bool {
     arm.ends_with("_replay")
 }

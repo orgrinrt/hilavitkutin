@@ -1,6 +1,7 @@
 //! The pinned toolchain, resolved once to the binaries a call runs, and what
-//! it says of itself: its host, its LLVM version and the target's own
-//! description, from which the default linker's mark is worked out.
+//! it says of itself: its host, the version its own `rust-lld` reports and the
+//! target's own description, from which the default linker's mark is worked
+//! out.
 //!
 //! The channel is read from `mock/rust-toolchain.toml`. It is resolved through
 //! rustup once, with every inherited variable but the ones rustup needs to find
@@ -23,8 +24,9 @@ pub struct Toolchain {
     pub rustc:   PathBuf,
     /// The host triple, which is the target every call builds for.
     pub host:    String,
-    /// The LLVM version rustc reports, `22.1.6` and the like.
-    pub llvm:    String,
+    /// What the toolchain's own `rust-lld` says of itself with `--version`,
+    /// where the toolchain carries one for the host and it answered.
+    pub lld:     Option<String>,
     /// rustc's description of the host target, as JSON text.
     pub spec:    String,
 }
@@ -33,7 +35,7 @@ impl Toolchain {
     /// The mark the toolchain's default linker leaves in an executable it
     /// links for the host. See [`default_mark`].
     pub fn default_mark(&self) -> Result<String, String> {
-        default_mark(&self.spec, &self.llvm, &self.host)
+        default_mark(&self.spec, self.lld.as_deref(), &self.host)
     }
 }
 
@@ -76,7 +78,8 @@ fn resolve() -> Result<Toolchain, String> {
             .map(|v| v.trim().to_string())
             .ok_or_else(|| format!("rustc -vV names no `{key}`"))
     };
-    let (host, llvm) = (field("host:")?, field("LLVM version:")?);
+    let host = field("host:")?;
+    let lld = lld_version(&sysroot, &host);
     let spec = said(
         own(&rustc, &[
             "-Z",
@@ -92,9 +95,33 @@ fn resolve() -> Result<Toolchain, String> {
         cargo,
         rustc,
         host,
-        llvm,
+        lld,
         spec,
     })
+}
+
+/// The first line `rust-lld` under `<sysroot>/lib/rustlib/<host>/bin/` prints
+/// for `--version` as the GNU flavor, or `None` where the toolchain carries no
+/// such binary or it does not answer.
+///
+/// FIXME(the_build_and_link_bench_assumes_an_elf_unix_host_and_fails): the GNU
+/// flavor is the one an ELF target links with; a Mach-O or PE host's own lld
+/// is asked as the wrong flavor, so its link cells fail on the mark.
+fn lld_version(sysroot: &Path, host: &str) -> Option<String> {
+    let lld = sysroot
+        .join("lib/rustlib")
+        .join(host)
+        .join("bin")
+        .join(format!("rust-lld{}", std::env::consts::EXE_SUFFIX));
+    if !lld.is_file() {
+        return None;
+    }
+    said(
+        own(&lld, &["-flavor", "gnu", "--version"]),
+        "rust-lld --version",
+    )
+    .ok()
+    .and_then(|t| t.lines().next().map(|l| l.trim().to_string()))
 }
 
 /// A toolchain binary, run with no inherited environment but the path.
@@ -131,20 +158,39 @@ pub fn channel() -> String {
         .unwrap_or_else(|| panic!("{}: no channel line", file.display()))
 }
 
+/// What GNU-flavor lld prints after its version for `--version`. Into
+/// `.comment` it writes `Linker: ` and the version alone.
+const GNU_COMPATIBLE: &str = " (compatible with GNU linkers)";
+
 /// The mark the default linker of the target `spec` describes leaves in what
-/// it links, worked out from the description and the toolchain's LLVM version.
+/// it links, worked out from the description and what the toolchain's own
+/// `rust-lld` said of itself (`lld`, its `--version` line).
 ///
 /// Where the target's linker flavor is an lld one and the toolchain links with
-/// its own copy (`link-self-contained` names the linker), the linker is the
-/// toolchain's `rust-lld`, built from the same LLVM as rustc, and its mark is
-/// `Linker: LLD <llvm>`. Any other default is refused: the bench has no way
-/// yet to know what that linker writes.
-pub fn default_mark(spec: &str, llvm: &str, host: &str) -> Result<String, String> {
+/// its own copy (`link-self-contained` names the linker), the linker is that
+/// `rust-lld`, and its mark is `Linker: ` followed by its version line, the
+/// LLVM commit it was built from included. A system lld of the same LLVM
+/// version leaves another mark. Any other default is refused: the bench has
+/// no way yet to know what that linker writes.
+///
+/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): which
+/// linker a target defaults to and the mark it leaves is build configuration
+/// hilavitkutin-build owns once its pragma round lands; this copy goes then.
+pub fn default_mark(spec: &str, lld: Option<&str>, host: &str) -> Result<String, String> {
     let flavor = string_field(spec, "linker-flavor").unwrap_or_default();
     let own_linker =
         object_field(spec, "link-self-contained").is_some_and(|o| o.contains("\"linker\""));
     if flavor.contains("lld") && own_linker {
-        return Ok(format!("Linker: LLD {llvm}"));
+        let said = lld.ok_or_else(|| {
+            format!("the toolchain links {host} with its own lld, and no rust-lld of it said its version")
+        })?;
+        let version = said
+            .strip_suffix(GNU_COMPATIBLE)
+            .filter(|v| v.starts_with("LLD "))
+            .ok_or_else(|| {
+                format!("rust-lld --version said `{said}`, not `LLD <version> (<source>){GNU_COMPATIBLE}`")
+            })?;
+        return Ok(format!("Linker: {version}"));
     }
     // FIXME(the_build_and_link_bench_assumes_an_elf_unix_host_and_fails): a
     // target whose default is another linker (GNU ld through cc, ld64, link.exe)
@@ -155,6 +201,10 @@ pub fn default_mark(spec: &str, llvm: &str, host: &str) -> Result<String, String
         if own_linker { "" } else { ", not the toolchain's own" }
     ))
 }
+
+// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
+// target description is read by hand here, enough for the two fields above;
+// reading it is hilavitkutin-build's once its pragma round lands.
 
 /// The string value of `"key": "value"` in a JSON text.
 fn string_field(json: &str, key: &str) -> Option<String> {

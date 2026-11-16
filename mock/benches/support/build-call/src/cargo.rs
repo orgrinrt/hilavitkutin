@@ -59,6 +59,10 @@ pub fn config_free_dir(ws: &Path) -> Result<PathBuf, String> {
 /// A cargo command for the cell `dirs`, with incremental compilation as given.
 /// `args` follow the unstable flag. Panics where no directory free of cargo
 /// configuration can be found, which fails the call's setup.
+///
+/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
+/// flags and configuration every call builds with are build configuration
+/// hilavitkutin-build owns once its pragma round lands; this copy goes then.
 pub fn command(dirs: &Dirs, incremental: bool, args: &[&str]) -> Command {
     let tc = toolchain::get();
     let ws = dirs.ws();
