@@ -20,6 +20,8 @@
 # default is 10 passes x 50000 runs x 3 harness_runs x 3 cooldowns; this trims to
 # a single 0-cooldown cohort with fewer passes/runs (still thousands of timed
 # batches per variant).
+title = "Resource storage layouts across mix-in intensity and payload size"
+
 [timing]
 # Per-call work scales with N (the morsel loop is N records), so a few thousand
 # runs already give a tight CI; the default 50000-run budget just re-measures the
@@ -35,84 +37,72 @@ batch_size = 250
 harness_runs = 3
 cooldowns_ms = [0]
 
-[bench.rsb_clean]
+[sweep.rsb_clean]
 title = "Resource storage layouts under clean morsel loop (algo only)"
 workload = "rsb_clean"
 master_seed = 0x1234_5678_9ABC_DEF0
 
-[[bench.rsb_clean.sizes]]
-n = 1024
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_clean.sizes]]
-n = 16384
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_clean.sizes]]
-n = 262144
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+arms = ["v0_blob", "v1_snapshot", "v2_decomposed", "v3_shapebound", "v4_erased", "v5_handletable"]
+points = [1024, 16384, 262144]
 
-[bench.rsb_light_thrash]
+[sweep.rsb_light_thrash]
 title = "Resource storage layouts under light surrounding work"
 workload = "rsb_light_thrash"
 master_seed = 0x1234_5678_9ABC_DEF0
 
-[[bench.rsb_light_thrash.sizes]]
-n = 1024
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_light_thrash.sizes]]
-n = 16384
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_light_thrash.sizes]]
-n = 262144
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+arms = ["v0_blob", "v1_snapshot", "v2_decomposed", "v3_shapebound", "v4_erased", "v5_handletable"]
+points = [1024, 16384, 262144]
 
-[bench.rsb_heavy_thrash]
+[sweep.rsb_heavy_thrash]
 title = "Resource storage layouts under L1-evicting heavy-memory mix-in"
 workload = "rsb_heavy_thrash"
 master_seed = 0x1234_5678_9ABC_DEF0
 
-[[bench.rsb_heavy_thrash.sizes]]
-n = 1024
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_heavy_thrash.sizes]]
-n = 16384
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
-[[bench.rsb_heavy_thrash.sizes]]
-n = 262144
-variants = ["variants/v0_blob/target/release/v0_blob", "variants/v1_snapshot/target/release/v1_snapshot", "variants/v2_decomposed/target/release/v2_decomposed", "variants/v3_shapebound/target/release/v3_shapebound", "variants/v4_erased/target/release/v4_erased", "variants/v5_handletable/target/release/v5_handletable"]
+arms = ["v0_blob", "v1_snapshot", "v2_decomposed", "v3_shapebound", "v4_erased", "v5_handletable"]
+points = [1024, 16384, 262144]
 
 # Axis D: Seq collection-member payload. Two variants: live-stream (V0 shape) vs
 # snapshot-copy (V1 shape). N = Seq bytes, swept from L1-resident to 256 MiB.
 # Clean workload (the fold IS the work). live wins decisively once the Seq
 # exceeds cache (the copy becomes pure overhead).
-[bench.rsb_seqd]
+[sweep.rsb_seqd]
 title = "Seq collection member: live-stream vs snapshot-copy across payload size"
 workload = "rsb_seqd"
 master_seed = 0x1234_5678_9ABC_DEF0
 
-[[bench.rsb_seqd.sizes]]
-n = 65536
-variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
-[[bench.rsb_seqd.sizes]]
-n = 1048576
-variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
-[[bench.rsb_seqd.sizes]]
-n = 4194304
-variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
-[[bench.rsb_seqd.sizes]]
-n = 16777216
-variants = ["variants/seq_live/target/release/seq_live", "variants/seq_snapshot/target/release/seq_snapshot"]
+arms = ["seq_live", "seq_snapshot"]
+points = [65536, 1048576, 4194304, 16777216]
 
-[bench.rsb_bwide]
+[sweep.rsb_bwide]
 title = "Intra-resource member gather at M=64: contiguous blob vs scattered columns"
 workload = "rsb_bwide"
 master_seed = 0x1234_5678_9ABC_DEF0
 
-[[bench.rsb_bwide.sizes]]
-n = 256
-variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]
-[[bench.rsb_bwide.sizes]]
-n = 16384
-variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]
-[[bench.rsb_bwide.sizes]]
-n = 4194304
-variants = ["variants/wide_blob/target/release/wide_blob", "variants/wide_decomposed/target/release/wide_decomposed"]
+arms = ["wide_blob", "wide_decomposed"]
+points = [256, 16384, 4194304]
+
+# Axis E: cross-core false sharing, the measurement the `axis_ce` test crate
+# used to time with its own clock. One thread per slot, at most sixteen, each
+# writing its own `u32` slot `n * 1024` times. `fs_packed` holds every slot in
+# one cache line, the V3 shape-bound hazard; `fs_padded` gives each slot a line
+# of its own, as the per-resource-line layouts do. Both return the same digest,
+# the sum of the slots read back. The input bytes are not read.
+[sweep.false_sharing]
+title = "Cross-core false sharing: slots packed in one line vs one line each"
+workload = "false_sharing"
+master_seed = 0x1234_5678_9ABC_DEF1
+may_differ = false
+required = true
+threaded = true
+baseline = "fs_padded"
+arms = ["fs_packed", "fs_padded"]
+points = [1024, 16384, 65536]
+
+[sweep.false_sharing.timing]
+passes = 2
+runs_per_pass = 10
+batch_size = 1
+harness_runs = 1
+cooldowns_ms = [0]
+validation_seeds = 2
+determinism_check_seeds = 1

@@ -1,0 +1,6 @@
+title = "Inline strategy: #[inline(always)] vs default vs #[inline(never)] per-record step"
+workload = "realistic"
+master_seed = 0x39f8_47b2_c651_de80
+
+arms = ["inline_always", "inline_default", "inline_never"]
+points = [256, 1024, 4096, 16384]

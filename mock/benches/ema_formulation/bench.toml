@@ -1,0 +1,7 @@
+title = "EMA formulation: Q0.32 saturating fixed-point vs float vs integer-shift"
+workload = "realistic"
+master_seed = 0x6c97_b3e2_5a1d_8f04
+may_differ = true
+
+arms = ["ema_form_q32", "ema_form_float", "ema_form_intshift"]
+points = [256, 1024, 4096, 16384]

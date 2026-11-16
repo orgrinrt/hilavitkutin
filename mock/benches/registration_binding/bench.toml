@@ -1,0 +1,13 @@
+# Registration: typed binding against a run-time binding table, over a column
+# workload of two units and five u32 columns in 512-record morsels. N is the
+# byte size of one column, so N / 4 records. The typed arm is the baseline,
+# and its twin is the same arm again: the distance between the two is the
+# noise floor of the run, and no smaller difference between arms counts.
+# Output is the FNV-1a checksum of the last column, byte-exact across arms.
+title = "Registration: typed binding vs a run-time binding table over a column workload"
+workload = "realistic"
+master_seed = 0x71c4_0e2b_95a3_d86f
+baseline = "reg_typed"
+
+arms = ["reg_typed", "reg_typed_twin", "reg_bound_columns", "reg_bound_units", "reg_bound_strided", "reg_bound_record"]
+points = [4096, 16384, 65536, 262144]

@@ -1,0 +1,11 @@
+# Topic 4 Axis A of the runtime round 202605101036: dispatch shapes LLVM can
+# devirtualise. A direct call, a sealed-trait static method and a const fn
+# pointer compute the same FNV-1a math; only the call site differs. Byte-exact
+# across arms. The hooks library runs the five-check disassembly over each cell.
+
+title = "Static dispatch shapes: direct vs sealed-trait vs const fn pointer"
+workload = "realistic"
+master_seed = 0x7eed_face_dead_beef
+
+arms = ["dispatch_direct", "dispatch_trait", "dispatch_const_ptr"]
+points = [64, 256, 1024, 4096, 16384]

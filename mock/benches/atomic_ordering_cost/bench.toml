@@ -1,0 +1,6 @@
+title = "Atomic ordering cost: Relaxed vs Acquire/Release vs SeqCst"
+workload = "realistic"
+master_seed = 0x0ddc_0ffe_e055_b011
+
+arms = ["atomic_relaxed", "atomic_acquire", "atomic_seqcst"]
+points = [64, 256, 1024, 4096, 16384]

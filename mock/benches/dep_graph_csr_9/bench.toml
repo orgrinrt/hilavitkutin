@@ -1,0 +1,6 @@
+title = "DependencyGraph backing: dense vs CSR vs hybrid (Topic 9 axis B gate)"
+workload = "realistic"
+master_seed = 0x1357_9bdf_2468_ace0
+
+arms = ["dep_graph_dense", "dep_graph_csr", "dep_graph_hybrid"]
+points = [8, 16, 32, 64, 128, 256]
