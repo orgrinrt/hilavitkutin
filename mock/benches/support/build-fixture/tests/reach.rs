@@ -35,35 +35,38 @@ fn a_root_contract_edit_reaches_everything_but_the_other_root_domains() {
 
 #[test]
 fn only_the_facade_takes_implementations() {
-    let f = Fixture::at(97).expect("the mid point");
-    for role in f.graph.roles() {
-        let takes_impl = f
-            .graph
-            .deps(role)
-            .iter()
-            .any(|d| matches!(d, Role::Implementation { .. }));
-        assert_eq!(takes_impl, role == Role::Facade, "{role:?}");
+    for n in POINTS {
+        let f = Fixture::at(n).expect("a point");
+        for role in f.graph.roles() {
+            let takes_impl = f
+                .graph
+                .deps(role)
+                .iter()
+                .any(|d| matches!(d, Role::Implementation { .. }));
+            assert_eq!(takes_impl, role == Role::Facade, "n={n}: {role:?}");
+        }
     }
 }
 
 #[test]
 fn every_domain_reads_the_root_tier_and_only_the_facade_reads_the_leaf_tier() {
-    let f = Fixture::at(25).expect("the small point");
-    let g = f.graph;
-    for d in 0 .. g.domains {
-        let reads = g.reads(d);
-        match g.tier(d) {
-            Tier::Root => assert!(reads.is_empty()),
-            _ => {
-                assert!(
-                    (0 .. g.domains / 3).all(|r| reads.contains(&r)),
-                    "domain {d}"
-                )
-            },
+    for n in POINTS {
+        let g = Fixture::at(n).expect("a point").graph;
+        for d in 0 .. g.domains {
+            let reads = g.reads(d);
+            match g.tier(d) {
+                Tier::Root => assert!(reads.is_empty(), "n={n}: domain {d}"),
+                _ => {
+                    assert!(
+                        (0 .. g.domains / 3).all(|r| reads.contains(&r)),
+                        "n={n}: domain {d}"
+                    )
+                },
+            }
+            assert!(
+                reads.iter().all(|r| g.tier(*r) != Tier::Leaf),
+                "n={n}: domain {d} reads a leaf"
+            );
         }
-        assert!(
-            reads.iter().all(|r| g.tier(*r) != Tier::Leaf),
-            "domain {d} reads a leaf"
-        );
     }
 }

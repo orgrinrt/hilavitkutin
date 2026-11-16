@@ -1,16 +1,8 @@
-//! The fixture is deterministic, its digest is the committed one at every
-//! point, and a fixture that differs is refused before anything builds it.
+//! The fixture's digest is the committed one at every point, which is what
+//! holds it deterministic, and a fixture that differs is refused before
+//! anything builds it.
 
 use build_fixture::{COMMITTED, Fixture, POINTS, SEED, committed_digest};
-
-#[test]
-fn the_same_seed_and_point_give_the_same_tree_twice() {
-    for n in POINTS {
-        let f = Fixture::at(n).expect("a point of the benches");
-        assert_eq!(f.files(), f.files(), "n={n}");
-        assert_eq!(f.digest(), f.digest(), "n={n}");
-    }
-}
 
 #[test]
 fn every_point_writes_the_committed_digest() {
