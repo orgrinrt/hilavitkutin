@@ -48,7 +48,7 @@ pub(crate) const IDIOMS: &[Idiom] = &[
     },
     Idiom {
         path:     "benches/sat_arithmetic/arms/sat_checked/src/lib.rs",
-        must:     &["matchacc.checked_add(term){", "None=>u64::MAX"],
+        must:     &["matchacc.checked_add(term){", "Some(v)=>v,", "None=>u64::MAX"],
         must_not: &[".saturating_add(", ".unwrap_or("],
         idiom:    "`match acc.checked_add(term) { Some(v) => v, None => u64::MAX }`",
     },

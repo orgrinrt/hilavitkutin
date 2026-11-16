@@ -78,3 +78,57 @@ fn whitespace_does_not_decide() {
     let wide = "(v  <<  k)\n    | (v >> (64 - k))";
     assert_eq!(finding(wide, rot()), None);
 }
+
+#[test]
+fn the_rotate_right_intrinsic_is_refused() {
+    let drifted = "fn rotl_manual(v: u64, k: u32) -> u64 {\n    v.rotate_right(64 - k)\n}\n";
+    assert!(finding(drifted, rot()).is_some());
+    let beside = format!("{ROT_KEPT}fn other(v: u64) -> u64 {{ v.rotate_right(3) }}\n");
+    assert!(finding(&beside, rot()).is_some());
+}
+
+#[test]
+fn a_changed_some_arm_is_refused() {
+    // Both pieces the lint used to pin are still there; the arm the match
+    // returns on success is not the one the idiom measures.
+    let drifted = "\
+acc = match acc.checked_add(term) {
+    Some(v) => v ^ 1,
+    None => u64::MAX,
+};
+";
+    assert!(finding(drifted, sat()).is_some());
+    let dropped =
+        "acc = match acc.checked_add(term) {\n    Some(_) => 0,\n    None => u64::MAX,\n};\n";
+    assert!(finding(dropped, sat()).is_some());
+}
+
+#[test]
+fn an_arm_that_is_not_there_is_refused_for_each_listed_path() {
+    use std::collections::BTreeSet;
+    use std::path::Path;
+
+    use mockspace::src_layout::NO_REF_FILES;
+    use mockspace::{RegistryView, RepoInput, testkit};
+
+    let gone = Path::new("/nonexistent/mock-dir-for-the-lint-test");
+    let crates = BTreeSet::new();
+    let registry = RegistryView::default();
+    let input = RepoInput {
+        mock_dir:    gone,
+        repo_root:   gone,
+        all_crates:  &crates,
+        src_dirs:    &[],
+        invocation:  None,
+        canon_paths: &[],
+        open_panels: &[],
+        ref_files:   &NO_REF_FILES,
+        registry:    &registry,
+    };
+    let errors = testkit::check_repo(&*repo_lint(), input);
+    assert_eq!(errors.len(), IDIOMS.len());
+    for (error, idiom) in errors.iter().zip(IDIOMS) {
+        assert!(error.message.contains("is gone"), "{}", error.message);
+        assert_eq!(error.path.as_deref(), Some(idiom.path));
+    }
+}
