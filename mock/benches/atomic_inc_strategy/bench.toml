@@ -1,0 +1,6 @@
+title = "Atomic increment strategy: fetch_add vs CAS-loop vs load+store"
+workload = "realistic"
+master_seed = 0x18c4_92ea_6f3b_a570
+
+arms = ["inc_fetch_add", "inc_cas_loop", "inc_load_store"]
+points = [256, 1024, 4096, 16384]

@@ -1,0 +1,12 @@
+# Topic 5 Axis H of the runtime round 202605101036: the EMA streaming pass
+# under a realistic workload, NEON intrinsics against a scalar reference and
+# autovectorisation, over 64 to 16384 bytes a call. The output is the FNV-1a
+# hash of the final EMA state, byte-exact across arms. On a target without NEON
+# `ema_neon` runs its scalar four-lane fallback under its own name.
+
+title = "EMA streaming pass: NEON vs scalar vs autovec under realistic workload"
+workload = "realistic"
+master_seed = 0x1234_5678_9ABC_DEF0
+
+arms = ["ema_neon", "ema_scalar", "ema_autovec"]
+points = [64, 256, 1024, 4096, 16384]

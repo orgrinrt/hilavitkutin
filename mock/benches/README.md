@@ -7,14 +7,14 @@ runner of its own.
 
 ## Layout
 
-- `bench.toml`: the root benches, the byte dispatch's points under
-  `[dispatch]`, every workload program under `[workload.*]`, timing.
-- `<member>/bench.toml`: a member's own sections, composed under
-  `<member>/<section>`: `engine_vs_std`, `single-trunk-convergence`,
-  `resource_storage`, `frame_wide`. A member's arms build in its own
-  workspace under `<member>/variants/`.
-- `variants/<name>/`: the root benches' arms, one cdylib per variant,
-  exporting `bench_entry`, `bench_name`, `bench_abi_hash`.
+- `bench.toml`: the byte dispatch's points under `[dispatch]`, every
+  workload program under `[workload.*]`, and the default timing.
+- `<bench>/bench.toml`: one bench, one question. Its arms are the
+  directories under `<bench>/arms/`, each one cdylib exporting
+  `bench_entry`, `bench_name`, `bench_abi_hash`. A bench with several
+  sweeps (`engine_vs_std`, `single-trunk-convergence`, `resource_storage`,
+  `frame_wide`) declares them as `[sweep.<name>]`; its arms build in the
+  workspace its own `Cargo.toml` declares over `arms/*`.
 - `support/`: the library crates the arms and the generated driver
   share: the routine types, the kernels, the five-check disassembly
   checker and the design's ceilings, each with its own tests.
@@ -32,11 +32,11 @@ runner of its own.
 
 ## Workflow
 
-1. Edit `bench.toml` or a member's: the sizes and variants of each
-   bench, and the workload it names.
-2. Add a variant under `variants/<name>/`, or a member's own, for each
-   implementation. Each exports `bench_entry` calling its own algorithm
-   via the `timed!` macro.
+1. `mock bench add <bench> <arm>` scaffolds a bench or an arm; the
+   bench's `bench.toml` names its arms, points and workload.
+2. Each arm under `<bench>/arms/<arm>/` exports `bench_entry` calling its
+   own algorithm through the `timed!` macro. Code two arms share is a
+   crate under `support/`.
 3. A routine that is not plain bytes goes in a support crate, and
    `routine_for` in `src/lib.rs` reaches it.
 4. `mock bench run` generates the driver, builds everything and runs

@@ -1,0 +1,13 @@
+# The definitive spectral-versus-greedy fiber comparison (#644; seed
+# governance item 3, evidence-then-bless oracle for the spectral role
+# deviation). Both arms run the SHIPPED plan functions on the same
+# layered wide-fan-out DAG family; n is the unit count (engine default
+# capacity 64). The timed body is one grouping call; the quality
+# proxies (fiber count, cut edges) come from the fiber_common quality
+# test and ride the findings memo. Groupings legitimately differ.
+title = "fiber grouping theories: greedy topo walk vs spectral bisection"
+workload = "realistic"
+master_seed = "0x51C3_F1BE_0000_0001"
+may_differ = true
+arms = ["fib_greedy", "fib_spectral"]
+points = [8, 16, 32, 64]

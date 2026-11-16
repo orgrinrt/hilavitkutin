@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "fs_padded"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "fs_padded"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rsb-kernels = { path = "../../../support/rsb-kernels" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

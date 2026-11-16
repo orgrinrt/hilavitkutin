@@ -16,7 +16,7 @@ Written by `asm_gate_fixtures/tests/asm_gate.rs` from the `asm_gate_fixtures` re
 |---|---|---|
 | 1. zero indirect call in inner body | PASS | 0 indirect calls through a stored pointer (59 to imports via the GOT: clock_gettime, free, malloc, memcpy, memset, syscall) |
 | 2. indexed addressing on column loads | PASS | 29 indexed-addressing instructions |
-| 3. no stack-relative accesses in inner loop | FAIL | 388 stack-relative accesses |
+| 3. no stack-relative accesses in inner loop | FAIL | 394 stack-relative accesses |
 | 4. immediate-constant morsel size baked | PASS | found 1 of 1 expected immediates |
 | 5. no direct call to morsel/fiber/wu_fn helpers | PASS | 0 direct calls to helper symbols |
 
@@ -84,9 +84,9 @@ Written by `asm_gate_fixtures/tests/asm_gate.rs` from the `asm_gate_fixtures` re
 
 | Check | Result | Detail |
 |---|---|---|
-| 1. zero indirect call in inner body | PASS | 0 indirect calls through a stored pointer (59 to imports via the GOT: clock_gettime, free, malloc, memcpy, memset, syscall) |
+| 1. zero indirect call in inner body | PASS | 0 indirect calls through a stored pointer (60 to imports via the GOT: clock_gettime, free, malloc, memcpy, memset, syscall) |
 | 2. indexed addressing on column loads | PASS | 58 indexed-addressing instructions |
-| 3. no stack-relative accesses in inner loop | FAIL | 395 stack-relative accesses |
+| 3. no stack-relative accesses in inner loop | FAIL | 414 stack-relative accesses |
 | 4. immediate-constant morsel size baked | PASS | found 1 of 1 expected immediates |
 | 5. no direct call to morsel/fiber/wu_fn helpers | PASS | 0 direct calls to helper symbols |
 
@@ -128,7 +128,7 @@ Written by `asm_gate_fixtures/tests/asm_gate.rs` from the `asm_gate_fixtures` re
 |---|---|---|
 | 1. zero indirect call in inner body | PASS | 0 indirect calls through a stored pointer (36 to imports via the GOT: clock_gettime, memset, syscall) |
 | 2. indexed addressing on column loads | PASS | 155 indexed-addressing instructions |
-| 3. no stack-relative accesses in inner loop | FAIL | 245 stack-relative accesses |
+| 3. no stack-relative accesses in inner loop | FAIL | 251 stack-relative accesses |
 | 4. immediate-constant morsel size baked | PASS | found 1 of 1 expected immediates |
 | 5. no direct call to morsel/fiber/wu_fn helpers | PASS | 0 direct calls to helper symbols |
 

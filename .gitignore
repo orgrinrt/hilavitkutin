@@ -23,14 +23,10 @@ mock/research/hilavitkutin_bench
 # === end mockspace-managed ===
 mock/research/sketches/*/libsketch.rmeta
 
-# Per-sketch and per-bench-variant lockfiles. These are own-workspace
-# subprojects; their build dirs fall under the target/ catch-all below.
+# Per-sketch lockfiles. These are own-workspace subprojects; their build dirs
+# fall under the target/ catch-all below. The bench arms and support crates
+# have theirs ignored by `mock/benches/.gitignore`.
 mock/research/**/Cargo.lock
-mock/benches/variants/**/Cargo.lock
-
-# A bench variant's `target` as a link, where every workspace builds into one
-# shared directory and the variant paths in `bench.toml` are reached through it.
-mock/benches/variants/*/target
 
 # Per-run selective-test record written by `cargo mock test`
 /mock/test-history/
