@@ -1,0 +1,13 @@
+[[ticket]]
+id = "the_build_and_link_bench_assumes_an_elf_unix_host_and_fails"
+title = "the build and link bench assumes an ELF unix host and fails elsewhere"
+kind = "task"
+what = "The same ticket as the workspace agenda row of this id, filed by ticket add, which hilavitkutin's every-fixme-names-a-ticket cannot read (where_hilavitkutin_s_tickets_live_now_that_its_registry_has). mock/benches/support/build-call reads the linker mark only from a 64-bit little-endian ELF (src/elf.rs), finds the facade's copy in deps as the one file with no extension (src/call.rs), keeps only PATH in the cargo and replay environment where Windows needs SystemRoot and more (src/cargo.rs), reads free space with POSIX df -Pk (src/space.rs), and derives the default linker's mark only for a self-contained lld flavor (src/toolchain.rs). On macOS, Windows or a 32-bit target these cells fail instead of being left out by declaration. What a target has comes from hilavitkutin-build's round, not a table in the bench tree."
+repos = ["hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261116111256_coord_c6bf"
+ticket = "the_build_and_link_bench_assumes_an_elf_unix_host_and_fails"
+to = "backlog"
+by = "coord"
+at = "2026-11-16T11:12:56Z"
