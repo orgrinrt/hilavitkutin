@@ -316,7 +316,8 @@ fn last_segment(sym: &str) -> &str {
     } else if !sym.starts_with("_R") {
         return sym;
     }
-    // The segment is the suffix `<len><ident>` whose decimal length matches.
+    // The segment is the suffix `<len>["_"]<ident>` whose decimal length matches.
+    // v0 writes the `_` only before an identifier that starts with `_` or a digit.
     let bytes = s.as_bytes();
     for i in 1 .. bytes.len() {
         if bytes[i].is_ascii_digit() || !bytes[i - 1].is_ascii_digit() {
@@ -325,8 +326,17 @@ fn last_segment(sym: &str) -> &str {
         let start = s[.. i]
             .rfind(|c: char| !c.is_ascii_digit())
             .map_or(0, |p| p + 1);
-        if s[start .. i].parse::<usize>().ok() == Some(bytes.len() - i) {
+        let len = s[start .. i].parse::<usize>().ok();
+        if len == Some(bytes.len() - i) {
             return &s[i ..];
+        }
+        if bytes[i] == b'_' {
+            let ident = &s[i + 1 ..];
+            if len == Some(ident.len())
+                && ident.starts_with(|c: char| c == '_' || c.is_ascii_digit())
+            {
+                return ident;
+            }
         }
     }
     sym

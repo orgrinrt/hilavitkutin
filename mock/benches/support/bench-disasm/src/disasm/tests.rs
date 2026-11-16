@@ -140,17 +140,14 @@ fn every_never_returning_name_keeps_the_import_in_each_spelling() {
             );
         }
         // v0 puts a `_` between the length and an identifier that starts with
-        // `_` or a digit. `last_segment` does not read that separator, so those
-        // names fail safe there: the register is forgotten, never wrongly kept.
-        let separated = name.starts_with(|c: char| c == '_' || c.is_ascii_digit());
-        let sep = if separated { "_" } else { "" };
-        let v0 = format!("_RNvNtCs1_4core9panicking{}{sep}{name}", name.len());
-        let calls = indirect_calls(&across(&v0));
-        if separated {
-            assert_eq!(calls.unresolved, ["23bd0"], "{v0}");
+        // `_` or a digit.
+        let sep = if name.starts_with(|c: char| c == '_' || c.is_ascii_digit()) {
+            "_"
         } else {
-            assert_eq!(calls.to_imports, ["memset"], "{v0}");
-        }
+            ""
+        };
+        let v0 = format!("_RNvNtCs1_4core9panicking{}{sep}{name}", name.len());
+        assert_eq!(indirect_calls(&across(&v0)).to_imports, ["memset"], "{v0}");
     }
 }
 
@@ -166,12 +163,23 @@ fn an_identifier_ending_in_digits_is_its_own_segment() {
 }
 
 #[test]
-fn a_v0_underscore_separated_identifier_is_not_split() {
-    // `14_` then `_Unwind_Resume`: the length counts the identifier without
-    // the separator, so no suffix matches and the whole symbol comes back.
-    let sym = "_RNvNtCs1_3std9panicking14__Unwind_Resume";
-    assert_eq!(last_segment(sym), sym);
-    assert!(!NO_RETURN.contains(&last_segment(sym)));
+fn a_v0_underscore_separated_identifier_is_extracted() {
+    // `14_` then `_Unwind_Resume`: the `_` after the length is the separator
+    // v0 writes before an identifier that starts with `_`, and is not part of it.
+    for (sym, name) in [
+        (
+            "_RNvNtCs1_3std9panicking14__Unwind_Resume",
+            "_Unwind_Resume",
+        ),
+        (
+            "_RNvNtCs1_3std9panicking18___rust_start_panic",
+            "__rust_start_panic",
+        ),
+        ("_RNvNtCs1_3std9panicking1_9", "9"),
+    ] {
+        assert_eq!(last_segment(sym), name, "{sym}");
+    }
+    assert!(NO_RETURN.contains(&last_segment("_RNvNtCs1_3std9panicking14__Unwind_Resume")));
 }
 
 #[test]
