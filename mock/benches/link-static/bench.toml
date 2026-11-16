@@ -18,6 +18,9 @@
 # program printing the same check line on every call.
 #
 # A sweep is one of the fixture's own profiles.
+#
+# Six passes, so the sign test over the pairs can reach p = 0.031; with the
+# three passes the first cells ran under it could not go below 0.25.
 
 title = "link-static: the facade linked again from fresh rlibs, by the default linker"
 workload = "build"
@@ -26,7 +29,7 @@ arms = ["default_relink", "default_replay"]
 baseline = "default_relink"
 may_differ = false
 required = true
-timing = { passes = 3, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], validation_seeds = 1, determinism_check_seeds = 1 }
+timing = { passes = 6, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], validation_seeds = 1, determinism_check_seeds = 1 }
 
 [sweep.dev]
 title = "link-static: the fixture's dev profile"
