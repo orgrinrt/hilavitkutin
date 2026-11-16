@@ -255,7 +255,6 @@ fn split_comment(rest: &str) -> (&str, &str) {
     (rest, "")
 }
 
-/// The name inside the first `<...>` of `s`, cut at `@` or `+`.
 /// The last name segments of the functions that never return: the panics of
 /// `core` and `std`, the unwinding entry points, and `abort`.
 const NO_RETURN: &[&str] = &[
@@ -333,6 +332,7 @@ fn last_segment(sym: &str) -> &str {
     sym
 }
 
+/// The name inside the first `<...>` of `s`, cut at `@` or `+`.
 fn symbol_in(s: &str) -> Option<&str> {
     let open = s.find('<')?;
     let close = open + s[open ..].find('>')?;

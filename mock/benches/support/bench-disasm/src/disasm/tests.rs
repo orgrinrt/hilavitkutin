@@ -107,22 +107,80 @@ fn a_returning_function_under_panicking_forgets_the_import() {
         );
         assert_eq!(indirect_calls(&text).unresolved, ["23bd0"], "{callee}");
     }
-    // The never-returning names keep it, in each mangling.
-    for callee in [
-        "_ZN4core9panicking9panic_fmt17h0123456789abcdefE",
-        "core::panicking::panic_nounwind",
-        "_RNvNtCs1_4core9panicking5panic",
-        "_RNvNtCs1_3std9panicking11begin_panic",
-        "_RNvNtCs1_4core9panicking24panic_const_add_overflow",
-        "abort",
-    ] {
-        let text = format!(
-            "   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 \
-             <memset@GLIBC_2.2.5>\n   23b07:\tcall   2c933 <{callee}>\n   \
-             23bd0:\tcall   *%r10\n"
+    // The `panic_const_` prefix and a plain C name keep it.
+    for callee in ["_RNvNtCs1_4core9panicking24panic_const_add_overflow", "abort"] {
+        assert_eq!(
+            indirect_calls(&across(callee)).to_imports,
+            ["memset"],
+            "{callee}"
         );
-        assert_eq!(indirect_calls(&text).to_imports, ["memset"], "{callee}");
     }
+}
+
+/// A memset slot loaded into r10, a call to `callee`, then a call through r10.
+fn across(callee: &str) -> String {
+    format!(
+        "   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 \
+         <memset@GLIBC_2.2.5>\n   23b07:\tcall   2c933 <{callee}>\n   \
+         23bd0:\tcall   *%r10\n"
+    )
+}
+
+#[test]
+fn every_never_returning_name_keeps_the_import_in_each_spelling() {
+    for name in NO_RETURN {
+        let legacy = format!("_ZN4core9panicking{}{name}17h0123456789abcdefE", name.len());
+        let demangled = format!("core::panicking::{name}");
+        let demangled_hash = format!("core::panicking::{name}::h0123456789abcdef");
+        for callee in [&legacy, &demangled, &demangled_hash] {
+            assert_eq!(
+                indirect_calls(&across(callee)).to_imports,
+                ["memset"],
+                "{callee}"
+            );
+        }
+        // v0 puts a `_` between the length and an identifier that starts with
+        // `_` or a digit. `last_segment` does not read that separator, so those
+        // names fail safe there: the register is forgotten, never wrongly kept.
+        let separated = name.starts_with(|c: char| c == '_' || c.is_ascii_digit());
+        let sep = if separated { "_" } else { "" };
+        let v0 = format!("_RNvNtCs1_4core9panicking{}{sep}{name}", name.len());
+        let calls = indirect_calls(&across(&v0));
+        if separated {
+            assert_eq!(calls.unresolved, ["23bd0"], "{v0}");
+        } else {
+            assert_eq!(calls.to_imports, ["memset"], "{v0}");
+        }
+    }
+}
+
+#[test]
+fn an_identifier_ending_in_digits_is_its_own_segment() {
+    for sym in [
+        "_RNvNtCs1_4core9panicking14panic_str_2015",
+        "_ZN4core9panicking14panic_str_201517h0123456789abcdefE",
+        "core::panicking::panic_str_2015",
+    ] {
+        assert_eq!(last_segment(sym), "panic_str_2015", "{sym}");
+    }
+}
+
+#[test]
+fn a_v0_underscore_separated_identifier_is_not_split() {
+    // `14_` then `_Unwind_Resume`: the length counts the identifier without
+    // the separator, so no suffix matches and the whole symbol comes back.
+    let sym = "_RNvNtCs1_3std9panicking14__Unwind_Resume";
+    assert_eq!(last_segment(sym), sym);
+    assert!(!NO_RETURN.contains(&last_segment(sym)));
+}
+
+#[test]
+fn a_v0_generic_symbol_is_not_split() {
+    // `begin_panic::<&str>`: the instantiation `I...E` follows the path, so
+    // the name is not the suffix and the whole symbol comes back.
+    let sym = "_RINvNtCs1_3std9panicking11begin_panicReEB4_";
+    assert_eq!(last_segment(sym), sym);
+    assert_eq!(indirect_calls(&across(sym)).unresolved, ["23bd0"]);
 }
 
 #[test]
