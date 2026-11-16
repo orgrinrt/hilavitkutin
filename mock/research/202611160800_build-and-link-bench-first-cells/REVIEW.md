@@ -27,3 +27,30 @@ The review of `work/bench-build-and-link` at `34cedee4` raised twelve findings. 
 12. The pushed subjects of `b2bbf4ba` and `a13db568` lack backticks around their identifiers. Pushed history is not rewritten, so this note is the whole of what was done.
 
 The incremental setting is left as it was, and NOTES hands it to the design round. For each recorded run, NOTES now says which guards it ran under.
+
+## The second round
+
+The second review, of `fd995314`, raised eight findings. Six are fixed on this branch, and two are carried by tickets, each cited by a FIXME at its sites. The support crates' tests pass: `build-call` 35, `build-fixture` 9.
+
+1. The test that compared the default mark with the format string that builds it is deleted (`4b0bb1b3`). The real check stays: a real link's mark is compared with the worked-out mark in `controls.rs`.
+
+2. Both benches now declare six passes, which lets the sign test reach p = 0.031. `tests/passes.rs` checks both `bench.toml` files and shows that three passes cannot reach significance (`b3421768`). In NOTES, every delta is now called a three-pass median delta that cannot reach significance. NOTES also says that `containers_build_with_incremental_off_and_line_tables` is a workspace ticket from kaski's registry, not a canon row.
+
+3. The default arm's mark is now `Linker: ` followed by the version line that the toolchain's own `rust-lld` (under `<sysroot>/lib/rustlib/<host>/bin/`) prints for `--version`. The LLVM commit is part of that line. The mark is compared exactly, so the following are refused:
+   - a system lld of the same version;
+   - the same version with no build note;
+   - a second linker's string joined after the right one.
+
+   `marks.rs` holds each of these (`4b0bb1b3`).
+
+4. A replay keeps its link line in one file per profile. It refuses a line whose `-o` resolves outside `target/<profile dir>` or climbs with `..`. `linkline.rs` covers both the failing and the passing cases (`704cea1f`).
+
+5. Left, ticket `build_call_s_target_spec_reading_linker_mark_and_cargo_flags`. The hand-read target spec, the default linker's mark and the cargo flags are build configuration, and they move into hilavitkutin-build with its pragma round (job ticket `hilavitkutin_build_carries_linker_backend_edge_form_c` on kaski `dev`). The FIXMEs are in `toolchain.rs` and `cargo.rs`.
+
+6. Left, ticket `a_link_static_arm_carries_its_linker_and_quantity_in_a_type`. The arm's linker and quantity are still parsed back from its name. The FIXMEs are at `linker::named` and `record::is_replay`.
+
+7. The `.comment` reader now checks every offset and size against the file and returns an error instead of panicking. `elf.rs` cuts a small ELF file at every length and points each offset it trusts outside the file (`ce53f3e4`).
+
+8. Every test that builds removes its bench's state, both at its start and when it ends. The removal also runs when the test panics, which `cleanup.rs` shows. The 430 MB of earlier `test-*` directories are removed (`7e7cfe46`).
+
+NOTES now says near its top that the fixture's `dev` profile is not hilavitkutin's `dev`, as the row `there_are_five_build_profiles_dev_dev_opt_release_profiling_and_ci` defines it. So the numbers measure the toolchain's default route, not a profile hilavitkutin ships.
