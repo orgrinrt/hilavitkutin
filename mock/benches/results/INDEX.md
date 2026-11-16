@@ -2559,6 +2559,45 @@ Latest: `20261114T211314Z-266650fb-dirty`
 - [20260510T231056Z-b4fbd1a](iter_patterns/iter_patterns_n4096/macos-aarch64-c8-bare-apple/20260510T231056Z-b4fbd1a/report.md)
 - [20261114T211314Z-266650fb-dirty](iter_patterns/iter_patterns_n4096/macos-aarch64-c8-bare-apple/20261114T211314Z-266650fb-dirty/report.md)
 
+## link-static/dev_n25
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261116T083526Z-b2bbf4ba`
+
+| variant | median | vs best |
+|---|---|---|
+| default_relink | 148.57 ms | 2.57x |
+| default_replay | 57.84 ms | 1.00x |
+
+- [20261116T083526Z-b2bbf4ba](link-static/dev_n25/linux-x86_64-c4-container-intel/20261116T083526Z-b2bbf4ba/report.md)
+
+## link-static/dev_n97
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261116T083526Z-b2bbf4ba`
+
+| variant | median | vs best |
+|---|---|---|
+| default_relink | 524.41 ms | 1.64x |
+| default_replay | 319.64 ms | 1.00x |
+
+- [20261116T083526Z-b2bbf4ba](link-static/dev_n97/linux-x86_64-c4-container-intel/20261116T083526Z-b2bbf4ba/report.md)
+
+## link-static/release_n25
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261116T083526Z-b2bbf4ba`
+
+| variant | median | vs best |
+|---|---|---|
+| default_relink | 137.90 ms | 2.21x |
+| default_replay | 62.37 ms | 1.00x |
+
+- [20261116T083526Z-b2bbf4ba](link-static/release_n25/linux-x86_64-c4-container-intel/20261116T083526Z-b2bbf4ba/report.md)
+
 ## load_alignment/load_alignment_n1024
 
 ### linux-x86_64-c16-bare-intel, 1 run(s)
