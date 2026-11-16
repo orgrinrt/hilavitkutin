@@ -1,7 +1,7 @@
-# Sketch findings: an accumulator grouped by the data gives the same bytes at every worker count under signed saturating addition
+# Sketch findings: an accumulator grouped by the data gives the same bytes at 1, 2, 3, 4 and 256 workers under signed saturating addition
 
 **Date:** 2026-11-15
-**Outcome:** WORKS on a copy of the engine with one function changed. On the engine as shipped it holds only where every worker's slice of the records is a whole number of groups, so for the shipped path alone the answer is INCONCLUSIVE, with the change named and sketched beside the engine.
+**Outcome:** WORKS on a copy of the engine with one function changed. On the engine as shipped it FAILS wherever a worker's slice cuts a group (step 4 is the counterexample, at 1001 records) and holds only where every slice is a whole number of groups. The change is named and sketched beside the engine.
 **Unblocks:** the priced model of option 3 has a correctness half to rest on, and the change it prices is named: one function of the accumulator split, `accum_per`.
 
 The sketch was written unattended by a dispatched seat. The dispatcher opened `out/final-test.txt` and `engine-aligned/EDITS.md` before writing this file. Nothing here is authority, and the section on the canon below says why this is evidence for a call of the maintainer's and not a design.
@@ -58,7 +58,7 @@ A fold whose groups are fixed by the data gives the same bytes at 1, 2, 3, 4 and
 
 The grouped result is not the sequential left fold. At 1001 records the grouping gives -110 at every count, while a single-thread left fold over the records gives -42. Option 3 fixes the answer across worker counts by changing what the answer is, at one worker too.
 
-Holds for: toolchain `nightly-2026-05-28`, x86_64 linux, test profile unoptimised; hilavitkutin `dev` at 2b137e9d; arvo rev 1b2796e; notko `dev` at 8a74dbcd; the law `IFixed<7, 0, Precise>`; G = 8; one input column, one accumulator, one unit, a carrier with no reach reader and no meta units, no leading-band appends; `run_parallel` at worker counts 1, 2, 3, 4 and 256 through an executor that reports the count, and `run`; two frames each; record counts 1, 3, 8, 9, 255, 1001, 2049 and 6144 on the copy, and 6144 alone for the equality on the shipped engine; the fixed input sequence of `src/lib.rs`. The build crate's rustc flags were applied to the copy and dropped for the shipped engine and its path dependencies.
+Holds for: toolchain `nightly-2026-05-28`, x86_64 linux, test profile unoptimised; hilavitkutin `dev` at 2b137e9d; arvo rev 1b2796e; notko `dev` at 8a74dbcd; the law `IFixed<7, 0, Precise>`; G = 8; one input column, one accumulator, one unit, a carrier with no reach reader and no meta units, no leading-band appends; `run_parallel` at worker counts 1, 2, 3, 4 and 256 through an executor that reports the count, and `run`; two frames each; record counts 1, 3, 8, 9, 255, 1001, 2049 and 6144 on the copy, and 6144 alone for the equality on the shipped engine; the fixed input sequence of `src/lib.rs`. The build crate's rustc flags were applied to the copy and dropped for the shipped engine and its path dependencies (`out/final-test.txt:1-7`), so a comparison between the two engines is confounded by that; each equality here is measured within one engine. The notko pin is recorded here only, since the repository ignores the sketch's lockfile. The worker counts are the five named and no others; the commit that added the sketch says "any worker count" in its subject, which is wider than what was run.
 
 ## What is NOT established
 
