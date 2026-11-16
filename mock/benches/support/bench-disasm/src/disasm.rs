@@ -120,15 +120,25 @@ impl<'a> Insn<'a> {
         is_reg.then(|| register_family(first))
     }
 
-    /// Whether this is a direct call to a function that never returns: a panic
-    /// of `core` or `std`, or `abort`. Nothing after it runs on its path, so the
-    /// instruction after it is reached only by a jump, from code that never
-    /// called it.
+    /// Whether this is a direct call to a function that never returns: one
+    /// whose last name segment is in [`NO_RETURN`] or starts with
+    /// `panic_const_`. The match is on the exact segment, so a function that
+    /// merely lives in a `panicking` module and returns
+    /// (`std::panicking::panic_count::is_zero_slow_path`,
+    /// `std::panicking::panicking`) is a call that returns.
+    ///
+    /// Keeping register state across such a call assumes the instruction after
+    /// it is reached only by a jump from code that never called it, which is
+    /// how the compiler lays out a cold panic block. That is a guess about
+    /// layout, not something the disassembly proves: if a jump lands after the
+    /// call from a path where the register was overwritten, the import is
+    /// still reported as resolved and the gate passes silently.
     pub fn calls_no_return(&self) -> bool {
         self.is_call()
             && !self.operands.starts_with(['*', '%', 'x'])
             && symbol_in(self.operands).is_some_and(|s| {
-                s.contains("panicking") || s.contains("panic_fmt") || s.starts_with("abort")
+                let name = last_segment(s);
+                NO_RETURN.contains(&name) || name.starts_with("panic_const_")
             })
     }
 
@@ -246,6 +256,83 @@ fn split_comment(rest: &str) -> (&str, &str) {
 }
 
 /// The name inside the first `<...>` of `s`, cut at `@` or `+`.
+/// The last name segments of the functions that never return: the panics of
+/// `core` and `std`, the unwinding entry points, and `abort`.
+const NO_RETURN: &[&str] = &[
+    "panic",
+    "panic_fmt",
+    "panic_nounwind",
+    "panic_nounwind_fmt",
+    "panic_nounwind_nobacktrace",
+    "panic_bounds_check",
+    "panic_explicit",
+    "panic_display",
+    "panic_str_2015",
+    "panic_cannot_unwind",
+    "panic_in_cleanup",
+    "panic_misaligned_pointer_dereference",
+    "panic_null_pointer_dereference",
+    "begin_panic",
+    "begin_panic_handler",
+    "rust_begin_unwind",
+    "rust_panic",
+    "__rust_start_panic",
+    "rust_panic_with_hook",
+    "unwrap_failed",
+    "expect_failed",
+    "assert_failed",
+    "slice_index_order_fail",
+    "slice_start_index_len_fail",
+    "slice_end_index_len_fail",
+    "str_index_overflow_fail",
+    "handle_alloc_error",
+    "capacity_overflow",
+    "_Unwind_Resume",
+    "abort",
+];
+
+/// The last name segment of a symbol, in any of the three spellings objdump
+/// prints: v0 mangled (`_RNvNtCs1_4core9panicking5panic`), legacy mangled
+/// (`_ZN4core9panicking5panic17h<hash>E`) or demangled
+/// (`core::panicking::panic`, with or without `::h<hash>`). A plain C name is
+/// its own segment.
+fn last_segment(sym: &str) -> &str {
+    let is_hash = |s: &str| {
+        s.len() == 17 && s.starts_with('h') && s[1 ..].bytes().all(|b| b.is_ascii_hexdigit())
+    };
+    if sym.contains("::") {
+        let mut parts = sym.rsplit("::");
+        let last = parts.next().unwrap_or(sym);
+        return if is_hash(last) { parts.next().unwrap_or(last) } else { last };
+    }
+    let mut s = sym;
+    if let Some(body) = s.strip_prefix("_ZN").and_then(|b| b.strip_suffix('E')) {
+        s = body;
+        if s.len() > 19 && s.ends_with(|c: char| c.is_ascii_hexdigit()) {
+            let tail = &s[s.len() - 19 ..];
+            if tail.starts_with("17") && is_hash(&tail[2 ..]) {
+                s = &s[.. s.len() - 19];
+            }
+        }
+    } else if !sym.starts_with("_R") {
+        return sym;
+    }
+    // The segment is the suffix `<len><ident>` whose decimal length matches.
+    let bytes = s.as_bytes();
+    for i in 1 .. bytes.len() {
+        if bytes[i].is_ascii_digit() || !bytes[i - 1].is_ascii_digit() {
+            continue;
+        }
+        let start = s[.. i]
+            .rfind(|c: char| !c.is_ascii_digit())
+            .map_or(0, |p| p + 1);
+        if s[start .. i].parse::<usize>().ok() == Some(bytes.len() - i) {
+            return &s[i ..];
+        }
+    }
+    sym
+}
+
 fn symbol_in(s: &str) -> Option<&str> {
     let open = s.find('<')?;
     let close = open + s[open ..].find('>')?;
@@ -390,187 +477,4 @@ pub fn disassemble(dylib: &Path, symbol: &str) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Lines as GNU objdump 2.4x prints them on x86_64, raw bytes shown.
-    const GNU_X86: &str = "\
-   1fa70:\t4c 8b 3d d9 50 04 00 \tmov    0x450d9(%rip),%r15        # 64b50 <syscall@GLIBC_2.2.5>
-   1fa80:\tbf ca 00 00 00       \tmov    $0xca,%edi
-   1fa92:\t41 ff d7             \tcall   *%r15
-   11ab8:\tff 15 72 30 05 00    \tcall   *0x53072(%rip)        # 64b30 <clock_gettime@GLIBC_2.17>
-   20f6d:\t49 8b 07             \tmov    (%r15),%rax
-   20f70:\t48 85 c0             \ttest   %rax,%rax
-   20f78:\tff d0                \tcall   *%rax
-";
-
-    #[test]
-    fn a_gnu_line_parses_into_its_parts() {
-        let line = GNU_X86.lines().next().unwrap();
-        let insn = Insn::parse(line).unwrap();
-        assert_eq!(insn.mnemonic, "mov");
-        assert_eq!(insn.operands, "0x450d9(%rip),%r15");
-        assert_eq!(insn.comment, "64b50 <syscall@GLIBC_2.2.5>");
-        assert_eq!(insn.comment_symbol(), Some("syscall"));
-        assert_eq!(insn.written_register().as_deref(), Some("%r15"));
-    }
-
-    #[test]
-    fn sub_registers_belong_to_their_family() {
-        for (sub, family) in [
-            ("%eax", "%rax"),
-            ("%al", "%rax"),
-            ("%r13d", "%r13"),
-            ("%r9b", "%r9"),
-            ("%sil", "%rsi"),
-            ("w8", "x8"),
-            ("%xmm0", "%xmm0"),
-        ] {
-            assert_eq!(register_family(sub), family, "{sub}");
-        }
-    }
-
-    #[test]
-    fn a_narrow_write_and_a_call_each_forget_the_import() {
-        let narrowed = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c288:\tmov    $0x1,%r13d
-   1c9a4:\tcall   *%r13
-";
-        assert_eq!(indirect_calls(narrowed).unresolved, ["1c9a4"]);
-        // rax is caller-saved, so the first call may have replaced it; r13 is
-        // callee-saved and survives.
-        let across_call = "\
-   1c990:\tmov    0x481a2(%rip),%rax        # 64b40 <memset@GLIBC_2.2.5>
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c99e:\tcall   *%r13
-   1c9b0:\tcall   *%rax
-";
-        let calls = indirect_calls(across_call);
-        assert_eq!(calls.to_imports, ["memset"]);
-        assert_eq!(calls.unresolved, ["1c9b0"]);
-    }
-
-    #[test]
-    fn a_call_that_never_returns_keeps_the_import() {
-        // The shape the accumulator fixture's body takes: the GOT slot is
-        // loaded, a cold bounds-check panic sits between, and the slot's
-        // register is called after it.
-        let across_panic = "\
-   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
-   23b07:\tcall   2c933 <_RNvNtCslfAf2Mv2Tp5_4core9panicking18panic_bounds_check>
-   23bcd:\tmov    %r10,%r12
-   23bd0:\tcall   *%r10
-   23be2:\tcall   *%r12
-";
-        assert_eq!(indirect_calls(across_panic).to_imports, [
-            "memset", "memset"
-        ]);
-        // The case that must still fail: a call that returns forgets r10.
-        let across_return = "\
-   23a3a:\tmov    0x44c1f(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
-   23b07:\tcall   2c933 <_RNvNtCslfAf2Mv2Tp5_4core3fmt5write>
-   23bd0:\tcall   *%r10
-";
-        assert_eq!(indirect_calls(across_return).unresolved, ["23bd0"]);
-    }
-
-    #[test]
-    fn an_implicit_destination_forgets_only_the_registers_it_writes() {
-        // The run_parallel worker body's shape: a memset slot in r10 across a
-        // `lock add`, a `lock xadd` and a `div`, none of which write r10.
-        let kept = "\
-   1eeb7:\tmov    0x497a2(%rip),%r10        # 68660 <memset@GLIBC_2.2.5>
-   1eee6:\tlock add %rcx,0x14120(%rbx,%r14,8)
-   1eefe:\tlock xadd %eax,(%rcx)
-   1ef28:\tdiv    %ecx
-   1efca:\tmov    %r10,%r15
-   1efcd:\tcall   *%r10
-   1efd0:\tcall   *%r15
-";
-        assert_eq!(indirect_calls(kept).to_imports, ["memset", "memset"]);
-        // The cases that must still fail: each instruction forgets the register
-        // it does write.
-        for (between, reg) in [
-            ("div    %ecx", "%rdx"),
-            ("lock xadd %r10d,(%rcx)", "%r10"),
-            ("syscall", "%r11"),
-            ("rep stos %rax,%es:(%rdi)", "%rdi"),
-        ] {
-            let disasm = format!(
-                "   1000:\tmov    0x497a2(%rip),{reg}        # 68660 <memset@GLIBC_2.2.5>\n   \
-                 1004:\t{between}\n   1008:\tcall   *{reg}\n"
-            );
-            assert_eq!(
-                indirect_calls(&disasm).unresolved,
-                ["1008"],
-                "{between} keeps {reg}"
-            );
-        }
-    }
-
-    #[test]
-    fn headers_and_labels_are_not_instructions() {
-        assert_eq!(Insn::parse(""), None);
-        assert_eq!(Insn::parse("Disassembly of section .text:"), None);
-        assert_eq!(
-            Insn::parse("000000000001f500 <asm_gate_column_chain>:"),
-            None
-        );
-        assert_eq!(Insn::parse("   1fa92:\t41 ff d7 "), None);
-    }
-
-    #[test]
-    fn a_padded_indirect_call_is_seen() {
-        // The form the old `\tcall\t*` match never matched.
-        let insn = Insn::parse("   1fa92:\t41 ff d7             \tcall   *%r15").unwrap();
-        assert!(insn.is_indirect_call());
-        assert!(
-            !Insn::parse("   1cab2:\te8 59 e3 ff ff \tcall   1ae10 <f>")
-                .unwrap()
-                .is_indirect_call()
-        );
-    }
-
-    #[test]
-    fn import_calls_resolve_and_a_loaded_pointer_does_not() {
-        let calls = indirect_calls(GNU_X86);
-        assert_eq!(calls.to_imports, ["syscall", "clock_gettime"]);
-        assert_eq!(calls.unresolved, ["20f78"]);
-        // Under a symbol header the location is an offset into the symbol.
-        let headed = format!("0000000000020f00 <asm_gate_x>:\n{GNU_X86}");
-        assert_eq!(indirect_calls(&headed).unresolved, ["+0x78"]);
-    }
-
-    #[test]
-    fn a_copy_keeps_the_import_and_an_overwrite_forgets_it() {
-        let copied = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1caee:\tmov    %r13,%rax
-   1cb4b:\tcall   *%rax
-";
-        assert_eq!(indirect_calls(copied).to_imports, ["memset"]);
-        let overwritten = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c9a0:\tadd    $0x8,%r13
-   1c9a4:\tcall   *%r13
-";
-        assert_eq!(indirect_calls(overwritten).unresolved, ["1c9a4"]);
-    }
-
-    #[test]
-    fn an_aarch64_blr_is_indirect_and_unresolved() {
-        let a64 = "   8f0:\tf9400108 \tldr\tx8, [x8, #16]\n   8f4:\td63f0100 \tblr\tx8\n";
-        let calls = indirect_calls(a64);
-        assert!(calls.to_imports.is_empty());
-        assert_eq!(calls.unresolved, ["8f4"]);
-        let imm = Insn::parse("   8f8:\td2802000 \tmov\tx0, #0x100").unwrap();
-        assert_eq!(imm.operands, "x0, #0x100");
-        assert_eq!(imm.written_register().as_deref(), Some("x0"));
-        // A mnemonic that is also hex digits, behind raw bytes that contain it.
-        let add = Insn::parse("   900:\t8add0000 \tadd\tx8, x8, #0x1").unwrap();
-        assert_eq!((add.mnemonic, add.operands), ("add", "x8, x8, #0x1"));
-        let bare = Insn::parse("   904:\tfadd\td0, d1, d2").unwrap();
-        assert_eq!((bare.mnemonic, bare.operands), ("fadd", "d0, d1, d2"));
-    }
-}
+mod tests;
