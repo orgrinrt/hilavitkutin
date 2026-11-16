@@ -1,12 +1,12 @@
-# Topic 4 Axis A — codegen dispatch 5-check disasm assertions
+# Topic 4 Axis A: codegen dispatch 5-check disasm assertions
 
 Companion to the `dispatch_static_n*` and `dispatch_dynamic_n*`
 bench series. Those benches measure end-to-end + algorithm-only
 timing for the dispatch shapes under Topic 4 Axis A. This file
 records the five disasm-level perf invariants the dispatch codegen
-must satisfy on the static-devirt path. The bench harness's variant
-asm dedup check is the running safety net; this file is the
-canonical statement of intent.
+must satisfy on the static-devirt path. The checks are run by
+`bench-disasm`, from the bench hooks and the `asm_gate_fixtures`
+gate; this file is the statement of intent.
 
 `StandardCodegen` (see `mock/crates/hilavitkutin-api/src/dispatch_codegen.rs` and `mock/crates/hilavitkutin/src/dispatch/standard.rs`)
 emits per-core dispatch closures via TAIT; per Topic 4 Axis A
@@ -15,6 +15,12 @@ heritage `mock/research/sketches/202605101036-codegen-entrypoint-tait/`
 and `mock/research/sketches/202605101036-codegen-tait-capture/` both
 confirm WORKS. The five checks below codify what "transparent" means
 at the disasm boundary for the `dispatch_static` bench shape.
+
+Only check 1 gates. The bench hooks and the `asm_gate_fixtures` gate
+fail on an indirect call through a stored pointer and on nothing else.
+Checks 2 to 5 describe the engine's `iter_morsel` body, which the
+bench arms and the fixtures do not run, so they are recorded in the
+report and gate nothing.
 
 ## The five checks
 
@@ -31,7 +37,7 @@ x86_64) anywhere in the per-record body. Indirect calls defeat LLVM
 constant propagation past the call site and serve as the bright-line
 signal that devirtualisation failed. The `dispatch_dynamic_n*` bench
 exists as the counter-example: opaque-fn-pointer and runtime-table
-variants exhibit `blr` and pay the documented penalty. The static
+arms exhibit `blr` and pay the documented penalty. The static
 shape must show zero.
 
 ### Check 2: indexed addressing on column loads
@@ -83,20 +89,20 @@ shape.
 
 Three layers cooperate:
 
-1. **`mock bench run` builds variant cdylibs at `-O3 lto=fat
-   codegen-units=1` and records timing.** The harness's variant asm
-   dedup check (see `mockspace-bench-harness/src/asm`) reads the
-   emitted asm out of each variant's release artefact, normalises
-   it, and flags variants whose normalised asm matches the
-   `dispatch_dynamic` baseline rather than the `dispatch_static`
-   baseline. That dedup check is the running safety net for the five
-   checks above.
+1. **`mock bench run` builds each arm's cdylib at `-O3 lto=fat
+   codegen-units=1` and records timing.** After every `dispatch_*`
+   cell, the hook in `mock/benches/src/lib.rs` runs the five checks
+   over every arm, through `bench-disasm`, and writes the report into
+   the cell's run directory. An indirect call kept in a
+   `dispatch_static` arm fails the cell; a `dispatch_dynamic` arm is
+   the expected counter-example and is only recorded. Checks 2 to 5
+   are recorded and gate nothing.
 
-2. **The disasm artefacts under `target/release/lib<variant>.dylib`
-   (or `.so`) carry the live asm at every run.** When a check
-   regresses, `cargo mock bench` flags the variant; the engineer
-   re-runs disasm against this file's five checks to pinpoint which
-   property degraded.
+2. **The ASM-dispatch gate in `asm_gate_fixtures` runs the same
+   checks** over the dispatch fixtures by their exact symbol names,
+   and fails on check 1 alone: a fixture that keeps an indirect call,
+   or a control that calls through a stored pointer and is not
+   caught. Its committed report is compared with each build's.
 
 3. **A future `tests/codegen_fence.rs` integration test (Pass 3
    CHANGE 6 follow-up) asserts the S3 fence shape per arch.** That
@@ -108,8 +114,8 @@ Three layers cooperate:
 ## Status
 
 CHANGE 7 of Pass 3 lands this file as the 5-check assertion
-document. The running asm dedup check ships with the bench
-harness; the five checks above are this round's statement of what
+document. The checks run from the bench hooks and the
+`asm_gate_fixtures` gate; the five checks above are this round's statement of what
 the harness is checking against on the Axis A path. Future Pass 3
 follow-ups + Pass 7 (test-utils + examples) wire the integration
 test for the S3 fence emission shape.
