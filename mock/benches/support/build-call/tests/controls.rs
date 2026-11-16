@@ -7,7 +7,7 @@
 //! never meet.
 
 use build_call::record::{self, Line};
-use build_call::{Arm, Call, Control, Profile, Scenario, root};
+use build_call::{Arm, Call, Control, Profile, Scenario, root, toolchain};
 
 const N: usize = 25;
 
@@ -54,10 +54,10 @@ fn every_scenario_compiles_what_the_generator_predicts_offline_and_locked() {
         assert!(verdict.is_ok(), "{s:?}: {verdict:?} for {line:?}");
     }
     let (lines, _) = record::read(&root(), bench);
-    let compiled: Vec<usize> = lines.iter().map(|l| l.compiled).collect();
+    let compiled: Vec<Option<usize>> = lines.iter().map(|l| l.compiled).collect();
     assert_eq!(
         compiled,
-        vec![25, 2, 7, 19],
+        vec![Some(25), Some(2), Some(7), Some(19)],
         "clean, leaf, mid, root at n=25"
     );
 }
@@ -97,25 +97,29 @@ fn an_edit_by_file_time_only_is_refused() {
 }
 
 #[test]
-fn a_relink_relinks_only_the_facade_and_one_that_keeps_the_executable_is_refused() {
+fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the_executable_is_refused()
+ {
     let bench = "test-relink";
     record::reset(&root(), bench);
-    let first = call(bench, "relink", Arm::Relink, Scenario::Link, None);
-    let second = call(bench, "relink", Arm::Relink, Scenario::Link, None);
+    let first = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
+    let second = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
     assert_eq!(
         second.setup_compiled, 0,
         "switching nothing recompiles nothing: {second:?}"
     );
     let ok = checked(bench, Scenario::Link, &[first.clone(), second]);
     assert!(ok.is_ok(), "{ok:?}");
+    let want = toolchain::get()
+        .default_mark()
+        .expect("this host's default linker has a mark");
     assert!(
-        first.mark.starts_with("Linker: LLD"),
-        "the default linker's mark: {}",
+        first.mark.starts_with(&format!("{want} ")) || first.mark == want,
+        "the mark worked out from the toolchain, `{want}`, is the one the default linker wrote: {}",
         first.mark
     );
     let kept = call(
         bench,
-        "relink",
+        "default_relink",
         Arm::Relink,
         Scenario::Link,
         Some(Control::KeepOutput),
@@ -123,6 +127,10 @@ fn a_relink_relinks_only_the_facade_and_one_that_keeps_the_executable_is_refused
     let why = checked(bench, Scenario::Link, &[kept])
         .expect_err("a link that kept the executable must be refused");
     assert!(why.contains("compiled 0 crates"), "{why}");
+    assert!(
+        why.contains("the final executable was still there"),
+        "{why}"
+    );
 }
 
 #[test]
@@ -135,6 +143,11 @@ fn the_recorded_link_line_replays_to_the_same_program() {
     assert_eq!(
         again.setup_compiled, 0,
         "the second replay rebuilt something: {again:?}"
+    );
+    assert_eq!(
+        (replayed.compiled, replayed.expected),
+        (None, None),
+        "a replay runs no cargo, so its line carries no count"
     );
     let ok = checked(bench, Scenario::Link, &[
         relinked.clone(),
@@ -154,8 +167,10 @@ fn the_recorded_link_line_replays_to_the_same_program() {
         Scenario::Link,
         Some(Control::KeepOutput),
     );
+    let why = checked(bench, Scenario::Link, &[kept])
+        .expect_err("a replay over a kept output must be refused");
     assert!(
-        checked(bench, Scenario::Link, &[kept]).is_err(),
-        "a replay over a kept output must be refused"
+        why.contains("the timed block had nothing to do: the final executable was still there"),
+        "{why}"
     );
 }

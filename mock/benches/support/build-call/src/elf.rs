@@ -1,11 +1,15 @@
 //! The `.comment` section of an ELF executable, where a linker leaves its
-//! mark: lld writes `Linker: LLD <version>`, mold and wild their names and
-//! versions, and GNU ld nothing.
+//! mark: lld writes `Linker: LLD <version>`, GNU ld nothing, and the plan names
+//! mold and wild as writing their names and versions (a claim not yet shown).
 
 use std::path::Path;
 
 /// Every string in the `.comment` section of the 64-bit little-endian ELF
 /// file at `path`, in order, or why none could be read.
+///
+/// FIXME(the_build_and_link_bench_assumes_an_elf_unix_host_and_fails): a
+/// Mach-O, PE or 32-bit executable is refused here, so a link cell on such a
+/// target fails on its missing mark instead of being left out by declaration.
 pub fn comment(path: &Path) -> Result<Vec<String>, String> {
     let b = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
     if b.len() < 64 || &b[.. 4] != b"\x7fELF" || b[4] != 2 || b[5] != 1 {
@@ -56,10 +60,21 @@ pub fn comment(path: &Path) -> Result<Vec<String>, String> {
     Ok(Vec::new())
 }
 
-/// The linker's own mark among the comment strings: the one naming a linker.
+/// The marks a compiler leaves in `.comment`: rustc's own, and those the C
+/// runtime's objects carry from the compiler that built them.
+const COMPILER_MARKS: [&str; 3] = ["rustc version ", "GCC: ", "clang version "];
+
+/// What is left among the comment strings once every compiler's mark is
+/// taken out, which is what the linker wrote, joined by ` | ` where it wrote
+/// more than one string. `None` where the linker wrote nothing, as GNU ld does.
+/// No linker is recognised by name here: what an arm's linker must write is
+/// held by [`crate::linker`], and a string of any other linker is kept whole
+/// so the record shows it.
 pub fn linker_mark(comments: &[String]) -> Option<String> {
-    comments
+    let left: Vec<&str> = comments
         .iter()
-        .find(|c| c.starts_with("Linker:") || c.starts_with("mold ") || c.contains("Wild"))
-        .cloned()
+        .map(String::as_str)
+        .filter(|c| !COMPILER_MARKS.iter().any(|m| c.starts_with(m)))
+        .collect();
+    (!left.is_empty()).then(|| left.join(" | "))
 }

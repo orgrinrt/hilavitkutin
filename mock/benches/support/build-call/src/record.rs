@@ -5,19 +5,29 @@
 //! cell when any line shows a call that did not do what its scenario must:
 //! a crate count other than the one the generator predicts, an output present
 //! before the timed block, an output missing after it, a wait on a lock, a
-//! failed cargo or linker, and for a link a missing linker mark or a check
-//! line differing between calls. The expected count is worked out again here
-//! from the fixture and the scenario, never read from the line.
+//! failed cargo or linker, and for a link a mark other than the one the arm's
+//! linker leaves, or a check line differing between calls. The expected count
+//! and the expected mark are worked out again here, from the fixture, the
+//! scenario, the arm's name and the toolchain, never read from the line.
+//!
+//! A replayed link line runs no cargo, so it compiles nothing cargo could
+//! count: its line carries `-` for the count and the prediction, and a replay
+//! line carrying a count is refused. Its guards are the output absent before
+//! the timed block and present after it, the mark, and the program's size and
+//! check line agreeing with the relink's.
 
 use std::path::{Path, PathBuf};
 
 use build_fixture::{Fixture, Site};
 
-use crate::{Profile, Scenario};
+use crate::{Profile, Scenario, linker};
 
 /// The columns of the record, as written into a run directory.
 pub const HEADER: &str = "bench\tarm\tscenario\tprofile\tn\tpid\tcall\tsetup_compiled\tcompiled\texpected\t\
                           absent_before\tpresent_after\texe_bytes\ttarget_bytes\tincremental_bytes\tmark\tcheck\texit\twaited\n";
+
+/// What a count column holds where the count does not apply.
+const NOT_APPLICABLE: &str = "-";
 
 /// One call's line.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,8 +40,10 @@ pub struct Line {
     pub pid:               u32,
     pub call:              u64,
     pub setup_compiled:    usize,
-    pub compiled:          usize,
-    pub expected:          usize,
+    /// The fixture crates the timed block compiled; `None` for a replay.
+    pub compiled:          Option<usize>,
+    /// The count the generator predicted; `None` for a replay.
+    pub expected:          Option<usize>,
     pub absent_before:     bool,
     pub present_after:     bool,
     pub exe_bytes:         u64,
@@ -55,8 +67,8 @@ impl Line {
             self.pid,
             self.call,
             self.setup_compiled,
-            self.compiled,
-            self.expected,
+            count(self.compiled),
+            count(self.expected),
             self.absent_before,
             self.present_after,
             self.exe_bytes,
@@ -83,8 +95,8 @@ impl Line {
             pid:               f[5].parse().ok()?,
             call:              f[6].parse().ok()?,
             setup_compiled:    f[7].parse().ok()?,
-            compiled:          f[8].parse().ok()?,
-            expected:          f[9].parse().ok()?,
+            compiled:          read_count(f[8])?,
+            expected:          read_count(f[9])?,
             absent_before:     f[10] == "true",
             present_after:     f[11] == "true",
             exe_bytes:         f[12].parse().ok()?,
@@ -96,6 +108,16 @@ impl Line {
             waited:            f[18] == "true",
         })
     }
+}
+
+/// A count as a column: the number, or `-` where it does not apply.
+fn count(c: Option<usize>) -> String {
+    c.map_or_else(|| NOT_APPLICABLE.to_string(), |c| c.to_string())
+}
+
+/// A count column read back: `Some(None)` for `-`, `None` for anything unreadable.
+fn read_count(f: &str) -> Option<Option<usize>> {
+    if f == NOT_APPLICABLE { Some(None) } else { f.parse().ok().map(Some) }
 }
 
 /// A field with no tab and no newline in it.
@@ -134,19 +156,23 @@ pub fn reset(root: &Path, bench: &str) {
     let _ = std::fs::remove_file(path(root, bench));
 }
 
-/// The count of fixture crates a call of `scenario` at `n` crates must compile,
-/// worked out from the generator: every crate from clean, an edit site's reach,
-/// the facade alone for a relink, and none for a replayed link line.
-pub fn expected(scenario: Scenario, replay: bool, n: usize) -> Option<usize> {
+/// The count of fixture crates a cargo call of `scenario` at `n` crates must
+/// compile, worked out from the generator: every crate from clean, an edit
+/// site's reach, the facade alone for a relink. `None` where `n` has no fixture.
+pub fn expected(scenario: Scenario, n: usize) -> Option<usize> {
     let f = Fixture::at(n)?;
     Some(match scenario {
         Scenario::Clean => n,
         Scenario::Leaf => f.reach(Site::Leaf),
         Scenario::Mid => f.reach(Site::Mid),
         Scenario::Root => f.reach(Site::Root),
-        Scenario::Link if replay => 0,
         Scenario::Link => 1,
     })
+}
+
+/// Whether a line was written by an arm that replays a link line.
+pub fn is_replay(arm: &str) -> bool {
+    arm.ends_with("_replay")
 }
 
 /// Hold every line of a cell to its scenario. `Ok` carries a one-line note,
@@ -163,8 +189,6 @@ pub fn check(
     }
     let mut bad = Vec::new();
     for (i, l) in lines.iter().enumerate() {
-        let replay = l.arm.ends_with("_replay");
-        let want = expected(scenario, replay, n);
         let mut why = Vec::new();
         if l.bench != bench
             || l.scenario != scenario.label()
@@ -181,11 +205,21 @@ pub fn check(
                 profile.label()
             ));
         }
-        if want != Some(l.compiled) {
-            why.push(format!(
-                "compiled {} crates, the generator predicts {want:?}",
-                l.compiled
-            ));
+        if is_replay(&l.arm) {
+            if let Some(c) = l.compiled {
+                why.push(format!(
+                    "a replayed link line runs no cargo, and the line says it compiled {c} crates"
+                ));
+            }
+        } else {
+            let want = expected(scenario, n);
+            if want.is_none() || l.compiled != want {
+                why.push(format!(
+                    "compiled {} crates, the generator predicts {}",
+                    count(l.compiled),
+                    count(want)
+                ));
+            }
         }
         if !l.absent_before {
             why.push(format!(
@@ -203,10 +237,9 @@ pub fn check(
             why.push("cargo waited on a lock".into());
         }
         if scenario == Scenario::Link
-            && !l.mark.starts_with("Linker:")
-            && !l.mark.starts_with("mold ")
+            && let Some(refused) = linker::refusal(&l.arm, &l.mark)
         {
-            why.push(format!("no linker mark in the output: `{}`", l.mark));
+            why.push(refused);
         }
         if !why.is_empty() {
             bad.push(format!("line {}: {}", i + 1, why.join(", ")));
@@ -220,9 +253,9 @@ pub fn check(
     }
     if bad.is_empty() {
         Ok(format!(
-            "{} calls, each compiled the {} crates its scenario reaches",
+            "{} calls, each held to scenario `{}` at n={n}",
             lines.len(),
-            lines[0].expected
+            scenario.label()
         ))
     } else {
         Err(bad.join("; "))

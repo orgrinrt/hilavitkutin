@@ -9,6 +9,7 @@
 
 use mockspace_bench_core::{Routine, RoutineBridge, routine_bridge};
 
+use crate::measured::{FIRST_CALL_S, call_key, scaled};
 use crate::{Profile, Scenario};
 
 /// The cell `SCENARIO` in `PROFILE`, by their codes.
@@ -27,40 +28,17 @@ impl<const SCENARIO: u8, const PROFILE: u8> Routine for Cell<SCENARIO, PROFILE> 
     }
 }
 
-/// The first timed call measured at a cell, in whole seconds rounded up, the
-/// slower of the bench's two arms: scenario code, profile code, point, seconds.
-/// Each row names the run it was read from.
-const FIRST_CALL_S: [(u8, u8, usize, u64); 4] = [
-    // build-static, run 20261116T063249Z-f04daa0a-dirty, first warm pass
-    (0, 0, 25, 17),
-    (1, 0, 25, 6),
-    (2, 0, 25, 6),
-    (3, 0, 25, 15),
-];
+/// How many times the measured first call a call may take.
+pub const BOUND_FACTOR: u64 = 3;
 
-/// The bound on one call, in microseconds: three times the first timed call
-/// measured at that cell. A point with no row of its own takes the row of the
-/// largest measured point below it, scaled by the ratio of the crate counts,
-/// until a run measures it. `None` leaves the harness's fallback of 300 s per
-/// worker.
+/// The bound on one call, in microseconds: [`BOUND_FACTOR`] times the first
+/// timed call measured at that cell ([`FIRST_CALL_S`]), carried to a point not
+/// yet measured by [`scaled`]. `None` leaves the harness's fallback of 300 s
+/// per worker, which no sweep of the build and link benches reaches: every
+/// one of their sweeps has a row at its smallest point.
 pub const fn bound_us(scenario: u8, profile: u8, n: usize) -> Option<u64> {
-    let mut best: Option<(usize, u64)> = None;
-    let mut i = 0;
-    while i < FIRST_CALL_S.len() {
-        let (s, p, at, secs) = FIRST_CALL_S[i];
-        if s == scenario && p == profile && at <= n {
-            best = match best {
-                Some((b, _)) if b >= at => best,
-                _ => Some((at, secs)),
-            };
-        }
-        i += 1;
-    }
-    match best {
-        Some((at, secs)) => {
-            let scaled = (secs * n as u64).div_ceil(at as u64);
-            Some(3 * scaled * 1_000_000)
-        },
+    match scaled(&FIRST_CALL_S, call_key(scenario, profile), n) {
+        Some(secs) => Some(BOUND_FACTOR * secs * 1_000_000),
         None => None,
     }
 }
