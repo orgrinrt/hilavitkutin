@@ -1,0 +1,19 @@
+# A root of its own: what one call of a build or link bench does, the record of
+# each call and the checks the hooks library holds a cell to. The arms of
+# `build-static` and `link-static` and the generated driver take it by path.
+[workspace]
+
+[package]
+name = "build-call"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MPL-2.0"
+
+[lib]
+name = "build_call"
+path = "src/lib.rs"
+
+[dependencies]
+build-fixture = { path = "../build-fixture" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

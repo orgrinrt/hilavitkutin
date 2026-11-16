@@ -1,0 +1,15 @@
+# A root of its own: the generator of the build and link benches' fixture, a
+# support crate the arms, the call crate and the generated driver take by path.
+# It has no dependency, so it builds wherever the bench tree builds.
+[workspace]
+
+[package]
+name = "build-fixture"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MPL-2.0"
+
+[lib]
+name = "build_fixture"
+path = "src/lib.rs"

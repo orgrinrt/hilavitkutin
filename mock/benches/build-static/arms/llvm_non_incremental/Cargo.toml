@@ -1,0 +1,18 @@
+# The arm's own manifest, so it links the bench core and `build-call` alone.
+[workspace]
+
+[package]
+name = "llvm_non_incremental"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MPL-2.0"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+build-call = { path = "../../../support/build-call" }

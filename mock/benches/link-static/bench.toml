@@ -1,0 +1,37 @@
+# What the final link of one static program costs, per linker. The workload is
+# the generated fixture of `support/build-fixture`, as in `build-static`; the
+# point is the crate count.
+#
+# Only the toolchain's default linker is here, reached the toolchain's default
+# way. Every other linker and driver waits on the hilavitkutin-build design
+# round that gives the linker axis an owner, so no arm configures a link.
+#
+# Two quantities, two arms. `default_relink` is quantity A: with every rlib
+# fresh and the facade's executable removed untimed, one cargo build of the
+# facade, which is rustc on the facade's few lines and the link. `default_replay`
+# is quantity B: the link line rustc printed for the facade, recorded untimed
+# with its objects kept, run again as a process with the executable removed.
+# Both answer the executable's size in bytes, so the harness holds the replay
+# to writing the same program the relink wrote. The hooks library holds each
+# call to having relinked the facade and compiled nothing else, to the
+# executable carrying the default linker's mark in `.comment`, and to the
+# program printing the same check line on every call.
+#
+# A sweep is one of the fixture's own profiles.
+
+title = "link-static: the facade linked again from fresh rlibs, by the default linker"
+workload = "build"
+master_seed = 0x6c6b_7374_6174_0001
+arms = ["default_relink", "default_replay"]
+baseline = "default_relink"
+may_differ = false
+required = true
+points = [25, 97]
+timing = { passes = 3, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], validation_seeds = 1, determinism_check_seeds = 1 }
+
+[sweep.dev]
+title = "link-static: the fixture's dev profile"
+
+[sweep.release]
+title = "link-static: the fixture's release profile"
+points = [25]

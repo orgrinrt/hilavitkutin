@@ -40,6 +40,12 @@ stages = ["algo_call"]
 [workload.frame]
 stages = ["algo_call"]
 
+# A call of `build-static` or `link-static` is one cargo build or one link, a
+# whole process tree of its own, which nothing on the caller thread would put
+# in context.
+[workload.build]
+stages = ["algo_call"]
+
 [workload.false_sharing]
 stages = ["algo_call"]
 
