@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794880119	07a9e9a3	fold_heavy_w8_n65536	head_tail	65536	warm	53429.2	53429.2	54681.2
+1794880119	07a9e9a3	fold_heavy_w8_n65536	head_tail_dyn	65536	warm	34116.7	34116.7	34593.8
+1794880119	07a9e9a3	fold_heavy_w8_n65536	kernel_nway	65536	warm	49360.4	49360.4	50620.8
+1794880119	07a9e9a3	fold_heavy_w8_n65536	kernel_seq	65536	warm	52210.4	52210.4	52604.2
+1794880119	07a9e9a3	fold_heavy_w8_n65536	nway	65536	warm	68589.6	68589.6	71614.6
+1794880119	07a9e9a3	fold_heavy_w8_n65536	sequential	65536	warm	56433.3	56433.3	57097.9
+1794880119	07a9e9a3	fold_heavy_w8_n65536	std_parallel	65536	warm	92689.6	92689.6	95435.4
