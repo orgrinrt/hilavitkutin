@@ -31,9 +31,26 @@ Holds for: toolchain `nightly-2026-05-28`, x86_64 linux, a 4-core container; the
 
 ## B1b: the price
 
-Not run yet. The bench is `accumulator_grouped`, six sections: W = 1, 2, 3 and 4 at G = 64, and G = 8 and 1024 at W = 4, each at 4096, 65536 and 1048576 records, with `per_core` as the baseline and every arm validated against its own model before timing.
+One run, `20261119T211727Z-abb93e97`, under `mock/benches/results/accumulator_grouped/<section>_n<n>/linux-x86_64-c4-container-intel/`, on the branch at `abb93e97` (dev `11996d09` merged, where hilavitkutin names notko's product with its carrier). Profile: the harness's pinned release (opt-level 3, fat LTO, one codegen unit), the `light` workload around each call, warm regime, three passes of 60 runs in batches of 10. Six sections, W = 1, 2, 3 and 4 at G = 64 and G = 8 and 1024 at W = 4, each at 4096, 65536 and 1048576 records. Validation passed in all 18 cells, three seeds each: every arm equal to its own hand model, so `grouped` gave its worker-count-free model at W = 1, 2, 3 and 4 in every cell, which is B1a again inside the timed tree.
 
-On hilavitkutin `dev` at `3177527a` no bench of the tree builds: the generated driver and the arms resolve notko `dev` at `15a95316`, where `Project` takes a carrier parameter, and `hilavitkutin-api` fails with E0107 at its `WriteSet` bound. An engine-free bench, `rotate_strategy`, fails at the driver the same way. The tickets are `hilavitkutin_names_notko_by_branch_dev_so_a_consumer_pinning` and `bench_members_follow_notko_on_branch_dev_with_every_cargo_lo`, and mockspace's `bench_run_regenerates_a_member_arm_s_workspace_lockfile_from`, which is why a lock seeded with the working notko does not survive a run. The numbers are added here, with their run directories, once the tree builds.
+The price is `grouped` against `per_core`, the median of each, with the absolute delta first.
+
+| W, G | 4096 records | 65536 records | 1048576 records |
+|---|---|---|---|
+| 1, 64 | +6.95 us (35.06 against 28.11, 1.25x) | +73.0 us (380.58 against 307.55, 1.24x) | +0.94 ms (5.73 against 4.79, 1.20x) |
+| 2, 64 | +4.64 us (40.56 against 35.92, 1.13x) | +31.5 us (202.15 against 170.62, 1.18x) | +0.38 ms (2.89 against 2.51, 1.15x) |
+| 3, 64 | -1.2 us (40.65 against 41.85, 0.97x) | +21.7 us (132.55 against 110.84, 1.20x) | +0.14 ms (1.84 against 1.70, 1.08x) |
+| 4, 64 | +2.15 us (46.93 against 44.78, 1.05x) | +9.6 us (161.69 against 152.07, 1.06x) | +0.28 ms (2.59 against 2.31, 1.12x) |
+| 4, 8 | -3.2 us (45.46 against 48.63, 0.93x) | +36.1 us (168.34 against 132.25, 1.27x) | +0.69 ms (3.07 against 2.38, 1.29x) |
+| 4, 1024 | -0.7 us (42.93 against 43.64, 0.98x) | -42.4 us (137.89 against 180.33, 0.76x) | -0.04 ms (2.20 against 2.24, 0.98x) |
+
+`sequential`, the one walker, took 4.67 to 4.95 ms at 1048576 records in every section and 24 to 31 us at 4096, where it was the fastest arm in every section with more than one worker: at that size the crew's frame costs more than the split saves, for both split arms alike.
+
+What the numbers carry, as a model: at one worker option 3 costs about a fifth more than one partial per core over the same records, which is the price of writing a partial per G records and folding them at the merge, with nothing parallel to hide it. With workers, the cost at 1048576 records falls to 8 to 15 percent at G = 64, rises to 29 percent at G = 8, and is gone within noise at G = 1024, where a partial is written per 1024 records. At 65536 records and below the deltas are of the size of the run's own noise at W = 4 (below).
+
+The noise: every W = 4 cell is the whole of a 4-core container, the harness's process included, and the reports flag an alternating pattern in most cells (autocorrelation -0.51 to -0.66, "throttle bounce"). `per_core` does the same work at G = 64 and G = 1024 and read 152.07 and 180.33 us at 65536 records, so a difference under about 20 percent at W = 4 and 65536 records says nothing here, and the 0.76x of `w4_g1024` at that size is that noise. The upper ends of the harness's intervals are in each cell's `summary.tsv`. The 1048576-record cells and the W = 1 and 2 cells are the ones to read.
+
+Holds for: x86_64 linux, a 4-core container (`linux-x86_64-c4-container-intel`), toolchain `nightly-2026-05-28`, the release profile named above; arvo `1b2796e9`, notko `15a95316`; the law `IFixed<7, 0, Precise>`; the model on the bench's crew and not the engine; G = 8, 64 and 1024; W = 1 to 4; the record counts named. No pass line, by the maintainer's ruling: these are a baseline for his call and not a verdict.
 
 ## What is not established
 
