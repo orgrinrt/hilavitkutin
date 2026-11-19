@@ -1,0 +1,19 @@
+diff --git a/crates/hilavitkutin/Cargo.toml b/research/sketches/202611152312_derived-context-monomorphic/engine/Cargo.toml
+index 36e08c53..798ac198 100644
+--- a/crates/hilavitkutin/Cargo.toml
++++ b/research/sketches/202611152312_derived-context-monomorphic/engine/Cargo.toml
+@@ -42,6 +42,14 @@ intrinsics-std = []
+ # suite must fail with it on. It builds only with HILAVITKUTIN_MUTANT_CHECK set
+ # (see `src/lib.rs`), so no other build can pick it up.
+ mutant-truncating-append = []
++# Sketch addition: the block form's window is one record short, so the run
++# test of the sketch must fail with it on. See `EDITS.md` at the sketch root.
++mutant-short-window = []
++# Sketch addition: the engine implementing the api's `CtxOf`. Built once, to
++# record the compiler's refusal. See `EDITS.md` at the sketch root.
++attempt-ctx-of = ["hilavitkutin-api/attempt-blanket"]
++# The same attempt spelled per list shape in place of over every read list.
++attempt-ctx-of-per-shape = ["attempt-ctx-of"]
+ 
+ [build-dependencies]
+ hilavitkutin-build.workspace = true

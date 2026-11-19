@@ -1,0 +1,11 @@
+error[E0207]: the type parameter `Rd` is not constrained by the impl trait, self type, or predicates
+  --> ui/attempts/f1_fn_item_unit.rs:30:9
+   |
+30 | impl<F, Rd, Wr> Registers for F
+   |         ^^ unconstrained type parameter
+
+error[E0207]: the type parameter `Wr` is not constrained by the impl trait, self type, or predicates
+  --> ui/attempts/f1_fn_item_unit.rs:30:13
+   |
+30 | impl<F, Rd, Wr> Registers for F
+   |             ^^ unconstrained type parameter

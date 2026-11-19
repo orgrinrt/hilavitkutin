@@ -55,6 +55,14 @@ const _: () = assert!(
      that check, and never enable the feature elsewhere"
 );
 
+mod sealed {
+    /// The engine's seal. Public in a module no path outside the crate names,
+    /// so a trait bounded on it can be named outside the engine and
+    /// implemented only inside it: the codegen traits take it, since their
+    /// implementers are codegen artefacts.
+    pub trait EngineOnly {}
+}
+
 pub mod adapt;
 pub mod dispatch;
 pub mod intrinsics;

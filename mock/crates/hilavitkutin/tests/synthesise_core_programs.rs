@@ -14,9 +14,9 @@
 
 use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
 use arvo_tensor::Dim;
+use hilavitkutin::dispatch::codegen::{RecordRange, SyncRole};
 use hilavitkutin::plan::core_program::synthesise_core_programs;
 use hilavitkutin::plan::{PlanDims, PlanInputs, compute_execution_plan};
-use hilavitkutin_api::{RecordRange, SyncRole};
 use notko::Outcome;
 
 /// Plan dimensions for the smoke tests.

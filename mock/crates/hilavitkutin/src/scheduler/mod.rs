@@ -61,7 +61,7 @@ use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_tensor::{Capacity, cap_size};
 use hilavitkutin_api::ColumnStorage;
-use hilavitkutin_api::platform::{Nanos, PoolFrame};
+use hilavitkutin_api::platform::Nanos;
 use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
 use hilavitkutin_api::store_values::{StoreValues, SvEmpty};
 use hilavitkutin_api::work_unit_values::WuNil;
@@ -69,6 +69,7 @@ use hilavitkutin_api::work_unit_values::WuNil;
 use crate::meta::MetaBlock;
 use crate::plan::grouping::GATE2_MAX_UNITS;
 use crate::plan::{AccessMask, DefaultPlanDims, PlanDims};
+use crate::thread::PoolFrame;
 use crate::thread::class::MAX_CORES;
 use crate::thread::frame::{await_exit, request_shutdown};
 

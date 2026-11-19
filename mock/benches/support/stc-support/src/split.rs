@@ -24,8 +24,8 @@ use std::ops::Range;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use arvo::USize;
+use hilavitkutin::dispatch::codegen::RecordRange;
 use hilavitkutin::thread::{Convergence, ThreadHandle};
-use hilavitkutin_api::dispatch_codegen::RecordRange;
 use hilavitkutin_api::run_cfg::{DefaultRunCfg, RunCfg};
 
 /// The engine's morsel size, the granularity of a dynamic claim.

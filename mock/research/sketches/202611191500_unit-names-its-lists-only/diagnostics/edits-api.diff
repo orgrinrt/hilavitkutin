@@ -1,0 +1,400 @@
+diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs
+new file mode 100644
+index 00000000..639d6a92
+--- /dev/null
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs
+@@ -0,0 +1,22 @@
++//! Attempt c1, behind the feature `attempt-read-vals-on-the-read-set`: the
++//! read values bounded on `ReadSet`, as the shipped `ReadVals` is, over the
++//! read product on the carrier. Built once, and its compiler output is kept
++//! under `diagnostics/`.
++
++use notko_hlist::Place;
++
++use crate::values::{Read, ReadProd, ReadSet, Readable};
++
++/// `ReadVals`, bounded on the read set and not on one frame's product.
++pub struct ReadValsOnSet<'a, R: ReadSet>(pub ReadProd<'a, R>);
++
++impl<'a, R: ReadSet> ReadValsOnSet<'a, R> {
++    /// The value of `member` at this record.
++    pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
++    where
++        R: model::Has<Read<'a>, M, P>,
++    {
++        core::mem::forget(member);
++        *<R as model::Has<Read<'a>, M, P>>::pick(&self.0)
++    }
++}
+diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_unit_sched.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_unit_sched.rs
+new file mode 100644
+index 00000000..6ad84062
+--- /dev/null
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_unit_sched.rs
+@@ -0,0 +1,26 @@
++//! Attempt s1, behind the feature `attempt-unit-sched`: the one-impl trait
++//! over a schedule parameter, so a unit run on a virtual firing is one impl
++//! too. Built once, and its compiler output is kept under `diagnostics/`.
++
++use crate::builder_input::{BuilderInput, UnitDispatch};
++use crate::hint::SchedulingHint;
++use crate::values::{ReadSet, ReadVals, WriteSet, WriteVals};
++use crate::work_unit::Always;
++
++/// `Unit`, with the schedule as a parameter the way `WorkUnit` has it.
++pub trait UnitOn<S = Always>: Send + Sync + Sized + 'static {
++    /// The stores the function reads.
++    type Read: ReadSet;
++    /// The stores the function returns values for.
++    type Write: WriteSet;
++    /// The scheduling hint.
++    type Hint: SchedulingHint;
++
++    /// The value function.
++    fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>;
++}
++
++impl<U: UnitOn<S>, S> BuilderInput for U {
++    type Dispatch = UnitDispatch<U>;
++    type Init = U;
++}
+diff --git a/crates/hilavitkutin-api/src/lib.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
+index 989d7403..5179fccd 100644
+--- a/crates/hilavitkutin-api/src/lib.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
+@@ -33,6 +33,10 @@ pub mod access;
+ pub mod accum_overflow;
+ pub mod accum_refused;
+ pub mod adapt;
++#[cfg(feature = "attempt-read-vals-on-the-read-set")]
++pub mod attempt_read_vals_on_the_read_set;
++#[cfg(feature = "attempt-unit-sched")]
++pub mod attempt_unit_sched;
+ pub mod builder;
+ pub mod builder_input;
+ pub mod capability;
+@@ -55,6 +59,8 @@ pub mod sink;
+ pub mod storage;
+ pub mod store;
+ pub mod store_values;
++#[cfg(feature = "unit-blanket")]
++pub mod unit;
+ pub mod values;
+ pub mod work_unit;
+ pub mod work_unit_values;
+@@ -220,7 +226,8 @@ pub use store_values::{
+     WorkUnitKind,
+ };
+ pub use values::{
+-    ReadAt,
++    Read,
++    ReadProd,
+     ReadSet,
+     ReadVals,
+     Readable,
+@@ -236,6 +243,7 @@ pub use work_unit::{
+     On,
+     OnMeta,
+     Plannable,
++    Positional,
+     ScheduleGate,
+     WorkUnit,
+     WorkUnitBundle,
+diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs
+new file mode 100644
+index 00000000..0be53ca3
+--- /dev/null
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs
+@@ -0,0 +1,58 @@
++//! Sketch addition (202611191500), behind the feature `unit-blanket`: a unit
++//! as one impl.
++//!
++//! Without this file a unit that names its lists and nothing else is three
++//! impls: `BuilderInput`, `WorkUnit` (the declaration) and `RecordOp` (the
++//! body). `Unit` is the three as one trait, and three blankets grant them.
++//! It adds no contract of its own: every item of it is an item of one of the
++//! three.
++
++use arvo::Bool;
++
++use crate::builder_input::{BuilderInput, UnitDispatch};
++use crate::hint::SchedulingHint;
++use crate::record_op::RecordOp;
++use crate::values::{ReadSet, ReadVals, WriteSet, WriteVals};
++use crate::work_unit::WorkUnit;
++
++/// A unit whose body is its value function, declared in one impl.
++///
++/// The read list, the write list, the hint, and `apply`: the values of the
++/// write list at one record, from the values of the read list at that record.
++/// The schedule is `Always`.
++pub trait Unit: Send + Sync + Sized + 'static {
++    /// The stores the function reads.
++    type Read: ReadSet;
++    /// The stores the function returns values for.
++    type Write: WriteSet;
++    /// The scheduling hint.
++    type Hint: SchedulingHint;
++
++    /// True if the unit's writes commute across record order, as
++    /// `WorkUnit::COMMUTATIVE` has it.
++    const COMMUTATIVE: Bool = Bool::FALSE;
++
++    /// The values of the write list at one record, from the values of the read
++    /// list at that record. Must be a pure function of `read`.
++    fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>;
++}
++
++impl<U: Unit> BuilderInput for U {
++    type Dispatch = UnitDispatch<U>;
++    type Init = U;
++}
++
++impl<U: Unit> WorkUnit for U {
++    type Hint = <U as Unit>::Hint;
++    type Read = <U as Unit>::Read;
++    type Write = <U as Unit>::Write;
++
++    const COMMUTATIVE: Bool = <U as Unit>::COMMUTATIVE;
++}
++
++impl<U: Unit> RecordOp for U {
++    #[inline(always)]
++    fn apply(&self, read: &ReadVals<'_, <U as Unit>::Read>) -> WriteVals<<U as Unit>::Write> {
++        <U as Unit>::apply(self, read)
++    }
++}
+diff --git a/crates/hilavitkutin-api/src/values.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/values.rs
+index 0133d5ae..4b805034 100644
+--- a/crates/hilavitkutin-api/src/values.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/values.rs
+@@ -164,41 +164,42 @@ impl<V: 'static> Elem for Virtual<V> {
+     type Value = Bool;
+ }
+ 
+-/// The end of a read product.
+-#[derive(Clone, Copy)]
+-pub struct RNil;
+-
+-/// A cell of a read product: the head member's value, then the rest.
++// Sketch edit (202611191500): the read product is the product of the list
++// through a carrier, in the shape notko designs for `notko-hlist`
++// (orgrinrt/notko `docs/design/notko-hlist-product-carrier.md` at `69915c8`,
++// built here against a copy of that design's model crate). The shipped
++// `RNil`, `RCons`, `ReadSet::Vals` and `ReadAt` are gone: the cells are the
++// model's `PNil` and `PCons`, and a member is reached through its `Has`.
++
++/// The carrier of a read product: what a value function reads of each member
++/// for the frame `'f`.
+ ///
+-/// The fields are public so that a runner builds one per record.
+-#[derive(Clone, Copy)]
+-pub struct RCons<V, T> {
+-    /// What the function reads of the head member.
+-    pub head: V,
+-    /// The product of the tail.
+-    pub tail: T,
++/// The read list names no lifetime. The frame sits here, on the carrier, and
++/// the carrier states one form per member: what `Readable` says the member
++/// gives.
++pub struct Read<'f>(core::marker::PhantomData<&'f ()>);
++
++impl<'f, M: Readable> model::Carrier<M> for Read<'f> {
++    type Of = M::Val<'f>;
+ }
+ 
+-/// A read list a value function can take: every member is `Readable`.
++/// The product of the read list `R` for the frame `'a`: the model's `PCons`
++/// per member through `Read<'a>`, `PNil` at the end.
++pub type ReadProd<'a, R> = <R as model::Project<Read<'a>>>::Prod;
++
++/// A read list a value function can take: every member is `Readable`, so the
++/// list has a product through `Read` for every frame.
+ #[diagnostic::on_unimplemented(
+     message = "a value function cannot read the list `{Self}`",
+     note = "Every member of the read list of a unit that calls `map` is `Readable`: a `Column`, a `Buffered`, either under a `Reach`, or a `Resource<T>` whose `T` implements `ResourceRead`."
+ )]
+-pub trait ReadSet: AccessSet {
+-    /// The product of the members' values at one record: `RCons` per cell,
+-    /// `RNil` at the end.
+-    type Vals<'a>: Copy;
+-}
++pub trait ReadSet: AccessSet + for<'a> model::Project<Read<'a>> {}
+ 
+ #[diagnostic::do_not_recommend]
+-impl ReadSet for Empty {
+-    type Vals<'a> = RNil;
+-}
++impl ReadSet for Empty {}
+ 
+ #[diagnostic::do_not_recommend]
+-impl<H: Readable, T: ReadSet> ReadSet for Cons<H, T> {
+-    type Vals<'a> = RCons<H::Val<'a>, T::Vals<'a>>;
+-}
++impl<H: Readable, T: ReadSet> ReadSet for Cons<H, T> {}
+ 
+ /// A write list a value function can return: every member is `Writable`.
+ #[diagnostic::on_unimplemented(
+@@ -218,7 +219,12 @@ impl<H, T: WriteSet> WriteSet for Cons<H, T> where H: Writable + Elem<Value = <H
+ /// A read is `r.get(MEMBER)`, with the member passed as a value and its
+ /// place in the list inferred from it. The bound is the read list holding
+ /// the member, so a member the unit did not declare does not compile.
+-pub struct ReadVals<'a, R: ReadSet>(pub R::Vals<'a>);
++///
++/// Sketch edit (202611191500): bounded on the list having a product for this
++/// one frame, where the shipped struct was bounded on `ReadSet`. A read set
++/// has a product for every frame, and that bound beside the one `Has` brings
++/// for the frame `'a` is refused as ambiguous (attempt c1).
++pub struct ReadVals<'a, R: model::Project<Read<'a>>>(pub ReadProd<'a, R>);
+ 
+ /// The values a function returns for a unit's write list at one record.
+ ///
+@@ -226,45 +232,19 @@ pub struct ReadVals<'a, R: ReadSet>(pub R::Vals<'a>);
+ /// by `rec!`.
+ pub type WriteVals<W> = Vals<W>;
+ 
+-/// The read list holds the readable member `M` at the place `P`.
+-///
+-/// What `ReadVals::get` is bounded on. Closed the way the shared crate's
+-/// `Has` is: the supertrait `PlaceOf` already answers every place a member
+-/// can sit at, and the two impls below cover each.
+-#[diagnostic::on_unimplemented(
+-    message = "the read list `{Self}` has no value for `{M}`",
+-    note = "A value function reads the members its unit declared in `type Read`, each named as it is written there (a `Reach` is read as the `Reach`). If the compiler reports `type annotations needed` instead, the list names the member twice."
+-)]
+-pub trait ReadAt<M: Readable, P: Place>: ReadSet + PlaceOf<M, P> {
+-    /// The value of `M` in `vals`.
+-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a>;
+-}
+-
+-#[diagnostic::do_not_recommend]
+-impl<M: Readable, T: ReadSet> ReadAt<M, Here> for Cons<M, T> {
+-    #[inline(always)]
+-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a> {
+-        vals.head
+-    }
+-}
+-
+-#[diagnostic::do_not_recommend]
+-impl<H: Readable, M: Readable, P: Place, T: ReadAt<M, P>> ReadAt<M, There<P>> for Cons<H, T> {
+-    #[inline(always)]
+-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a> {
+-        T::at(&vals.tail)
+-    }
+-}
+-
+-impl<'a, R: ReadSet> ReadVals<'a, R> {
++impl<'a, R: model::Project<Read<'a>>> ReadVals<'a, R> {
+     /// The value of `member` at this record.
++    ///
++    /// Sketch edit (202611191500): bounded on the model's `Has` through
++    /// `Read<'a>`, where the shipped method was bounded on this crate's own
++    /// `ReadAt`.
+     #[inline(always)]
+     pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
+     where
+-        R: ReadAt<M, P>,
++        R: model::Has<Read<'a>, M, P>,
+     {
+         // The marker says which member and nothing else.
+         core::mem::forget(member);
+-        R::at(&self.0)
++        *<R as model::Has<Read<'a>, M, P>>::pick(&self.0)
+     }
+ }
+diff --git a/crates/hilavitkutin-api/src/work_unit.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit.rs
+index 0b7ba1be..64d74b0a 100644
+--- a/crates/hilavitkutin-api/src/work_unit.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit.rs
+@@ -64,6 +64,24 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
+     /// Scheduling hint triple. Consumer provides; no default because
+     /// the implementing tuple is marker-specific.
+     type Hint: SchedulingHint;
++
++    /// True if the WU's writes commute across record order.
++    ///
++    /// Enables the scheduler to emit a reduce-style pattern instead
++    /// of serialising. Default `Bool::FALSE`: consumer opts in.
++    const COMMUTATIVE: Bool = Bool::FALSE;
++}
++
++/// Sketch edit (202611191500): the positional body of a unit, split out of
++/// `WorkUnit`.
++///
++/// `WorkUnit` above is now the declaration alone: the read list, the write
++/// list, the hint and the commutativity flag. A unit whose body walks the
++/// records itself through a context offers `Positional`: the context type and
++/// `execute`, both moved here unchanged. A unit whose body is a function from
++/// the values read to the values written offers `RecordOp` and names no
++/// context at all. A runner takes either.
++pub trait Positional<Schedule = Always>: WorkUnit<Schedule> {
+     /// Provider-tuple shape this WU's body consumes.
+     ///
+     /// GAT-shaped: the `'frame`
+@@ -82,12 +100,6 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
+         + HasBatch<Self::Read, Self::Write>
+         + HasReduce<Self::Read, Self::Write>;
+ 
+-    /// True if the WU's writes commute across record order.
+-    ///
+-    /// Enables the scheduler to emit a reduce-style pattern instead
+-    /// of serialising. Default `Bool::FALSE`: consumer opts in.
+-    const COMMUTATIVE: Bool = Bool::FALSE;
+-
+     /// Run this WU against the provided context for one morsel.
+     ///
+     /// The engine windows the record range into morsels and invokes
+diff --git a/crates/hilavitkutin-api/src/work_unit_values.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit_values.rs
+index a2ac23a7..ac14e5b5 100644
+--- a/crates/hilavitkutin-api/src/work_unit_values.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit_values.rs
+@@ -48,7 +48,7 @@ pub struct FiberCons<F, Rest> {
+     /// The fiber at this position: its own `WuCons` / `WuNil` unit list.
+     pub fiber: F,
+     /// The remaining fibers in the trunk.
+-    pub rest: Rest,
++    pub rest:  Rest,
+ }
+ 
+ /// Terminator for a phase's value-carrying trunk sequence.
+@@ -67,7 +67,7 @@ pub struct TrunkCons<T, Rest> {
+     /// The trunk at this position: its own `FiberCons` / `FiberNil` fiber list.
+     pub trunk: T,
+     /// The remaining trunks in the phase.
+-    pub rest: Rest,
++    pub rest:  Rest,
+ }
+ 
+ /// Terminator for the pipeline's value-carrying phase sequence.
+@@ -87,7 +87,7 @@ pub struct PhaseCons<P, Rest> {
+     /// The phase at this position: its own `TrunkCons` / `TrunkNil` trunk list.
+     pub phase: P,
+     /// The remaining phases in the pipeline.
+-    pub rest: Rest,
++    pub rest:  Rest,
+ }
+ 
+ /// Append a unit value onto the end of the carrier.
+@@ -110,7 +110,10 @@ impl<P> WuAppend<P> for WuNil {
+ 
+     #[inline]
+     fn append(self, p: P) -> Self::Out {
+-        WuCons { head: p, tail: WuNil }
++        WuCons {
++            head: p,
++            tail: WuNil,
++        }
+     }
+ }
+ 
+@@ -122,6 +125,9 @@ where
+ 
+     #[inline]
+     fn append(self, p: P) -> Self::Out {
+-        WuCons { head: self.head, tail: self.tail.append(p) }
++        WuCons {
++            head: self.head,
++            tail: self.tail.append(p),
++        }
+     }
+ }

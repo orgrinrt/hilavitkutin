@@ -26,10 +26,18 @@
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::{CoreProgram, FiberId, PhaseEntry, PhaseId, RecordRange, SyncRole, TrunkId};
 
 use super::ExecutionPlan;
 use super::dims::PlanDims;
+use crate::dispatch::codegen::{
+    CoreProgram,
+    FiberId,
+    PhaseEntry,
+    PhaseId,
+    RecordRange,
+    SyncRole,
+    TrunkId,
+};
 
 /// Synthesise per-core `CoreProgram`s from the execution plan.
 ///

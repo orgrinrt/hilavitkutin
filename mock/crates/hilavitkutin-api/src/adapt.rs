@@ -156,7 +156,7 @@ axis_config!(
 axis_config!(
     PredictiveParkingAxis,
     1,
-    "Per-phase predicted wait window written to\n`PoolFrame.predicted_wait_ns` at `ScheduleEnd`. The parking\nmodule's tier selector reads this on phase entry."
+    "Per-phase predicted wait window written to\nthe engine pool frame's `predicted_wait_ns` at `ScheduleEnd`. The parking\nmodule's tier selector reads this on phase entry."
 );
 axis_config!(
     MemoryWatermarkAxis,
@@ -166,5 +166,5 @@ axis_config!(
 axis_config!(
     CoreIdleTimeAxis,
     8,
-    "Per-core park-time accumulator. Reads `PoolFrame.idle_accumulator`\nand `PoolFrame.park_count` at `ScheduleEnd`."
+    "Per-core park-time accumulator. Reads the engine pool frame's `idle_accumulator`\nand `park_count` at `ScheduleEnd`."
 );

@@ -1,0 +1,24 @@
+error[E0277]: the trait bound `MyCodegen: hilavitkutin::sealed::EngineOnly` is not satisfied
+ --> tests/ui/dispatch_codegen_outside_the_engine_fail.rs:8:36
+  |
+8 | impl<Cfg> DispatchCodegen<Cfg> for MyCodegen {
+  |                                    ^^^^^^^^^ unsatisfied trait bound
+  |
+help: the trait `hilavitkutin::sealed::EngineOnly` is not implemented for `MyCodegen`
+ --> tests/ui/dispatch_codegen_outside_the_engine_fail.rs:6:1
+  |
+6 | struct MyCodegen;
+  | ^^^^^^^^^^^^^^^^
+help: the trait `hilavitkutin::sealed::EngineOnly` is implemented for `StandardCodegen`
+ --> src/dispatch/codegen.rs
+  |
+  | impl sealed::EngineOnly for StandardCodegen {}
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required by a bound in `DispatchCodegen`
+ --> src/dispatch/codegen.rs
+  |
+  | pub trait DispatchCodegen<Cfg>: sealed::EngineOnly {
+  |                                 ^^^^^^^^^^^^^^^^^^ required by this bound in `DispatchCodegen`
+  = note: `DispatchCodegen` is a "sealed trait", because to implement it you also need to implement `hilavitkutin::sealed::EngineOnly`, which is not accessible; this is usually done to force you to use one of the provided types that already implement it
+  = help: the following type implements the trait:
+            hilavitkutin::dispatch::StandardCodegen

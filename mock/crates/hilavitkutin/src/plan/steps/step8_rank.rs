@@ -7,9 +7,9 @@ use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_bitmask::BitAccess;
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::UnitId;
 
 use super::{DependencyGraph, DirtyMasks, FiberGrouping, PlanDims, PlanInputs};
+use crate::dispatch::codegen::UnitId;
 
 /// Step 8 (fused, per Topic 3 S5 / P1.5): upward rank + dirty
 /// propagation in a single reverse-topo walk.

@@ -11,9 +11,9 @@
 
 | Crate | Role |
 |-------|------|
-| `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Consumer contract surface (capability / sink / codec) for API positions that receive or emit items outside WU execution. |
+| `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit and the unit vocabulary, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Nothing only the engine reads; a consumer's diagnostic or byte output goes through notko's sink. |
 | `hilavitkutin-api-macros` | Proc-macro companion to `hilavitkutin-api`. Emits `#[derive(ResourceFootprint)]`, which sums a resource value type's `Field`/`Seq`/`Map` field footprints so the engine reads its L1-morsel write-collection budget (canonical R5). |
-| `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
+| `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. Declares what only it reads: the dispatch codegen surface and its ids, the pool frame, the wake strategy and the sealed executor. |
 | `hilavitkutin-build` | Build-time optimisations (LLVM passes, MIR, cfg emission, PGO/BOLT workflows). Standalone build-dep, no runtime deps. |
 | `hilavitkutin-conformance` | What a runner of work units is held to: the one-thread reference runner `Oracle`, the digest `Fold`, and the laws as functions over recorded runs, with the mutants each law has to fail. Written against `hilavitkutin-api` alone. `no_std`, no alloc. |
 | `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
@@ -22,7 +22,7 @@
 | `hilavitkutin-frozen-authors` | Value-form work units written as a consumer writes them, beside a hand model of their frame, frozen under a ledger of content hashes so that a contract change an author would feel is recorded as a break. Not published. |
 | `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
 | `hilavitkutin-linking` | Cross-platform dynamic library loading primitive (dlopen / LoadLibrary + typed Symbol / StaticRef). Pull-based explicit-symbol resolution. `no_std`, no allocator. Renamed from prior `hilavitkutin-extensions`. |
-| `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
+| `hilavitkutin-persistence` | Generic hot-cold storage bridge, an opt-in ecosystem crate that builds on `hilavitkutin-str` and `hilavitkutin-api` and never on the engine or `hilavitkutin-ctx`. |
 | `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor) plus the declarative `InternerKit` (round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
 | `hilavitkutin-sym` | Generic interned-identity core: the `Sym` handle, domain traits, `Interner`, `Generator` (ecosystem, standalone). `hilavitkutin-str` builds on it. |
 | `hilavitkutin-str` | Interned string system, one domain of `hilavitkutin-sym` (ecosystem, standalone). |
@@ -31,7 +31,7 @@
 
 A consumer crate depends on `hilavitkutin`. The engine pulls `hilavitkutin-api` plus the arvo crates it needs at runtime: `arvo`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`, `arvo-spectral` (which itself depends on `arvo-sparse`), and `arvo-comb` (which depends on `arvo-bitmask`). A consumer's `build.rs` separately depends on `hilavitkutin-build`, which has no runtime deps.
 
-hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
+hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are ecosystem crates that consumers opt into, and ctx, persistence, sym, str are pure ecosystem (the engine does not depend on them). ctx, sym and str are standalone; persistence builds on hilavitkutin-str and hilavitkutin-api, never on the engine or hilavitkutin-ctx. hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
 
 hilavitkutin-linking, hilavitkutin-extensions, hilavitkutin-extensions-macros make up the plugin-host layer. Downstream consumer ecosystems build domain-specific contract crates on top.
 

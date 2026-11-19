@@ -10,6 +10,7 @@
 //! wiring that fills them is a BACKLOG item.
 
 pub mod approach;
+pub mod codegen;
 pub mod core_dispatch;
 pub mod core_mask;
 pub mod engine_ctx;
@@ -29,6 +30,19 @@ pub mod wu_fn;
 pub use approach::DispatchApproach;
 use arvo::USize;
 use arvo_tensor::Capacity;
+pub use codegen::{
+    CoreProgram,
+    DispatchCodegen,
+    FiberId,
+    FiberShape,
+    PhaseEntry,
+    PhaseId,
+    RecordRange,
+    StandardCodegen,
+    SyncRole,
+    TrunkId,
+    UnitId,
+};
 pub use core_dispatch::CoreDispatch;
 pub use engine_ctx::{
     AccumBundleOf,
@@ -40,7 +54,6 @@ pub use engine_ctx::{
 };
 pub use fiber_dispatch::FiberDispatch;
 pub use fiber_run::RunFiber;
-pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
 // The value-carrying WorkUnit, fiber, trunk, and phase lists live in the api
 // crate so the builder can construct them; re-export them here next to the
 // dispatch machinery that consumes them.

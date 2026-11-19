@@ -1,0 +1,39 @@
+   Compiling notko v0.0.1 (https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcd)
+   Compiling notko-hlist v0.0.1 (https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcd)
+   Compiling libc v0.2.189
+   Compiling hilavitkutin-build v0.1.0 (<repo>/mock/crates/hilavitkutin-build)
+   Compiling arvo-transparent v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-strategy v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling hilavitkutin-ctx v0.1.0 (<repo>/mock/crates/hilavitkutin-ctx)
+   Compiling hilavitkutin-api v0.1.0 (<repo>/mock/crates/hilavitkutin-api)
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-kit v0.1.0 (<repo>/mock/crates/hilavitkutin-kit)
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-sym v0.1.0 (<repo>/mock/crates/hilavitkutin-sym)
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-str v0.1.0 (<repo>/mock/crates/hilavitkutin-str)
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-aligned v0.1.0 (<sketch>/engine-aligned)
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling hilavitkutin-providers v0.1.0 (<repo>/mock/crates/hilavitkutin-providers)
+   Compiling hilavitkutin v0.1.0 (<repo>/mock/crates/hilavitkutin)
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+   Compiling arvo-storage v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bits-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bits v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-numeric-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-mask-contracts v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-tensor v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-bitmask v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-sparse v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-comb v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-spectral v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-refit v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling arvo-graph v0.1.0 (ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e9)
+   Compiling accumulator-grouped-by-data v0.0.0 (<sketch>)
+    Finished `test` profile [unoptimized] target(s) in 9.18s
+  Executable unittests src/lib.rs (<target>/debug/deps/accumulator_grouped_by_data-4cd87fef7b9e7efe)
+  Executable tests/grouping.rs (<target>/debug/deps/grouping-6590936092149f79)
+  Executable tests/law.rs (<target>/debug/deps/law-4f485ded1d57a894)

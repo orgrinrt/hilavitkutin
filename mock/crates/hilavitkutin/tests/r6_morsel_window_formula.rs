@@ -196,6 +196,7 @@ fn non_aligned_min_morsel_keeps_the_floor() {
     // `& !3` gives 64, and with a floor of 3 it gives 0, a window that covers
     // no record. Either undercuts what the run config asked for.
     use hilavitkutin::DefaultPlanDims;
+    use hilavitkutin::dispatch::codegen::FiberId;
     use hilavitkutin::plan::{
         AccessMask,
         FiberGrouping,
@@ -204,7 +205,6 @@ fn non_aligned_min_morsel_keeps_the_floor() {
         PlanInputs,
         steps,
     };
-    use hilavitkutin_api::FiberId;
 
     type Dims = DefaultPlanDims;
     for floor in [66usize, 3] {

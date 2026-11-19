@@ -1,0 +1,7 @@
+error[E0271]: type mismatch resolving `<Val as Carrier>::Of<Written<Column<Glow>>> == Pos`
+  --> ui/fail/write_undeclared.rs:29:9
+   |
+29 |         rec![Pos(pos.0 + pos.0)]
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^ expected `Pos`, found `Glow`
+   |
+   = note: this error originates in the macro `$crate::rec` which comes from the expansion of the macro `rec` (in Nightly builds, run with -Z macro-backtrace for more info)
