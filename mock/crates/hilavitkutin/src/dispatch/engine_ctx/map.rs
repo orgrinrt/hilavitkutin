@@ -283,7 +283,7 @@ pub trait Scatter<WC, WA, WV, MP>: WriteSet {
     /// `at` is a record of every column of the list, and the unit holds the
     /// writer's slot for it in each.
     unsafe fn scatter(
-        vals: &<Self as Project>::Prod<Val>,
+        vals: &<Self as Project<Val>>::Prod,
         cols: &WC,
         accs: &WA,
         virts: &WV,
@@ -303,7 +303,7 @@ impl<WC, WA, WV, MP> Scatter<WC, WA, WV, MP> for Empty {
 
     #[inline(always)]
     unsafe fn scatter(
-        _vals: &<Self as Project>::Prod<Val>,
+        _vals: &<Self as Project<Val>>::Prod,
         _cols: &WC,
         _accs: &WA,
         _virts: &WV,
@@ -326,7 +326,7 @@ impl<C: ColWrite, Tail: Scatter<WC, WA, WV, MP>, WC, WA, WV, MP: MetaRank>
 
     #[inline(always)]
     unsafe fn scatter(
-        vals: &<Self as Project>::Prod<Val>,
+        vals: &<Self as Project<Val>>::Prod,
         cols: &ColPtrCons<C::T, WC, C::K>,
         accs: &WA,
         virts: &WV,
@@ -360,7 +360,7 @@ impl<'f, T: ColumnValue, Tail: Scatter<WC, WA, WV, MP>, WC, WA, WV, MP>
 
     #[inline(always)]
     unsafe fn scatter(
-        vals: &<Self as Project>::Prod<Val>,
+        vals: &<Self as Project<Val>>::Prod,
         cols: &WC,
         accs: &AccPtrCons<'f, T, WA>,
         virts: &WV,
@@ -391,7 +391,7 @@ impl<'f, V: 'static, Tail: Scatter<WC, WA, WV, MP>, WC, WA, WV, MP>
 
     #[inline(always)]
     unsafe fn scatter(
-        vals: &<Self as Project>::Prod<Val>,
+        vals: &<Self as Project<Val>>::Prod,
         cols: &WC,
         accs: &WA,
         virts: &VirtCons<'f, V, WV>,
