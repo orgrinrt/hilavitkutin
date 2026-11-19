@@ -1,0 +1,345 @@
+diff --git a/crates/hilavitkutin/src/dispatch/engine_ctx/map.rs b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/engine_ctx/map.rs
+index 7923e3f5..e5c48f40 100644
+--- a/crates/hilavitkutin/src/dispatch/engine_ctx/map.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/engine_ctx/map.rs
+@@ -430,6 +430,10 @@ where
+     {
+         let start = self.morsel.start;
+         let len = self.morsel.len;
++        // Sketch edit (202611191500): the mutant applies the function one
++        // record short of the window, which the run test must catch.
++        #[cfg(feature = "mutant-short-window")]
++        let len = USize(len.0.saturating_sub(1));
+         // The flags live in registers across the morsel, and each store's
+         // mark is set once after it, not per record.
+         let mut flags = <W as Scatter<WCols, WAccum, WVirt, MP>>::NONE;
+diff --git a/crates/hilavitkutin/src/dispatch/fiber_run.rs b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/fiber_run.rs
+index dc068d5a..cf220acf 100644
+--- a/crates/hilavitkutin/src/dispatch/fiber_run.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/fiber_run.rs
+@@ -21,7 +21,8 @@ use arvo::USize;
+ use arvo_bitmask::BitAccess; // re-exported through arvo-bitmask L2 per #76
+ use hilavitkutin_api::access::{Cons, Empty};
+ use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
+-use hilavitkutin_api::{HasSchedule, WorkUnit};
++use hilavitkutin_api::context::ResolveMap;
++use hilavitkutin_api::{HasSchedule, Positional, ReadSet, RecordOp, WorkUnit, WriteSet};
+ 
+ use crate::dispatch::engine_ctx::{
+     AccumProject,
+@@ -33,7 +34,7 @@ use crate::dispatch::engine_ctx::{
+     VirtualProject,
+ };
+ use crate::dispatch::morsel::MorselRange;
+-use crate::dispatch::wu_fn::invoke_wu_in_fiber;
++use crate::dispatch::wu_fn::{invoke_value_in_fiber, invoke_wu_in_fiber};
+ use crate::meta::MetaBlock;
+ 
+ /// Run a unit cons-list in carrier order, projecting and executing each unit.
+@@ -113,8 +114,83 @@ impl<A> RunFiber<A, Empty> for WuNil {
+     }
+ }
+ 
+-impl<A, W, Tail, RIdx, RCIdx, WCIdx, WAIdx, WVIdx, GI, WTail>
+-    RunFiber<A, Cons<(RIdx, RCIdx, WCIdx, WAIdx, WVIdx, GI), WTail>> for WuCons<W, Tail>
++// ---------------------------------------------------------------------
++// Sketch edit (202611191500): the per-unit step, by the kind of body.
++//
++// The shipped walk built the unit's context and called `execute` inside the
++// `WuCons` impl of `RunFiber`. The step is now a trait of its own, `RunUnit`,
++// with one impl per kind of body, and the `WuCons` impl of `RunFiber` below
++// calls it. The two impls are told apart by the witness: `ByCtx` for a unit
++// that offers `Positional` (its `execute` is handed the context) and
++// `ByValue` for a unit that offers `RecordOp` (the engine's context applies
++// its value function). The witness is inferred at `Scheduler::run`, as the
++// projection indices inside it are, so a unit is registered bare either way.
++// ---------------------------------------------------------------------
++
++/// Witness: the unit's body is `Positional::execute`, handed the context.
++pub struct ByCtx<I>(core::marker::PhantomData<I>);
++
++/// Witness: the unit's body is `RecordOp::apply`, applied by the context.
++pub struct ByValue<I>(core::marker::PhantomData<I>);
++
++/// Build one unit's context from the bindings and run its body over `morsel`.
++pub trait RunUnit<A, Wit> {
++    /// Project this unit's context and run its body.
++    fn run_unit(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize);
++}
++
++impl<A, W, RIdx, RCIdx, WCIdx, WAIdx, WVIdx> RunUnit<A, ByValue<(RIdx, RCIdx, WCIdx, WAIdx, WVIdx)>>
++    for W
++where
++    W: HasSchedule + RecordOp<<W as HasSchedule>::Sched>,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: ReadSet,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: WriteSet,
++    for<'f> <W as HasSchedule>::Sched: MetaPtrFor<'f>,
++    A: Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>,
++    A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>,
++    A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>,
++    for<'f> A: AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>,
++    for<'f> A: VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>,
++    // The unit names no context, so nothing is tied to one. What is asked is
++    // that the engine's own context over the unit's lists, with the bundles the
++    // bindings project for them, can apply a value function: a bound on a type
++    // of this crate, which no orphan rule stands in the way of.
++    for<'f> EngineCtx<
++        'f,
++        <W as WorkUnit<<W as HasSchedule>::Sched>>::Read,
++        <W as WorkUnit<<W as HasSchedule>::Sched>>::Write,
++        <A as Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>>::Out,
++        <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>>::Out,
++        <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>>::Out,
++        <A as AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>>::Out,
++        <A as VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>>::Out,
++        <<W as HasSchedule>::Sched as MetaPtrFor<'f>>::Ptr,
++    >: ResolveMap<
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Read,
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Write,
++        >,
++{
++    #[inline]
++    fn run_unit(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize) {
++        let ctx: EngineCtx<
++            '_,
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Read,
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Write,
++            _,
++            _,
++            _,
++            _,
++            _,
++            <<W as HasSchedule>::Sched as MetaPtrFor<'_>>::Ptr,
++        > = EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(
++            bindings, bindings, meta_block, epoch, morsel,
++        );
++        invoke_value_in_fiber(self, &ctx);
++    }
++}
++
++impl<A, W, RIdx, RCIdx, WCIdx, WAIdx, WVIdx> RunUnit<A, ByCtx<(RIdx, RCIdx, WCIdx, WAIdx, WVIdx)>>
++    for W
+ where
+     // E4 slice 1: recover the unit's schedule (`Always` or `On<V>`) so a mixed
+     // carrier dispatches; `<W as HasSchedule>::Sched` feeds back as the WorkUnit
+@@ -122,8 +198,7 @@ where
+     // existing Always WU unchanged. The `GateWith` bound pins the schedule-gate
+     // index `GI` (the 6th witness-tuple element) so it infers alongside the
+     // projection indices; the trunk walk reads it, `RunFiber` does not gate.
+-    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
+-    <W as HasSchedule>::Sched: GateWith<A, GI>,
++    W: HasSchedule + Positional<<W as HasSchedule>::Sched>,
+     // E4 slice 3: the unit's schedule determines its Ctx meta pointer (the 9th
+     // `EngineCtx` param): `MetaNil` for `Always` / `On<V>`, `MetaRef<'f>` for
+     // `OnMeta<V>`. The dispatch projects it from the engine-owned meta block.
+@@ -140,7 +215,7 @@ where
+     // column-, accumulator-, or virtual-bearing unit projects its real handles.
+     // The accumulator and virtual bundles are lifetime-tied, so the 7th and 8th
+     // Ctx params vary with `'f`.
+-    for<'f> W: WorkUnit<
++    for<'f> W: Positional<
+         <W as HasSchedule>::Sched,
+         Ctx<'f> = EngineCtx<
+             'f,
+@@ -154,19 +229,32 @@ where
+             <<W as HasSchedule>::Sched as MetaPtrFor<'f>>::Ptr,
+         >,
+     >,
+-    Tail: RunFiber<A, WTail>,
+ {
+     #[inline]
+-    fn run(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize) {
++    fn run_unit(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize) {
+         // The bindings are the resource source, the column source, the
+         // accumulator source, and the virtual source (Shape A): all `project`
+         // arguments are the same bindings. The resource and column pointers are
+         // read out (Copy) at projection time; the accumulator and virtual bundles
+         // retain a borrow of the bindings' cells for the dispatch frame. The meta
+         // block is the engine-owned meta state (E4 slice 3).
+-        let ctx: <W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'_> =
++        let ctx: <W as Positional<<W as HasSchedule>::Sched>>::Ctx<'_> =
+             EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(bindings, bindings, meta_block, epoch, morsel);
+-        invoke_wu_in_fiber(&self.head, &ctx);
++        invoke_wu_in_fiber(self, &ctx);
++    }
++}
++
++impl<A, W, Tail, U, GI, WTail> RunFiber<A, Cons<(U, GI), WTail>> for WuCons<W, Tail>
++where
++    // The per-unit step, by whichever body the unit offers. `U` is `ByCtx` or
++    // `ByValue` over the unit's projection indices.
++    W: HasSchedule + RunUnit<A, U>,
++    <W as HasSchedule>::Sched: GateWith<A, GI>,
++    Tail: RunFiber<A, WTail>,
++{
++    #[inline]
++    fn run(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize) {
++        self.head.run_unit(bindings, meta_block, morsel, epoch);
+         self.tail.run(bindings, meta_block, morsel, epoch);
+     }
+ 
+@@ -184,9 +272,7 @@ where
+         // carrier-position bit is clean. The bit test is the only cost a
+         // skipped unit incurs; the branch is predicated, adding no call.
+         if dirty.bit(pos).0 {
+-            let ctx: <W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'_> =
+-                EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(bindings, bindings, meta_block, epoch, morsel);
+-            invoke_wu_in_fiber(&self.head, &ctx);
++            self.head.run_unit(bindings, meta_block, morsel, epoch);
+         }
+         let next = USize(pos.0 + 1); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: carrier-position successor; tracked: #72
+         self.tail.run_gated(bindings, meta_block, morsel, dirty, next, epoch);
+@@ -194,8 +280,6 @@ where
+ 
+     #[inline]
+     fn run_head(&self, bindings: &A, meta_block: &MetaBlock, morsel: MorselRange, epoch: USize) {
+-        let ctx: <W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'_> =
+-            EngineCtx::project::<A, A, RIdx, RCIdx, WCIdx, WAIdx, WVIdx>(bindings, bindings, meta_block, epoch, morsel);
+-        invoke_wu_in_fiber(&self.head, &ctx);
++        self.head.run_unit(bindings, meta_block, morsel, epoch);
+     }
+ }
+diff --git a/crates/hilavitkutin/src/dispatch/fusion.rs b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/fusion.rs
+index f52fe994..6b17591d 100644
+--- a/crates/hilavitkutin/src/dispatch/fusion.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/fusion.rs
+@@ -232,6 +232,16 @@ impl<C: Send + Sync + 'static> BuilderInput for ChainWu<C> {
+ }
+ 
+ impl<C> WorkUnit<Always> for ChainWu<C>
++where
++    C: OpChain + Send + Sync + 'static,
++{
++    type Hint = (Immediate, Atomic, Normal);
++    type Read = One<<C as OpChain>::In>;
++    type Write = One<<C as OpChain>::Out>;
++}
++
++// Sketch edit (202611191500): the context and `execute` moved to `Positional`.
++impl<C> hilavitkutin_api::Positional<Always> for ChainWu<C>
+ where
+     C: OpChain + Send + Sync + 'static,
+ {
+@@ -243,9 +253,6 @@ where
+         ColPtrCons<<C as OpChain>::In, ColPtrNil>,
+         ColPtrCons<<C as OpChain>::Out, ColPtrNil>,
+     >;
+-    type Hint = (Immediate, Atomic, Normal);
+-    type Read = One<<C as OpChain>::In>;
+-    type Write = One<<C as OpChain>::Out>;
+ 
+     #[inline]
+     fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+diff --git a/crates/hilavitkutin/src/dispatch/trunk_gate.rs b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/trunk_gate.rs
+index 12b7af5d..8abc441b 100644
+--- a/crates/hilavitkutin/src/dispatch/trunk_gate.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/trunk_gate.rs
+@@ -148,11 +148,7 @@ impl<
+     A,
+     W,
+     Tail,
+-    RI,
+-    RCI,
+-    WCI,
+-    WAI,
+-    WVI,
++    U,
+     GI,
+     WTail,
+     GW,
+@@ -166,7 +162,7 @@ impl<
+     RunGatedTrunk<
+         Full,
+         A,
+-        Cons<(RI, RCI, WCI, WAI, WVI, GI), WTail>,
++        Cons<(U, GI), WTail>,
+         GW,
+         Stores,
+         CU,
+@@ -176,7 +172,7 @@ impl<
+         Pos,
+     > for WuCons<W, Tail>
+ where
+-    WuCons<W, Tail>: RunFiber<A, Cons<(RI, RCI, WCI, WAI, WVI, GI), WTail>>,
++    WuCons<W, Tail>: RunFiber<A, Cons<(U, GI), WTail>>,
+     W: HasSchedule,
+     <W as HasSchedule>::Sched: GateWith<A, GI>,
+     Full: const BundleMasks<Stores, GW, CS>,
+diff --git a/crates/hilavitkutin/src/dispatch/wu_fn.rs b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/wu_fn.rs
+index c2b5de7f..0fcbca46 100644
+--- a/crates/hilavitkutin/src/dispatch/wu_fn.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/src/dispatch/wu_fn.rs
+@@ -22,7 +22,8 @@
+ //! lands in `fiber_dispatch::run_fiber` (CHANGE 3) and the morsel
+ //! / sync CHANGE blocks below.
+ 
+-use hilavitkutin_api::{HasSchedule, WorkUnit};
++use hilavitkutin_api::context::ResolveMap;
++use hilavitkutin_api::{HasSchedule, Positional, ReadSet, RecordOp, WorkUnit, WriteSet};
+ 
+ /// Function-pointer shape used by dispatch records.
+ pub type WuFn<Ctx> = fn(&Ctx);
+@@ -40,13 +41,49 @@ pub type WuFn<Ctx> = fn(&Ctx);
+ #[inline(always)]
+ pub fn invoke_wu_in_fiber<'frame, W>(
+     wu: &W,
+-    ctx: &<W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'frame>,
++    ctx: &<W as Positional<<W as HasSchedule>::Sched>>::Ctx<'frame>,
+ ) where
+-    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
++    W: HasSchedule + Positional<<W as HasSchedule>::Sched>,
+ {
+     execute_without_unwinding::<W>(wu, ctx);
+ }
+ 
++/// Sketch edit (202611191500): the shim for a unit whose body is its value
++/// function. The unit names no context; the engine's own context, built from
++/// the unit's lists, applies the function at each record of the morsel.
++///
++/// `C` is the engine's context for the unit's lists and nothing else: the one
++/// caller is the value arm of `RunFiber`, which builds it by `project`.
++#[inline(always)]
++pub fn invoke_value_in_fiber<W, C>(wu: &W, ctx: &C)
++where
++    W: HasSchedule + RecordOp<<W as HasSchedule>::Sched>,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: ReadSet,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: WriteSet,
++    C: ResolveMap<
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Read,
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Write,
++        >,
++{
++    apply_without_unwinding::<W, C>(wu, ctx);
++}
++
++/// The value function of a unit behind the boundary `execute_without_unwinding`
++/// keeps for a positional body.
++#[inline(always)]
++extern "C" fn apply_without_unwinding<W, C>(wu: &W, ctx: &C)
++where
++    W: HasSchedule + RecordOp<<W as HasSchedule>::Sched>,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: ReadSet,
++    <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: WriteSet,
++    C: ResolveMap<
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Read,
++            <W as WorkUnit<<W as HasSchedule>::Sched>>::Write,
++        >,
++{
++    ctx.resolve_map(|r| wu.apply(r));
++}
++
+ /// Run a unit body behind a boundary an unwind cannot cross.
+ ///
+ /// An unwind reaching an `extern "C"` function aborts, whatever the build's
+@@ -57,9 +94,9 @@ pub fn invoke_wu_in_fiber<'frame, W>(
+ #[inline(always)]
+ extern "C" fn execute_without_unwinding<'frame, W>(
+     wu: &W,
+-    ctx: &<W as WorkUnit<<W as HasSchedule>::Sched>>::Ctx<'frame>,
++    ctx: &<W as Positional<<W as HasSchedule>::Sched>>::Ctx<'frame>,
+ ) where
+-    W: HasSchedule + WorkUnit<<W as HasSchedule>::Sched>,
++    W: HasSchedule + Positional<<W as HasSchedule>::Sched>,
+ {
+     wu.execute(ctx);
+ }

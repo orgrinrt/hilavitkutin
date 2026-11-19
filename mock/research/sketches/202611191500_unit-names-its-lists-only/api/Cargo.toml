@@ -1,0 +1,28 @@
+[package]
+name = "hilavitkutin-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "WorkUnit + provider trait surface for the hilavitkutin pipeline engine"
+repository.workspace = true
+
+[dependencies]
+arvo.workspace = true
+arvo-bitmask.workspace = true
+arvo-tensor.workspace = true
+hilavitkutin-ctx.workspace = true
+notko.workspace = true
+notko-hlist.workspace = true
+
+[dev-dependencies]
+trybuild = "1"
+
+[features]
+default = []
+# Sketch (202611191500): the one-impl trait `Unit` and its three blankets.
+unit-blanket = []
+# Sketch (202611191500): attempt s1, which does not compile.
+attempt-unit-sched = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

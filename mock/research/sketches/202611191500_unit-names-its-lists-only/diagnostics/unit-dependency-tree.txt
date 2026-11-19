@@ -1,0 +1,17 @@
+$ cargo tree -p unit -e normal,build,dev
+
+The crates named, each once (the full output repeats the arvo crates under
+every crate that takes them):
+
+unit
+  arvo (and under it arvo-bits, arvo-bits-contracts, arvo-numeric-contracts,
+        arvo-storage, arvo-strategy, arvo-transparent, notko)
+  hilavitkutin-api (the copy under this sketch's `api/`)
+    arvo, arvo-bitmask, arvo-mask-contracts, arvo-tensor
+    hilavitkutin-ctx
+      [build-dependencies] hilavitkutin-build
+    notko, notko-hlist
+    [build-dependencies] hilavitkutin-build
+
+No `hilavitkutin` (the engine), no `hilavitkutin-kit` and no
+`hilavitkutin-providers` is in the tree.

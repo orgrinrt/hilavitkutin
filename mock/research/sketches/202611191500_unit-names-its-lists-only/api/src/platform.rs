@@ -1,0 +1,491 @@
+//! Platform contracts.
+//!
+//! Three runtime surfaces the engine needs from the host: memory
+//! allocation and protection, thread-pool spawn and sizing, and a
+//! monotonic clock. Consumed by monomorphisation: no `dyn`.
+
+use arvo::strategy::Hot;
+use arvo::ufixed::UFixed;
+use arvo::{Bool, USize, fbits, ibits};
+
+/// Nanoseconds since a platform-defined epoch.
+///
+/// Monotonic instant type returned by `ClockApi::now_ns`. Backed by
+/// `arvo::UFixed<64, 0, Hot>`; the `Hot` strategy dispatches to the
+/// host's native 64-bit unsigned.
+pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
+
+/// Memory provider.
+///
+/// Backing allocator for arena slabs. `allocate` / `deallocate`
+/// track raw pointers sized by `USize`. `protect` toggles page-level
+/// read/write permissions; consumers use it for sealed resource
+/// pages.
+///
+/// # Safety
+///
+/// The engine records the blocks this provider returns and reads and
+/// writes through them from unsafe code after the provider has been
+/// moved, so an implementation promises:
+///
+/// 1. A non-null block from `allocate(len, align)` is aligned to
+///    `align` and valid for reads and writes of `len` bytes.
+/// 2. The block stays valid at the same address until the matching
+///    `deallocate` on this provider, or until the provider is dropped.
+///    Moving the provider moves and frees no block, so a provider that
+///    keeps its memory inline in itself cannot implement this trait.
+/// 3. Two live blocks do not overlap.
+/// 4. All three methods may be called from several threads at once.
+///
+/// Null is always a valid answer from `allocate` and means the block
+/// was refused. The `# Safety` sections on the methods are the
+/// caller's half of the contract.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement Memory provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `MemoryProviderApi` via const generics; supply your own `MemoryProvider` to the scheduler at construction time."
+)]
+pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
+    /// Allocate `len` bytes at `align` alignment.
+    ///
+    /// # Safety
+    ///
+    /// Returned pointer is valid until a matching `deallocate`.
+    /// Alignment must be a power of two. OOM returns null; caller
+    /// checks.
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+
+    /// Release a previously-allocated block.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must come from a prior `allocate` on the same provider
+    /// with the same `len` and the same `align`. All three are the
+    /// contract: nothing at the free site can recover the alignment,
+    /// and an allocator underneath may need the whole layout to free.
+    /// Deallocation invalidates the pointer.
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+
+    /// Change page permissions over a block.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must cover `len` bytes of pages owned by this provider.
+    /// Revoking read or write while a live borrow exists is UB.
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+}
+
+/// Thread-pool provider.
+///
+/// Threads are spawned once at pipeline construction. `spawn` is
+/// generic over the closure type so the pool can monomorphise per
+/// call site. No `dyn`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement ThreadPool provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `ThreadPoolApi` via const generics; supply your own `ThreadPool` to the scheduler at construction time."
+)]
+pub trait ThreadPoolApi: Send + Sync + 'static {
+    /// Submit `f` for execution on a pool worker.
+    ///
+    /// Implementations may block, queue, or steal; the engine makes
+    /// no assumption about scheduling fairness.
+    ///
+    /// Every closure the engine hands here is no wider and no more
+    /// aligned than one pointer, so an implementation can move it into
+    /// a thread's single argument slot without allocating. The engine
+    /// forces [`OnePointerClosure::FITS`] on it at the spawn site, and
+    /// an implementation may force the same gate on its own `F`.
+    fn spawn<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static;
+
+    /// Number of worker threads in the pool.
+    fn worker_count(&self) -> USize;
+}
+
+/// Compile-time gate that a closure fits one pointer-sized,
+/// pointer-aligned slot.
+///
+/// Forcing `OnePointerClosure::<F>::FITS` fails the build at
+/// monomorphisation when `F` is wider or more aligned than
+/// `*const ()`. The engine forces it on the closure it hands
+/// [`ThreadPoolApi::spawn`]. An associated const rather than an inline
+/// `const {}` block, because the latter is an anonymous generic
+/// constant the `generic_const_exprs` grammar rejects.
+///
+/// The failure is a monomorphisation error, so `cargo check` does not
+/// report it and `cargo build` does. A closure capturing two
+/// pointer-sized values is refused:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let (a, b) = (1usize, 2usize);
+/// force(move || {
+///     core::hint::black_box((a, b));
+/// });
+/// ```
+///
+/// A zero-sized capture aligned past a pointer is no wider than one
+/// pointer and is refused on alignment alone:
+///
+/// ```compile_fail,E0080
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// #[derive(Copy, Clone)]
+/// #[repr(align(64))]
+/// struct OverAligned;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let z = OverAligned;
+/// force(move || {
+///     core::hint::black_box(z);
+/// });
+/// ```
+///
+/// The same shape with one captured value builds:
+///
+/// ```
+/// use hilavitkutin_api::platform::OnePointerClosure;
+///
+/// fn force<F: FnOnce()>(f: F) {
+///     let () = OnePointerClosure::<F>::FITS;
+///     f();
+/// }
+///
+/// let a = 1usize;
+/// force(move || {
+///     core::hint::black_box(a);
+/// });
+/// ```
+pub struct OnePointerClosure<F>(PhantomData<F>);
+
+impl<F> OnePointerClosure<F> {
+    /// Evaluates to `()` when `F` fits one pointer slot; fails the
+    /// build otherwise.
+    pub const FITS: () = {
+        assert!(
+            core::mem::size_of::<F>() <= core::mem::size_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is wider than one pointer; an executor cannot carry it without allocating"
+        );
+        assert!(
+            core::mem::align_of::<F>() <= core::mem::align_of::<*const ()>(),
+            "the closure handed to ThreadPoolApi::spawn is more aligned than a pointer slot"
+        );
+    };
+}
+
+/// Monotonic clock.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not implement Clock provider contract",
+    note = "Provide a platform-specific impl. The engine builds against `ClockApi` via const generics; supply your own `Clock` to the scheduler at construction time."
+)]
+pub trait ClockApi: Send + Sync + 'static {
+    /// Current time in nanoseconds since a platform-defined epoch.
+    fn now_ns(&self) -> Nanos;
+}
+
+// Accessor traits expressed directly rather than via ctx's
+// `provider!` macro: the macro emits a `Context<P>` inherent impl
+// that would violate the orphan rule from this downstream crate.
+// Each accessor is a plain trait: `HasX { type Provider: XApi; fn
+// method(&self) -> &Self::Provider; }`.
+
+/// Provider-tuple entry point for the memory provider.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a Memory provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
+pub trait HasMemoryProvider {
+    /// Concrete provider type the tuple exposes.
+    type Provider: MemoryProviderApi;
+    /// Borrow the memory provider.
+    fn memory(&self) -> &Self::Provider;
+}
+
+/// Provider-tuple entry point for the thread pool.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a ThreadPool provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
+pub trait HasThreadPool {
+    /// Concrete pool type the tuple exposes.
+    type Provider: ThreadPoolApi;
+    /// Borrow the thread pool.
+    fn threads(&self) -> &Self::Provider;
+}
+
+/// Provider-tuple entry point for the clock.
+#[diagnostic::on_unimplemented(
+    message = "provider tuple `{Self}` does not expose a Clock provider",
+    note = "Compose the provider tuple with the `provider_generic!` accessor. The substrate's `Context<P>` framework wires this from the scheduler builder."
+)]
+pub trait HasClock {
+    /// Concrete clock type the tuple exposes.
+    type Provider: ClockApi;
+    /// Borrow the clock.
+    fn clock(&self) -> &Self::Provider;
+}
+
+// ---------------------------------------------------------------------
+// Runtime data plane: PoolFrame + WakeStrategy + Executor.
+// ---------------------------------------------------------------------
+
+use core::marker::PhantomData;
+use core::ptr::NonNull;
+use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize};
+
+/// Per-pool runtime data plane carrier. Hot fields live on per-pool
+/// cache lines, NOT per-fiber lines
+/// (per-fiber lines hold progress counters via `progress_slots` arena
+/// indirection).
+///
+/// Const generics `MAX_CORES` and `MAX_PHASES` bound the slot arrays.
+/// `#[repr(C, align(64))]` so the carrier sits on its own cache line
+/// boundary; the inner field layout is hand-tuned for false-sharing
+/// avoidance (predicted_wait_ns and idle_accumulator are per-core, so
+/// they land on separate lines per index).
+///
+/// `shutdown`: workers Relaxed-load after each morsel; on
+/// `true`, exit mainloop cleanly. Scheduler::Drop sets it then wakes
+/// all parked workers via the platform atomic-wait primitive.
+///
+/// `phase_arrived`: centralised atomic counter. Workers Release
+/// fetch_add(1) on phase exit; last arriver wakes all parked workers and
+/// resets the counter. Tree-barrier deferred until 32+ core benches
+/// show measurable cacheline ping-pong (BACKLOG).
+///
+/// `predicted_wait_ns`: per-phase atomic slot. AdaptWu writes
+/// at `ScheduleEnd`; workers Relaxed-load on phase entry to pick the
+/// parking tier (spin / futex / park) per the WakeStrategy thresholds.
+///
+/// `idle_accumulator` + `park_count`: per-core
+/// wait-time accumulators. Park entry/exit increments the accumulator
+/// (Release on increment paired with phase-boundary Release); AdaptWu
+/// reads with Acquire at `ScheduleEnd`.
+///
+/// `progress_slots`: non-owning pointer into the
+/// plan-stage scratch arena's `[AtomicUsize; MAX_FIBERS]` region.
+/// Codegen emits Release stores against `progress_slots.add(slot_idx)`.
+/// The `'arena` lifetime parameter ties the borrow to the scratch
+/// arena that owns the `[AtomicUsize; MAX_FIBERS]` storage. Any
+/// `&'_ PoolFrame<'arena, ...>` borrow is constrained by `'arena`;
+/// dropping the arena before workers stop is a borrow-checker error
+/// rather than a use-after-free at runtime. The `PhantomData` field
+/// expresses the relationship without changing the runtime layout.
+#[repr(C, align(64))]
+pub struct PoolFrame<'arena, const MAX_CORES: usize, const MAX_PHASES: usize> {
+    /// Shutdown signal. Set by `Scheduler::Drop`. Workers Relaxed-load.
+    pub shutdown: AtomicBool,
+
+    /// Phase-barrier counter. Workers fetch_add(1) on phase exit
+    /// (Release); last arriver futex-wakes all and resets.
+    pub phase_arrived: AtomicU32,
+
+    /// Waist-barrier sense / generation word. Paired with
+    /// `phase_arrived` for the worker-side sense-reversing barrier:
+    /// the last arriver of an episode resets `phase_arrived` and bumps
+    /// this (Release), then futex-wakes all; followers park on it and
+    /// wake when it changes from the value they snapshotted on entry.
+    /// The flip makes the barrier reusable across the many waists of a
+    /// frame with no reset race (a fast worker that loops to the next
+    /// episode waits for the next flip, never a stale count).
+    pub barrier_sense: AtomicU32,
+
+    /// Frame sequence / worker wake word. The scheduler bumps it
+    /// (Release) and futex-wakes to publish a new frame; parked
+    /// workers wait on it. Distinct from `phase_arrived` (the
+    /// within-frame waist barrier): `seq` marks frame START. Drives
+    /// the per-frame protocol in `thread::frame`.
+    pub seq: AtomicU32,
+
+    /// Frame-completion counter / scheduler wake word. Each worker
+    /// fetch_add(1)s (Release) on finishing a frame; the last arriver
+    /// futex-wakes the scheduler, which is parked on it. Reset to zero
+    /// by the scheduler before each `frame_publish`.
+    pub done: AtomicU32,
+
+    /// Worker-exit counter. Each worker fetch_add(1)s (Release) on
+    /// observing `shutdown`, then futex-wakes the scheduler. The
+    /// scheduler waits for this to reach the worker count before the
+    /// `PoolFrame` (and the carrier its workers read) can drop. This
+    /// is the join with no join method: the `ThreadPoolApi` contract
+    /// is fire-and-forget and workers are detached, so the exit
+    /// counter, not a thread join, provides the shutdown ordering.
+    pub exited: AtomicU32,
+
+    /// Per-phase predicted wait time in nanoseconds, written by
+    /// AdaptWu at `ScheduleEnd`, read by workers at phase entry.
+    /// Drives WakeStrategy tier selection.
+    pub predicted_wait_ns: [AtomicU32; MAX_PHASES],
+
+    /// Per-core park-time accumulator in nanoseconds. Owning core
+    /// fetch_add(1)s on park entry/exit. AdaptWu reads with Acquire
+    /// fence at `ScheduleEnd`.
+    pub idle_accumulator: [AtomicU64; MAX_CORES],
+
+    /// Per-core park count. Pairs with `idle_accumulator` for the
+    /// core-idle adapt axis.
+    pub park_count: [AtomicU64; MAX_CORES],
+
+    /// Base pointer to `[AtomicUsize; MAX_FIBERS]` in plan-stage
+    /// scratch arena. Codegen emits Release stores against
+    /// `progress_slots.add(slot_idx)`. Non-owning; the `'arena`
+    /// lifetime on the enclosing struct ties this borrow to the
+    /// arena's allocation.
+    pub progress_slots: NonNull<AtomicUsize>,
+
+    /// Number of valid progress slots starting at `progress_slots`.
+    pub progress_slot_count: USize,
+
+    /// Borrow tracker tying the `progress_slots` pointer to the arena
+    /// it indexes into. Zero-sized at runtime; load-bearing at the
+    /// type level so dropping the arena while a worker holds a
+    /// `&PoolFrame<'arena>` is a compile-time error.
+    pub _arena: PhantomData<&'arena [AtomicUsize]>,
+}
+
+// SAFETY: `NonNull<AtomicUsize>` carries no Send/Sync auto-impl on its
+// own. The `'arena` lifetime on `PoolFrame` ties the borrow to the
+// scratch arena's allocation; workers receive `Pin<&'frame PoolFrame<'arena, ...>>`
+// borrows that the borrow-checker constrains to `'arena: 'frame`.
+// Under those bounds the `AtomicUsize` slice is shared-safe (its own
+// methods carry the synchronisation) and the pointer is valid for as
+// long as any worker holds the borrow.
+unsafe impl<'arena, const C: usize, const P: usize> Send for PoolFrame<'arena, C, P> {}
+unsafe impl<'arena, const C: usize, const P: usize> Sync for PoolFrame<'arena, C, P> {}
+
+/// Per-CoreClass wake strategy.
+///
+/// Controls the three-tier parking selection per worker: spin budget
+/// before yielding, futex threshold for sub-50µs waits, park threshold
+/// for long-tail waits. Per-CoreClass split because P-cores cost more
+/// to leave parked than E-cores; default `default_hybrid()` ships
+/// `p_spin_iters = 128`, `e_spin_iters = 32` (4:1 ratio matching Apple
+/// Silicon P/E latency asymmetry).
+///
+/// Per `arvo-toolbox-not-policer.md`: fields are public, the
+/// `default_hybrid()` constructor provides sensible defaults, consumers
+/// override per-app via struct literal + `..default_hybrid()`. Removes
+/// the PureSpin / PurePark enum variants in favour of expressing both
+/// via the same struct (`p_spin = e_spin = USize::MAX` is pure-spin;
+/// `p_spin = e_spin = <USize as Identity<Additive>>::IDENTITY` is pure-park).
+pub struct WakeStrategy {
+    /// Spin iterations on P-cores before falling back to the atomic-
+    /// wait tier. Default 128.
+    pub p_spin_iters:       USize,
+    /// Spin iterations on E-cores before falling back. Default 32.
+    pub e_spin_iters:       USize,
+    /// Nanosecond threshold below which spin + atomic-wait (futex /
+    /// ulock / WaitOnAddress) is cheaper than full park. Default 2µs.
+    pub futex_threshold_ns: USize,
+    /// Nanosecond threshold above which spin is skipped entirely and
+    /// the worker parks immediately via the platform atomic-wait
+    /// primitive. Default 50µs.
+    pub park_threshold_ns:  USize,
+}
+
+impl WakeStrategy {
+    /// Substrate-default hybrid wake strategy.
+    /// P-cores spin longer (128 iters; they cost more to
+    /// re-park); E-cores yield quickly (32 iters; cheap to restart).
+    /// Thresholds: <2µs spin-only, 2-50µs spin+futex, >50µs park
+    /// immediately.
+    pub const fn default_hybrid() -> Self {
+        Self {
+            p_spin_iters:       USize(128),
+            e_spin_iters:       USize(32),
+            futex_threshold_ns: USize(2_000),
+            park_threshold_ns:  USize(50_000),
+        }
+    }
+}
+
+impl Default for WakeStrategy {
+    fn default() -> Self {
+        Self::default_hybrid()
+    }
+}
+
+/// Sealed executor trait.
+///
+/// The engine ships exactly one default impl `HybridExecutor` in
+/// `hilavitkutin::thread`. It takes the crate's one seal,
+/// `sealed::Sealed`, a public trait in a private module, so consumer
+/// impls of `Executor` cannot bypass the cross-thread atomic-ordering
+/// protocol.
+///
+/// Per-worker mainloop entry: `run(pool, core_id, wake_strategy)`
+/// walks the pre-computed `CoreProgram`, dispatching morsels, hitting
+/// phase barriers, and observing the shutdown signal between morsels.
+/// Returns `Outcome<(), ExecutorError>`; cleanly-shut workers return
+/// `Outcome::Ok(())`.
+pub trait Executor: crate::sealed::Sealed {
+    /// Per-worker mainloop. Spawned once per core at
+    /// `ThreadPool::build()` time; runs until `pool.shutdown` is set.
+    ///
+    /// `'arena` is the scratch arena's lifetime (where the
+    /// `progress_slots` storage lives); `'frame` is the borrow's
+    /// lifetime within this `run` call. The borrow checker enforces
+    /// `'arena: 'frame` from the `PoolFrame<'arena, ...>` instantiation.
+    fn run<'frame, 'arena, const C: usize, const P: usize>(
+        &self,
+        pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
+        core_id: USize,
+        wake_strategy: &WakeStrategy,
+    ) -> notko::Outcome<(), ExecutorError>;
+}
+
+/// Executor failure modes. `#[non_exhaustive]` so future variants
+/// don't break consumers.
+#[non_exhaustive]
+#[derive(Debug)]
+pub enum ExecutorError {
+    /// Worker exited because `pool.shutdown` was set. Not a true
+    /// failure; the cleanup path.
+    Shutdown,
+}
+
+/// The substrate's default `Executor` impl.
+///
+/// Per-worker mainloop: walks the pre-computed `CoreProgram`,
+/// dispatches morsels via the engine's `dispatch::run_fiber<S>` per
+/// fiber shape, hits the centralised phase barrier between phase
+/// boundaries, observes the shutdown signal between morsels.
+///
+/// Zero-sized marker. Sealed via the api crate's private supertrait
+/// so consumer impls of `Executor` cannot bypass the cross-thread
+/// atomic-ordering protocol. The
+/// re-export module `hilavitkutin::thread::hybrid` lifts this type
+/// into the engine's public surface.
+pub struct HybridExecutor;
+
+impl crate::sealed::Sealed for HybridExecutor {}
+
+impl Executor for HybridExecutor {
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    fn run<'frame, 'arena, const C: usize, const P: usize>( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+        &self,
+        pool: core::pin::Pin<&'frame PoolFrame<'arena, C, P>>,
+        core_id: USize,
+        wake_strategy: &WakeStrategy,
+    ) -> notko::Outcome<(), ExecutorError> {
+        // FIXME(placeholders_tagged_fe682c10859c): the worker mainloop is not written. It
+        // would walk the pre-computed CoreProgram, dispatch morsels,
+        // hit the phase barriers and observe the shutdown signal,
+        // monomorphised per (C, P, CoreProgram) at scheduler-build
+        // time. This body does none of that and returns Ok, so the type
+        // and its sealed impls are reachable to downstream construction
+        // code.
+        let _ = (pool, core_id, wake_strategy);
+        notko::Outcome::Ok(())
+    }
+}

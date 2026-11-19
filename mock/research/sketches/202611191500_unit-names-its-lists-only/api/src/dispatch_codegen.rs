@@ -1,0 +1,399 @@
+//! `DispatchCodegen<Cfg>` trait + TAIT `CoreDispatch` + sealed
+//! `FiberShape` marker family + `CoreProgram` / `PhaseEntry` /
+//! `RecordRange` / `SyncRole` data shapes.
+//!
+//! `DispatchCodegen` is the trait the engine implements (single
+//! shipped impl `StandardCodegen` in `hilavitkutin::dispatch::standard`)
+//! to translate `(ExecutionPlan, CoreProgram, Cfg::Units)` into a
+//! monomorphised per-core dispatch closure. The trait is sealed
+//! so only substrate-controlled codegen variants
+//! can ship. The `CoreDispatch` TAIT keeps the closure type opaque
+//! to consumers.
+//!
+//! `FiberShape` is the sealed marker family per-shape codegen
+//! emits at build time. Each unique fiber-shape (WU sequence)
+//! across the plan gets one impl; LLVM monomorphises per shape.
+//! Consumers cannot impl FiberShape; impls are codegen artefacts.
+
+use core::marker::PhantomData;
+
+use arvo::strategy::{Additive, Identity};
+use arvo::traits::FromConstant;
+use arvo::{USize, Uint};
+
+use crate::sealed;
+
+/// `PhaseId` newtype carrying the plan-stage-assigned phase index.
+///
+/// Bit budget 5: phases rarely exceed 20 in any plan. arvo picks
+/// the underlying container per strategy.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct PhaseId(pub Uint<5>);
+
+impl core::fmt::Debug for PhaseId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "PhaseId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
+    }
+}
+
+// A block of its own, so rustfmt's impl-item reordering has no later item to
+// move the `lint:allow` onto.
+impl PhaseId {
+    /// Number of distinct phase ids this fixed-width type can name.
+    ///
+    /// `PhaseId` wraps `Uint<5>`, so it addresses indices `0 .. 2^5`. A
+    /// `PlanDims` whose phase capacity exceeds this cannot name its high
+    /// slots; the plan stage rejects such a dims rather than wrapping ids.
+    /// Keep in sync with the `Uint<5>` width above.
+    pub const ADDRESSABLE: usize = 1 << 5; // lint:allow(no-bare-numeric) reason: 2^(Uint<5> width): the addressable-id-count bound; tracked: #641
+}
+
+impl PhaseId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<5> as Identity<Additive>>::IDENTITY);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<5> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<5>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+}
+
+impl Default for PhaseId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// `TrunkId` newtype carrying the plan-stage-assigned trunk index.
+///
+/// Bit budget 6: trunks per phase are fewer than fibers; 64 is
+/// generous for any realistic plan.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct TrunkId(pub Uint<6>);
+
+impl core::fmt::Debug for TrunkId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "TrunkId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
+    }
+}
+
+impl TrunkId {
+    /// Number of distinct trunk ids this fixed-width type can name.
+    ///
+    /// `TrunkId` wraps `Uint<6>`, so it addresses indices `0 .. 2^6`. A
+    /// `PlanDims` whose trunk capacity exceeds this cannot name its high
+    /// slots; the plan stage rejects such a dims rather than wrapping ids.
+    /// Keep in sync with the `Uint<6>` width above.
+    pub const ADDRESSABLE: usize = 1 << 6; // lint:allow(no-bare-numeric) reason: 2^(Uint<6> width): the addressable-id-count bound; tracked: #641
+}
+
+impl TrunkId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<6> as Identity<Additive>>::IDENTITY);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<6> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<6>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+}
+
+impl Default for TrunkId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// `FiberId` newtype carrying the plan-stage-assigned fiber index.
+/// Distinct from `StoreId` / `UnitId` for type-safety at access
+/// sites.
+///
+/// Bit budget 7: even a 64-core plan rarely exceeds 100 fibers.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct FiberId(pub Uint<7>);
+
+impl core::fmt::Debug for FiberId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "FiberId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
+    }
+}
+
+impl FiberId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<7> as Identity<Additive>>::IDENTITY);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<7> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<7>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+}
+
+impl Default for FiberId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// `UnitId` newtype carrying the plan-stage-assigned WorkUnit index.
+///
+/// Named `UnitId` (not `NodeId`) to keep engine vocabulary distinct
+/// from arvo graph-substrate vocabulary.
+///
+/// Bit budget 16: WU count grows into the thousands across larger
+/// consumers (viola plugin sets, loimu pipelines); 65K is the cap.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct UnitId(pub Uint<16>);
+
+impl core::fmt::Debug for UnitId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "UnitId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
+    }
+}
+
+impl UnitId {
+    /// Zero-valued default.
+    pub const ZERO: Self = Self(<Uint<16> as Identity<Additive>>::IDENTITY);
+
+    /// Typed-const constructor for non-zero indices.
+    pub const fn from_constant<const C: USize>() -> Self {
+        Self(<Uint<16> as FromConstant>::from_constant::<C>())
+    }
+
+    /// Project to the array-index value.
+    pub const fn index(self) -> USize {
+        USize(self.0.to_raw() as usize) // lint:allow(no-bare-numeric) reason: typed-id to array-index boundary; to_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+
+    /// Reconstruct from an array-index value.
+    pub const fn from_index(i: USize) -> Self {
+        Self(Uint::<16>::from_raw(i.0 as _)) // lint:allow(no-bare-numeric) reason: array-index to typed-id boundary; from_raw is arvo's strategy-aware container projection (replaces transmute_copy); tracked: #339
+    }
+}
+
+impl Default for UnitId {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+/// Per-core projection of `ExecutionPlan`. Each core's worker walks
+/// this at runtime to issue phase-sync points + dispatch morsels.
+///
+/// Plan-stage produces one `CoreProgram` per physical core (laid
+/// out in the plan-stage scratch arena). Codegen emits
+/// a per-core closure parameterised by const-known fields of this
+/// program.
+#[derive(Copy, Clone, Debug)]
+pub struct CoreProgram<
+    const MAX_PHASES_PER_CORE: usize,
+    const MAX_TRUNKS_PER_CORE: usize,
+    const MAX_FIBERS_PER_CORE: usize,
+> {
+    /// Phases this core participates in.
+    pub phases:      [PhaseEntry; MAX_PHASES_PER_CORE],
+    pub phase_count: USize,
+
+    /// Trunks this core owns.
+    pub trunks:      [TrunkId; MAX_TRUNKS_PER_CORE],
+    pub trunk_count: USize,
+
+    /// Per-fiber record range for this core. Full / Head / Tail.
+    pub fiber_ranges: [(FiberId, RecordRange); MAX_FIBERS_PER_CORE],
+    pub range_count:  USize,
+
+    /// Estimated icache footprint of the monomorphised per-core
+    /// function in bytes. Plan stage uses
+    /// this to fall back ScheduleMega → TrunkMega → IndirectPerFiber
+    /// when budget exceeds platform L1 icache.
+    pub estimated_icache_bytes: USize,
+
+    /// Index into `PoolFrame.progress_slots[]` for this core's
+    /// progress counter base, with arena indirection.
+    pub progress_slot_idx: USize,
+
+    /// Offset of this core's bit within `PoolFrame.phase_arrived`.
+    pub phase_arrived_offset: USize,
+}
+
+impl<
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+{
+    /// All-zero program. Used as the array-init default before
+    /// `synthesise_core_programs` populates real values.
+    pub const fn new() -> Self {
+        Self {
+            phases:                 [PhaseEntry::new(); MAX_PHASES_PER_CORE],
+            phase_count:            <USize as Identity<Additive>>::IDENTITY,
+            trunks:                 [TrunkId::ZERO; MAX_TRUNKS_PER_CORE],
+            trunk_count:            <USize as Identity<Additive>>::IDENTITY,
+            fiber_ranges:           [(FiberId::ZERO, RecordRange::Full); MAX_FIBERS_PER_CORE],
+            range_count:            <USize as Identity<Additive>>::IDENTITY,
+            estimated_icache_bytes: <USize as Identity<Additive>>::IDENTITY,
+            progress_slot_idx:      <USize as Identity<Additive>>::IDENTITY,
+            phase_arrived_offset:   <USize as Identity<Additive>>::IDENTITY,
+        }
+    }
+}
+
+impl<
+    const MAX_PHASES_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_TRUNKS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    const MAX_FIBERS_PER_CORE: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+> Default for CoreProgram<MAX_PHASES_PER_CORE, MAX_TRUNKS_PER_CORE, MAX_FIBERS_PER_CORE>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Per-phase entry on a `CoreProgram`.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct PhaseEntry {
+    pub phase:     PhaseId,
+    /// What this core does at the phase barrier: wait, signal, or
+    /// both.
+    pub sync_role: SyncRole,
+}
+
+impl PhaseEntry {
+    /// Default-initialised entry; phase = ZERO, role = `WaitAndSignal`.
+    pub const fn new() -> Self {
+        Self {
+            phase:     PhaseId::ZERO,
+            sync_role: SyncRole::WaitAndSignal,
+        }
+    }
+}
+
+impl Default for PhaseEntry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Phase-sync role for a core at a given phase.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum SyncRole {
+    /// This core waits for the producer counter.
+    WaitOnly,
+    /// This core only produces; downstream waits.
+    SignalOnly,
+    /// Midstream phase: waits AND signals.
+    WaitAndSignal,
+}
+
+/// Per-core record range, with head+tail convergence. Exactly three
+/// variants; there is no `Custom` fallback, so a consumer needing a
+/// different range shape needs this enum replaced.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum RecordRange {
+    /// Full range `0..record_count`.
+    Full,
+    /// Head half: `0..mid` (head+tail convergence, head thread).
+    Head {
+        mid_slot: USize,
+    },
+    /// Tail half: `mid..record_count` (head+tail convergence, tail thread).
+    Tail {
+        mid_slot: USize,
+    },
+}
+
+/// `DispatchCodegen<Cfg>` produces a monomorphised per-core dispatch
+/// closure from an `ExecutionPlan` + `CoreProgram` projection.
+/// Sealed; single shipped impl `StandardCodegen`.
+///
+/// The `CoreDispatch` TAIT keeps the closure type opaque (consumer
+/// cannot name it); `#[inline]` on `build` forces consumer-site
+/// re-codegen.
+///
+/// **Pre-stub:** the actual associated `type CoreDispatch = impl
+/// Fn(...)` lowering lands in the engine impl. This trait
+/// declaration just commits the surface.
+pub trait DispatchCodegen<Cfg>: sealed::Sealed {
+    /// The monomorphised per-core dispatch closure type. Engine
+    /// impls set this via TAIT
+    /// `type CoreDispatch = impl Fn(...) -> notko::Outcome<(), AccumRefused>;`.
+    type CoreDispatch;
+}
+
+/// The single shipped `DispatchCodegen` implementer. Both the marker type AND its trait
+/// impl `DispatchCodegen<Cfg>` live in the api crate because the seal is api-internal and
+/// because trait impls follow the orphan rule (trait OR impl-target
+/// must be local). Engine-side emit code consumes the marker via
+/// `hilavitkutin::dispatch::standard`.
+///
+/// Zero-sized. Constructible by anyone; no instances escape the
+/// engine because the public traits all carry sealed bounds.
+#[derive(Copy, Clone, Debug, Default)]
+pub struct StandardCodegen;
+
+impl sealed::Sealed for StandardCodegen {}
+
+/// `CoreDispatch` is a `()` placeholder. The TAIT lowering
+/// `type CoreDispatch = impl Fn(&PoolFrame<...>) -> Outcome<(), AccumRefused>;`
+/// lands once the defining-use closure body emits in the engine's
+/// `dispatch::standard` follow-ups (run_fiber, wu_fn,
+/// morsel, sync). The design uses TAIT; this placeholder
+/// reserves the type-slot until the closure body resolves it.
+impl<Cfg> DispatchCodegen<Cfg> for StandardCodegen
+where
+    Cfg: crate::run_cfg::RunCfg,
+{
+    type CoreDispatch = ();
+}
+
+/// Sealed marker family: per-fiber-shape monomorphisation key.
+/// Codegen emits one impl per unique fiber shape encountered in the plan; consumers cannot
+/// impl this. `WuTuple` is the typed tuple of WU types in fiber-
+/// execution order; `SHAPE_ID` is the dedup hash.
+pub trait FiberShape: sealed::Sealed {
+    /// Type-level tuple of WU types in fiber-execution order.
+    type WuTuple;
+
+    /// Stable identity for de-duplication. Codegen hashes the
+    /// `WuTuple` type-id sequence.
+    const SHAPE_ID: USize;
+}
+
+/// Marker handle for a registered store. Distinct from `StoreId`
+/// (a runtime ID); this is the type-level evidence.
+pub struct StoreMarker<T>(PhantomData<T>);

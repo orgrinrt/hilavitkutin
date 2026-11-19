@@ -1,0 +1,119 @@
+diff --git a/crates/hilavitkutin-api/src/lib.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
+index 989d7403..7ced8842 100644
+--- a/crates/hilavitkutin-api/src/lib.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
+@@ -55,6 +55,8 @@ pub mod sink;
+ pub mod storage;
+ pub mod store;
+ pub mod store_values;
++#[cfg(feature = "unit-blanket")]
++pub mod unit;
+ pub mod values;
+ pub mod work_unit;
+ pub mod work_unit_values;
+@@ -236,6 +238,7 @@ pub use work_unit::{
+     On,
+     OnMeta,
+     Plannable,
++    Positional,
+     ScheduleGate,
+     WorkUnit,
+     WorkUnitBundle,
+diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs
+new file mode 100644
+index 00000000..e7c9c7d7
+--- /dev/null
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/unit.rs
+@@ -0,0 +1,50 @@
++//! Sketch addition (202611191500), behind the feature `unit-blanket`: a unit
++//! as one impl.
++//!
++//! Without this file a unit that names its lists and nothing else is three
++//! impls: `BuilderInput`, `WorkUnit` (the declaration) and `RecordOp` (the
++//! body). `Unit` is the three as one trait, and three blankets grant them.
++//! It adds no contract of its own: every item of it is an item of one of the
++//! three.
++
++use crate::builder_input::{BuilderInput, UnitDispatch};
++use crate::hint::SchedulingHint;
++use crate::record_op::RecordOp;
++use crate::values::{ReadSet, ReadVals, WriteSet, WriteVals};
++use crate::work_unit::WorkUnit;
++
++/// A unit whose body is its value function, declared in one impl.
++///
++/// The read list, the write list, the hint, and `apply`: the values of the
++/// write list at one record, from the values of the read list at that record.
++/// The schedule is `Always`.
++pub trait Unit: Send + Sync + Sized + 'static {
++    /// The stores the function reads.
++    type Read: ReadSet;
++    /// The stores the function returns values for.
++    type Write: WriteSet;
++    /// The scheduling hint.
++    type Hint: SchedulingHint;
++
++    /// The values of the write list at one record, from the values of the read
++    /// list at that record. Must be a pure function of `read`.
++    fn apply(&self, read: &ReadVals<'_, Self::Read>) -> WriteVals<Self::Write>;
++}
++
++impl<U: Unit> BuilderInput for U {
++    type Dispatch = UnitDispatch<U>;
++    type Init = U;
++}
++
++impl<U: Unit> WorkUnit for U {
++    type Hint = <U as Unit>::Hint;
++    type Read = <U as Unit>::Read;
++    type Write = <U as Unit>::Write;
++}
++
++impl<U: Unit> RecordOp for U {
++    #[inline(always)]
++    fn apply(&self, read: &ReadVals<'_, <U as Unit>::Read>) -> WriteVals<<U as Unit>::Write> {
++        <U as Unit>::apply(self, read)
++    }
++}
+diff --git a/crates/hilavitkutin-api/src/work_unit.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit.rs
+index 0b7ba1be..64d74b0a 100644
+--- a/crates/hilavitkutin-api/src/work_unit.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/work_unit.rs
+@@ -64,6 +64,24 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
+     /// Scheduling hint triple. Consumer provides; no default because
+     /// the implementing tuple is marker-specific.
+     type Hint: SchedulingHint;
++
++    /// True if the WU's writes commute across record order.
++    ///
++    /// Enables the scheduler to emit a reduce-style pattern instead
++    /// of serialising. Default `Bool::FALSE`: consumer opts in.
++    const COMMUTATIVE: Bool = Bool::FALSE;
++}
++
++/// Sketch edit (202611191500): the positional body of a unit, split out of
++/// `WorkUnit`.
++///
++/// `WorkUnit` above is now the declaration alone: the read list, the write
++/// list, the hint and the commutativity flag. A unit whose body walks the
++/// records itself through a context offers `Positional`: the context type and
++/// `execute`, both moved here unchanged. A unit whose body is a function from
++/// the values read to the values written offers `RecordOp` and names no
++/// context at all. A runner takes either.
++pub trait Positional<Schedule = Always>: WorkUnit<Schedule> {
+     /// Provider-tuple shape this WU's body consumes.
+     ///
+     /// GAT-shaped: the `'frame`
+@@ -82,12 +100,6 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
+         + HasBatch<Self::Read, Self::Write>
+         + HasReduce<Self::Read, Self::Write>;
+ 
+-    /// True if the WU's writes commute across record order.
+-    ///
+-    /// Enables the scheduler to emit a reduce-style pattern instead
+-    /// of serialising. Default `Bool::FALSE`: consumer opts in.
+-    const COMMUTATIVE: Bool = Bool::FALSE;
+-
+     /// Run this WU against the provided context for one morsel.
+     ///
+     /// The engine windows the record range into morsels and invokes

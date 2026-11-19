@@ -1,0 +1,36 @@
+$ cargo check -q -p hilavitkutin-api --features attempt-unit-sched
+
+The build stops with one E0119 for every `BuilderInput` impl the api holds
+(the stores, the run configuration, the extension surface, each adapt axis).
+The first two, as printed; the rest differ in the type named alone.
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `ExtensionSurface<_>`
+   --> api/src/builder_input.rs:174:1
+    |
+174 | impl<T: ?Sized + 'static> BuilderInput for ExtensionSurface<T> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `ExtensionSurface<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `builder_input::ExtensionSurface<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `DefaultRunCfg<_>`
+   --> api/src/run_cfg.rs:164:1
+    |
+164 | impl<O: AccumOverflow> BuilderInput for DefaultRunCfg<O> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `DefaultRunCfg<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `run_cfg::DefaultRunCfg<_>`
+
+The same build with the feature `unit-blanket` in its place, where the trait
+has no schedule parameter (`impl<U: Unit> BuilderInput for U`), prints nothing:
+a trait with no parameter of a downstream crate's own cannot be implemented
+downstream for an api type.
