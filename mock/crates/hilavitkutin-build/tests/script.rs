@@ -277,16 +277,19 @@ fn a_wrapper_that_holds_another_text_is_written_again() {
     assert!(!stale.said.contains("warning:"), "{}", stale.said);
 
     // Cargo dates a script's run from its start, so the wrapper the script
-    // wrote during that run reads as changed once more: the next build runs
-    // the script again, which finds the text in place and writes nothing.
-    // The build after that one compiles nothing.
+    // wrote during that run reads as changed once more and the next build
+    // runs the script again. It finds the text in place and leaves the
+    // file as it is: the file is the same one, written at the same moment.
+    let written = fs::metadata(&wrapper)
+        .and_then(|file| file.modified())
+        .expect("the wrapper has a date");
     build(&root);
-    let settled = build(&root);
-    assert!(
-        !settled.rustc.contains("--crate-name scratch_stale ")
-            && !settled.rustc.contains("--crate-name build_script_"),
-        "{}",
-        settled.rustc
+    build(&root);
+    assert_eq!(
+        fs::metadata(&wrapper)
+            .and_then(|file| file.modified())
+            .expect("the wrapper has a date"),
+        written
     );
     assert_eq!(
         fs::read_to_string(&wrapper).expect("the wrapper is there"),

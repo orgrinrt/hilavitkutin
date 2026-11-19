@@ -112,4 +112,6 @@ The round was reopened a last time for the design to say findings 2 and 3.
 6. Fixed. `a_wrapper_with_a_line_added_after_the_text_is_written_again`.
 7. `dev` is merged in and the suite rerun on the merge; the line below this list says what it gave.
 
+On the merge with `dev` (`1d854df3`) the whole workspace ran 723 tests and 722 passed. `hilavitkutin::ui compile_fail_fixtures`, red on `dev` during the first pass, passes there now. The one failure was this round's own `a_wrapper_that_holds_another_text_is_written_again`, which asserted that a later build compiles nothing; other tests building the crate in the shared target at the same time had cargo build the scratch script again. The test now holds what the round claims, that the script leaves a wrapper with the right text as it is, by the file's date, and the crate's suite passes on the merge.
+
 The follow-ups the pass does not block on are the ticket `hilavitkutin_build_follow_ups_from_the_three_review_passes_o`. One of them is not this branch's to change: the canon row `the_build_crate_is_a_shared_build_dependency_and_not_an_xtask_and_it_optimises_how_code_is_compiled` still names `configure().run()` as its mechanism, a call the crate never had. The pragma round, which rewrites what the canon says of this crate's mechanism, takes it to op with its own questions.
