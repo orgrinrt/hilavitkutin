@@ -1,3 +1,31 @@
+diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs
+new file mode 100644
+index 00000000..639d6a92
+--- /dev/null
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_read_vals_on_the_read_set.rs
+@@ -0,0 +1,22 @@
++//! Attempt c1, behind the feature `attempt-read-vals-on-the-read-set`: the
++//! read values bounded on `ReadSet`, as the shipped `ReadVals` is, over the
++//! read product on the carrier. Built once, and its compiler output is kept
++//! under `diagnostics/`.
++
++use notko_hlist::Place;
++
++use crate::values::{Read, ReadProd, ReadSet, Readable};
++
++/// `ReadVals`, bounded on the read set and not on one frame's product.
++pub struct ReadValsOnSet<'a, R: ReadSet>(pub ReadProd<'a, R>);
++
++impl<'a, R: ReadSet> ReadValsOnSet<'a, R> {
++    /// The value of `member` at this record.
++    pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
++    where
++        R: model::Has<Read<'a>, M, P>,
++    {
++        core::mem::forget(member);
++        *<R as model::Has<Read<'a>, M, P>>::pick(&self.0)
++    }
++}
 diff --git a/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_unit_sched.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/attempt_unit_sched.rs
 new file mode 100644
 index 00000000..6ad84062
@@ -31,19 +59,21 @@ index 00000000..6ad84062
 +    type Init = U;
 +}
 diff --git a/crates/hilavitkutin-api/src/lib.rs b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
-index 989d7403..d340c23c 100644
+index 989d7403..5179fccd 100644
 --- a/crates/hilavitkutin-api/src/lib.rs
 +++ b/research/sketches/202611191500_unit-names-its-lists-only/api/src/lib.rs
-@@ -33,6 +33,8 @@ pub mod access;
+@@ -33,6 +33,10 @@ pub mod access;
  pub mod accum_overflow;
  pub mod accum_refused;
  pub mod adapt;
++#[cfg(feature = "attempt-read-vals-on-the-read-set")]
++pub mod attempt_read_vals_on_the_read_set;
 +#[cfg(feature = "attempt-unit-sched")]
 +pub mod attempt_unit_sched;
  pub mod builder;
  pub mod builder_input;
  pub mod capability;
-@@ -55,6 +57,8 @@ pub mod sink;
+@@ -55,6 +59,8 @@ pub mod sink;
  pub mod storage;
  pub mod store;
  pub mod store_values;
@@ -52,7 +82,7 @@ index 989d7403..d340c23c 100644
  pub mod values;
  pub mod work_unit;
  pub mod work_unit_values;
-@@ -220,7 +224,8 @@ pub use store_values::{
+@@ -220,7 +226,8 @@ pub use store_values::{
      WorkUnitKind,
  };
  pub use values::{
@@ -62,7 +92,7 @@ index 989d7403..d340c23c 100644
      ReadSet,
      ReadVals,
      Readable,
-@@ -236,6 +241,7 @@ pub use work_unit::{
+@@ -236,6 +243,7 @@ pub use work_unit::{
      On,
      OnMeta,
      Plannable,

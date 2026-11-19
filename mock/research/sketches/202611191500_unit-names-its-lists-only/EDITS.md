@@ -4,7 +4,7 @@ This sketch carries its own copies of three shipped crates, because the form it 
 
 Every difference between a copy and its source is listed here and kept as a diff under `diagnostics/`, made with `git diff --no-index` after the last commit that touched the copies. The source of each crate is in `edits-api.diff`, `edits-engine.diff` and `edits-providers.diff`, each manifest in `edits-api-manifest.diff`, `edits-engine-manifest.diff` and `edits-providers-manifest.diff`, and the model in `edits-carrier-model.diff`. A file not named below is identical to its source. The tests, the examples and the design templates of the three crates were not copied.
 
-The repository's commit hook formats what a commit stages, and it changed the layout of files the sources hold unformatted. Seven carry no edit of this sketch and differ in layout alone: `engine/src/dispatch/sync.rs`, `engine/src/plan/laplacian.rs`, `engine/src/resource/accumulator.rs`, `engine/src/resource/mod.rs`, `engine/src/resource/provenance.rs`, `engine/src/scheduler/plan.rs` and `api/src/work_unit_values.rs`. `carrier-model/src/lib.rs` differs from notko's file in layout alone as well. The diffs show these too.
+The repository's commit hook formats what a commit stages, and it rewrote files the sources hold unformatted. Seven carry no edit of this sketch and differ by the formatter alone: `engine/src/dispatch/sync.rs`, `engine/src/plan/laplacian.rs`, `engine/src/resource/accumulator.rs`, `engine/src/resource/mod.rs`, `engine/src/resource/provenance.rs`, `engine/src/scheduler/plan.rs` and `api/src/work_unit_values.rs`. `carrier-model/src/lib.rs` differs from notko's file by the formatter alone as well. The diffs show these too. What the formatter did is more than line breaks in two places, neither of which changes what compiles: in the model it wrote `const impl<..> Trait for ..` where notko's file has `impl<..> const Trait for ..`, at six impls, and in the engine copy it moved trailing `// lint:allow(..)` comments off the lines they sat on.
 
 `kit/` is not a copy. It is a manifest alone whose `[lib] path` points at the shipped source, with `build = false`, so the workspace holds one api (the copy) and the shipped kit compiles against it unchanged. The build scripts of kit and providers do not run here.
 
@@ -18,9 +18,11 @@ The repository's commit hook formats what a commit stages, and it changed the la
 
 `api/src/attempt_unit_sched.rs` is new and compiles only under the feature `attempt-unit-sched`. It holds attempt s1, which does not compile, and is no part of the form.
 
-`api/src/lib.rs` gains the two gated module declarations, re-exports `Positional`, `Read` and `ReadProd`, and no longer re-exports `ReadAt`.
+`api/src/attempt_read_vals_on_the_read_set.rs` is new and compiles only under the feature of that name. It holds attempt c1, which does not compile, and is no part of the form.
 
-`api/Cargo.toml` gains the dependency on `carrier-model` and the features `unit-blanket` and `attempt-unit-sched`, both empty.
+`api/src/lib.rs` gains the three gated module declarations, re-exports `Positional`, `Read` and `ReadProd`, and no longer re-exports `ReadAt`.
+
+`api/Cargo.toml` gains the dependency on `carrier-model` and the features `unit-blanket`, `attempt-unit-sched` and `attempt-read-vals-on-the-read-set`, all empty.
 
 ## The engine copy
 
