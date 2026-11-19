@@ -1,0 +1,12 @@
+[workspace]
+
+[package]
+name = "sketch-takes-by-git"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# The local clone stands in for the remote; the revision is the commit
+# that added `dep-lib`.
+[dependencies]
+sketch-dep-lib = { git = "file:///home/user/hilavitkutin", rev = "4a78664b4f16857747e936b21db17553995e695c" }
