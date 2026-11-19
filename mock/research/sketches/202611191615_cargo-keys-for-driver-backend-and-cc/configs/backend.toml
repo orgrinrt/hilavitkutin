@@ -1,0 +1,6 @@
+# The backend: a profile key, behind cargo's unstable flag of the same name.
+[unstable]
+codegen-backend = true
+
+[profile.dev]
+codegen-backend = "cranelift"
