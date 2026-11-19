@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized] target(s) in 0.03s
+     Running tests/interner.rs (/home/user/target/debug/deps/interner-73d79f20159c1683)
+
+running 1 test
+error: test failed, to rerun pass `-p consumer-surface-probe --test interner`
+
+Caused by:
+  process didn't exit successfully: `/home/user/target/debug/deps/interner-73d79f20159c1683 resolve_of_the_overflow_handle --ignored --nocapture` (signal: 11, SIGSEGV: invalid memory reference)
+exit status 0

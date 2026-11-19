@@ -47,10 +47,21 @@ impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
 
 /// Host-implemented arena contract. Only handles runtime strings;
 /// const strings are short-circuited by `StringInterner`.
+///
+/// The arena keeps the interning law for runtime strings: equal
+/// strings get one id, so they give equal handles through
+/// `StringInterner`. Resolving an id at or past the arena's live count
+/// reads nothing outside the arena's storage; an overflow id masked into
+/// the 28-bit handle lands there. What it returns for such an id is not
+/// part of the contract and may equal a held string, the empty one.
+/// A `Str` names no interner, so a handle carried to another interner
+/// resolves to whatever that interner holds at its id.
 pub trait ArenaInterner {
-    /// Insert `s` into the arena and return its 28-bit ID.
+    /// Return the 28-bit ID of `s`: the ID already given to an equal
+    /// string, or a new one with `s` stored.
     fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
     /// Resolve a previously-returned arena ID back to the stored string.
+    /// An ID at or past the live count reads nothing outside the arena.
     fn arena_resolve(&self, id: u32) -> &str; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: resolved &str; u32 is the 28-bit id width; tracked: #72
 }
 
@@ -74,7 +85,8 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     }
 
     /// Intern a string. Checks the const linker section first; on miss,
-    /// falls back to the arena and tags the result as runtime.
+    /// falls back to the arena and tags the result as runtime. A runtime
+    /// string is deduplicated by the arena, as `ArenaInterner` requires.
     #[rustfmt::skip]
     pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
         if let Maybe::Is(h) = lookup_const_by_value(s) {
@@ -102,15 +114,15 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     ///
     /// Const handles delegate to the linker-section table; a
     /// const-table miss returns `Maybe::Isnt`. Runtime handles
-    /// always resolve via the arena: an arena that cannot resolve
-    /// is outside the `ArenaInterner` contract (the interner hands
-    /// out ids it can resolve), so the runtime branch returns
-    /// `Maybe::Is(...)` unconditionally.
+    /// resolve via the arena and come back as `Maybe::Is`, an id
+    /// the arena did not issue (the masked overflow id among them)
+    /// included.
     #[rustfmt::skip]
     pub fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary: resolved &str; tracked: #72
         if s.is_const().0 {
             lookup_const_by_handle(s)
         } else {
+            // FIXME(evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of): an id the arena did not issue comes back as `Maybe::Is`; `Maybe::Isnt` needs a resolve that can say it holds nothing.
             Maybe::Is(self.arena.arena_resolve(s.id().to_raw()))
         }
     }
