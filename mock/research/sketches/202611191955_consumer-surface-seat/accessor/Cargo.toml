@@ -1,0 +1,17 @@
+[package]
+name = "consumer-surface-accessor"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[features]
+# `fixed`: the shipped `HasInterner` shape, implemented once over every context
+# that can resolve the interner resource. Expected to fail with E0207.
+# `method`: the same reach as a generic method on a blanket extension trait.
+fixed = []
+method = []
+
+[dependencies]
+hilavitkutin-api.workspace = true
+hilavitkutin-providers.workspace = true
+hilavitkutin-str.workspace = true
