@@ -242,6 +242,24 @@ fn several_members_wire_the_workspace_together_and_all_take_the_flags() {
     }
 }
 
+/// The wrapper is held to the whole text and to nothing more: one that
+/// starts with the text and goes on is not current.
+#[test]
+fn a_wrapper_with_a_line_added_after_the_text_is_written_again() {
+    let root = workspace("longer");
+    let wrapper = root.join(".cargo/hilavitkutin-rustc-wrapper");
+    build(&root);
+    build(&root);
+
+    let longer = wrapper_text() + "# a line somebody added\n";
+    fs::write(&wrapper, &longer).expect("the longer wrapper");
+    build(&root);
+    assert_eq!(
+        fs::read_to_string(&wrapper).expect("the wrapper is there"),
+        wrapper_text()
+    );
+}
+
 #[test]
 fn a_wrapper_that_holds_another_text_is_written_again() {
     let root = workspace("stale");
@@ -395,9 +413,9 @@ fn a_path_dependency_in_another_workspace_has_that_workspace_wired() {
     let first = build(&root);
     assert!(root.join(".cargo/hilavitkutin-rustc-wrapper").exists());
     assert!(sibling.join(".cargo/hilavitkutin-rustc-wrapper").exists());
-    for compile in first.compiles_of("scratch_foreign_dep") {
-        assert!(!compile.contains(A_FLAG_OF_OURS), "{compile}");
-    }
+    let outside = first.compiles_of("scratch_foreign_dep");
+    assert_eq!(outside.len(), 1, "{}", first.rustc);
+    assert!(!outside[0].contains(A_FLAG_OF_OURS), "{}", outside[0]);
 
     // The outer workspace is wired now, and the script still cannot know.
     fs::remove_dir_all(sibling.join(".cargo")).expect("the second workspace's wiring goes");
@@ -411,7 +429,7 @@ fn a_path_dependency_in_another_workspace_has_that_workspace_wired() {
     let member = second.compiles_of("scratch_foreign");
     assert_eq!(member.len(), 1, "{}", second.rustc);
     assert!(member[0].ends_with(A_FLAG_OF_OURS), "{}", member[0]);
-    for compile in second.compiles_of("scratch_foreign_dep") {
-        assert!(!compile.contains(A_FLAG_OF_OURS), "{compile}");
-    }
+    let outside = second.compiles_of("scratch_foreign_dep");
+    assert_eq!(outside.len(), 1, "{}", second.rustc);
+    assert!(!outside[0].contains(A_FLAG_OF_OURS), "{}", outside[0]);
 }

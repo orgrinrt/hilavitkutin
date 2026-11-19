@@ -83,3 +83,33 @@ The round was reopened once more for the design to say findings 1, 3 and 5.
 7. Fixed. The text says the wiring is in place.
 
 The crate doc in `lib.rs` is corrected. The profiles no `PROFILE` reaches are the pragma round's, which reworks how a profile is chosen.
+
+## Pass 3, tip `c6ab1c6d`
+
+Verdict: merge after fixes. The third and last pass, by a fresh reviewer told of the first two as a record to test.
+
+The canon gate passed. It read the rows at `mock/registry/tenet/identity.toml` that make the workspace wrapper a mechanism of the canon and have every script call the crate's entry point, which `script!` does through `Prototype::configure`. The canon says nothing about writing into the consumer's tree; that is a design choice the doc changelist records. The suite audit found no tautological test.
+
+### Findings it holds must be fixed before landing
+
+1. Both `lint:allow(forbidden-imports)` lines are still at the tip, and it could not find the three tickets this record names in this repository's registry or in kaski's.
+2. The wrapper section of the design said `clippy-driver` gets the warning for dropped flags and that a wrapper is known by how its path ends, against the section above it and the source.
+3. Ten public items of the wiring were named nowhere in the design.
+4. The pragma table in the crate's rustdoc described plugins and profile settings no pragma writes, against the root `README.md` this branch rewrote and `flags.rs`.
+5. Two loops in the path dependency test pass where no rustc line matched.
+6. Nothing exercised the comparison's check that the wrapper on disk ends where the text ends: a wrapper with the text and a line after it would have been kept.
+7. The branch was three commits behind `dev`, so its green was the branch's and not the merge's.
+
+### What was done after pass 3
+
+The round was reopened a last time for the design to say findings 2 and 3.
+
+1. The allows go once this container's launcher runs mockspace `dev` at `1689dcc`, where stack-coord landed the lint's fix. The tickets are in the workspace's own tracker (clause-dev `.shared/scripts/life/tickets-mockspace.toml` and beside it), which is where `ticket` files what is not kaski's; `ticket show <id>` prints each.
+2. Fixed. One statement, in both sections.
+3. Fixed. The design names each item and says why it is public.
+4. Fixed. The table has what each pragma is for and what it writes today.
+5. Fixed. One rustc line is asserted, then read.
+6. Fixed. `a_wrapper_with_a_line_added_after_the_text_is_written_again`.
+7. `dev` is merged in and the suite rerun on the merge; the line below this list says what it gave.
+
+The follow-ups the pass does not block on are the ticket `hilavitkutin_build_follow_ups_from_the_three_review_passes_o`. One of them is not this branch's to change: the canon row `the_build_crate_is_a_shared_build_dependency_and_not_an_xtask_and_it_optimises_how_code_is_compiled` still names `configure().run()` as its mechanism, a call the crate never had. The pragma round, which rewrites what the canon says of this crate's mechanism, takes it to op with its own questions.

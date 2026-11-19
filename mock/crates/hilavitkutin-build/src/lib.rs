@@ -40,23 +40,27 @@
 //! # Pragma roster
 //!
 //! The 13 pragmas that `Pragma` exposes (definitions live in
-//! [`pragma`]; external-tool requirements in [`requirements`]):
+//! [`pragma`]; external-tool requirements in [`requirements`]). The
+//! second column is what the pragma is for, and the third what it
+//! writes today, as [`flags`] has it. A pragma that waits on a plugin, a
+//! profile or a tool is named, carries its requirement and writes
+//! nothing yet.
 //!
-//! | Pragma | Effect |
-//! |--------|--------|
-//! | `LoopOptimization` | IRCE, LoopPredication, SimplifyCFG, LoopInterchange, LoopDistribute, LoopDataPrefetch, SeparateConstOffsetFromGEP via `polka-passes.so`. |
-//! | `Polly` | Polyhedral optimiser; requires Polly-enabled LLVM. |
-//! | `MathPeephole` | Float peephole rewrites via `math-peephole.so`. |
-//! | `FastMath` | The `arvo_fast_math` cfg, for the configured crate's own code; it never reaches arvo. |
-//! | `ExpandedLto` | Fat LTO with codegen-units=1 (generated Cargo config). |
-//! | `Pgo` | Consume PGO profiles when present on disk. |
-//! | `Bolt` | Post-link binary rewriting (Linux ELF only). |
-//! | `Profiling` | Run profiling benchmarks post-build. |
-//! | `BuildStd` | Rebuild std from source with optimisation flags. |
-//! | `ParallelCodegen` | `-Zthreads=N` (0 = auto-detect). |
-//! | `SharedGenerics` | `-Zshare-generics=y`. |
-//! | `LoopFusion` | Experimental; fuse adjacent loops. |
-//! | `MimallocAllocator` | Advisory mimalloc recommendation. |
+//! | Pragma | For | Writes today |
+//! |--------|-----|--------------|
+//! | `LoopOptimization` | Loop passes beyond the default pipeline. | Five built-in `-Cllvm-args` loop options. |
+//! | `Polly` | The polyhedral optimiser of a Polly-enabled LLVM. | Nothing. |
+//! | `MathPeephole` | Float peephole rewrites; stands on `FastMath`. | Nothing. |
+//! | `FastMath` | Fast float math in the configured crate's own code. | The `arvo_fast_math` cfg; it never reaches arvo. |
+//! | `ExpandedLto` | Fat LTO with one codegen unit. | Nothing. |
+//! | `Pgo` | Profile-guided optimisation. | Nothing. |
+//! | `Bolt` | Post-link binary rewriting. | Nothing. |
+//! | `Profiling` | Profiling runs; stands on `Pgo` or `Bolt`. | Nothing. |
+//! | `BuildStd` | std rebuilt from source. | Nothing. |
+//! | `ParallelCodegen` | Frontend threads. | `-Zthreads=N` (0 lets rustc choose). |
+//! | `SharedGenerics` | Generic instances shared across crates. | `-Zshare-generics=y`. |
+//! | `LoopFusion` | Adjacent loops fused. | Nothing. |
+//! | `MimallocAllocator` | A recommendation of mimalloc. | Nothing. |
 //!
 //! The generated config file carries no `Cargo.toml`-shaped overrides
 //! (Profiles etc.).
