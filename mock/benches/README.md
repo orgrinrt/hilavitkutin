@@ -12,8 +12,7 @@ runner of its own.
 - `<bench>/bench.toml`: one bench, one question. Its arms are the
   directories under `<bench>/arms/`, each one cdylib exporting
   `bench_entry`, `bench_name`, `bench_abi_hash`. A bench with several
-  sweeps (`engine_vs_std`, `single-trunk-convergence`, `resource_storage`,
-  `frame_wide`) declares them as `[sweep.<name>]`; its arms build in the
+  sweeps declares them as `[sweep.<name>]`; its arms build in the
   workspace its own `Cargo.toml` declares over `arms/*`.
 - `support/`: the library crates the arms and the generated driver
   share: the routine types, the kernels, the five-check disassembly

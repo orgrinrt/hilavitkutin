@@ -1,0 +1,96 @@
+# Option 3 of the fold split, priced: the accumulator grouped by the data
+# against one partial per core and against one walker, under signed saturating
+# addition. Roadmap step B1b; the maintainer ruled that it carries no pass line
+# and its numbers go to him.
+#
+# Sections are named `w<W>_g<G>`: the worker count and the group width, read
+# back by the hooks into the input every arm of the section receives. The
+# worker counts run 1 to 4 at G = 64, which is the machine's maximum and
+# includes 3, a count the record counts do not divide; the group widths run
+# 8, 64 and 1024 at W = 4.
+#
+# The three arms compute three different results by design, and that is the
+# question, so the sections do not compare the arms with each other
+# (may_differ = true). Each arm is instead validated against its own hand
+# model before timing, rebuilt from the seed: `grouped`'s model names no worker
+# count, so its validation passing in every section is the equality across
+# worker counts, and `per_core`'s model at the section's count is the one that
+# moves. `required = true`: a mismatch fails the run. `threaded = true` keeps
+# the harness from pinning the worker subprocess to one core.
+
+title = "Accumulator grouped by the data: option 3 of the fold split priced"
+
+[timing]
+passes = 3
+runs_per_pass = 60
+batch_size = 10
+harness_runs = 1
+cooldowns_ms = [0]
+validation_seeds = 3
+determinism_check_seeds = 1
+
+[sweep.w1_g64]
+title = "W = 1, G = 64"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
+
+[sweep.w2_g64]
+title = "W = 2, G = 64"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
+
+[sweep.w3_g64]
+title = "W = 3, G = 64"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
+
+[sweep.w4_g64]
+title = "W = 4, G = 64"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
+
+[sweep.w4_g8]
+title = "W = 4, G = 8"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
+
+[sweep.w4_g1024]
+title = "W = 4, G = 1024"
+workload = "light"
+master_seed = 0x5EED_0000_0000_0001
+threaded = true
+may_differ = true
+required = true
+baseline = "ag_per_core"
+arms = ["ag_per_core", "ag_grouped", "ag_sequential"]
+points = [4096, 65536, 1048576]
