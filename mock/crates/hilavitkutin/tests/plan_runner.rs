@@ -107,8 +107,8 @@ fn morsel_windows_follow_the_l1_budget_per_fiber() {
     // (8 bytes), fiber 1's unit writes store 1 (2 bytes). Budget 1024/4/512:
     // fiber 0 window = (1024 / 8) = 128; fiber 1 = (1024 / 2) = 512 (upper
     // clamp), both already 4-aligned.
+    use hilavitkutin::dispatch::codegen::FiberId;
     use hilavitkutin::plan::MorselBudget;
-    use hilavitkutin_api::FiberId;
 
     let mut inputs: Inputs = PlanInputs::new();
     inputs.unit_count = USize(2); // lint:allow(no-bare-numeric) reason: smoke fixture; tracked: #427

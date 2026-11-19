@@ -8,8 +8,8 @@
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-use hilavitkutin_api::TrunkId;
 
+use crate::dispatch::codegen::TrunkId;
 use crate::plan::dims::PlanDims;
 use crate::plan::fiber::Fiber;
 

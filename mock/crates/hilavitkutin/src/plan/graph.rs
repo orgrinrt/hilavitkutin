@@ -27,8 +27,8 @@ use arvo::{Bool, USize};
 use arvo_bitmask::NodeId;
 use arvo_sparse::{Csr, CsrBidirectional};
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::UnitId;
 
+use crate::dispatch::codegen::UnitId;
 use crate::plan::dims::PlanDims;
 
 /// Classification of one dependency edge.

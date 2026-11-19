@@ -8,8 +8,8 @@ use core::fmt;
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-use hilavitkutin_api::UnitId;
 
+use crate::dispatch::codegen::UnitId;
 use crate::plan::{DefaultPlanDims, PlanDims};
 
 /// Failure modes for `SchedulerBuilder::build`.

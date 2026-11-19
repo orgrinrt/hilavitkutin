@@ -1,0 +1,50 @@
+1ae5c3eb chore: lock src changelist 202611191549
+0ba629ae feat: open the executor trait and test the engine seal's module
+9250ab72 chore: lock doc changelist 202611191546
+923fe3cd docs: keep op's rulings to his words and open the executor
+7b0c0928 docs: carry the cap-lifting topic's text into its flat file
+36644a06 docs: re-file the inherited cap-lifting topic flat
+02f7637a chore: close design round 202611191514
+52953a3c chore: lock src changelist 202611191517
+40d50b6f feat: keep `CeilingDiv` in the engine and test the engine seal
+8061d06e chore: lock doc changelist 202611191514
+fedc16df docs: teach notko's sink and keep `CeilingDiv` in the engine
+2977fcbf chore: close design round 202611191347
+e163ca23 chore: lock src changelist 202611191404
+3f0145c8 refactor!: move the engine-only items out of `hilavitkutin-api`
+0616590f chore: lock doc changelist 202611191347
+6f1f40de docs: name the engine's own seal for the codegen and the executor
+3d81ee84 chore: lock doc changelist 202611191347
+eca11803 docs: place the api items where op chose and supersede two rows
+9bf23a50 docs: decide the seventeen stranded branches of last week
+07a9e9a3 bench: add the build and link bench with its first default cells
+7b1a6136 chore: configure the `commit-subject` gate
+dea557ae bench: port every bench onto the current harness
+2b137e9d docs: land the first stack audit
+0e098dc4 docs: land the second stack audit
+c5567576 bench: land the overwritten july m1 and november xeon runs
+f623ba58 bench: land the linux results of 14 november on the generated driver
+c6a00a64 research: port channel documents into the research dir
+5a64c58a fix: say nothing of dropped flags under `clippy-driver`
+638fb969 bench: land the m1 results of 14 november
+35f55e13 bench: land the m1 results of 14 november
+7cb45cd6 research: land the second stack audit
+266650fb feat: land the skip differential, memory provider and unit abort
+62453a65 fix: make the hilavitkutin suite and surface hold what they claim
+ade63db9 fix: make the hilavitkutin benches measure what they claim
+f0304be0 docs: plan the engine's one path and its correctness work
+8236de3c feat: revise the hilavitkutin api in place
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e99af156 docs: record the load-time units panel and its sketches
+4d31368e fix: make the leaf crates green
+271909e5 feat: build every crate through `hilavitkutin-build`
+44f7de28 bench: add the frame_wide member and the wide bench matrix
+81c5c587 docs: land the record from every unmerged branch
+311a2ae6 feat: install a swapped resource value under a provisional spec
+c4902694 docs: audit hilavitkutin as part of the stack
+49ab3440 feat: land the recovered engine source, tests and bench variants
+ab63d610 bench: measure single trunk convergence against hand written loops
+ada51bb4 chore: port the lints to the one view of the tree
+6e971d1b docs: keep the perf gate section under the corrected findings
+6524900e docs: land the unlanded bench results and their run history
+c42d7074 feat: make an append past capacity a refusal the consumer configures

@@ -169,6 +169,25 @@ Turns the plan into executable code. Codegen is shaped by Topic 4 axes:
 - Codegen-wrapped via `#[inline(always)] fn invoke_<wu>_in_fiber_<n>`
   shim fns; LLVM elides the shim layer.
 
+The codegen surface is the engine's own and is declared in
+`dispatch::codegen`, since nothing outside the engine reads it. The
+plan stage assigns each phase, trunk, fiber and unit a fixed-width id,
+`PhaseId`, `TrunkId`, `FiberId` and `UnitId`, each a newtype over an
+arvo `Uint` with `index` and `from_index` at the array boundary. A
+`CoreProgram` is one core's projection of the plan: the `PhaseEntry`
+of each phase it takes part in, with its `SyncRole` at the barrier
+(wait, signal, or both), the trunks it owns, a `RecordRange` per fiber
+(the full range, or the head or the tail half under head and tail
+convergence), the estimated icache footprint that drives the fallback
+from `ScheduleMega` through `TrunkMega` to `IndirectPerFiber`, and its
+offsets into the pool frame. `DispatchCodegen` and `FiberShape` take
+the engine's seal, `EngineOnly`, a public trait in a private module
+of the engine, so only the engine implements them; `StandardCodegen`
+is the single implementer. The seal is the engine's own and not the
+api's: the api keeps its seal for the traits it closes, and the engine
+seals only the codegen traits, whose implementers are codegen
+artefacts.
+
 The fused-pipeline pattern within a fiber:
 
 1. Cache resources to stack-local array
@@ -708,10 +727,16 @@ pipeline lifetime.
 
 ### Executor trait
 
-Open `trait Executor: Sealed`, monomorphised. Default impl
-`HybridExecutor` ships in this crate. `Scheduler<'frame, Cfg, E: Executor = HybridExecutor>`
-propagates the type so consumers can swap in custom executors.
-Sealed bound enforces Topic 3 S7 cross-thread atomic-ordering protocol.
+Open `trait Executor`, monomorphised, declared in `thread` with its
+error `ExecutorError` and the library's deterministic executor
+`HybridExecutor`. A consumer whose per-record times vary enough to
+unbalance the cores may provide a stealing executor through the trait;
+`Scheduler<'frame, Cfg, E: Executor = HybridExecutor>` carries the type
+so it takes the library's place. An executor of its own holds the
+Topic 3 S7 cross-thread atomic-ordering protocol on the pool frame it
+is handed, as `HybridExecutor` does; the trait states the protocol
+rather than sealing it away. The pool frame and the wake strategy
+below are declared in `thread` as well.
 
 ### Three-tier parking
 
@@ -1115,6 +1140,15 @@ pub trait PlanDims {
     type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity;
 }
 ```
+
+A derived dimension such as units per fiber is the consumer's own
+associated type, worst case by default, and never computed from two
+others. Where a consumer wants the ceiling of one capacity over another
+as its pick, `plan::CeilingDiv`, implemented by `plan::Ceil<N, D>`,
+gives `N.div_ceil(D)` as a constant, so the division sits in an impl
+rather than in an array-length position; a zero divisor fails the
+build where the constant is read. It is a heuristic offered, and the
+engine reads none of it.
 
 `AccumsPerCore` and `PlanAffecting` are the consumer-tunable replacements
 for two formerly-hardcoded engine caps. `AccumsPerCore` sizes the accumulator

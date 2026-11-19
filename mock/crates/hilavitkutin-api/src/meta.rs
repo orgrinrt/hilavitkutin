@@ -102,7 +102,7 @@ pub struct SchedulerMetrics {
     /// with no new instrumentation.
     pub change_seen_count:    Cell<USize>,
     /// Worst-core idle time of the current frame in nanoseconds: the maximum
-    /// across the per-core `PoolFrame::idle_accumulator` slots the waist barrier
+    /// across the per-core idle accumulator slots of the engine pool frame the waist barrier
     /// fills. An `OnMeta` hook reads it as the phase-imbalance signal (the adapt
     /// trigger to re-select per-phase configs). The single-core and fused paths
     /// never cross a waist barrier, so they leave it zero: no inter-core wait

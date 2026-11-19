@@ -369,8 +369,7 @@ the bare primitive might otherwise appear.
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:159-178 were written by 8e63891 and 04e1cb9 of 2026-04-20, which ported the shared principles fragment of the workspace and tightened its bare-primitive section, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec scopes the raw-primitives lint to struct fields and public functions at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2240-2241 and keeps a primitive among the four forms of type at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206, so a table applying everywhere is the point row no_bare_primitive_exists_anywhere_in_the_stack puts to op; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:130-270 and mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2256, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+superseded_by = ["the_primitive_vocabulary_table_names_the_stack_type_that_replaces_each_bare_primitive_and_a_mutable_vector_parameter_becomes_notko_s_push"]
 keywords = ["primitive vocabulary", "Maybe", "Outcome", "Collector", "Str", "USize", "FastFloat", "Bool", "replacement table"]
 related = ["tenet::no_bare_primitive_exists_anywhere_in_the_stack"]
 
@@ -472,8 +471,7 @@ implementation choices, not contracts.
 '''
 origin = "stated"
 standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: its lines mock/PRINCIPLES.md.tmpl:60-66 were written by 8e63891 of 2026-04-20, which ported the shared principles fragment of the workspace into the template, and not by the seed 680a672, and no capture of op speaks of that fragment; the founding spec bans the vector and the box outright at mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2203-2204, which row hilavitkutin_does_not_use_the_alloc_crate_and_dynamic_storage_goes_through_slab_columns_or_stack_arrays holds, and op asks for the logic to work through generics with real bounds and associated types at mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:13-17, but no passage names iterator returns, slice reference bounds or the collector, diagnostic and byte emitter sinks; searched mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:531-560, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2198-2238 and mock/research/202611130850_the-record-read-whole/OP-ANSWERS-FRAGMENT.md:7-17, so it is not ratified by default from the written history and stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+superseded_by = ["trait_signatures_return_iterators_and_take_notko_s_sink_and_never_name_a_vector_or_boxed_slice"]
 keywords = ["no Vec", "Box<[T]>", "IntoIterator", "Collector", "DiagnosticSink", "ByteEmitter", "trait signature", "sink"]
 related = ["tenet::allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime"]
 

@@ -209,7 +209,7 @@ pub struct PlanStage;
 
 /// Meta-Virtual marker: per-core dispatch programs ready.
 ///
-/// Fired after `DispatchCodegen::build` completes. WUs bound to
+/// Fired after the engine's dispatch codegen completes. WUs bound to
 /// `OnMeta<ScheduleReady>` may inspect the assembled per-core programs.
 pub struct ScheduleReady;
 

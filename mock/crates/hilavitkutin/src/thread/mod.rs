@@ -16,6 +16,7 @@ pub mod frame;
 pub mod handle;
 pub mod hybrid;
 pub mod parking;
+pub mod pool_frame;
 
 use arvo::USize;
 use arvo_tensor::{Capacity, cap_size};
@@ -32,8 +33,7 @@ pub use frame::{
     request_shutdown,
 };
 pub use handle::ThreadHandle;
-pub use hilavitkutin_api::platform::WakeStrategy;
-pub use hybrid::HybridExecutor;
+pub use hybrid::{Executor, ExecutorError, HybridExecutor};
 pub use parking::{
     ParkTier,
     atomic_wait,
@@ -44,6 +44,7 @@ pub use parking::{
     spin,
     spin_budget_for,
 };
+pub use pool_frame::{PoolFrame, WakeStrategy};
 
 use crate::plan::PlanDims;
 
