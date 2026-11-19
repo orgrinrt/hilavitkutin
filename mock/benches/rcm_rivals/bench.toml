@@ -1,0 +1,25 @@
+# Ordering-theory rivals: the chain topology above cannot rank ordering
+# ALGORITHMS (on a chain, RCM, spectral, and greedy all collapse to the
+# same adjacency order), so this bench drives a 3x4 grid sharing topology
+# where they diverge. Columns are the 17 grid edges; WU n reads the edges
+# incident to grid node n and writes its own output; all permutations are
+# valid topological orders. Arms, by objective: riv_rcm minimises maximum
+# reuse distance (bandwidth 4, canon Step 5's pick), riv_spec minimises
+# total reuse distance (the minimum-linear-arrangement objective,
+# bandwidth 3), riv_snake maximises immediate consecutive sharing
+# (greedy nearest-neighbour, bandwidth 7), riv_rowm is the naive
+# row-major baseline, riv_scr the no-consecutive-sharing worst case.
+# Same n-to-records mapping and timing regime as rcm_order.
+title = "ordering theories on a grid: RCM vs spectral vs greedy vs row-major"
+workload = "realistic"
+master_seed = "0x51C3_04D3_1234_5679"
+
+arms = ["riv_rcm", "riv_spec", "riv_snake", "riv_rowm", "riv_scr"]
+points = [64, 256, 1024, 2048, 4096, 8192, 16384]
+
+[timing]
+passes = 3
+runs_per_pass = 30
+batch_size = 10
+harness_runs = 2
+cooldowns_ms = [0]

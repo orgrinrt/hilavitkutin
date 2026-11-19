@@ -8,9 +8,9 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-# The `frame_wide` workload and its arms, defined once. Every variant cdylib
-# under `../../variants/` is one call into `bench_call` here, so the workload,
-# the engine scaffolding and the plain bars exist in one place. std is allowed:
+# The `frame_wide` workload and its arms, defined once. Every arm cdylib
+# under `../../frame_wide/arms/` is one call into `bench_call` here, so the
+# workload, the engine scaffolding and the plain bars exist in one place. std is allowed:
 # this is a bench crate outside the no_std, no_alloc `mock/crates` members.
 # The arvo and notko pins are `engine_vs_std`'s, so the engine resolves to the
 # same dependency tree it already builds against there.

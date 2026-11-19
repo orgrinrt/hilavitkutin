@@ -117,9 +117,8 @@ pub fn worker_main(args: &[String]) -> ExitCode {
 
 /// Where an arm's cdylib actually is, given the path the manifest resolved.
 ///
-/// The harness resolves a short name to
-/// `variants/<name>/target/release/lib<name>.so`, a per-variant target
-/// directory. This member is one workspace building into whatever target
+/// The harness resolves a short name to `lib<name>.so` in a target directory
+/// of the arm's own. This member is one workspace building into whatever target
 /// directory cargo is configured with, so every arm lands beside the driver
 /// binary (and one level above a test binary, which cargo puts in `deps/`).
 /// The file name the harness resolved is kept, prefix and extension included,

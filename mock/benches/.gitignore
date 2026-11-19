@@ -1,7 +1,3 @@
-# cdylib variant build artifacts; rebuilt on demand by `cargo mock bench run`.
-variants/*/target/
-variants/*/Cargo.lock
-
-# top-level bench-binary target if any leaks in
+# Arm build artifacts and lockfiles, rebuilt on demand by `cargo mock bench run`.
 target/
 Cargo.lock

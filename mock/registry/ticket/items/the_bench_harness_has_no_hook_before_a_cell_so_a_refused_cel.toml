@@ -1,0 +1,13 @@
+[[ticket]]
+id = "the_bench_harness_has_no_hook_before_a_cell_so_a_refused_cel"
+title = "the bench harness has no hook before a cell so a refused cell fails"
+kind = "task"
+what = "The same ticket as the workspace agenda row of this id, filed by ticket add, which hilavitkutin's every-fixme-names-a-ticket cannot read (where_hilavitkutin_s_tickets_live_now_that_its_registry_has). Plan 59 section 8 has the hooks library refuse a group of cells whose disk is under its budget plus 1 GB and record the cells as absent. bench-harness Hooks has on_init, after_init, routine_for and after_cell only, and CellVerdict has Pass, Note and Fail, so mock/benches/support/build-call refuses in the untimed setup of each call (src/space.rs, src/call.rs) and the worker's panic fails the cell instead. Wanted from mockspace: a hook before each cell whose verdict can be absent with a reason."
+repos = ["hilavitkutin", "mockspace"]
+
+[[ticket_move]]
+id = "m20261116111302_coord_ae66"
+ticket = "the_bench_harness_has_no_hook_before_a_cell_so_a_refused_cel"
+to = "backlog"
+by = "coord"
+at = "2026-11-16T11:13:02Z"

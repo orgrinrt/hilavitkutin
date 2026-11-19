@@ -146,10 +146,9 @@ fn gate(dylib: &Path, fixtures_dir: &Path, check_only: bool) -> Result<(), Strin
             disasm_5check::run_checks_on_disasm(&text, dylib, &target.label, &morsel_immediates);
         let _ = write!(report, "{checked}");
         let c1 = checked
-            .outcomes
-            .first()
-            .ok_or("the checklist returned no outcomes")?;
-        match (target.kind, c1.pass) {
+            .indirect_call()
+            .ok_or("the checklist returned no indirect-call outcome")?;
+        match (target.kind, checked.devirtualised()) {
             (Kind::Control, true) => failures.push(format!(
                 "check 1 passed the control `{CONTROL}`, which calls through a stored pointer, so it is blind"
             )),

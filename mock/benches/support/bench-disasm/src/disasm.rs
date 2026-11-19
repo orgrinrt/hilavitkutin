@@ -120,30 +120,70 @@ impl<'a> Insn<'a> {
         is_reg.then(|| register_family(first))
     }
 
-    /// Whether this instruction may write registers it does not name: a call
-    /// (the callee may clobber every caller-saved register) and the x86_64
-    /// instructions with implicit destinations.
-    pub fn clobbers_implicitly(&self) -> bool {
+    /// Whether this is a direct call to a function that never returns: one
+    /// whose last name segment is in [`NO_RETURN`] or starts with
+    /// `panic_const_`. The match is on the exact segment, so a function that
+    /// merely lives in a `panicking` module and returns
+    /// (`std::panicking::panic_count::is_zero_slow_path`,
+    /// `std::panicking::panicking`) is a call that returns.
+    ///
+    /// Keeping register state across such a call assumes the instruction after
+    /// it is reached only by a jump from code that never called it, which is
+    /// how the compiler lays out a cold panic block. That is a guess about
+    /// layout, not something the disassembly proves: if a jump lands after the
+    /// call from a path where the register was overwritten, the import is
+    /// still reported as resolved and the gate passes silently.
+    pub fn calls_no_return(&self) -> bool {
         self.is_call()
-            || self.mnemonic.starts_with("rep")
-            || matches!(
-                self.mnemonic,
-                "mul"
-                    | "div"
-                    | "idiv"
-                    | "cqto"
-                    | "cltq"
-                    | "cltd"
-                    | "cpuid"
-                    | "rdtsc"
-                    | "rdtscp"
-                    | "syscall"
-                    | "xchg"
-                    | "cmpxchg"
-                    | "xadd"
-            )
-            || self.mnemonic.starts_with("lock")
-            || self.mnemonic == "imul" && !self.operands.contains(',')
+            && !self.operands.starts_with(['*', '%', 'x'])
+            && symbol_in(self.operands).is_some_and(|s| {
+                let name = last_segment(s);
+                NO_RETURN.contains(&name) || name.starts_with("panic_const_")
+            })
+    }
+
+    /// Whether this instruction may write register `family` without naming it
+    /// as its destination: a call that returns writes every caller-saved
+    /// register; an x86_64 instruction with implicit destinations writes those
+    /// (`div` writes `%rax` and `%rdx`, `syscall` `%rax`, `%rcx` and `%r11`); an
+    /// exchange writes every register it names. Anything else writes only what
+    /// [`Self::written_register`] reports, so a `lock add` to memory or a `div`
+    /// leaves `%r10` as it was.
+    pub fn clobbers(&self, family: &str) -> bool {
+        if self.is_call() {
+            return !self.calls_no_return() && caller_saved(family);
+        }
+        // `lock` and `rep` print as the mnemonic, the instruction they prefix
+        // as the first word of the operands.
+        let (m, ops) = match self.mnemonic {
+            "lock" | "rep" | "repz" | "repe" | "repnz" | "repne" => {
+                let rest = self.operands.trim_start();
+                rest.split_once(char::is_whitespace).unwrap_or((rest, ""))
+            },
+            m => (m, self.operands),
+        };
+        let implicit: &[&str] = match m {
+            _ if self.mnemonic.starts_with("rep") => &["%rax", "%rcx", "%rdi", "%rsi"],
+            "mul" | "div" | "idiv" => &["%rax", "%rdx"],
+            "imul" if !ops.contains(',') => &["%rax", "%rdx"],
+            "cqto" | "cltd" | "cwtd" => &["%rdx"],
+            "cltq" | "cwtl" | "cbtw" => &["%rax"],
+            "cpuid" => &["%rax", "%rbx", "%rcx", "%rdx"],
+            "rdtsc" => &["%rax", "%rdx"],
+            "rdtscp" => &["%rax", "%rcx", "%rdx"],
+            "syscall" => &["%rax", "%rcx", "%r11"],
+            _ if m.starts_with("cmpxchg") => &["%rax", "%rdx"],
+            _ => &[],
+        };
+        if implicit.contains(&family) {
+            return true;
+        }
+        let exchanges = m.starts_with("xchg") || m.starts_with("xadd") || m.starts_with("cmpxchg");
+        exchanges
+            && ops
+                .split(',')
+                .map(str::trim)
+                .any(|o| o.starts_with('%') && register_family(o) == family)
     }
 }
 
@@ -213,6 +253,93 @@ fn split_comment(rest: &str) -> (&str, &str) {
         return (rest[.. i].trim_end(), rest[i + 2 ..].trim());
     }
     (rest, "")
+}
+
+/// The last name segments of the functions that never return: the panics of
+/// `core` and `std`, the unwinding entry points, and `abort`.
+const NO_RETURN: &[&str] = &[
+    "panic",
+    "panic_fmt",
+    "panic_nounwind",
+    "panic_nounwind_fmt",
+    "panic_nounwind_nobacktrace",
+    "panic_bounds_check",
+    "panic_explicit",
+    "panic_display",
+    "panic_str_2015",
+    "panic_cannot_unwind",
+    "panic_in_cleanup",
+    "panic_misaligned_pointer_dereference",
+    "panic_null_pointer_dereference",
+    "begin_panic",
+    "begin_panic_handler",
+    "rust_begin_unwind",
+    "rust_panic",
+    "__rust_start_panic",
+    "rust_panic_with_hook",
+    "unwrap_failed",
+    "expect_failed",
+    "assert_failed",
+    "slice_index_order_fail",
+    "slice_start_index_len_fail",
+    "slice_end_index_len_fail",
+    "str_index_overflow_fail",
+    "handle_alloc_error",
+    "capacity_overflow",
+    "_Unwind_Resume",
+    "abort",
+];
+
+/// The last name segment of a symbol, in any of the three spellings objdump
+/// prints: v0 mangled (`_RNvNtCs1_4core9panicking5panic`), legacy mangled
+/// (`_ZN4core9panicking5panic17h<hash>E`) or demangled
+/// (`core::panicking::panic`, with or without `::h<hash>`). A plain C name is
+/// its own segment.
+fn last_segment(sym: &str) -> &str {
+    let is_hash = |s: &str| {
+        s.len() == 17 && s.starts_with('h') && s[1 ..].bytes().all(|b| b.is_ascii_hexdigit())
+    };
+    if sym.contains("::") {
+        let mut parts = sym.rsplit("::");
+        let last = parts.next().unwrap_or(sym);
+        return if is_hash(last) { parts.next().unwrap_or(last) } else { last };
+    }
+    let mut s = sym;
+    if let Some(body) = s.strip_prefix("_ZN").and_then(|b| b.strip_suffix('E')) {
+        s = body;
+        if s.len() > 19 && s.ends_with(|c: char| c.is_ascii_hexdigit()) {
+            let tail = &s[s.len() - 19 ..];
+            if tail.starts_with("17") && is_hash(&tail[2 ..]) {
+                s = &s[.. s.len() - 19];
+            }
+        }
+    } else if !sym.starts_with("_R") {
+        return sym;
+    }
+    // The segment is the suffix `<len>["_"]<ident>` whose decimal length matches.
+    // v0 writes the `_` only before an identifier that starts with `_` or a digit.
+    let bytes = s.as_bytes();
+    for i in 1 .. bytes.len() {
+        if bytes[i].is_ascii_digit() || !bytes[i - 1].is_ascii_digit() {
+            continue;
+        }
+        let start = s[.. i]
+            .rfind(|c: char| !c.is_ascii_digit())
+            .map_or(0, |p| p + 1);
+        let len = s[start .. i].parse::<usize>().ok();
+        if len == Some(bytes.len() - i) {
+            return &s[i ..];
+        }
+        if bytes[i] == b'_' {
+            let ident = &s[i + 1 ..];
+            if len == Some(ident.len())
+                && ident.starts_with(|c: char| c == '_' || c.is_ascii_digit())
+            {
+                return ident;
+            }
+        }
+    }
+    sym
 }
 
 /// The name inside the first `<...>` of `s`, cut at `@` or `+`.
@@ -292,9 +419,7 @@ pub fn indirect_calls(disasm: &str) -> IndirectCalls {
                 (false, None) => out.unresolved.push(location(line, base)),
             }
         }
-        if insn.clobbers_implicitly() {
-            holds.retain(|(r, _)| !caller_saved(r));
-        }
+        holds.retain(|(r, _)| !insn.clobbers(r));
         let Some(reg) = insn.written_register() else { continue };
         let source = if insn.mnemonic == "mov"
             && names_import(insn.comment)
@@ -362,129 +487,4 @@ pub fn disassemble(dylib: &Path, symbol: &str) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Lines as GNU objdump 2.4x prints them on x86_64, raw bytes shown.
-    const GNU_X86: &str = "\
-   1fa70:\t4c 8b 3d d9 50 04 00 \tmov    0x450d9(%rip),%r15        # 64b50 <syscall@GLIBC_2.2.5>
-   1fa80:\tbf ca 00 00 00       \tmov    $0xca,%edi
-   1fa92:\t41 ff d7             \tcall   *%r15
-   11ab8:\tff 15 72 30 05 00    \tcall   *0x53072(%rip)        # 64b30 <clock_gettime@GLIBC_2.17>
-   20f6d:\t49 8b 07             \tmov    (%r15),%rax
-   20f70:\t48 85 c0             \ttest   %rax,%rax
-   20f78:\tff d0                \tcall   *%rax
-";
-
-    #[test]
-    fn a_gnu_line_parses_into_its_parts() {
-        let line = GNU_X86.lines().next().unwrap();
-        let insn = Insn::parse(line).unwrap();
-        assert_eq!(insn.mnemonic, "mov");
-        assert_eq!(insn.operands, "0x450d9(%rip),%r15");
-        assert_eq!(insn.comment, "64b50 <syscall@GLIBC_2.2.5>");
-        assert_eq!(insn.comment_symbol(), Some("syscall"));
-        assert_eq!(insn.written_register().as_deref(), Some("%r15"));
-    }
-
-    #[test]
-    fn sub_registers_belong_to_their_family() {
-        for (sub, family) in [
-            ("%eax", "%rax"),
-            ("%al", "%rax"),
-            ("%r13d", "%r13"),
-            ("%r9b", "%r9"),
-            ("%sil", "%rsi"),
-            ("w8", "x8"),
-            ("%xmm0", "%xmm0"),
-        ] {
-            assert_eq!(register_family(sub), family, "{sub}");
-        }
-    }
-
-    #[test]
-    fn a_narrow_write_and_a_call_each_forget_the_import() {
-        let narrowed = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c288:\tmov    $0x1,%r13d
-   1c9a4:\tcall   *%r13
-";
-        assert_eq!(indirect_calls(narrowed).unresolved, ["1c9a4"]);
-        // rax is caller-saved, so the first call may have replaced it; r13 is
-        // callee-saved and survives.
-        let across_call = "\
-   1c990:\tmov    0x481a2(%rip),%rax        # 64b40 <memset@GLIBC_2.2.5>
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c99e:\tcall   *%r13
-   1c9b0:\tcall   *%rax
-";
-        let calls = indirect_calls(across_call);
-        assert_eq!(calls.to_imports, ["memset"]);
-        assert_eq!(calls.unresolved, ["1c9b0"]);
-    }
-
-    #[test]
-    fn headers_and_labels_are_not_instructions() {
-        assert_eq!(Insn::parse(""), None);
-        assert_eq!(Insn::parse("Disassembly of section .text:"), None);
-        assert_eq!(
-            Insn::parse("000000000001f500 <asm_gate_column_chain>:"),
-            None
-        );
-        assert_eq!(Insn::parse("   1fa92:\t41 ff d7 "), None);
-    }
-
-    #[test]
-    fn a_padded_indirect_call_is_seen() {
-        // The form the old `\tcall\t*` match never matched.
-        let insn = Insn::parse("   1fa92:\t41 ff d7             \tcall   *%r15").unwrap();
-        assert!(insn.is_indirect_call());
-        assert!(
-            !Insn::parse("   1cab2:\te8 59 e3 ff ff \tcall   1ae10 <f>")
-                .unwrap()
-                .is_indirect_call()
-        );
-    }
-
-    #[test]
-    fn import_calls_resolve_and_a_loaded_pointer_does_not() {
-        let calls = indirect_calls(GNU_X86);
-        assert_eq!(calls.to_imports, ["syscall", "clock_gettime"]);
-        assert_eq!(calls.unresolved, ["20f78"]);
-        // Under a symbol header the location is an offset into the symbol.
-        let headed = format!("0000000000020f00 <asm_gate_x>:\n{GNU_X86}");
-        assert_eq!(indirect_calls(&headed).unresolved, ["+0x78"]);
-    }
-
-    #[test]
-    fn a_copy_keeps_the_import_and_an_overwrite_forgets_it() {
-        let copied = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1caee:\tmov    %r13,%rax
-   1cb4b:\tcall   *%rax
-";
-        assert_eq!(indirect_calls(copied).to_imports, ["memset"]);
-        let overwritten = "\
-   1c997:\tmov    0x481a2(%rip),%r13        # 64b40 <memset@GLIBC_2.2.5>
-   1c9a0:\tadd    $0x8,%r13
-   1c9a4:\tcall   *%r13
-";
-        assert_eq!(indirect_calls(overwritten).unresolved, ["1c9a4"]);
-    }
-
-    #[test]
-    fn an_aarch64_blr_is_indirect_and_unresolved() {
-        let a64 = "   8f0:\tf9400108 \tldr\tx8, [x8, #16]\n   8f4:\td63f0100 \tblr\tx8\n";
-        let calls = indirect_calls(a64);
-        assert!(calls.to_imports.is_empty());
-        assert_eq!(calls.unresolved, ["8f4"]);
-        let imm = Insn::parse("   8f8:\td2802000 \tmov\tx0, #0x100").unwrap();
-        assert_eq!(imm.operands, "x0, #0x100");
-        assert_eq!(imm.written_register().as_deref(), Some("x0"));
-        // A mnemonic that is also hex digits, behind raw bytes that contain it.
-        let add = Insn::parse("   900:\t8add0000 \tadd\tx8, x8, #0x1").unwrap();
-        assert_eq!((add.mnemonic, add.operands), ("add", "x8, x8, #0x1"));
-        let bare = Insn::parse("   904:\tfadd\td0, d1, d2").unwrap();
-        assert_eq!((bare.mnemonic, bare.operands), ("fadd", "d0, d1, d2"));
-    }
-}
+mod tests;

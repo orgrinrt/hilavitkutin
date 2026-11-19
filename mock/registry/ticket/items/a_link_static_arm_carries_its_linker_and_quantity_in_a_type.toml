@@ -1,0 +1,13 @@
+[[ticket]]
+id = "a_link_static_arm_carries_its_linker_and_quantity_in_a_type"
+title = "a link-static arm carries its linker and quantity in a type, not its name"
+kind = "task"
+what = "The same ticket as the workspace agenda row of this id, filed by ticket add, which hilavitkutin's every-fixme-names-a-ticket cannot read (where_hilavitkutin_s_tickets_live_now_that_its_registry_has). Each link-static arm is described three times (its name in bench.toml, its bench_variant, the Arm passed to bench_call) and build-call parses its linker and quantity back from the name's suffix (src/linker.rs named, src/record.rs is_replay). The arm's type should carry the linker and the quantity so nothing is parsed from a name and the three descriptions cannot disagree."
+repos = ["hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261116150000_coord_b5a2"
+ticket = "a_link_static_arm_carries_its_linker_and_quantity_in_a_type"
+to = "backlog"
+by = "coord"
+at = "2026-11-16T15:00:00Z"

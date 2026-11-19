@@ -35,6 +35,8 @@
 # (ticket 3ec38cb5c7c8), and validation spawns one probe worker per arm per
 # seed, so the seed count is kept low: four seeds of 65536 records each is
 # already a quarter million records checked per arm against the reference.
+title = "One simulation frame, wide, under heavy and light per-stage compute"
+
 [timing]
 passes = 2
 runs_per_pass = 20
@@ -44,7 +46,7 @@ cooldowns_ms = [0]
 validation_seeds = 4
 determinism_check_seeds = 4
 
-[bench.heavy]
+[sweep.heavy]
 title = "Wide frame, heavy per-record compute"
 workload = "frame"
 master_seed = "0xF4A3_E000_0000_0001"
@@ -55,9 +57,9 @@ arms = ["fw_engine", "fw_engine_par", "fw_hand", "fw_hand_par", "fw_rust_nostd",
 # FIXME(placeholders_tagged_5f526d071953): only 65536 has been run. The three large sizes are the
 # intended region and are configured, but no cell of them has results, so this
 # list advertises more than the tree holds.
-sizes = [65536, 1048576, 4194304, 16777216]
+points = [65536, 1048576, 4194304, 16777216]
 
-[bench.light]
+[sweep.light]
 title = "Wide frame, one multiply per stage"
 workload = "frame"
 master_seed = "0xF4A3_E000_0000_0002"
@@ -65,4 +67,5 @@ may_differ = false
 required = true
 threaded = true
 arms = ["fw_engine", "fw_engine_par", "fw_hand", "fw_hand_par", "fw_rust_nostd", "fw_rust_std", "fw_rust_std_par"]
-sizes = [65536, 1048576, 4194304, 16777216]
+points = [65536, 1048576, 4194304, 16777216]
+

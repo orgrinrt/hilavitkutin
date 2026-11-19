@@ -126,6 +126,15 @@ commit = "error"
 build = "error"
 push = "error"
 
+# The `rot_manual_shifts` and `sat_checked` arms measure hand-written idioms
+# clippy autofix rewrites into the intrinsics their siblings time; the port
+# did so once and both arms went on reporting under their own names. Repo
+# lint, `mock/lints/`.
+[lints.a-bench-arm-keeps-the-idiom-it-measures]
+commit = "error"
+build = "error"
+push = "error"
+
 # A frozen crate is written as a consumer would write it: no feature gate and
 # no raised recursion limit, each of which would hide what the api makes an
 # author do. A frozen crate also changes only through its ledger: every file
@@ -1524,3 +1533,9 @@ maintainer_names = ["op", "lead designer"]
 [tools.tickets]
 maintainer_words = "../.data/op-responses"
 maintainer_names = ["op", "lead designer"]
+
+# The commit types this repository uses, beyond mockspace's defaults (feat, fix, refactor, docs,
+# test, chore, bench, release). The builtin `commit-subject` gate refuses a type that is not listed, so a new
+# type is added here and nowhere else.
+[lints.commit-subject]
+extra_types = "research,plan"

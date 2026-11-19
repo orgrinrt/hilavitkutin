@@ -1,0 +1,7 @@
+title = "Shift amount: const vs loop-invariant runtime vs per-iter independent"
+workload = "realistic"
+master_seed = 0x6a92_bf08_e314_750d
+may_differ = true
+
+arms = ["shr_const", "shr_loop_invariant", "shr_per_iter"]
+points = [256, 1024, 4096, 16384]

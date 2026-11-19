@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794813400	b2bbf4ba	clean_n25	llvm_incremental	25	warm	17371481895.9	17371481895.9	17954046717.5
+1794813400	b2bbf4ba	clean_n25	llvm_non_incremental	25	warm	16426098303.0	16426098303.0	16639505259.5

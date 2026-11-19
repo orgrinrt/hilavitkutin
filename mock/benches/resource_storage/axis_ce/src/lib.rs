@@ -1,18 +1,17 @@
-//! Axis C (column-count capacity) and axis E (cross-core false-sharing) for the
-//! resource-storage-model round 202606210600.
+//! Axis C (column-count capacity) for the resource-storage-model round
+//! 202606210600.
 //!
-//! These are not latency benches (those run through the mockspace bench harness
-//! in `../`). C is a capacity ASSERTION against the real
-//! `hilavitkutin_providers::ArenaColumnStorage<_, Dim<256>>`: the per-member-
-//! column layouts (V2 decomposed, V5 handle-table) reserve one column per scalar
-//! member, so a resource set's distinct-column count is resources x members and
-//! crosses the engine's 256-store cap, whereas the per-resource layouts (V0/V1
-//! blob, V3 shape-bound, V4 erased) reserve one column per resource and stay
-//! well under it. E is a contention measurement with real threads: V3's shared
-//! shape-bound column, written by resources owned by different cores, suffers
-//! false sharing that the per-resource-line layouts do not.
-
-use std::sync::atomic::{AtomicU64, Ordering};
+//! A capacity assertion against the real
+//! `hilavitkutin_providers::ArenaColumnStorage<_, Dim<256>>`, not a latency
+//! bench: the per-member-column layouts (V2 decomposed, V5 handle-table) reserve
+//! one column per scalar member, so a resource set's distinct-column count is
+//! resources x members and crosses the engine's 256-store cap, whereas the
+//! per-resource layouts (V0/V1 blob, V3 shape-bound, V4 erased) reserve one
+//! column per resource and stay well under it.
+//!
+//! Axis E, the cross-core false-sharing measurement this crate used to time by
+//! hand, is the `false_sharing` sweep of the `resource_storage` bench, arms
+//! `fs_packed` and `fs_padded`.
 
 use arvo::USize;
 use arvo_tensor::Dim;
@@ -117,65 +116,6 @@ pub fn column_count(layout: &str, resources: usize, m: usize) -> usize {
     }
 }
 
-/// Axis E: cross-core false sharing. `threads` threads, each owning a distinct
-/// resource slot. Packed: every slot is a `u32` inside ONE 64-byte cache line
-/// (the V3 shape-bound hazard, several resources' members sharing one column on
-/// one line). Padded: each slot on its own 64-byte line (the per-resource-line
-/// layouts). Each thread writes only its own slot in a tight loop; the packed
-/// layout makes the cores fight over one line. Returns (packed_ns, padded_ns).
-pub fn false_sharing(threads: usize, iters_per: u64) -> (u128, u128) {
-    let slots = threads.max(2).min(16); // up to 16 u32 fit on one 64-byte line
-    let packed = contend(true, slots, iters_per);
-    let padded = contend(false, slots, iters_per);
-    (packed, padded)
-}
-
-fn contend(packed: bool, slots: usize, iters_per: u64) -> u128 {
-    let line = 64usize;
-    // Packed: one line holds all slots. Padded: one line per slot.
-    let region = if packed { line } else { line * slots };
-    // 64-byte-aligned backing block.
-    let mut backing = vec![0u64; (region + line) / 8 + 8];
-    let base = {
-        let p = backing.as_mut_ptr() as usize;
-        (p + line - 1) / line * line
-    };
-    let addrs: Vec<usize> = (0 .. slots)
-        .map(|s| if packed { base + s * 4 } else { base + s * line })
-        .collect();
-    // keep backing alive for the scope
-    let _guard = &backing;
-
-    let warmup = 3u64;
-    let timed = 15u64;
-    let mut samples: Vec<u128> = Vec::new();
-    for rep in 0 .. (warmup + timed) {
-        let t = std::time::Instant::now();
-        std::thread::scope(|sc| {
-            for &addr in &addrs {
-                sc.spawn(move || {
-                    let p = addr as *mut u32;
-                    let mut v = 1u32;
-                    let mut it = 0u64;
-                    while it < iters_per {
-                        // SAFETY: addr is a reserved u32 this thread exclusively
-                        // writes; the backing block outlives the scope.
-                        unsafe { std::ptr::write_volatile(p, v) };
-                        v = v.wrapping_add(1);
-                        it += 1;
-                    }
-                });
-            }
-        });
-        if rep >= warmup {
-            samples.push(t.elapsed().as_nanos());
-        }
-    }
-    let _ = AtomicU64::new(0).load(Ordering::Relaxed); // touch the import
-    samples.sort_unstable();
-    samples[samples.len() / 2]
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,27 +153,6 @@ mod tests {
             reserve_n_columns(crossing),
             Err(StorageError::IdOutOfRange),
             "per-member layout at 300 columns must hit the Dim<256> cap"
-        );
-    }
-
-    /// Axis E: the packed (shared-line) layout suffers a measurable false-
-    /// sharing penalty vs the padded (per-line) layout. The penalty is hardware-
-    /// dependent; the test asserts a clear separation (> 1.5x) rather than an
-    /// exact figure, and prints the numbers for the findings doc.
-    #[test]
-    fn axis_e_false_sharing_penalty() {
-        let threads = std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(4);
-        let (packed, padded) = false_sharing(threads, 80_000_000);
-        let ratio = packed as f64 / padded.max(1) as f64;
-        println!(
-            "axis E: threads={threads} packed={packed}ns padded={padded}ns penalty={ratio:.3}"
-        );
-        assert!(
-            ratio > 1.5,
-            "expected a clear false-sharing penalty (>1.5x), got {ratio:.3} \
-             (packed {packed}ns vs padded {padded}ns)"
         );
     }
 }
