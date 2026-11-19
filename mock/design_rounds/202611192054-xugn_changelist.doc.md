@@ -68,6 +68,8 @@ A pragma the target does not admit fails the build: `configure` writes `cargo::e
 
 What the second review of the source asked of this section. A pragma names every tool it needs, in `Pragma::NEEDS`, rows of `TOOLS`, where it named one in `Pragma::TOOL`. `Wild` writes `-Clinker=clang` and waited on wild alone, so a machine without clang got rustc's own error; `ClangCc` puts `clang++` and `llvm-ar` under `[env]` and was asked about clang alone, so the generated file could hold a key the machine cannot follow. `Wild` needs wild and clang, `GccCc` gcc, g++ and ar, `ClangCc` clang, clang++ and llvm-ar. The table gains the four rows, each a package. The first of a pragma's needs is the one whose path its writer is handed.
 
+What the third review of the source asked of this section. An older version is removed only where the script takes that version's lock at once: a held lock is a clone that pins the version and is building it now, so its directory stays. A lock file is never removed, since a script that removed one could take it from under a script waiting on it; the files are empty and stay beside the directories. A `Proof` is read off the first two lines a tool prints when asked for its version, joined by a space, where it was read off the first alone: an llvm-ar built with no vendor name prints `LLVM (http://llvm.org/):` first and its `LLVM version` on the second line, and was refused as missing while installed.
+
 ### `DESIGN.md.tmpl`, section "Entry point"
 
 `BuildConfig::from_env` reads through the closure and `BuildConfig::from_cargo` takes the values already read. `write_directives` is generic over the set and takes its `Site`. `Profile::name` is the profile as cargo spells it.
