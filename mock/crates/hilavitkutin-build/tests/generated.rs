@@ -172,6 +172,16 @@ fn a_pragma_the_build_cannot_carry_is_named_with_its_profile() {
         ),
         "{no_clang}"
     );
+    // A pragma is asked about every tool its text names: the C compiler
+    // puts the archiver under `[env]`, so a machine with clang and
+    // without llvm-ar does not carry it.
+    assert_eq!(
+        uncarried::<Everything>(elf(), &["llvm-ar"]),
+        "cargo::error=hilavitkutin-build: ClangCc, in the dev set of the prototype that claims the workspace, \
+         waits on llvm-ar, which this build has not got: the generated cargo file is left as it was\n\
+         cargo::error=hilavitkutin-build: ClangCc, in the release set of the prototype that claims the workspace, \
+         waits on llvm-ar, which this build has not got: the generated cargo file is left as it was\n"
+    );
 
     // A target that does not admit the pragma, with its tool there.
     assert_eq!(
@@ -222,7 +232,18 @@ fn only_a_workspace_pragma_with_a_tool_that_has_a_source_is_asked_about() {
         &mut out,
     )
     .expect("a String takes every write");
-    assert_eq!(asked, ["cranelift", "clang", "clang", "clang", "clang"]);
+    // Every need of every one: the driver's clang, then the C compiler's three.
+    assert_eq!(asked, [
+        "cranelift",
+        "clang",
+        "clang",
+        "clang++",
+        "llvm-ar",
+        "clang",
+        "clang",
+        "clang++",
+        "llvm-ar"
+    ]);
 }
 
 #[test]

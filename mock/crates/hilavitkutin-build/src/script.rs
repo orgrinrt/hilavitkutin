@@ -250,8 +250,9 @@ macro_rules! __script {
         /// Print the directives of the profile's set, with the tools it
         /// waits on found first, and say whether it has flags.
         fn directives<S: $crate::Set>(cfg: &$crate::BuildConfig, stdout: &mut Sink<io::Stdout>) -> $crate::Flags {
-            // A set holds sixteen pragmas at most, so sixteen tools.
-            let mut found: [_; 16] = ::core::array::from_fn(|_| None);
+            // A set holds sixteen pragmas at most and a pragma needs three
+            // tools at most, so forty-eight places hold them all.
+            let mut found: [_; 48] = ::core::array::from_fn(|_| None);
             let mut count = 0;
             $crate::each_tool::<S>(|tool| {
                 let seen = found[..count].iter().flatten().any(|(have, _): &(&$crate::Tool, PathBuf)| have.name == tool.name);
@@ -260,8 +261,8 @@ macro_rules! __script {
                     count += 1;
                 }
             });
-            let texts: [_; 16] = ::core::array::from_fn(|at| found[at].as_ref().map(|(_, path)| path.to_string_lossy()));
-            let mut paths = [$crate::ToolPath::new(&$crate::tools::MOLD, ""); 16];
+            let texts: [_; 48] = ::core::array::from_fn(|at| found[at].as_ref().map(|(_, path)| path.to_string_lossy()));
+            let mut paths = [$crate::ToolPath::new(&$crate::tools::MOLD, ""); 48];
             for at in 0..count {
                 if let (Some((tool, _)), Some(text)) = (&found[at], &texts[at]) {
                     paths[at] = $crate::ToolPath::new(tool, text);

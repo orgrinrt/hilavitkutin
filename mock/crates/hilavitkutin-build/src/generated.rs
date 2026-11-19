@@ -91,10 +91,10 @@ impl<W: Write, F: FnMut(&'static Tool) -> bool> Visit for Uncarried<'_, W, F> { 
                  workspace, {why}: the generated cargo file is left as it was"
             )?;
         }
-        if let Maybe::Is(tool) = P::TOOL
-            && !matches!(tool.source, Source::Awaited)
-            && (self.lacks)(tool)
-        {
+        for tool in P::NEEDS {
+            if matches!(tool.source, Source::Awaited) || !(self.lacks)(tool) {
+                continue;
+            }
             let tool = tool.name;
             writeln!(
                 self.out,
@@ -115,7 +115,7 @@ impl<W: Write, F: FnMut(&'static Tool) -> bool> Visit for Uncarried<'_, W, F> { 
 /// The pragmas looked at are the ones of workspace reach in the `dev` set
 /// and in the `release` set, whichever profile is being built. One is
 /// not carried where `target` does not admit it, and where `lacks` says
-/// the machine has not got its tool; a tool with no source yet is asked
+/// the machine has not got one of the tools it needs; a tool with no source yet is asked
 /// about nobody. The script that claims the workspace writes the file
 /// only where this writes nothing.
 #[rustfmt::skip] // keeps the allow on the signature it governs

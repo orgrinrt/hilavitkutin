@@ -43,3 +43,45 @@ The doc changelist was reopened for findings 1 to 5, the design and both changel
 7. The rustdoc of the linkers says both flags go through the wrapper.
 8. The kept case of `tests/refused.rs` holds a driver in all five sets. `tests/generated.rs` asserts over prototypes that `claimed` passes, each checked by a `const` item.
 9. Kept on purpose: `Workspace`'s `Ci` set holds `ExpandedLto` and the design says no build selects the ci set yet; `mock/Cargo.toml` keeps its two keys because a run started outside `mock/` reads no `.cargo/`. The slow tests and the `#72` allows go to tickets.
+
+## Pass 2, tip `b4800774`
+
+A fresh reviewer, with the canon read on its own before it opened this record. Verdict: merge after fixes.
+
+The canon gate passed. The reviewer read the rows on the three mechanisms, on the builder, on what a pragma requires, on the cfg arvo takes and on the crate being a build dependency, and found the round aligned with each. Its reading and pass 1's agree now that every linker goes through the wrapper. One point it handed back as older than the round and for the maintainer: the row on mechanisms lists `FastMath` under the wrapper and the row on arvo has it as a cfg of the build script, which is what the design and the code do.
+
+Of pass 1's findings it found 3, 5, 6, 7 and 8 addressed, 4 addressed for cranelift alone, 1 and 9 short of the question and the tickets this record said were filed, and 2 short of two things, below.
+
+### Findings
+
+1. The source changelist says kaski's twenty-eight scripts move on a branch that lands straight after the round, and no such branch is on the remote. kaski pins the crate from `dev`, so its next update breaks them.
+2. A pragma is asked about one tool where its text names more. `Wild` writes `-Clinker=clang` and waits on wild alone. `ClangCc` puts `clang++` and `llvm-ar` under `[env]` and is asked about clang alone, so the generated file can hold a key the machine cannot follow.
+3. An older version of a tool is removed without its lock being asked for, so a clone that pins it and is building it loses it.
+4. The mold test runs one branch per machine, and the wild test asserts nothing where clang is missing. The mold test reads the flag and not what linked.
+5. The record says a question and two tickets were filed, and none was.
+6. `Workspace` holds `ExpandedLto` with no bench cell cited, against the call on defaults.
+7. `includes_generated` takes `sub/hilavitkutin-build.toml`, which is another file, and a test asserted that.
+8. A local build that fails inside `script!` is followed by an error telling the author to use `script!`.
+9. The count of pragmas in the tests is kept by hand beside a list kept by hand.
+
+### Suite
+
+115 tests passed, the slowest 6.5 s. No tautology and no test that asserts nothing. Missing: the wait on a held tool lock, the refusal of a missing package linker on a machine that has it, wild without clang, and the driver key at a second target.
+
+### Not checked
+
+Whether clang's `--ld-path` finds a bare `wild` on the path, whether `-Cprefer-dynamic` belongs on the dylib or on its dependents, hosts other than Linux, and that no design of the repository declares its canon.
+
+### What was done
+
+The doc changelist was reopened a third time, for finding 2.
+
+1. The kaski branch is written in a worktree, twenty-eight scripts to `configure_as::<Deterministic, _, _>`, and cannot build or be pushed green before this round is on `dev`, since kaski takes the crate from there by git. The source changelist says so. It lands by kaski's flow straight after, and the coordinator of the stack is told the contract before this round lands.
+2. `Pragma::NEEDS` is a list of rows where `TOOL` was one. `Wild` needs wild and clang, `GccCc` gcc, g++ and ar, `ClangCc` clang, clang++ and llvm-ar, and the table has the four new rows. The script provisions every need, and `write_uncarried` asks about each.
+3. Before an older version is removed the script tries its lock, and leaves the version where the lock is held. `tests/script_build.rs` holds one and finds its directory left. A clone that only links through an older version at that moment holds no lock; that is in the follow-up ticket.
+4. The tests hand a build a path of their own. The refusal of mold, of clang under `Wild` and of llvm-ar under `ClangCc` each run on every machine, over a path with the program left out. Where the machine has mold the test reads mold's mark in the binary of the second build and its absence in the first.
+5. Filed: the question `which_canon_row_says_where_fastmath_takes_effect_and_is_the`, which carries the builder's spelling too; the task `the_lint_allows_of_hilavitkutin_build_cite_a_tracker_number`; the task `follow_ups_of_the_pragma_round_s_second_review_pass_in_hilav`. No test is slow any more, so no ticket for one.
+6. Filed as the question `does_the_workspace_prototype_keep_expandedlto_before_a_bench`. The prototype is unchanged until it is answered.
+7. `includes_generated` takes the bare name in quotes alone, and the test line moved to the cases it does not take.
+8. The line says that a `script!` with no path says why in its own error, and that no other script can name the pragma.
+9. Not changed: the crate has no public list of every pragma to hold the count to, and adding one is a surface of its own. It is in the follow-up ticket, with the test of the wait on a held lock and of the driver key at a second target.

@@ -15,7 +15,7 @@ mod harness;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use harness::{host, prototype, run_cargo, workspace_with};
+use harness::{host, path_with, prototype, run_cargo, workspace_with};
 
 /// A workspace whose one crate names wild, with a tools home beside it
 /// and, in that, a cargo home that takes its registry from a directory.
@@ -54,6 +54,17 @@ fn workspace_naming_wild(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     (root, home, registry)
 }
 
+/// A path on which clang answers, whatever the machine has. Wild links
+/// through clang and a set that names it needs both; these workspaces
+/// have a library alone and link nothing, so a stand-in that answers the
+/// version question is all the build asks of it.
+fn with_clang(root: &Path) -> PathBuf {
+    let beside = root
+        .parent()
+        .expect("the workspace sits in a scratch directory");
+    path_with(beside, "clang", "clang version 0.0.0 stand-in")
+}
+
 /// Put a crate under wild's name and pin into the registry. Its program
 /// prints wild's version line whatever it is asked.
 ///
@@ -90,7 +101,8 @@ fn publish_the_stand_in(registry: &Path) {
 /// The first build of a workspace that names wild, on a machine that has
 /// it nowhere, builds it into the tools home. Beside it sit an older
 /// version, a newer one, the lock file of another pin and a lock file of
-/// this pin that a process long gone left behind. The older version goes
+/// this pin that a process long gone left behind, and a second older
+/// version whose lock the test holds. The older version nobody holds goes
 /// and nothing else does, the stale lock holds nobody up, and no scratch
 /// directory of the build is left. The second build finds the tool and
 /// builds nothing, and its rustc is handed the tool by its full path.
@@ -110,10 +122,18 @@ fn a_tool_the_machine_lacks_is_built_into_the_home_and_older_versions_go() {
     fs::create_dir_all(newer.join("bin")).expect("a newer version");
     fs::write(&other_lock, "").expect("another pin's lock");
     fs::write(&stale_lock, "").expect("a lock nobody holds");
+    // A second older version, whose lock this test holds as a clone that
+    // pins it and is building it would.
+    let in_use = at.join("wild-0.8.0");
+    fs::create_dir_all(in_use.join("bin")).expect("an older version in use");
+    let holding = fs::File::create(at.join("wild-0.8.0.lock")).expect("its lock");
+    holding.lock().expect("the lock is free");
     let cargo_home = home.join(".cargo");
+    let path = with_clang(&root);
     let vars = [
         ("HILAVITKUTIN_BUILD_TOOLS_HOME", home.as_path()),
         ("CARGO_HOME", cargo_home.as_path()),
+        ("PATH", path.as_path()),
     ];
 
     let first = run_cargo(&root, "build", &[], &vars);
@@ -130,6 +150,11 @@ fn a_tool_the_machine_lacks_is_built_into_the_home_and_older_versions_go() {
         "the child's target directory is left"
     );
     assert!(!older.exists(), "the older version is left");
+    assert!(
+        in_use.exists(),
+        "an older version whose lock is held, which a clone is building, went"
+    );
+    drop(holding);
     assert!(newer.exists(), "a newer version, another clone's pin, went");
     assert!(other_lock.exists(), "another pin's lock went");
 
@@ -158,9 +183,11 @@ fn a_local_build_that_fails_fails_the_build_and_removes_nothing() {
     let older = at.join("wild-0.9.0");
     fs::create_dir_all(&older).expect("an older version");
     let cargo_home = home.join(".cargo");
+    let path = with_clang(&root);
     let vars = [
         ("HILAVITKUTIN_BUILD_TOOLS_HOME", home.as_path()),
         ("CARGO_HOME", cargo_home.as_path()),
+        ("PATH", path.as_path()),
     ];
 
     let built = run_cargo(&root, "build", &[], &vars);

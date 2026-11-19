@@ -94,9 +94,10 @@ impl<W: Write> Visit for Refusals<'_, '_, W> {
                  leaves {name} out on this target"
             )?;
         }
-        if let Maybe::Is(tool) = P::TOOL
-            && matches!(tool.source, Source::LocalBuild(_))
-        {
+        for tool in P::NEEDS {
+            if !matches!(tool.source, Source::LocalBuild(_)) {
+                continue;
+            }
             let path = self.site.path_of(tool);
             let tool = tool.name;
             match path {

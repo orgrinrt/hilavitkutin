@@ -390,8 +390,19 @@ fn a_site_hands_every_member_its_own_tool_and_what_is_owed() {
     assert_eq!(wild.triple(), "x86_64-unknown-linux-gnu");
     assert_eq!(wild.tool(), Maybe::Is("/tools/wild-0.10.0/bin/wild"));
     assert_eq!(wild.shared(), Shared::Owed);
-    // A pragma is handed its own tool's path and no other's.
+    // A pragma is handed its own tool's path and no other's, and of its
+    // own the first: `ClangCc` needs clang first and `Wild` second.
     assert_eq!(site.written::<Mold>().tool(), Maybe::Isnt);
+    let both = [
+        ToolPath::new(&hilavitkutin_build::tools::CLANG, "/usr/bin/clang"),
+        ToolPath::new(&WILD, "/tools/wild"),
+    ];
+    let both = Site::new(Profile::Release, "", &both);
+    assert_eq!(both.written::<Wild>().tool(), Maybe::Is("/tools/wild"));
+    assert_eq!(
+        both.written::<ClangCc>().tool(),
+        Maybe::Is("/usr/bin/clang")
+    );
     assert_eq!(site.written::<FastMath>().tool(), Maybe::Isnt);
     assert_eq!(
         Site::new(Profile::Dev, "", &[]).written::<Wild>().tool(),
@@ -435,7 +446,7 @@ fn the_tools_of_a_set_are_handed_over_in_its_order() {
     );
     assert_eq!(
         named(|push| each_tool::<(ClangDriver, Mold, ClangCc, Wild)>(|tool| push(tool.name))),
-        ["clang", "mold", "clang", "wild"]
+        ["clang", "mold", "clang", "clang++", "llvm-ar", "wild", "clang"]
     );
     assert_eq!(
         named(|push| each_tool::<(MimallocAllocator, Pgo)>(|tool| push(tool.name))),

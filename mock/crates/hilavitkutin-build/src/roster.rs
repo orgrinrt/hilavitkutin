@@ -6,8 +6,6 @@
 
 use core::fmt::{self, Write};
 
-use notko::Maybe;
-
 use crate::choice::LtoGroup;
 use crate::pragma::{All, Any, Free, Mask, Pragma, Reach, Slot, Words, Written};
 use crate::tools::{LLVM_BOLT, MATH_PEEPHOLE, MIMALLOC, POLKA_PASSES, POLLY, PROFDATA, Tool};
@@ -31,7 +29,7 @@ impl Pragma for LoopOptimization {
 
     const BIT: Mask = Slot::LoopOptimization.bit();
     const NAME: Words = "LoopOptimization";
-    const TOOL: Maybe<&'static Tool> = Maybe::Is(&POLKA_PASSES);
+    const NEEDS: &'static [&'static Tool] = &[&POLKA_PASSES];
 
     // FIXME(placeholders_tagged_hilavitkutin_build_build_scripts_find): the `-Zllvm-plugins` flag for polka-passes.so waits on the build script finding the plugin.
     fn write_rustflags<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
@@ -118,7 +116,7 @@ impl Pragma for SharedGenerics {
 }
 
 /// A pragma that writes nothing yet: its name, its place, what it
-/// requires of its set and the tool it waits on.
+/// requires of its set and the tools it waits on.
 macro_rules! waiting {
     ($(#[$doc:meta])* $name:ident, $requires:ty, $unmet:expr, $tool:expr) => {
         $(#[$doc])*
@@ -131,7 +129,7 @@ macro_rules! waiting {
 
             const BIT: Mask = Slot::$name.bit();
             const NAME: Words = stringify!($name);
-            const TOOL: Maybe<&'static Tool> = $tool;
+            const NEEDS: &'static [&'static Tool] = $tool;
             const UNMET: Words = $unmet;
         }
     };
@@ -142,54 +140,54 @@ waiting!(
     Polly,
     (),
     "",
-    Maybe::Is(&POLLY)
+    &[&POLLY]
 );
 waiting!(
     /// Float peephole rewrites. Stands on `FastMath`.
     MathPeephole,
     All<(FastMath,)>,
     "MathPeephole stands on FastMath, which the set does not hold",
-    Maybe::Is(&MATH_PEEPHOLE)
+    &[&MATH_PEEPHOLE]
 );
 waiting!(
     /// Profile-guided optimisation, from profiles found on disk.
     Pgo,
     (),
     "",
-    Maybe::Is(&PROFDATA)
+    &[&PROFDATA]
 );
 waiting!(
     /// Post-link binary rewriting.
     Bolt,
     (),
     "",
-    Maybe::Is(&LLVM_BOLT)
+    &[&LLVM_BOLT]
 );
 waiting!(
     /// Profiling runs after the build. Stands on `Pgo` or `Bolt`.
     Profiling,
     Any<(Pgo, Bolt)>,
     "Profiling stands on Pgo or Bolt, and the set holds neither",
-    Maybe::Is(&PROFDATA)
+    &[&PROFDATA]
 );
 waiting!(
     /// std rebuilt from source with the build's flags.
     BuildStd,
     (),
     "",
-    Maybe::Isnt
+    &[]
 );
 waiting!(
     /// Adjacent loops fused. Experimental.
     LoopFusion,
     (),
     "",
-    Maybe::Is(&POLKA_PASSES)
+    &[&POLKA_PASSES]
 );
 waiting!(
     /// A recommendation of mimalloc; the consumer sets its allocator.
     MimallocAllocator,
     (),
     "",
-    Maybe::Is(&MIMALLOC)
+    &[&MIMALLOC]
 );

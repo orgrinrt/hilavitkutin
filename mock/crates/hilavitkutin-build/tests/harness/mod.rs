@@ -160,6 +160,65 @@ pub fn run_cargo(root: &Path, verb: &str, more: &[&str], vars: &[(&str, &Path)])
     }
 }
 
+/// A path for a build on a machine without the programs `gone`: one
+/// directory beside the workspace with a link to every program on the
+/// suite's path but those. Handed to [`run_cargo`] as `PATH`, it lets a
+/// test decide what the machine has.
+#[cfg(unix)]
+pub fn path_without(beside: &Path, gone: &[&str]) -> PathBuf {
+    let dir = beside.join("path");
+    fs::create_dir_all(&dir).expect("the path's directory");
+    let path = std::env::var_os("PATH").expect("the suite runs under a path");
+    for from in std::env::split_paths(&path) {
+        for entry in fs::read_dir(&from).into_iter().flatten().flatten() {
+            let name = entry.file_name();
+            if gone.iter().any(|gone| name.to_str() == Some(*gone)) {
+                continue;
+            }
+            // The first directory of the path that has a name wins, as on
+            // the path itself: a link that is already there stays.
+            let _ = std::os::unix::fs::symlink(entry.path(), dir.join(&name));
+        }
+    }
+    dir
+}
+
+/// A path whose first directory holds a program `name` that prints `line`
+/// when asked for its version and fails at anything else, before the
+/// suite's own path. A test that needs the machine to have a tool it does
+/// not run hands this to [`run_cargo`] as `PATH`.
+#[cfg(unix)]
+pub fn path_with(beside: &Path, name: &str, line: &str) -> PathBuf {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let dir = beside.join("stand-ins");
+    fs::create_dir_all(&dir).expect("the stand-ins' directory");
+    let program = dir.join(name);
+    fs::write(
+        &program,
+        format!("#!/bin/sh\nif [ \"$1\" = --version ]; then\n    echo '{line}'\n    exit 0\nfi\nexit 1\n"),
+    )
+    .expect("the stand-in");
+    fs::set_permissions(&program, fs::Permissions::from_mode(0o755)).expect("the stand-in runs");
+    let path = std::env::var_os("PATH").expect("the suite runs under a path");
+    let all = std::iter::once(dir).chain(std::env::split_paths(&path));
+    PathBuf::from(std::env::join_paths(all).expect("a path of directories"))
+}
+
+/// The directory cargo builds the workspace at `root` into.
+pub fn target_dir(root: &Path) -> PathBuf {
+    let asked = Command::new(std::env::var_os("CARGO").expect("cargo runs the suite"))
+        .args(["metadata", "--offline", "--no-deps", "--format-version", "1"])
+        .current_dir(root)
+        .output()
+        .expect("cargo starts");
+    let text = String::from_utf8_lossy(&asked.stdout);
+    let key = "\"target_directory\":\"";
+    let from = text.find(key).expect("cargo names its target directory") + key.len();
+    let to = text[from ..].find('"').expect("the directory's name ends");
+    PathBuf::from(&text[from .. from + to])
+}
+
 /// A prototype of the script's own file whose dev set is `dev` and whose
 /// other sets are empty, named in `script!` by its path, `crate::<name>`.
 pub fn prototype(name: &str, dev: &str) -> String {

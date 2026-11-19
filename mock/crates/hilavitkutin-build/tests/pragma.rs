@@ -128,23 +128,43 @@ fn every_pragma_is_of_the_group_and_the_reach_the_design_gives_it() {
 }
 
 #[test]
-fn every_pragma_waits_on_the_tool_the_design_gives_it() {
+fn every_pragma_waits_on_the_tools_the_design_gives_it() {
     for row in pragmas() {
-        let tool = match row.name {
-            "LoopOptimization" | "LoopFusion" => Some("polka-passes"),
-            "MathPeephole" => Some("math-peephole"),
-            "Polly" => Some("polly"),
-            "Pgo" | "Profiling" => Some("llvm-profdata"),
-            "Bolt" => Some("llvm-bolt"),
-            "MimallocAllocator" => Some("mimalloc"),
-            "Mold" => Some("mold"),
-            "Wild" => Some("wild"),
-            "Cranelift" => Some("cranelift"),
-            "GccDriver" | "GccCc" => Some("gcc"),
-            "ClangDriver" | "ClangCc" => Some("clang"),
-            _ => None,
+        let needs: &[&str] = match row.name {
+            "LoopOptimization" | "LoopFusion" => &["polka-passes"],
+            "MathPeephole" => &["math-peephole"],
+            "Polly" => &["polly"],
+            "Pgo" | "Profiling" => &["llvm-profdata"],
+            "Bolt" => &["llvm-bolt"],
+            "MimallocAllocator" => &["mimalloc"],
+            "Mold" => &["mold"],
+            "Wild" => &["wild", "clang"],
+            "Cranelift" => &["cranelift"],
+            "GccDriver" => &["gcc"],
+            "ClangDriver" => &["clang"],
+            "GccCc" => &["gcc", "g++", "ar"],
+            "ClangCc" => &["clang", "clang++", "llvm-ar"],
+            _ => &[],
         };
-        assert_eq!(row.tool, tool, "{}", row.name);
+        assert_eq!(row.needs, needs, "{}", row.name);
+    }
+}
+
+/// A script keeps the tools of a set in forty-eight places, three for
+/// each of sixteen members, and every need is a row of the table.
+#[test]
+fn no_pragma_needs_more_than_three_tools_and_each_is_a_row_of_the_table() {
+    for row in pragmas() {
+        assert!(row.needs.len() <= 3, "{} needs {:?}", row.name, row.needs);
+        for need in &row.needs {
+            assert!(
+                hilavitkutin_build::TOOLS
+                    .iter()
+                    .any(|tool| tool.name == *need),
+                "{} needs {need}, which is no row",
+                row.name
+            );
+        }
     }
 }
 

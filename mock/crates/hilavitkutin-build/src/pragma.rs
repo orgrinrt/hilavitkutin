@@ -249,8 +249,10 @@ pub trait Pragma {
     const REACH: Reach = Reach::Crate;
     /// What is said of a set that does not meet [`Requires`](Pragma::Requires).
     const UNMET: Words = "";
-    /// The tool the pragma waits on, a row of [`TOOLS`](crate::TOOLS).
-    const TOOL: Maybe<&'static Tool> = Maybe::Isnt;
+    /// The tools the pragma waits on, rows of [`TOOLS`](crate::TOOLS):
+    /// every program its text names. Its writer is handed the path of
+    /// the first.
+    const NEEDS: &'static [&'static Tool] = &[];
 
     /// The choice the pragma is one value of.
     type Group: Group;

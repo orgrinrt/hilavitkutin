@@ -14,13 +14,16 @@ use harness::{
     build,
     build_with,
     host,
+    path_without,
     prototype,
     run_cargo,
     scratch,
+    target_dir,
     workspace,
     workspace_with,
     write_crate_with,
 };
+use hilavitkutin_build::tools::MOLD;
 
 /// What `script!` is handed by the script that claims the workspace.
 const CLAIMING: &str = "Workspace, workspace";
@@ -263,40 +266,117 @@ fn machine_has(program: &str) -> bool {
         .is_ok_and(|asked| asked.status.success())
 }
 
-/// A set that names a package tool. Where the machine has mold, the first
-/// build links as the toolchain does by itself, like every flag of a
-/// first build, and the second links with mold by the flag the wrapper
-/// appends. Where it has none, the build fails with the command that
-/// brings it.
+/// Whether `bytes` holds `mark` anywhere.
+fn holds(bytes: &[u8], mark: &str) -> bool {
+    bytes
+        .windows(mark.len())
+        .any(|window| window == mark.as_bytes())
+}
+
+/// A set that names a package tool, on a machine without it: the build
+/// fails with the command that brings the tool. The test hands the build
+/// a path with no mold on it, so this runs on every machine.
+#[cfg(unix)]
 #[test]
-fn a_linker_from_the_machines_packages_is_used_or_the_build_says_how_to_get_it() {
+fn a_linker_the_machine_lacks_fails_the_build_with_how_to_get_it() {
+    let root = workspace_with(
+        "mold-gone",
+        &prototype("Linked", "(hilavitkutin_build::Mold,)"),
+        "crate::Linked",
+    );
+    with_a_binary(&root);
+    let path = path_without(root.parent().expect("a scratch directory"), &["mold"]);
+    let built = run_cargo(&root, "build", &[], &[("PATH", path.as_path())]);
+    assert!(!built.passed, "{}", built.said);
+    assert_eq!(
+        built
+            .said
+            .matches("needs mold, which this machine lacks: install the package `mold`")
+            .count(),
+        1,
+        "{}",
+        built.said
+    );
+}
+
+/// The same set where the machine has mold. The first build links as the
+/// toolchain does by itself, like every flag of a first build, and the
+/// second links with mold by the flag the wrapper appends: its rustc is
+/// handed the flag, and what it linked carries mold's mark, which a
+/// binary linked by the toolchain's own linker does not.
+#[test]
+fn a_linker_from_the_machines_packages_links_from_the_second_build_on() {
+    if !machine_has("mold") {
+        // The refusal is the test above; this machine cannot link so.
+        return;
+    }
+    let mark = Option::from(MOLD.proof.mark).expect("mold leaves a mark");
     let root = workspace_with(
         "mold",
         &prototype("Linked", "(hilavitkutin_build::Mold,)"),
         "crate::Linked",
     );
     with_a_binary(&root);
+    let binary = target_dir(&root).join("debug/scratch-mold");
     let first = run_cargo(&root, "build", &[], &[]);
+    assert!(first.passed, "{}", first.said);
     assert!(
         !first.said.contains("rustc-link-arg") && !first.rustc.contains("fuse-ld"),
         "the script named a link argument of its own\n{}\n{}",
         first.said,
         first.rustc
     );
-    if machine_has("mold") {
-        assert!(first.passed, "{}", first.said);
-        let second = run_cargo(&root, "build", &[], &[]);
-        assert!(second.passed, "{}", second.said);
-        let link = link_of(&second, "scratch_mold");
-        assert!(link.ends_with(" -Clink-arg=-fuse-ld=mold"), "{link}");
-    } else {
-        assert!(!first.passed, "{}", first.said);
-        assert!(
-            first.said.contains("install the package `mold`"),
-            "{}",
-            first.said
-        );
-    }
+    assert!(
+        !holds(&fs::read(&binary).expect("the first binary"), mark),
+        "the first build, which has no wrapper, linked with mold"
+    );
+    let second = run_cargo(&root, "build", &[], &[]);
+    assert!(second.passed, "{}", second.said);
+    let link = link_of(&second, "scratch_mold");
+    assert!(link.ends_with(" -Clink-arg=-fuse-ld=mold"), "{link}");
+    assert!(
+        holds(&fs::read(&binary).expect("the second binary"), mark),
+        "the second build did not link with mold"
+    );
+}
+
+/// The claiming script asks about every tool a pragma's text names. The
+/// C compiler by clang puts `llvm-ar` under `[env]`, so on a machine
+/// without it the build fails with the package that brings it and no
+/// generated file is written, whatever else the machine has.
+#[cfg(unix)]
+#[test]
+fn a_c_compiler_whose_archiver_the_machine_lacks_writes_no_key() {
+    let sets = "(hilavitkutin_build::ClangCc,)";
+    let items = format!(
+        "struct Compiled;\nimpl hilavitkutin_build::Prototype for Compiled {{\n    type Dev = {sets};\n    type DevOpt \
+         = {sets};\n    type Release = {sets};\n    type Profiling = {sets};\n    type Ci = {sets};\n}}\n"
+    );
+    let root = workspace_with("cc-gone", &items, "crate::Compiled, workspace");
+    let path = path_without(root.parent().expect("a scratch directory"), &["llvm-ar"]);
+    let built = run_cargo(&root, "build", &[], &[("PATH", path.as_path())]);
+    assert!(!built.passed, "{}", built.said);
+    assert_eq!(
+        built
+            .said
+            .matches("needs llvm-ar, which this machine lacks: install the package `llvm`")
+            .count(),
+        1,
+        "{}",
+        built.said
+    );
+    assert!(
+        built.said.contains(
+            "ClangCc, in the dev set of the prototype that claims the workspace, waits on llvm-ar, which this build \
+             has not got: the generated cargo file is left as it was"
+        ),
+        "{}",
+        built.said
+    );
+    assert!(
+        !root.join(".cargo/hilavitkutin-build.toml").exists(),
+        "a key the build cannot follow was written"
+    );
 }
 
 /// A sysroot of the test's own, with the cranelift backend or without.
@@ -364,6 +444,48 @@ fn a_backend_the_toolchain_lacks_fails_the_build_and_writes_no_key() {
     );
 }
 
+/// Wild links through clang, so a set that names it needs both. With
+/// wild in the tools home and no clang on the path the build fails with
+/// the package that brings clang, said by the crate and not by rustc at
+/// the link. The test hands the build a path with no clang on it, so
+/// this runs on every machine.
+#[cfg(target_os = "linux")]
+#[test]
+fn wild_on_a_machine_without_clang_fails_the_build_with_how_to_get_it() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let root = workspace_with(
+        "wild-no-clang",
+        &prototype("Wilded", "(hilavitkutin_build::Wild,)"),
+        "crate::Wilded",
+    );
+    with_a_binary(&root);
+    let beside = root.parent().expect("a scratch directory");
+    let home = beside.join("tools");
+    let wild = home.join(host()).join("wild-0.10.0/bin/wild");
+    fs::create_dir_all(wild.parent().expect("a directory")).expect("the tool's directory");
+    fs::write(
+        &wild,
+        "#!/bin/sh\necho 'Wild 0.10.0 stand-in (compatible with GNU linkers)'\n",
+    )
+    .expect("the stand-in");
+    fs::set_permissions(&wild, fs::Permissions::from_mode(0o755)).expect("the stand-in runs");
+    let path = path_without(beside, &["clang"]);
+    let vars = [("HILAVITKUTIN_BUILD_TOOLS_HOME", home.as_path()), ("PATH", path.as_path())];
+    let built = run_cargo(&root, "build", &[], &vars);
+    assert!(!built.passed, "{}", built.said);
+    assert_eq!(
+        built
+            .said
+            .matches("needs clang, which this machine lacks: install the package `clang`")
+            .count(),
+        1,
+        "{}",
+        built.said
+    );
+    assert!(!built.said.contains("is building wild"), "{}", built.said);
+}
+
 /// A set that names wild takes it from the tools home, by its full path,
 /// and links through it. The stand-in here answers the version question
 /// as wild 0.10.0 does and hands every link on to the system's `ld`, so
@@ -375,7 +497,7 @@ fn wild_is_taken_from_the_tools_home_by_its_full_path() {
     use std::os::unix::fs::PermissionsExt as _;
 
     if !machine_has("clang") {
-        // Wild links through clang; without it this machine cannot link so.
+        // The refusal is the test above; this machine cannot link so.
         return;
     }
     let root = workspace_with(

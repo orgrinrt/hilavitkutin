@@ -42,7 +42,7 @@ pub struct Row {
     pub bit:      Mask,
     pub group:    Mask,
     pub reach:    Reach,
-    pub tool:     Option<&'static str>,
+    pub needs:    Vec<&'static str>,
     pub admitted: fn(&Target) -> Maybe<&'static str>,
 }
 
@@ -52,7 +52,7 @@ fn row<P: Pragma>() -> Row {
         bit:      P::BIT,
         group:    <P::Group as Group>::BIT,
         reach:    P::REACH,
-        tool:     Option::from(P::TOOL).map(|tool: &hilavitkutin_build::Tool| tool.name),
+        needs:    P::NEEDS.iter().map(|tool| tool.name).collect(),
         admitted: P::admitted,
     }
 }

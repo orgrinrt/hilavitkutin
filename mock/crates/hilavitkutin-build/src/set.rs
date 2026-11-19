@@ -156,23 +156,23 @@ pub const fn crate_reach<S: Set>() {
     );
 }
 
-/// The walk that hands over every member's tool.
+/// The walk that hands over every member's tools.
 struct Tools<F: FnMut(&'static Tool)> {
     each: F,
 }
 
 impl<F: FnMut(&'static Tool)> Visit for Tools<F> {
     fn pragma<P: Pragma>(&mut self) -> core::fmt::Result {
-        if let Maybe::Is(tool) = P::TOOL {
+        for tool in P::NEEDS {
             (self.each)(tool);
         }
         Ok(())
     }
 }
 
-/// Hand `each` the tool of every member of the set `S` that names one,
-/// in the order the set names its members. Two members that wait on one
-/// tool hand it over twice.
+/// Hand `each` every tool the members of the set `S` need, in the order
+/// the set names its members and each member its needs. Two members
+/// that wait on one tool hand it over twice.
 pub fn each_tool<S: Set>(each: impl FnMut(&'static Tool)) {
     // The walk's only failure is a writer's, and this walk writes nothing.
     let _ = S::each(&mut Tools {
@@ -261,9 +261,9 @@ impl<'a> Site<'a> {
         let group = <P::Group as Group>::BIT;
         let before = if group == 0 { self.mask & P::BIT } else { self.groups & group };
         let shared = if before == 0 { Shared::Owed } else { Shared::Written };
-        let tool = match P::TOOL {
-            Maybe::Is(tool) => self.path_of(tool),
-            Maybe::Isnt => Maybe::Isnt,
+        let tool = match P::NEEDS.first() {
+            Some(tool) => self.path_of(tool),
+            None => Maybe::Isnt,
         };
         Written::new(self.profile.name(), self.triple, tool, shared)
     }

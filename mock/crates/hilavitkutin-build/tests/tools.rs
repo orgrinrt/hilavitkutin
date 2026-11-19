@@ -1,7 +1,18 @@
 //! The tools table, where the tools home is, and what a script does about
 //! a tool for everything it can find.
 
-use hilavitkutin_build::tools::{CLANG, CRANELIFT, GCC, LLVM_BOLT, MOLD, WILD};
+use hilavitkutin_build::tools::{
+    AR,
+    CLANG,
+    CLANGXX,
+    CRANELIFT,
+    GCC,
+    GXX,
+    LLVM_AR,
+    LLVM_BOLT,
+    MOLD,
+    WILD,
+};
 use hilavitkutin_build::{
     Line,
     Os,
@@ -72,6 +83,10 @@ fn the_table_names_every_tool_once_with_the_source_the_design_gives_it() {
         ),
         ("clang", Maybe::Isnt, Source::Package("clang")),
         ("gcc", Maybe::Isnt, Source::Package("gcc")),
+        ("clang++", Maybe::Isnt, Source::Package("clang")),
+        ("llvm-ar", Maybe::Isnt, Source::Package("llvm")),
+        ("g++", Maybe::Isnt, Source::Package("g++")),
+        ("ar", Maybe::Isnt, Source::Package("binutils")),
         (
             "cranelift",
             Maybe::Isnt,
@@ -91,11 +106,26 @@ fn the_table_names_every_tool_once_with_the_source_the_design_gives_it() {
     assert_eq!(LLVM_BOLT.proof.line, Line::Nothing);
 }
 
-/// The version lines the four programs print on the machine this was
+/// The version lines the eight programs print on the machine this was
 /// written on, and lines that only look like them.
 #[test]
 fn a_proof_holds_of_the_tools_own_version_line_and_of_no_other() {
-    let table: [(&Tool, &str, bool); 16] = [
+    let table: [(&Tool, &str, bool); 27] = [
+        (&CLANGXX, "Ubuntu clang version 18.1.3 (1ubuntu1)", true),
+        (
+            &CLANGXX,
+            "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+            false,
+        ),
+        (&LLVM_AR, "Ubuntu LLVM version 18.1.3", true),
+        (&LLVM_AR, "LLVM version 19.1.0", true),
+        (&LLVM_AR, "GNU ar (GNU Binutils for Ubuntu) 2.42", false),
+        (&GXX, "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0", true),
+        (&GXX, "g++-13 (Ubuntu) 13.3.0", false),
+        (&GXX, "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0", false),
+        (&AR, "GNU ar (GNU Binutils for Ubuntu) 2.42", true),
+        (&AR, "GNU ld (GNU Binutils for Ubuntu) 2.42", false),
+        (&AR, "Ubuntu LLVM version 18.1.3", false),
         (&MOLD, "mold 2.30.0 (compatible with GNU ld)", true),
         (&MOLD, "moldy 1.0", false),
         (&MOLD, "GNU ld (GNU Binutils for Ubuntu) 2.42", false),

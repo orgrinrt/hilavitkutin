@@ -14,7 +14,7 @@ use notko::Maybe;
 use crate::pragma::{Group, GroupSlot, Mask, Not, Pragma, Reach, Shared, Slot, Words, Written};
 use crate::roster::ExpandedLto;
 use crate::target::{ObjectFormat, Target};
-use crate::tools::{CLANG, CRANELIFT, GCC, MOLD, Tool, WILD};
+use crate::tools::{AR, CLANG, CLANGXX, CRANELIFT, GCC, GXX, LLVM_AR, MOLD, Tool, WILD};
 
 /// A group: its place and the sentence for a set that holds two of it.
 macro_rules! group {
@@ -112,7 +112,7 @@ impl Pragma for Mold {
 
     const BIT: Mask = Slot::Mold.bit();
     const NAME: Words = "Mold";
-    const TOOL: Maybe<&'static Tool> = Maybe::Is(&MOLD);
+    const NEEDS: &'static [&'static Tool] = &[&MOLD];
 
     fn admitted(target: &Target) -> Maybe<&'static str> {
         elf_only(target)
@@ -148,8 +148,9 @@ impl Pragma for Bfd {
 /// A gcc older than 15 knows a fixed list of linkers and wild is not on
 /// it, so the crate links through clang, which takes any linker by
 /// `--ld-path`. The driver and the path are one pair of flags the
-/// wrapper appends. Without a path for the tool nothing is written, and
-/// the directives say the path is missing.
+/// wrapper appends, so the pragma needs clang beside wild. Without a
+/// path for wild nothing is written, and the directives say the path is
+/// missing.
 #[derive(Debug, Clone, Copy)]
 pub struct Wild;
 
@@ -159,7 +160,7 @@ impl Pragma for Wild {
 
     const BIT: Mask = Slot::Wild.bit();
     const NAME: Words = "Wild";
-    const TOOL: Maybe<&'static Tool> = Maybe::Is(&WILD);
+    const NEEDS: &'static [&'static Tool] = &[&WILD, &CLANG];
 
     fn admitted(target: &Target) -> Maybe<&'static str> {
         elf_only(target)
@@ -261,8 +262,8 @@ impl Pragma for Cranelift {
 
     const BIT: Mask = Slot::Cranelift.bit();
     const NAME: Words = "Cranelift";
+    const NEEDS: &'static [&'static Tool] = &[&CRANELIFT];
     const REACH: Reach = Reach::Workspace;
-    const TOOL: Maybe<&'static Tool> = Maybe::Is(&CRANELIFT);
     const UNMET: Words = "Cranelift builds without LTO, and the set holds an LTO pragma";
 
     fn admitted(target: &Target) -> Maybe<&'static str> {
@@ -295,7 +296,7 @@ macro_rules! driver {
             const BIT: Mask = Slot::$name.bit();
             const NAME: Words = stringify!($name);
             const REACH: Reach = Reach::Workspace;
-            const TOOL: Maybe<&'static Tool> = Maybe::Is(&$tool);
+            const NEEDS: &'static [&'static Tool] = &[&$tool];
 
             fn write_cargo_config<W: Write>(with: &Written<'_>, out: &mut W) -> fmt::Result {
                 match with.shared() {
@@ -322,7 +323,7 @@ driver!(
 
 /// A C compiler: the `CC`, `CXX` and `AR` a build script finds.
 macro_rules! cc {
-    ($(#[$doc:meta])* $name:ident, $cc:literal, $cxx:literal, $ar:literal, $tool:ident) => {
+    ($(#[$doc:meta])* $name:ident, $cc:literal, $cxx:literal, $ar:literal, [$($tool:ident),*]) => {
         $(#[$doc])*
         #[derive(Debug, Clone, Copy)]
         pub struct $name;
@@ -334,7 +335,7 @@ macro_rules! cc {
             const BIT: Mask = Slot::$name.bit();
             const NAME: Words = stringify!($name);
             const REACH: Reach = Reach::Workspace;
-            const TOOL: Maybe<&'static Tool> = Maybe::Is(&$tool);
+            const NEEDS: &'static [&'static Tool] = &[$(&$tool),*];
 
             fn write_cargo_config<W: Write>(with: &Written<'_>, out: &mut W) -> fmt::Result {
                 match with.shared() {
@@ -360,7 +361,7 @@ cc!(
     "gcc",
     "g++",
     "ar",
-    GCC
+    [GCC, GXX, AR]
 );
 cc!(
     /// Build scripts compile C with clang.
@@ -368,5 +369,5 @@ cc!(
     "clang",
     "clang++",
     "llvm-ar",
-    CLANG
+    [CLANG, CLANGXX, LLVM_AR]
 );

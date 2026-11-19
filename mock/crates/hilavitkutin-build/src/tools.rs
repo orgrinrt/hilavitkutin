@@ -1,8 +1,8 @@
 //! The tools a pragma waits on, and what a script does about each.
 //!
-//! A pragma that needs something the toolchain does not bring names a row
-//! of [`TOOLS`] in its [`TOOL`](crate::Pragma::TOOL). The script looks for
-//! the tool and asks [`provision`], which answers what to do. The looking,
+//! A pragma that needs something the toolchain does not bring names rows
+//! of [`TOOLS`] in its [`NEEDS`](crate::Pragma::NEEDS). The script looks
+//! for each tool and asks [`provision`], which answers what to do. The looking,
 //! the building and the removing stay the script's; this module holds the
 //! rows, the decision and the text.
 
@@ -136,6 +136,28 @@ pub const GCC: Tool = Tool {
     },
 };
 
+/// A program a package brings, proved by its version line alone.
+const fn packaged(name: &'static str, package: &'static str, line: Line) -> Tool {
+    Tool {
+        name,
+        version: Maybe::Isnt,
+        source: Source::Package(package),
+        proof: Proof {
+            line,
+            mark: Maybe::Isnt,
+        },
+    }
+}
+
+/// clang++, the C++ compiler `ClangCc` names.
+pub const CLANGXX: Tool = packaged("clang++", "clang", Line::Holds("clang version"));
+/// llvm-ar, the archiver `ClangCc` names.
+pub const LLVM_AR: Tool = packaged("llvm-ar", "llvm", Line::Holds("LLVM version"));
+/// g++, the C++ compiler `GccCc` names.
+pub const GXX: Tool = packaged("g++", "g++", Line::Starts("g++ "));
+/// ar of binutils, the archiver `GccCc` names.
+pub const AR: Tool = packaged("ar", "binutils", Line::Starts("GNU ar "));
+
 /// The cranelift codegen backend of the pinned toolchain.
 pub const CRANELIFT: Tool = Tool {
     name:    "cranelift",
@@ -166,6 +188,10 @@ pub const TOOLS: &[Tool] = &[
     WILD,
     CLANG,
     GCC,
+    CLANGXX,
+    LLVM_AR,
+    GXX,
+    AR,
     CRANELIFT,
     POLKA_PASSES,
     MATH_PEEPHOLE,
