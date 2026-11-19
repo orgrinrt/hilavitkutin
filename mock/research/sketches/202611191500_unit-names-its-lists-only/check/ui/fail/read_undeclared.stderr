@@ -1,15 +1,31 @@
-error[E0277]: the read list `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>` has no value for `Column<Glow>`
-  --> ui/fail/read_undeclared.rs:28:24
+error[E0277]: the trait bound `hilavitkutin_api::Empty: model::Has<hilavitkutin_api::Read<'_>, Column<Glow>, _>` is not satisfied
+  --> ui/fail/read_undeclared.rs:28:28
    |
 28 |         let vel = read.get(Column::<Glow>::new());
-   |                        ^^^ the trait `ReadAt<Column<Glow>, There<There<_>>>` is not implemented for `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>`
+   |                        --- ^^^^^^^^^^^^^^^^^^^^^ the trait `model::Has<hilavitkutin_api::Read<'_>, Column<Glow>, _>` is not implemented for `hilavitkutin_api::Empty`
+   |                        |
+   |                        required by a bound introduced by this call
    |
-   = note: A value function reads the members its unit declared in `type Read`, each named as it is written there (a `Reach` is read as the `Reach`). If the compiler reports `type annotations needed` instead, the list names the member twice.
+help: the following other types implement trait `model::Has<C, M, P>`
+  --> $WORKSPACE/carrier-model/src/lib.rs
+   |
+   |   impl<C: Carrier<M>, M, T: Project<C>> const Has<C, M, Here> for Cons<M, T> {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<M, T>` implements `model::Has<C, M, Here>`
+...
+   | / impl<C, H, M, P, T> const Has<C, M, There<P>> for Cons<H, T>
+   | | where
+   | |     C: Carrier<H> + Carrier<M>,
+   | |     P: Place,
+   | |     T: [const] Has<C, M, P>,
+   | |____________________________^ `Cons<H, T>` implements `model::Has<C, M, There<P>>`
+   = note: required for `Cons<Column<Vel>, hilavitkutin_api::Empty>` to implement `model::Has<hilavitkutin_api::Read<'_>, Column<Glow>, There<_>>`
+   = note: 1 redundant requirement hidden
+   = note: required for `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>` to implement `model::Has<hilavitkutin_api::Read<'_>, Column<Glow>, There<There<_>>>`
 note: required by a bound in `ReadVals::<'a, R>::get`
   --> $WORKSPACE/api/src/values.rs
    |
    |     pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
    |            --- required by a bound in this associated function
    |     where
-   |         R: ReadAt<M, P>,
-   |            ^^^^^^^^^^^^ required by this bound in `ReadVals::<'a, R>::get`
+   |         R: model::Has<Read<'a>, M, P>,
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ReadVals::<'a, R>::get`

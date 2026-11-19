@@ -19,7 +19,7 @@ use arvo::{Bool, Cap, USize};
 use hilavitkutin_api::access::{AccessSet, Cons, Empty};
 use hilavitkutin_api::context::ResolveMap;
 use hilavitkutin_api::store::{Accum, BufferMode, Buffered, Column, Resource, Virtual};
-use hilavitkutin_api::values::{RCons, RNil, Readable, Writable};
+use hilavitkutin_api::values::{ReadProd, Readable, Writable};
 use hilavitkutin_api::{
     ColumnValue,
     Differs,
@@ -32,6 +32,8 @@ use hilavitkutin_api::{
     WriteVals,
     Written,
 };
+// Sketch edit (202611191500): the cells of the read product are the model's.
+use model::{PCons as RCons, PNil as RNil};
 use notko::Maybe;
 use notko_hlist::{Elem, Project, Val};
 
@@ -115,7 +117,7 @@ pub trait Gather<RB, RC>: ReadSet {
     ///
     /// `at` is a record of every column of the list, and nothing writes a
     /// base the list reads while the product lives.
-    unsafe fn gather<'a>(reads: &'a RB, cols: &'a RC, at: USize) -> Self::Vals<'a>;
+    unsafe fn gather<'a>(reads: &'a RB, cols: &'a RC, at: USize) -> ReadProd<'a, Self>;
 }
 
 impl<RB, RC> Gather<RB, RC> for Empty {
@@ -133,7 +135,7 @@ impl<C: ColRead, Tail: Gather<RB, RC>, RB, RC> Gather<RB, ColPtrCons<C::T, RC, C
         reads: &'a RB,
         cols: &'a ColPtrCons<C::T, RC, C::K>,
         at: USize,
-    ) -> Self::Vals<'a> {
+    ) -> ReadProd<'a, Self> {
         RCons {
             // SAFETY: the head of the bundle is this member's column, and the
             // caller's guarantee covers it.
@@ -148,7 +150,11 @@ impl<T: ResourceRead, Tail: Gather<RB, RC>, RB, RC> Gather<SnapCons<T, RB>, RC>
     for Cons<Resource<T>, Tail>
 {
     #[inline(always)]
-    unsafe fn gather<'a>(reads: &'a SnapCons<T, RB>, cols: &'a RC, at: USize) -> Self::Vals<'a> {
+    unsafe fn gather<'a>(
+        reads: &'a SnapCons<T, RB>,
+        cols: &'a RC,
+        at: USize,
+    ) -> ReadProd<'a, Self> {
         RCons {
             // The snapshot the context holds, read by value or in place as
             // the value type says.

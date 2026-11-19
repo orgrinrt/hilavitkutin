@@ -224,7 +224,8 @@ pub use store_values::{
     WorkUnitKind,
 };
 pub use values::{
-    ReadAt,
+    Read,
+    ReadProd,
     ReadSet,
     ReadVals,
     Readable,

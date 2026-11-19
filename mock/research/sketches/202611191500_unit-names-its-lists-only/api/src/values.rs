@@ -164,41 +164,42 @@ impl<V: 'static> Elem for Virtual<V> {
     type Value = Bool;
 }
 
-/// The end of a read product.
-#[derive(Clone, Copy)]
-pub struct RNil;
+// Sketch edit (202611191500): the read product is the product of the list
+// through a carrier, in the shape notko designs for `notko-hlist`
+// (orgrinrt/notko `docs/design/notko-hlist-product-carrier.md` at `69915c8`,
+// built here against a copy of that design's model crate). The shipped
+// `RNil`, `RCons`, `ReadSet::Vals` and `ReadAt` are gone: the cells are the
+// model's `PNil` and `PCons`, and a member is reached through its `Has`.
 
-/// A cell of a read product: the head member's value, then the rest.
+/// The carrier of a read product: what a value function reads of each member
+/// for the frame `'f`.
 ///
-/// The fields are public so that a runner builds one per record.
-#[derive(Clone, Copy)]
-pub struct RCons<V, T> {
-    /// What the function reads of the head member.
-    pub head: V,
-    /// The product of the tail.
-    pub tail: T,
+/// The read list names no lifetime. The frame sits here, on the carrier, and
+/// the carrier states one form per member: what `Readable` says the member
+/// gives.
+pub struct Read<'f>(core::marker::PhantomData<&'f ()>);
+
+impl<'f, M: Readable> model::Carrier<M> for Read<'f> {
+    type Of = M::Val<'f>;
 }
 
-/// A read list a value function can take: every member is `Readable`.
+/// The product of the read list `R` for the frame `'a`: the model's `PCons`
+/// per member through `Read<'a>`, `PNil` at the end.
+pub type ReadProd<'a, R> = <R as model::Project<Read<'a>>>::Prod;
+
+/// A read list a value function can take: every member is `Readable`, so the
+/// list has a product through `Read` for every frame.
 #[diagnostic::on_unimplemented(
     message = "a value function cannot read the list `{Self}`",
     note = "Every member of the read list of a unit that calls `map` is `Readable`: a `Column`, a `Buffered`, either under a `Reach`, or a `Resource<T>` whose `T` implements `ResourceRead`."
 )]
-pub trait ReadSet: AccessSet {
-    /// The product of the members' values at one record: `RCons` per cell,
-    /// `RNil` at the end.
-    type Vals<'a>: Copy;
-}
+pub trait ReadSet: AccessSet + for<'a> model::Project<Read<'a>> {}
 
 #[diagnostic::do_not_recommend]
-impl ReadSet for Empty {
-    type Vals<'a> = RNil;
-}
+impl ReadSet for Empty {}
 
 #[diagnostic::do_not_recommend]
-impl<H: Readable, T: ReadSet> ReadSet for Cons<H, T> {
-    type Vals<'a> = RCons<H::Val<'a>, T::Vals<'a>>;
-}
+impl<H: Readable, T: ReadSet> ReadSet for Cons<H, T> {}
 
 /// A write list a value function can return: every member is `Writable`.
 #[diagnostic::on_unimplemented(
@@ -218,7 +219,12 @@ impl<H, T: WriteSet> WriteSet for Cons<H, T> where H: Writable + Elem<Value = <H
 /// A read is `r.get(MEMBER)`, with the member passed as a value and its
 /// place in the list inferred from it. The bound is the read list holding
 /// the member, so a member the unit did not declare does not compile.
-pub struct ReadVals<'a, R: ReadSet>(pub R::Vals<'a>);
+///
+/// Sketch edit (202611191500): bounded on the list having a product for this
+/// one frame, where the shipped struct was bounded on `ReadSet`. A read set
+/// has a product for every frame, and that bound beside the one `Has` brings
+/// for the frame `'a` is refused as ambiguous (attempt c1).
+pub struct ReadVals<'a, R: model::Project<Read<'a>>>(pub ReadProd<'a, R>);
 
 /// The values a function returns for a unit's write list at one record.
 ///
@@ -226,45 +232,19 @@ pub struct ReadVals<'a, R: ReadSet>(pub R::Vals<'a>);
 /// by `rec!`.
 pub type WriteVals<W> = Vals<W>;
 
-/// The read list holds the readable member `M` at the place `P`.
-///
-/// What `ReadVals::get` is bounded on. Closed the way the shared crate's
-/// `Has` is: the supertrait `PlaceOf` already answers every place a member
-/// can sit at, and the two impls below cover each.
-#[diagnostic::on_unimplemented(
-    message = "the read list `{Self}` has no value for `{M}`",
-    note = "A value function reads the members its unit declared in `type Read`, each named as it is written there (a `Reach` is read as the `Reach`). If the compiler reports `type annotations needed` instead, the list names the member twice."
-)]
-pub trait ReadAt<M: Readable, P: Place>: ReadSet + PlaceOf<M, P> {
-    /// The value of `M` in `vals`.
-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a>;
-}
-
-#[diagnostic::do_not_recommend]
-impl<M: Readable, T: ReadSet> ReadAt<M, Here> for Cons<M, T> {
-    #[inline(always)]
-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a> {
-        vals.head
-    }
-}
-
-#[diagnostic::do_not_recommend]
-impl<H: Readable, M: Readable, P: Place, T: ReadAt<M, P>> ReadAt<M, There<P>> for Cons<H, T> {
-    #[inline(always)]
-    fn at<'a>(vals: &Self::Vals<'a>) -> M::Val<'a> {
-        T::at(&vals.tail)
-    }
-}
-
-impl<'a, R: ReadSet> ReadVals<'a, R> {
+impl<'a, R: model::Project<Read<'a>>> ReadVals<'a, R> {
     /// The value of `member` at this record.
+    ///
+    /// Sketch edit (202611191500): bounded on the model's `Has` through
+    /// `Read<'a>`, where the shipped method was bounded on this crate's own
+    /// `ReadAt`.
     #[inline(always)]
     pub fn get<M: Readable, P: Place>(&self, member: M) -> M::Val<'a>
     where
-        R: ReadAt<M, P>,
+        R: model::Has<Read<'a>, M, P>,
     {
         // The marker says which member and nothing else.
         core::mem::forget(member);
-        R::at(&self.0)
+        *<R as model::Has<Read<'a>, M, P>>::pick(&self.0)
     }
 }

@@ -43,10 +43,11 @@ use hilavitkutin_api::context::{
 };
 use hilavitkutin_api::hint::{Atomic, Immediate, Normal};
 use hilavitkutin_api::store::Column;
-use hilavitkutin_api::values::{RCons, RNil};
 use hilavitkutin_api::work_unit::{Always, WorkUnit};
 use hilavitkutin_api::work_unit_values::{WuCons, WuNil};
 use hilavitkutin_api::{ReadVals, RecordOp};
+// Sketch edit (202611191500): the cells of the read product are the model's.
+use model::{PCons as RCons, PNil as RNil};
 
 use crate::dispatch::engine_ctx::{ColPtrCons, ColPtrNil, EngineCtx, SnapNil};
 

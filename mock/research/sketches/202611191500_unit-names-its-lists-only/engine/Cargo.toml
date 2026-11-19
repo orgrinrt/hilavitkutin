@@ -12,6 +12,8 @@ hilavitkutin-kit.workspace = true
 arvo.workspace = true
 notko.workspace = true
 notko-hlist.workspace = true
+# Sketch (202611191500): the cells of the read product.
+carrier-model.workspace = true
 arvo-bitmask.workspace = true
 arvo-graph.workspace = true
 arvo-sparse.workspace = true

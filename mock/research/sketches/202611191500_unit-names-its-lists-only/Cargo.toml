@@ -15,7 +15,7 @@
 
 [workspace]
 resolver = "3"
-members = ["api", "engine", "kit", "providers", "unit", "native", "check", "probe"]
+members = ["carrier-model", "api", "engine", "kit", "providers", "unit", "native", "check", "probe"]
 
 [workspace.package]
 edition = "2024"
@@ -43,6 +43,7 @@ arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
 notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1" }
 libc = { version = "0.2", default-features = false }
+carrier-model = { path = "carrier-model" }
 unit = { path = "unit" }
 native = { path = "native" }
 
