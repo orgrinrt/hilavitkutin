@@ -1,7 +1,7 @@
 //! Arm `grouped`: option 3, the accumulator grouped by the data. Groups of
 //! the section's width from record zero, one partial per group, each core's
-//! slice rounded up to whole groups. Its result is the same at every worker
-//! count.
+//! slice rounded up to whole groups. Its result was the same at every worker
+//! count the support crate's tests ran: 1, 2, 3, 4 and 256.
 
 use accum_group_support::Acc;
 use accum_group_support::arms::{GroupedArm, call};

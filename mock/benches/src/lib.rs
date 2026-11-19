@@ -104,17 +104,27 @@ fn evs_bridge(config: &BenchConfig) -> Option<mockspace_bench_core::RoutineBridg
 }
 
 /// `Acc<N>` with the input builder for the section's worker count and group
-/// width. A section is named `w<W>_g<G>`.
+/// width. A section is named `w<W>_g<G>`. A section, record count or pair
+/// this bench does not build panics rather than falling through to the byte
+/// dispatch, which would run another routine under the section's name.
 fn acc_bridge(config: &BenchConfig) -> Option<mockspace_bench_core::RoutineBridge> {
     use accum_group_support::Acc;
-    let section = accum_group_support::section::parse(&config.bench_name)?;
+    let name = &config.bench_name;
+    let section = accum_group_support::section::parse(name)
+        .unwrap_or_else(|| panic!("{ACC}: section `{name}` is not `w<W>_g<G>`"));
     let mut bridge = match config.n {
         4096 => routine_bridge!(Acc<4096>),
         65536 => routine_bridge!(Acc<65536>),
         1048576 => routine_bridge!(Acc<1048576>),
-        _ => return None,
+        n => panic!("{ACC}: no routine for {n} records"),
     };
-    bridge.input_builder = accum_group_support::builder(section.workers, section.group)?;
+    bridge.input_builder = accum_group_support::builder(section.workers, section.group)
+        .unwrap_or_else(|| {
+            panic!(
+                "{ACC}: no input builder for {} workers and groups of {}",
+                section.workers, section.group
+            )
+        });
     Some(bridge)
 }
 

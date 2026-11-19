@@ -1,7 +1,8 @@
 //! Shared code for the `accumulator_grouped` bench.
 //!
 //! The question is what it costs to split a fold that is not associative
-//! across cores so that its result is the same bytes at every worker count.
+//! across cores so that its result is the same bytes at every worker count
+//! the tests run (1, 2, 3, 4 and 256).
 //! Option 3 of the fold split groups the accumulator by the data: the records
 //! cut into groups of `G` from record zero, one partial per group, partials
 //! kept in group sequence and folded left to right at the merge. Each core's
