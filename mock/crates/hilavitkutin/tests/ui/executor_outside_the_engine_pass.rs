@@ -1,5 +1,5 @@
-//! An executor written outside the engine is refused: `Executor` takes
-//! the engine's seal, which no outside crate can name or implement.
+//! A consumer's own executor builds: `Executor` is open, so a stealing
+//! executor can take the library's place.
 
 use core::pin::Pin;
 
@@ -20,4 +20,8 @@ impl Executor for StealingExecutor {
     }
 }
 
-fn main() {}
+fn takes_any_executor<E: Executor>(_: &E) {}
+
+fn main() {
+    takes_any_executor(&StealingExecutor);
+}

@@ -58,8 +58,8 @@ const _: () = assert!(
 mod sealed {
     /// The engine's seal. Public in a module no path outside the crate names,
     /// so a trait bounded on it can be named outside the engine and
-    /// implemented only inside it: the codegen traits and the executor take
-    /// it, since their impls hold the cross-thread ordering the engine owns.
+    /// implemented only inside it: the codegen traits take it, since their
+    /// implementers are codegen artefacts.
     pub trait EngineOnly {}
 }
 

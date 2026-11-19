@@ -1,8 +1,10 @@
-//! The sealed executor, its error, and its one implementation.
+//! The executor trait, its error, and the library's deterministic
+//! executor.
 //!
-//! `Executor` takes the engine's seal, so only the engine writes an
-//! executor: an impl outside it could break the cross-thread ordering
-//! protocol the workers rely on.
+//! `Executor` is open: a consumer whose per-record times unbalance the
+//! cores may provide a stealing executor through it. An executor holds
+//! the cross-thread ordering protocol on the pool frame it is handed,
+//! as `HybridExecutor` does.
 //!
 //! The mainloop body for the executor monomorphises against the
 //! `CoreProgram` emitted by the dispatch codegen.
@@ -11,19 +13,21 @@ use arvo::USize;
 
 use super::pool_frame::{PoolFrame, WakeStrategy};
 
-/// Sealed executor trait.
+/// The per-worker executor.
 ///
-/// The engine ships exactly one impl, `HybridExecutor`. The trait
-/// takes the engine's seal, `sealed::EngineOnly`, a public trait in a
-/// private module, so an impl outside the engine cannot bypass the
-/// cross-thread atomic-ordering protocol.
+/// The library ships `HybridExecutor`, which assigns morsels
+/// deterministically. A consumer may provide its own, a stealing one
+/// for instance; it must hold the Topic 3 S7 ordering protocol on the
+/// pool frame: Release on the phase-arrival and progress counters it
+/// publishes, Acquire where it reads them, and the shutdown flag
+/// observed between morsels.
 ///
 /// Per-worker mainloop entry: `run(pool, core_id, wake_strategy)`
 /// walks the pre-computed `CoreProgram`, dispatching morsels, hitting
 /// phase barriers, and observing the shutdown signal between morsels.
 /// Returns `Outcome<(), ExecutorError>`; cleanly-shut workers return
 /// `Outcome::Ok(())`.
-pub trait Executor: crate::sealed::EngineOnly {
+pub trait Executor {
     /// Per-worker mainloop. Spawned once per core at
     /// `ThreadPool::build()` time; runs until `pool.shutdown` is set.
     ///
@@ -56,11 +60,8 @@ pub enum ExecutorError {
 /// fiber shape, hits the centralised phase barrier between phase
 /// boundaries, observes the shutdown signal between morsels.
 ///
-/// Zero-sized marker, sealed with the engine's seal like the trait it
-/// implements.
+/// Zero-sized marker.
 pub struct HybridExecutor;
-
-impl crate::sealed::EngineOnly for HybridExecutor {}
 
 impl Executor for HybridExecutor {
     #[rustfmt::skip] // keeps the allow on the signature it governs

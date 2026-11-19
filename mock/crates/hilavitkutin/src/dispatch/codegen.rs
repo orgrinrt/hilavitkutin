@@ -141,6 +141,16 @@ impl core::fmt::Debug for FiberId {
     }
 }
 
+// A block of its own, so rustfmt's impl-item reordering has no later item to
+// move the `lint:allow` onto.
+impl FiberId {
+    /// Number of distinct fiber ids this fixed-width type can name.
+    ///
+    /// `FiberId` wraps `Uint<7>`, so it addresses indices `0 .. 2^7`. Keep
+    /// in sync with the `Uint<7>` width above.
+    pub const ADDRESSABLE: usize = 1 << 7; // lint:allow(no-bare-numeric) reason: 2^(Uint<7> width): the addressable-id-count bound; tracked: #641
+}
+
 impl FiberId {
     /// Zero-valued default.
     pub const ZERO: Self = Self(<Uint<7> as Identity<Additive>>::IDENTITY);
@@ -182,6 +192,16 @@ impl core::fmt::Debug for UnitId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "UnitId({})", (*self).index().0) // lint:allow(no-bare-numeric) reason: Display of the raw index value; tracked: #339
     }
+}
+
+// A block of its own, so rustfmt's impl-item reordering has no later item to
+// move the `lint:allow` onto.
+impl UnitId {
+    /// Number of distinct unit ids this fixed-width type can name.
+    ///
+    /// `UnitId` wraps `Uint<16>`, so it addresses indices `0 .. 2^16`. Keep
+    /// in sync with the `Uint<16>` width above.
+    pub const ADDRESSABLE: usize = 1 << 16; // lint:allow(no-bare-numeric) reason: 2^(Uint<16> width): the addressable-id-count bound; tracked: #641
 }
 
 impl UnitId {
