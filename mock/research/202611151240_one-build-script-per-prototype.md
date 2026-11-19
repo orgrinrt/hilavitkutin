@@ -16,4 +16,4 @@ Considered and not taken: `package.build` alone, refused by packaging for every 
 
 ## Status
 
-The round `202611151157` carrying it is at its doc changelist. Its commits are refused by the bench lints mockspace landed on 15 November, ticket `hilavitkutin_kirjo_and_arvo_port_their_benches_to_the_one_mo`.
+The round `202611151157` carrying it is at its doc changelist. On 15 November its commits were refused by the bench lints mockspace landed that day, ticket `hilavitkutin_kirjo_and_arvo_port_their_benches_to_the_one_mo`. On 19 November, with `dev` merged in at `4acfbc7a`, the lint pipeline is green on the branch and the changelist names where the pack lives and the branch the round supersedes.
