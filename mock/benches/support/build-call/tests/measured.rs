@@ -1,5 +1,6 @@
-//! Every row of the two tables in `measured.rs`, read back from the run
-//! directory its comment cites: the first warm pass of the slower arm rounded
+//! Every row of the two tables in `measured.rs` equals the reading of the cells
+//! this test lists, each by its run directory (the comments in `measured.rs`
+//! cite the same runs, which nothing here reads): the first warm pass of the slower arm rounded
 //! up to a second, and the largest target directory a cell left. The test
 //! lists the cells it reads, and a row that none of them gives, or a listed
 //! cell that no row accounts for, fails here; a run directory outside the list
