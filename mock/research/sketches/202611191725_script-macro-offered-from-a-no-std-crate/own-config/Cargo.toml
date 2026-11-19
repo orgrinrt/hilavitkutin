@@ -1,0 +1,13 @@
+[workspace]
+
+[package]
+name = "sketch-own-config"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[build-dependencies]
+sketch-script-lib = { path = "../script-lib" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sketch_flag_arrived)", "cfg(sketch_deterministic)"] }

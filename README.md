@@ -144,27 +144,18 @@ impl Compressor for Gzip {
 
 ## Build tooling and hooks
 
-`hilavitkutin-build` runs at build time only; its code never links into the produced runtime binary. Integration is one `configure().run()` call from a `build.rs`. The bootstrap writes a generated `target/hilavitkutin-build/hilavitkutin-config.toml` (containing the rustc-workspace-wrapper path, Cargo profile settings such as `lto = "fat"`, `codegen-units = 1`, `profile-use`, plus any flags the active pragmas require) and ensures the matching `include = "..."` line exists in `.cargo/config.toml` so Cargo picks the generated TOML up. Everything mutable lives in the generated file; `cargo clean` wipes all generated state and the next build regenerates it. The committed `.cargo/config.toml` keeps just the include directive; the bootstrap manages it on first run.
-
-Typed pragmas drive the artefact. Each pragma names what it is and what it needs. `LoopOptimization` activates the LLVM pass plugin that runs IRCE, LoopPredication, LoopInterchange, LoopDistribute, and LoopDataPrefetch. `FastMath` flips `-C llvm-args=-enable-unsafe-fp-math` and emits the `arvo_fast_math` cfg. `MathPeephole` (which requires `FastMath`) loads the math-peephole pass plugin. `ExpandedLto` writes `lto = "fat"` + `codegen-units = 1` (required for devirtualisation of the monomorphised dispatch). Combinators (`All<(A, B)>`, `Any<(A, B)>`) declare requirements; conflicts surface at `configure().run()` time, not at build time.
-
-`Pgo` and `Bolt` integrate as post-build hooks. The first release build runs PGO-instrumented benchmarks in the background to generate `merged.profdata`; subsequent builds pick up the profile and recompile with profile-guided inlining, followed by BOLT post-link rewriting on Linux targets. Profiles are gitignored, expire on `cargo clean`, and warn when HEAD has diverged more than 50 commits since generation.
+`hilavitkutin-build` runs at build time only; its code never links into the produced runtime binary. A crate takes it as a build-dependency and writes one line in a build script it keeps wherever it wants. The first build writes a small rustc wrapper at `.cargo/hilavitkutin-rustc-wrapper` in the workspace, and a `.cargo/config.toml` that names it where the workspace has none, and the builds after that one hand each crate the rustc flags its pragmas chose. Both files are meant to be committed. A `config.toml` that is already there is left as it is, and the build says which line to add. The flags reach the workspace's own members and never its dependencies.
 
 ```rust
-// build.rs
-use hilavitkutin_build::{configure, pragmas::*};
-
+// the crate's build script, at whatever path the crate keeps it
 fn main() {
-    configure()
-        .profile("release", |p| p.enable::<(
-            ExpandedLto,        // fat lto + codegen-units=1
-            FastMath,           // unsafe-fp-math + arvo_fast_math cfg
-            LoopOptimization,   // llvm pass plugin
-            Pgo, Bolt,          // profile-guided + post-link rewriting
-        )>())
-        .run();
+    hilavitkutin_build::script!(Default);
 }
 ```
+
+`Default` takes the pragmas of the profile cargo is building. `Deterministic` is the same without `FastMath`, for a crate whose floats have to come out the same on every machine. A script that wants its own set calls `configure_with` and takes pragmas out by hand.
+
+A pragma names one thing about how the crate is compiled. Today three of them write rustc flags: `LoopOptimization` turns on five LLVM loop options, `ParallelCodegen` sets the frontend thread count and `SharedGenerics` shares generic instances across crates. `FastMath` sets the `arvo_fast_math` cfg for the crate's own code. The rest (`Polly`, `MathPeephole`, `ExpandedLto`, `Pgo`, `Bolt`, `BuildStd` and the others) are named and carry their requirements, and write nothing yet.
 
 ## Ecosystem extensions
 
