@@ -23,16 +23,19 @@ pub const fn disk_key(incremental: bool) -> u16 {
 
 /// The first timed call measured at a cell, in whole seconds rounded up, the
 /// slower of the bench's two arms.
-pub const FIRST_CALL_S: [Row; 7] = [
+pub const FIRST_CALL_S: [Row; 6] = [
     // build-static, run 20261116T063249Z-f04daa0a-dirty, first warm pass
     (call_key(0, 0), 25, 17),
     (call_key(1, 0), 25, 6),
     (call_key(2, 0), 25, 6),
     (call_key(3, 0), 25, 15),
     // link-static, run 20261116T083526Z-b2bbf4ba, first warm pass: the
-    // relink, 0.157 s at dev 25, 0.478 s at dev 97, 0.138 s at release 25
+    // relink, 0.157 s at dev 25 and 0.138 s at release 25. The row at dev 97
+    // is left out until a run reads it: with it the probe of the harness gave
+    // the cell 30 s, which the untimed build of 97 crates in the first call
+    // exceeds (ticket
+    // `the_bench_harness_probe_counts_the_untimed_setup_of_a_build`).
     (call_key(4, 0), 25, 1),
-    (call_key(4, 0), 97, 1),
     (call_key(4, 1), 25, 1),
 ];
 
