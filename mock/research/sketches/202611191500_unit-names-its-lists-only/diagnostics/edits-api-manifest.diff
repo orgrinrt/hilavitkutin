@@ -1,0 +1,23 @@
+diff --git a/crates/hilavitkutin-api/Cargo.toml b/research/sketches/202611191500_unit-names-its-lists-only/api/Cargo.toml
+index cf71865a..2b91c62a 100644
+--- a/crates/hilavitkutin-api/Cargo.toml
++++ b/research/sketches/202611191500_unit-names-its-lists-only/api/Cargo.toml
+@@ -13,12 +13,18 @@ arvo-tensor.workspace = true
+ hilavitkutin-ctx.workspace = true
+ notko.workspace = true
+ notko-hlist.workspace = true
++# Sketch (202611191500): the product with its carrier as a parameter.
++carrier-model.workspace = true
+ 
+ [dev-dependencies]
+ trybuild = "1"
+ 
+ [features]
+ default = []
++# Sketch (202611191500): the one-impl trait `Unit` and its three blankets.
++unit-blanket = []
++# Sketch (202611191500): attempt s1, which does not compile.
++attempt-unit-sched = []
+ 
+ [build-dependencies]
+ hilavitkutin-build.workspace = true

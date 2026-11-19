@@ -1,15 +1,16 @@
-The search for indirect calls in the bodies, and its control.
+The search for calls and jumps in the bodies, and its control.
 
 Emitted code: x86-64 linux, AT&T syntax, toolchain nightly-2026-05-28,
-profile `probe` (inherits release: opt-level 3, lto "fat", codegen-units 1).
+profile `probe` (inherits release: opt-level 3, lto "fat", codegen-units 1),
+on the tree with the read product on the carrier.
 
 command, from the sketch root:
 cargo rustc -q -p probe --profile probe --lib -- --emit asm,llvm-ir
-kept as `probe.s` (136 lines) and `probe.ll` (267 lines).
+kept as `probe.s` and `probe.ll`.
 
 An indirect call or jump in this syntax is `call` or `jmp` with a `*` operand.
 
-pattern, any call or jmp: ^\s*(call|jmp)q?\s
+pattern, any call or unconditional jmp: ^\s*(call|jmp)q?\s
 
 probe.s, by symbol
   probe_control_indirect  line 10   jmpq *%rax     (the control: found)
@@ -18,9 +19,14 @@ probe.s, by symbol
   probe_value_drift       no line
   probe_value_warm        no line
 
-Each of the four bodies is a loop of loads, an add, stores, conditional
-branches and a return. The value bodies hold no call to `apply` either: the
-value function is inlined into the loop.
+The pattern does not look for conditional jumps. Each of the four bodies holds
+two: the `je` that skips an empty window and the `jne` that closes the loop.
+Between them a body is loads, an add and a store, and it ends in `retq`. The
+value bodies hold no call to `apply`: the value function is inlined into the
+loop.
+
+probe_value_drift (lines 81 to 101) and probe_native_drift (lines 21 to 41)
+are the same instructions, line for line.
 
 probe.ll
   The only `call` instructions in the four bodies are to

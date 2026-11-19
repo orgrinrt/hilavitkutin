@@ -9,10 +9,10 @@ error[E0277]: the trait bound `hilavitkutin_api::Empty: model::Has<hilavitkutin_
 help: the following other types implement trait `model::Has<C, M, P>`
   --> $WORKSPACE/carrier-model/src/lib.rs
    |
-   |   impl<C: Carrier<M>, M, T: Project<C>> const Has<C, M, Here> for Cons<M, T> {
+   |   const impl<C: Carrier<M>, M, T: Project<C>> Has<C, M, Here> for Cons<M, T> {
    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<M, T>` implements `model::Has<C, M, Here>`
 ...
-   | / impl<C, H, M, P, T> const Has<C, M, There<P>> for Cons<H, T>
+   | / const impl<C, H, M, P, T> Has<C, M, There<P>> for Cons<H, T>
    | | where
    | |     C: Carrier<H> + Carrier<M>,
    | |     P: Place,
