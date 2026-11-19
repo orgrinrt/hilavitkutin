@@ -1,0 +1,14 @@
+[[ticket]]
+id = "a_host_import_marks_its_whole_store_changed"
+title = "a host import marks its whole store changed where only the records it wrote changed"
+kind = "task"
+what = "Scheduler::import sets the coarse store bit mark_dirty sets, so every morsel of every unit reading the store reruns after an import of one record. The per-morsel generation counters are not built (tenet the_per_morsel_generation_counters_are_not_built_and_the_engine_has_a_coarse_per_store_dirty_only, which asks for a design sketch first); the grain is op's question what_a_host_import_into_a_built_scheduler_marks_as_changed. Red test: hilavitkutin host_import an_import_of_one_record_reruns_only_the_morsel_that_covers_it."
+related = ["subject::change"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261119235235_hila_consumer_surface_4e81"
+ticket = "a_host_import_marks_its_whole_store_changed"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-19T23:52:35Z"
