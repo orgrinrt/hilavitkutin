@@ -88,8 +88,9 @@ fn the_empty_string_interns_to_one_handle() {
     resolves_to(&interner, a, "");
 }
 
-/// A handle the arena did not issue resolves to none of the strings it
-/// holds. What it resolves to otherwise is not part of the contract.
+/// A handle the arena did not issue resolves to none of the given held
+/// strings. Callers pass non-empty ones: the arena answers such a handle
+/// with `""`, which aliases a held `""` (the red below).
 fn aliases_none_of(interner: &impl InternerApi, h: Str, held: &[&str]) {
     if let Maybe::Is(s) = InternerApi::resolve(interner, h) {
         for want in held {
@@ -99,9 +100,10 @@ fn aliases_none_of(interner: &impl InternerApi, h: Str, held: &[&str]) {
 }
 
 /// The overflow handle reaches the arena masked to the 28-bit id field. It
-/// resolves to no held string, and every handle issued before still resolves.
+/// resolves to no held non-empty string, and every handle issued before
+/// still resolves.
 #[test]
-fn the_overflow_handle_aliases_no_held_string_and_the_earlier_handles_hold() {
+fn the_overflow_handle_aliases_no_held_non_empty_string_and_the_earlier_handles_hold() {
     let interner = default_interner::<8, 2>();
     let first = InternerApi::intern(&interner, "abcd");
     let second = InternerApi::intern(&interner, "efgh");
@@ -115,9 +117,9 @@ fn the_overflow_handle_aliases_no_held_string_and_the_earlier_handles_hold() {
 }
 
 /// An id at or past the live count reads nothing outside the arena and
-/// aliases none of its strings, whichever arena issued it.
+/// aliases none of its non-empty strings, whichever arena issued it.
 #[test]
-fn a_handle_past_the_live_count_aliases_no_held_string() {
+fn a_handle_past_the_live_count_aliases_no_held_non_empty_string() {
     let first = default_interner::<64, 4>();
     let _ = InternerApi::intern(&first, "foreign-0");
     let past = InternerApi::intern(&first, "foreign-1");
@@ -184,4 +186,21 @@ fn an_arena_with_no_bytes_overflows_every_non_empty_string() {
     let empty = InternerApi::intern(&interner, "");
     assert_ne!(a, empty);
     resolves_to(&interner, empty, "");
+}
+
+/// An id the arena did not issue does not alias a held empty string: not
+/// the id past the live count, and not the masked overflow id of an arena
+/// with no bytes.
+#[test]
+#[ignore = "catalogue: an unissued id resolves to the empty string, which aliases a held one; needs a resolve that can say it holds nothing; tracked #evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of"]
+fn an_unissued_id_does_not_alias_a_held_empty_string() {
+    let arena: MemoryArena<16, 4> = MemoryArena::new();
+    let empty = arena.arena_intern("");
+    let ab = arena.arena_intern("ab");
+    assert_ne!(arena.arena_resolve(ab + 1), arena.arena_resolve(empty));
+
+    let bare: MemoryArena<0, 4> = MemoryArena::new();
+    let empty = bare.arena_intern("");
+    let over = bare.arena_intern("ab") & ((1 << 28) - 1);
+    assert_ne!(bare.arena_resolve(over), bare.arena_resolve(empty));
 }

@@ -51,9 +51,9 @@ impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
 /// The arena keeps the interning law for runtime strings: equal
 /// strings get one id, so they give equal handles through
 /// `StringInterner`. Resolving an id at or past the arena's live count
-/// reads nothing outside the arena's storage and gives no string the
-/// arena holds; an overflow id masked into the 28-bit handle lands there.
-/// What it returns for such an id is not part of the contract.
+/// reads nothing outside the arena's storage; an overflow id masked into
+/// the 28-bit handle lands there. What it returns for such an id is not
+/// part of the contract and may equal a held string, the empty one.
 /// A `Str` names no interner, so a handle carried to another interner
 /// resolves to whatever that interner holds at its id.
 pub trait ArenaInterner {

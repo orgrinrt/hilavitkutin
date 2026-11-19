@@ -99,10 +99,10 @@ where
 /// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
 /// reads nothing for any id at or past the live entry count, the
 /// sentinel among them once `StringInterner` masks it to the 28-bit
-/// id field, and answers it with no string the arena holds. A handle
-/// another arena issued is not told apart from one of its own. `ENTRIES`
-/// of 2^28 or more, whose last id would equal the masked sentinel,
-/// fails the build at [`MemoryArena::new`].
+/// id field, and answers it with `""`, which aliases `""` once the arena
+/// holds it. A handle another arena issued is not told apart from one of
+/// its own. `ENTRIES` of 2^28 or more, whose last id would equal the
+/// masked sentinel, fails the build at [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
