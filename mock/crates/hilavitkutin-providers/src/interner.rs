@@ -100,8 +100,8 @@ where
 /// count: the sentinel, which `StringInterner` masks to the 28-bit id
 /// field, and an id another arena issued. The `StringInterner`
 /// wrapping this arena observes that as `Maybe::Is(&"")`. `ENTRIES`
-/// above 2^28, more than the 28-bit id addresses, fails the build at
-/// [`MemoryArena::new`].
+/// of 2^28 or more, whose last id would equal the masked sentinel,
+/// fails the build at [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
@@ -123,16 +123,18 @@ impl<
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
 > MemoryArena<BYTES, ENTRIES>
 {
-    /// The 28-bit id addresses at most 2^28 entries; a larger arena
-    /// would hand out ids that alias once masked into a `Str`.
+    /// Every issued id stays below 2^28 - 1, the id the `u32::MAX`
+    /// sentinel becomes once masked into a `Str`; at 2^28 entries the
+    /// last slot would carry the sentinel's own id, and past it ids
+    /// alias each other.
     const ENTRIES_FIT_THE_ID: () = assert!(
-        ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
-        "MemoryArena: ENTRIES above 2^28 cannot be addressed by the 28-bit Str id; use at most 268435456 entries",
+        ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
+        "MemoryArena: ENTRIES of 2^28 or more reach the masked overflow sentinel's 28-bit Str id; use at most 268435455 entries",
     );
 
     /// Construct an empty arena. Buffer initialised to zero, entry
     /// table initialised with zero offsets and zero lengths. An
-    /// `ENTRIES` above 2^28 fails the build here.
+    /// `ENTRIES` of 2^28 or more fails the build here.
     pub const fn new() -> Self {
         let () = Self::ENTRIES_FIT_THE_ID;
         Self {
