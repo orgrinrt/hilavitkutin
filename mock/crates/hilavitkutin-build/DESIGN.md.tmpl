@@ -1,8 +1,8 @@
 # hilavitkutin-build, Design
 
 Shared build-dependency crate. Every hilavitkutin crate but this one,
-and every consumer crate that builds through it, calls
-`hilavitkutin_build::configure` from its build script. Independent of
+and every consumer crate that builds through it, writes
+`hilavitkutin_build::script!` in its build script. Independent of
 the hilavitkutin runtime, it optimises how code is compiled, not what
 it does. A build-dependency only, it never links into a binary.
 
@@ -17,7 +17,11 @@ fn main() {
 
 `script!` is the whole of a script that only configures, and one line
 of a script that does more. It expands, in the script's own std
-context, to the call below and to the wiring the next section states:
+context, to two things: the named prototype's directives, written
+straight to standard output with no text kept in memory, and the
+wiring the next section states. The directives are the ones the call
+below prints, less its warning, since `script!` looks at the wiring
+before it says anything:
 
 ```rust
 let mut out = String::new();
@@ -26,7 +30,9 @@ hilavitkutin_build::configure(|key| std::env::var(key).ok().into(), &mut out)
 print!("{out}");
 ```
 
-A crate that tunes its pragmas calls `configure_with` instead, with a
+That call is also what a script written by hand uses, and it does
+nothing about the wiring. A crate that tunes its pragmas calls
+`configure_with` the same way, with a
 function over the profile's default `PragmaSet`. The tuned set is made
 coherent, so a pragma whose required pragma was taken out goes with
 it. A crate whose own code must not take fast float math removes
@@ -81,21 +87,44 @@ is written again, also in a workspace long since wired, so a consumer
 keeps no test of its copy. A `config.toml` that exists without the line
 is left as it is, and the script's warning names the line to add.
 
-Two roots are not the consumer's to write into, and nothing is written
-there. A root under `CARGO_HOME` is a checkout cargo fetched for a
-dependency. A root that holds `Cargo.toml.orig` is a crate cargo
-unpacked, which is what `cargo package` builds when it verifies, and
-that build fails when a script adds a file to it.
+Three roots are not this build's to write into, and nothing is written
+there and nothing said. A root under `CARGO_HOME` is a checkout cargo
+fetched for a dependency. A root that holds `Cargo.toml.orig` is a
+crate cargo unpacked, which is what `cargo package` builds when it
+verifies, and that build fails when a script adds a file to it. The
+third is a root other than the one cargo's wrapper sits in: where
+`RUSTC_WORKSPACE_WRAPPER` names a `hilavitkutin-rustc-wrapper` outside
+the root's `.cargo/`, the crate is a path dependency being built from
+another workspace that is wired, and its own workspace is left alone.
+A workspace wrapper reaches the members of the workspace cargo was run
+in, so such a crate takes no flags from that build either way.
+
+One case is not told apart. A path dependency built from a workspace
+that is not wired yet has no wrapper named, exactly as its own
+workspace's first build has, so the script wires the dependency's
+workspace. That is the consumer's own tree and the files are the ones
+its own first build would write, and from the outer workspace's next
+build on the third rule holds.
 
 Cargo reads its configuration when it starts, so the build that writes
 the wiring runs without the wrapper, and says so in one `cargo::warning`.
 `RUSTC_WORKSPACE_WRAPPER` decides only what is said: nothing where it
 names the wrapper or `clippy-driver`, and that the flags are dropped
-where the wiring is in place and cargo names something else.
-The next build takes the flags, and cargo starts it over by itself,
-since the script asks to be rerun when `RUSTC_WORKSPACE_WRAPPER`
-changes. Both files are committed, so this happens once per workspace
-and never on a fresh clone.
+where the wiring is in place and cargo names something else. A build
+of the workspace after that one runs through the wrapper, which changes
+how cargo names every member's artifacts, so the members and their
+scripts are built again and take the flags.
+
+The script asks to be rerun when either file of the wiring changes
+(`cargo::rerun-if-changed` on both paths, which it knows once it has
+the root), and when `RUSTC_WORKSPACE_WRAPPER` changes in cargo's own
+environment. A wrapper edited by hand or left behind by an older
+version of the crate is therefore written again by the next build, and
+a `config.toml` that gains the line stops the warning. The script
+cannot help where the wrapper is deleted, or loses its executable bit,
+in a workspace whose `config.toml` names it: cargo runs the wrapper
+before any script and stops there. Both files are committed, so the
+writing happens once per workspace and a fresh clone has them.
 
 The crate stays `no_std`: which file holds what text, and when it is
 written, is decided by functions of this crate that write into a
@@ -160,14 +189,16 @@ rustc-workspace-wrapper = ".cargo/hilavitkutin-rustc-wrapper"
 ```
 
 Only affects workspace crates, not dependencies, and of those only the
-crates whose build script calls `configure`. Cargo finds
+crates whose build script builds through this crate. Cargo finds
 `.cargo/config.toml` from the directory it runs in, not from the
 manifest, and walks up from it, so the one at the repository root
 reaches cargo run anywhere in the repository. Where a
 crate has flags to hand over and cargo names no wrapper, or one whose
 path does not end with `hilavitkutin-rustc-wrapper` (`clippy-driver`
 under `cargo clippy`, a compile cache set as the workspace wrapper),
-`configure` writes a `cargo::warning` that the flags are dropped.
+a `cargo::warning` says the flags are dropped: `configure` writes it
+for a script written by hand, and `script!` prints it once it has seen
+that the wiring is in place.
 
 **4. Generated config file:** pragmas that need Cargo profile
 settings (ExpandedLto, Pgo, BuildStd) write to
