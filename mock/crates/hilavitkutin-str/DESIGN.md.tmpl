@@ -188,10 +188,12 @@ handled by the wrapper.
 The arena keeps the interning law for runtime strings: `arena_intern`
 of a string equal to one it already stored returns the id it gave that
 string, so equal strings give equal handles through `StringInterner`.
-`arena_resolve` of an id the arena did not issue returns the empty
-string and reads nothing outside the arena's storage; a handle from
-another interner instance, or an arena's overflow id masked into the
-28-bit handle, lands there.
+`arena_resolve` of an id at or past the arena's live count returns the
+empty string and reads nothing outside the arena's storage; an arena's
+overflow id masked into the 28-bit handle lands there. A `Str` names
+no interner, so a handle is meaningful only to the interner that
+issued it: one carried to another interner resolves to whatever that
+interner holds at its id, and is not detected.
 
 ## `StringInterner<A>`, wrapper
 
