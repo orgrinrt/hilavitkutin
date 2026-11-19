@@ -1,0 +1,15 @@
+error[E0277]: the write list `Cons<Written<Column<Glow>>, hilavitkutin_api::Empty>` holds no column of `Pos`
+  --> ui/fail/write_undeclared.rs:21:21
+   |
+21 |             records.write::<Pos, _>(i, Pos(pos.0 + pos.0));
+   |                     ^^^^^ the trait `WritesAt<Pos, There<_>>` is not implemented for `Cons<Written<Column<Glow>>, hilavitkutin_api::Empty>`
+   |
+   = note: A block unit writes a column it lists in `type Write`, bare, under `Written<_>` or under `Differs<_>`.
+note: required by a bound in `hilavitkutin_api::block::Records::write`
+  --> $WORKSPACE/api/src/block.rs
+   |
+   |     unsafe fn write<T: ColumnValue, K>(&self, i: USize, v: T)
+   |               ----- required by a bound in this associated function
+   |     where
+   |         W: WritesAt<T, K>;
+   |            ^^^^^^^^^^^^^^ required by this bound in `Records::write`

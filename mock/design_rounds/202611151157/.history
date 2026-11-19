@@ -1,0 +1,50 @@
+46296832 chore: lock src changelist 202611151157
+193a2689 fix: drop the two lint allows the exported macro no longer needs
+100c558d test: hold a settled wrapper by its date, not by what cargo compiles
+1d854df3 Merge remote-tracking branch 'origin/dev' into work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an
+a4d535f4 fix: hold the wrapper to its whole text and say what pragmas write
+6f3c485d docs: write the src changelist of 202611151157 after the third review
+0b7780c5 chore: lock doc changelist 202611151157
+49166213 docs: name the wiring's public items and settle what clippy is told
+e0c100f0 chore: unlock design round and reopen the doc changelist
+3177527a docs: land the two stranded sketch records
+c6ab1c6d fix: keep scripts of one workspace apart and leave a host with no sh
+f0e4aa8c docs: write the src changelist of 202611151157 after the second review
+81d23d8a chore: lock doc changelist 202611151157
+5691f8f3 docs: state the several-member first build and the host with no sh
+0f664ebb chore: unlock design round and reopen the doc changelist
+8055e4ca fix: rerun the script when the wiring changes and read `[build]` alone
+18df2037 docs: write the src changelist of 202611151157 after review
+e213f645 chore: lock doc changelist 202611151157
+8ae87513 docs: say a path dependency's own workspace gets wired
+7928dc91 chore: unlock design round and reopen the doc changelist
+323715c1 docs: replace the src changelist of 202611151157 after review
+4dc99788 chore: lock doc changelist 202611151157
+62f55a70 docs: say what reruns the script and which roots it leaves alone
+d8b57028 chore: unlock design round, deprecate src and unlock doc
+5e94a769 chore: lock src changelist 202611151157
+535f5077 feat: give a build script one line with `script!` and `Prototype`
+739b02e6 docs: land the unit-names-its-lists-only sketch and report
+8b9f9715 chore: reopen src changelist 202611151157 for the source
+4e953ca1 chore: lock src changelist 202611151157
+8d75ecfd docs: sketch where prefer-dynamic has to reach for a dylib domain
+252c5190 refactor: move the engine-only items out of the api crate
+ee5335ac docs: sketch where the lto and incremental pragmas fall
+b84671e0 docs: write the source changelist of round 202611151157
+4dcd93b7 chore: lock doc changelist 202611151157
+2d447fc1 docs: decline an unpacked crate and keep the wrapper on every run
+bd9da90b chore: unlock doc changelist 202611151157
+12c79893 docs: record what the `script!` sketch found
+4a78664b docs: sketch `script!` offered from a `no_std` crate
+9ca4c4f8 chore: lock doc changelist 202611151157
+6dc0f935 docs: leave every build script with its consumer
+247261cb chore: record `compile_fail_fixtures` as red on `dev`
+97a3a09c docs: sketch the pragma round's three open points
+c285f8f6 docs: write up the pragma round before it opens
+7e046c25 docs: place the build pack under `mock/tools`
+4acfbc7a chore: regenerate generated files after merge
+b788bb20 Merge remote-tracking branch 'origin/dev' into work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an
+07a9e9a3 bench: add the build and link bench with its first default cells
+7b1a6136 chore: configure the `commit-subject` gate
+dea557ae bench: port every bench onto the current harness
+2b137e9d docs: land the first stack audit

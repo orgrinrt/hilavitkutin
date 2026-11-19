@@ -1,0 +1,54 @@
+//! `Depth` trait for total cons-list element count.
+//!
+//! Plan-stage code uses `Depth::D` for total recursive counts.
+//! `AccessSet::LEN` reports immediate-tuple-arity (always 2 for
+//! cons-list cells); the two consts coexist with distinct contracts.
+
+use arvo::USize;
+use arvo::strategy::{Additive, Identity, Multiplicative};
+
+use crate::access::{Cons, Empty};
+use crate::sealed;
+
+/// Total cons-list element count.
+///
+/// `<()>::D == <USize as Identity<Additive>>::IDENTITY` and `<Empty>::D ==
+/// <USize as Identity<Additive>>::IDENTITY`.
+/// `<(H, R)>::D == R::D + <USize as Identity<Multiplicative>>::IDENTITY` and
+/// `<Cons<H, R>>::D == R::D + <USize as Identity<Multiplicative>>::IDENTITY`. Both flat-tuple and
+/// `Cons<H, R>` shapes impl `Depth`. Flat tuples of arity 3+
+/// deliberately do not impl `Depth`.
+///
+/// Sealed; consumers cannot impl directly.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` does not carry a Depth",
+    note = "Depth is sealed and implemented internally by the scheduler builder. If you reach this from consumer code, you have likely named a builder shape that does not exist; check the builder method chain."
+)]
+pub trait Depth: sealed::Sealed {
+    const D: USize;
+}
+
+// ---------------------------------------------------------------------
+// Depth: total cons-list element count. Two pairs of impls (flat
+// tuple () + (H, R) and HList Empty + Cons<H, R>), all disjoint.
+// ---------------------------------------------------------------------
+
+impl sealed::Sealed for () {}
+impl<H, R: Depth> sealed::Sealed for (H, R) {}
+
+impl Depth for () {
+    const D: USize = <USize as Identity<Additive>>::IDENTITY;
+}
+impl<H, R: Depth> Depth for (H, R) {
+    const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
+}
+
+impl sealed::Sealed for Empty {}
+impl<H, R: Depth> sealed::Sealed for Cons<H, R> {}
+
+impl Depth for Empty {
+    const D: USize = <USize as Identity<Additive>>::IDENTITY;
+}
+impl<H, R: Depth> Depth for Cons<H, R> {
+    const D: USize = R::D + <USize as Identity<Multiplicative>>::IDENTITY;
+}

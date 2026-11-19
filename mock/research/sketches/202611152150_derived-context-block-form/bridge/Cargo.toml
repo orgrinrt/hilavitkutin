@@ -1,0 +1,11 @@
+[package]
+name = "bridge"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+# Engine-side: the one crate of the sketch that names the engine.
+[dependencies]
+hilavitkutin.workspace = true
+hilavitkutin-api.workspace = true
+derived.workspace = true

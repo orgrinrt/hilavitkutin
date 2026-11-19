@@ -1,0 +1,47 @@
+[workspace]
+
+[package]
+name = "pragma-requirements-as-bounds"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[[example]]
+name = "ok"
+test = false
+
+[[example]]
+name = "breaks_exclusion"
+test = false
+
+[[example]]
+name = "breaks_all"
+test = false
+
+[[example]]
+name = "breaks_any"
+test = false
+
+[[example]]
+name = "any_two_present"
+test = false
+
+[[example]]
+name = "mask_ok"
+test = false
+
+[[example]]
+name = "mask_breaks_exclusion"
+test = false
+
+[[example]]
+name = "mask_breaks_all"
+test = false
+
+[[example]]
+name = "mask_breaks_any"
+test = false

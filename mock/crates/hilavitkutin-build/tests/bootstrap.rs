@@ -115,7 +115,7 @@ fn a_release_build_writes_the_cfg_and_the_loop_and_thread_flags() {
     assert_eq!(
         directives(&release),
         format!(
-            "cargo::rerun-if-changed=build.rs\n\
+            "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
              cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
              cargo::rustc-cfg=arvo_fast_math\n\
              cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
@@ -129,7 +129,7 @@ fn a_dev_build_writes_no_cfg_and_its_two_flags() {
     assert!(!dev.fast_math());
     assert_eq!(
         directives(&dev),
-        "cargo::rerun-if-changed=build.rs\n\
+        "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
          cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
          cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Zthreads=0 -Zshare-generics=y\n",
     );
@@ -219,7 +219,7 @@ fn configure_reads_profile_features_and_wrapper_through_the_closure() {
     assert_eq!(
         out,
         format!(
-            "cargo::rerun-if-changed=build.rs\n\
+            "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
              cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
              cargo::rustc-cfg=arvo_fast_math\n\
              cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
@@ -292,15 +292,17 @@ fn a_tuned_set_is_made_coherent() {
     assert_eq!(release.coherent(), release);
 }
 
-/// The committed wrapper, run with `echo` standing in for rustc, appends
-/// the variable's words and nothing else: unset, empty, set, and holding
-/// a glob that must not be expanded against the directory.
+/// The wrapper the crate writes, run with `echo` standing in for rustc,
+/// appends the variable's words and nothing else: unset, empty, set, and
+/// holding a glob that must not be expanded against the directory.
 #[test]
 fn the_wrapper_appends_the_variable_and_nothing_else() {
-    let wrapper = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../.cargo/hilavitkutin-rustc-wrapper"
-    );
+    let mut text = String::new();
+    write_wrapper(&mut text).expect("writing to a String cannot fail");
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("wrapper");
+    std::fs::create_dir_all(&dir).expect("a scratch directory");
+    let wrapper = dir.join("hilavitkutin-rustc-wrapper");
+    std::fs::write(&wrapper, &text).expect("the wrapper's text");
     for (value, expected) in [
         (None, "rustc --crate-name x\n"),
         (Some(""), "rustc --crate-name x\n"),
@@ -312,7 +314,8 @@ fn the_wrapper_appends_the_variable_and_nothing_else() {
     ] {
         let mut command = std::process::Command::new("sh");
         command
-            .args([wrapper, "echo", "rustc", "--crate-name", "x"])
+            .arg(&wrapper)
+            .args(["echo", "rustc", "--crate-name", "x"])
             .current_dir(env!("CARGO_MANIFEST_DIR"))
             .env_remove("HILAVITKUTIN_BUILD_RUSTFLAGS");
         if let Some(value) = value {
@@ -346,18 +349,6 @@ fn configure_with_tunes_the_default_set() {
     .expect("writing to a String cannot fail");
     assert!(!out.contains("cargo::rustc-cfg=arvo_fast_math"), "{out}");
     assert!(out.contains(LOOP_FLAGS), "{out}");
-}
-
-/// The wrapper this repository commits is the text the crate writes.
-#[test]
-fn the_committed_wrapper_is_the_written_one() {
-    let mut text = String::new();
-    write_wrapper(&mut text).expect("writing to a String cannot fail");
-    assert_eq!(
-        include_str!("../../../.cargo/hilavitkutin-rustc-wrapper"),
-        text
-    );
-    assert!(text.contains("set -f\nexec \"$@\" $HILAVITKUTIN_BUILD_RUSTFLAGS\n"));
 }
 
 #[test]
@@ -423,9 +414,17 @@ fn clippy_driver_as_the_wrapper_is_not_warned_of() {
     };
     let clippy = run("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
     assert!(!clippy.contains("cargo::warning"), "{clippy}");
-    let other = run("/usr/bin/sccache");
-    assert!(
-        other.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
-        "{other}"
-    );
+    // Somebody else's wrapper, and two whose file names only end with a
+    // name that would have been let through.
+    for name in [
+        "/usr/bin/sccache",
+        "/repo/.cargo/my-hilavitkutin-rustc-wrapper",
+        "/usr/bin/not-clippy-driver",
+    ] {
+        let other = run(name);
+        assert!(
+            other.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
+            "{name}: {other}"
+        );
+    }
 }

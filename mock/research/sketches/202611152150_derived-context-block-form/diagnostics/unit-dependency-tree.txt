@@ -1,0 +1,27 @@
+Condition 1: the unit crate depends on no engine crate.
+
+Command, from the sketch directory:
+  cargo +nightly-2026-05-28 tree -p unit -e normal,build,dev --prefix none --format {p} --no-dedupe --depth 2
+
+Output (git sources shortened to repository and revision):
+
+unit v0.0.0 (sketch/unit)
+arvo v0.1.0 (orgrinrt/arvo rev 1b2796e9)  (x3)
+arvo-bits v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-bits-contracts v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-numeric-contracts v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-storage v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-strategy v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-transparent v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+notko v0.0.1 (orgrinrt/notko branch dev 8a74dbcd)  (x2)
+derived v0.0.0 (sketch/derived)
+hilavitkutin-api v0.1.0 (mock/crates/hilavitkutin-api)  (x2)
+notko-hlist v0.0.1 (orgrinrt/notko branch dev 8a74dbcd)  (x2)
+arvo-bitmask v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+arvo-tensor v0.1.0 (orgrinrt/arvo rev 1b2796e9)
+hilavitkutin-ctx v0.1.0 (mock/crates/hilavitkutin-ctx)
+hilavitkutin-build v0.1.0 (mock/crates/hilavitkutin-build)
+
+No `hilavitkutin` engine crate and no `hilavitkutin-providers` appear.
+`hilavitkutin-ctx` and `hilavitkutin-build` arrive only under
+`hilavitkutin-api` (a normal and a build dependency of the api).

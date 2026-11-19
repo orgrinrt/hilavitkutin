@@ -1,0 +1,11 @@
+[package]
+name = "sketch-edge-domain"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+sketch-edge-leaf = { path = "../leaf" }

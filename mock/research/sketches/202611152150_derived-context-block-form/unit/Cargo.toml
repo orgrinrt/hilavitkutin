@@ -1,0 +1,12 @@
+[package]
+name = "unit"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+# The block form's contract, the api, and arvo for the index type. No engine
+# crate, here or in the dev-dependencies.
+[dependencies]
+derived.workspace = true
+hilavitkutin-api.workspace = true
+arvo.workspace = true

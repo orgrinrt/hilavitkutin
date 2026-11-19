@@ -1,0 +1,12 @@
+[package]
+name = "control-probe"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+derived = { path = "../../../202611152150_derived-context-block-form/derived" }
+unit = { path = "../../../202611152150_derived-context-block-form/unit" }
+bridge = { path = "../../../202611152150_derived-context-block-form/bridge" }
+hilavitkutin = { path = "../../../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../../../crates/hilavitkutin-api" }

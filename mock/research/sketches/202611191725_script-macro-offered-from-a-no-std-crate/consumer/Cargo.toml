@@ -1,0 +1,13 @@
+[package]
+name = "sketch-script-consumer"
+version = "0.0.1"
+edition = "2024"
+description = "sketch: a consumer whose build script is one line"
+license = "MPL-2.0"
+build = "scripts/anywhere.rs"
+
+[build-dependencies]
+sketch-script-lib = { path = "../script-lib", version = "0.0.1" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sketch_flag_arrived)", "cfg(sketch_deterministic)"] }

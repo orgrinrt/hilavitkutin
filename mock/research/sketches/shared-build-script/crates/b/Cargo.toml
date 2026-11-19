@@ -1,0 +1,6 @@
+[package]
+name = "shared-build-script-b"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "A crate whose build script is a file outside it"

@@ -1,0 +1,55 @@
+[package]
+name = "hilavitkutin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Static scheduler and runtime that turns read / write access sets into per-core dispatch with cache-aware morsels. no_std, no alloc, no spawn, no dyn."
+repository.workspace = true
+
+[dependencies]
+hilavitkutin-api.workspace = true
+hilavitkutin-kit.workspace = true
+arvo.workspace = true
+notko.workspace = true
+notko-hlist.workspace = true
+arvo-bitmask.workspace = true
+arvo-graph.workspace = true
+arvo-sparse.workspace = true
+arvo-tensor.workspace = true
+arvo-spectral.workspace = true
+arvo-comb.workspace = true
+libc = { workspace = true, optional = true }
+
+
+[dev-dependencies]
+# Tests wire the arena-backed `ColumnStorage` default. Dev-dep only: the
+# engine lib depends on the storage trait (hilavitkutin-api), never on
+# the default impl. providers forbids depending on the engine, so no cycle.
+hilavitkutin-providers.workspace = true
+# Compile-fail fixtures under tests/ui, run by tests/ui.rs.
+trybuild = "1"
+
+[features]
+default = ["platform-os"]
+platform-os = ["dep:libc"]
+platform-no-os = []
+# Opt-in intrinsics upgrade. Still core-only; enables
+# `core::hint::black_box` for `noinline_barrier`. Nightly
+# `core::intrinsics::prefetch_*` is a follow-up (BACKLOG).
+intrinsics-std = []
+# Test-only mutant: an accumulator append refused at the capacity is dropped
+# without being counted, so no refusal reaches the run's output. The overflow
+# suite must fail with it on. It builds only with HILAVITKUTIN_MUTANT_CHECK set
+# (see `src/lib.rs`), so no other build can pick it up.
+mutant-truncating-append = []
+# Sketch addition: the block form's window is one record short, so the run
+# test of the sketch must fail with it on. See `EDITS.md` at the sketch root.
+mutant-short-window = []
+# Sketch addition: the engine implementing the api's `CtxOf`. Built once, to
+# record the compiler's refusal. See `EDITS.md` at the sketch root.
+attempt-ctx-of = ["hilavitkutin-api/attempt-blanket"]
+# The same attempt spelled per list shape in place of over every read list.
+attempt-ctx-of-per-shape = ["attempt-ctx-of"]
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
