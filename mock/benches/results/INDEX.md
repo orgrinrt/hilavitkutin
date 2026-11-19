@@ -705,6 +705,19 @@ Latest: `20261119T150158Z-ffb57e5a`
 - [20261116T063249Z-f04daa0a-dirty](build-static/clean_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/clean_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
 
+## build-static/clean_n97
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261119T171604Z-fe400621`
+
+| variant | median | vs best |
+|---|---|---|
+| llvm_incremental | 126373.24 ms | 1.08x |
+| llvm_non_incremental | 117220.40 ms | 1.00x |
+
+- [20261119T171604Z-fe400621](build-static/clean_n97/linux-x86_64-c4-container-intel/20261119T171604Z-fe400621/report.md)
+
 ## build-static/leaf_n25
 
 ### linux-x86_64-c4-container-intel, 2 run(s)
