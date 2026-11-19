@@ -50,14 +50,17 @@ pub const FIRST_CALL_S: [Row; 11] = [
     // times its bound from the whole first call, whose untimed setup builds
     // the 97 crates, so a row of 1 s skipped the cell at 30 s and a bound
     // scaled from 25 skipped it at 120 s. This row is the non-incremental
-    // clean build of run 20261119T171604Z-fe400621 (118.47 s) plus that
-    // relink, rounded up, and it lets a bound of 357 s on a 0.5 s call stand
-    // until the probe leaves the setup out.
+    // clean build of run 20261119T171604Z-fe400621 (118.47 s) plus the
+    // relink, rounded up. It was set from the relink of the earlier run
+    // 20261116T083526Z-b2bbf4ba (0.478 s) before the run above existed, and
+    // that run's 0.51 s gives the same 119. It lets a bound of 357 s on a
+    // half second call stand until the probe leaves the setup out.
     (call_key(4, 0), 97, 119),
 ];
 
-/// The largest target directory a cell left, in bytes: with incremental on
-/// after a root edit and off after a leaf edit, from the build-static runs
+/// The largest target directory a cell left, in bytes, over the four sweeps of
+/// build-static at the point: with incremental on it was after a root edit and
+/// off after a leaf edit in the runs
 /// `20261119T150158Z-ffb57e5a` (25) and `20261119T203124Z-4228372a` (97) and
 /// the clean sweep `20261119T171604Z-fe400621` (97).
 pub const TARGET_BYTES: [Row; 4] = [
