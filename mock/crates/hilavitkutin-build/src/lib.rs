@@ -1,12 +1,13 @@
 //! hilavitkutin-build: shared build-dependency crate.
 //!
-//! A consumer's `build.rs` calls [`configure`] with a closure that reads
-//! cargo's environment, and prints the directives it writes: the cfg
+//! A consumer's build script is one line, [`script!`] with the name of a
+//! [`Prototype`]. It prints the directives the prototype writes: the cfg
 //! and the crate's rustc flags, which the workspace wrapper
-//! ([`write_wrapper`]) appends to its rustc.
-//! A consumer commits the wrapper at `.cargo/hilavitkutin-rustc-wrapper`
-//! and names it in `.cargo/config.toml`; the flags reach its own
-//! workspace members only.
+//! ([`write_wrapper`]) appends to its rustc. The first build writes the
+//! wiring by itself, the wrapper at `.cargo/hilavitkutin-rustc-wrapper`
+//! and the `.cargo/config.toml` that names it, and the builds after it
+//! take the flags; they reach the consumer's own workspace members only.
+//! A script that tunes its pragmas calls [`configure_with`] instead.
 //! The crate optimises HOW code is compiled (pragmas, profiles, rustc
 //! wrapper), not what it does. Standalone, no runtime deps.
 //!
@@ -29,7 +30,10 @@
 //! [`requirements`] contains the static pragma-to-external-tool
 //! table. [`flags`] writes each pragma's rustc flags. [`bootstrap`]
 //! reads the environment through the script's closure and writes the
-//! directives, the wrapper and the config file.
+//! directives, the wrapper and the config file. [`prototype`] names
+//! the scripts the crate offers, [`wiring`] decides what a script
+//! writes into the workspace and says, and [`mod@script`] holds the
+//! macro that runs both in the script.
 //! [`guards`] exposes `compile_error!` macro helpers.
 //!
 //! # Pragma roster
@@ -66,7 +70,10 @@ pub mod flags;
 pub mod guards;
 pub mod pragma;
 pub mod profile;
+pub mod prototype;
 pub mod requirements;
+pub mod script;
+pub mod wiring;
 
 pub use axis::{PassesAxis, TargetAxis, TierAxis};
 pub use bootstrap::{
@@ -81,4 +88,16 @@ pub use config::BuildConfig;
 pub use flags::write_rustflags;
 pub use pragma::{Pragma, PragmaIter, PragmaSet};
 pub use profile::Profile;
+pub use prototype::Prototype;
 pub use requirements::{PragmaRequirement, REQUIREMENTS, Requirement, requirements_for};
+pub use wiring::{
+    ConfigFile,
+    Notice,
+    Plan,
+    Tree,
+    WRAPPER_NAME,
+    WrapperFile,
+    plan,
+    write_cargo_config,
+    write_notice,
+};
