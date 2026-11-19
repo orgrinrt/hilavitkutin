@@ -1,0 +1,38 @@
+# A copy of `mock/crates/hilavitkutin` as of the commit this sketch was cut
+# from, with the edits `EDITS.md` lists and nothing else. Named apart so the
+# sketch can hold it beside the shipped engine in one graph.
+
+[package]
+name = "hilavitkutin-aligned"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+doctest = false
+
+[dependencies]
+hilavitkutin-api.workspace = true
+hilavitkutin-kit.workspace = true
+arvo.workspace = true
+notko.workspace = true
+notko-hlist.workspace = true
+arvo-bitmask.workspace = true
+arvo-graph.workspace = true
+arvo-sparse.workspace = true
+arvo-tensor.workspace = true
+arvo-spectral.workspace = true
+arvo-comb.workspace = true
+libc = { workspace = true, optional = true }
+
+[features]
+default = ["platform-os"]
+platform-os = ["dep:libc"]
+platform-no-os = []
+intrinsics-std = []
+mutant-truncating-append = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true
