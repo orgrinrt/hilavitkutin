@@ -24,13 +24,17 @@ The pragma table gains the rows of the seven groups:
 
 | Group | Pragmas | Reach | Takes effect by |
 |---|---|---|---|
-| `LinkerGroup` | `Mold`, `Wild`, `Bfd` | crate | `cargo::rustc-link-arg`; `Wild` also `-Clinker=clang` through the wrapper |
+| `LinkerGroup` | `Mold`, `Wild`, `Bfd` | crate | `cargo::rustc-link-arg` for `Mold` and `Bfd`; for `Wild` the pair `-Clinker=clang -Clink-arg=--ld-path=<its path>` through the wrapper |
 | `EdgeGroup` | `DylibDomain` | crate | `-Cprefer-dynamic` through the wrapper |
 | `LtoGroup` | `ThinLto`, `ExpandedLto` | workspace | profile keys in the generated cargo file |
 | `IncrementalGroup` | `Incremental`, `NoIncremental` | workspace | profile key in the generated cargo file |
 | `BackendGroup` | `Cranelift` | workspace | `[unstable] codegen-backend` and the profile key |
 | `DriverGroup` | `GccDriver`, `ClangDriver` | workspace | `[target.<triple>] linker` |
 | `CcGroup` | `GccCc`, `ClangCc` | workspace | `CC`, `CXX` and `AR` under `[env]` |
+
+`Wild`'s two flags go by one route. Written as a link argument of the script and a flag of the wrapper, as this changelist first had it, the argument reached the first build of a workspace, which runs without the wrapper, and gcc refused `--ld-path` there: found when the source was written, before any test ran it. A tool's path that holds a space is refused, since the wrapper splits on spaces.
+
+The verdict of a set also names a pragma named twice. `Mask` and `Words` are the aliases the constants are written in. `each_tool` hands over a set's tools, and `writes_flags` asks a set at its site. A prototype of the script's own file is named by a path, `script!(crate::Sim)`. `tools_home` answers a `Home`. The claiming script asks to be run again when the generated file changes, and the include line is the constant `INCLUDE_LINE`.
 
 A group with no pragma in the set leaves the choice to the toolchain. lld is the pinned toolchain's own linker on x86_64 Linux and has no pragma; gold links and rustc warns against it on every build, so it has none either. `Cranelift` requires `Not<(ThinLto, ExpandedLto)>`. `zig cc`, as a driver and as a C compiler, waits in the backlog on the prebuilt source.
 
