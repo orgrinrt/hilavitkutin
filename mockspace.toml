@@ -20,17 +20,18 @@ module_crates = []
 primary_domain_macro = "wu"
 primary_domain_label = "WorkUnits"
 
-# Layer labels by depth index
+# Layer labels by dependency depth, not by crate: mockspace computes each
+# crate's depth from its dependencies and prints the label at that index.
+# The engine crate is left out of the render as the project's own crate.
 layers = [
-    "API",          # hilavitkutin-api (contracts)
-    "Engine",       # hilavitkutin (plan/dispatch/exec)
-    "Build",        # hilavitkutin-build (LLVM/MIR)
-    "Ext:ctx",      # hilavitkutin-ctx
-    "Ext:persist",  # hilavitkutin-persistence
-    "Ext:sym",      # hilavitkutin-sym
-    "Ext:str",      # hilavitkutin-str
-    "Ext:kit",      # hilavitkutin-kit
-    "Ext:providers", # hilavitkutin-providers
+    "Build",            # hilavitkutin-build
+    "Foundations",      # hilavitkutin-ctx, -linking, -sym
+    "Contracts",        # hilavitkutin-api, -extensions, -str
+    "Companions",       # hilavitkutin-api-macros, -extensions-macros, -kit
+    "Providers",        # hilavitkutin-providers
+    "Persistence",      # hilavitkutin-persistence
+    "Conformance",      # hilavitkutin-conformance
+    "Frozen authors",   # hilavitkutin-frozen-authors
 ]
 
 # Domain kind labels for STRUCTURE.md domain items table
