@@ -189,10 +189,12 @@ The arena keeps the interning law for runtime strings: `arena_intern`
 of a string equal to one it already stored returns the id it gave that
 string, so equal strings give equal handles through `StringInterner`.
 `arena_resolve` of an id at or past the arena's live count reads nothing
-outside the arena's storage and gives no string the arena holds; an
-arena's overflow id masked into the 28-bit handle lands there. What it
-returns for such an id is not part of the contract: saying that it holds
-nothing needs a resolve that does not return a string. A `Str` names
+outside the arena's storage; an arena's overflow id masked into the
+28-bit handle lands there. What it returns for such an id is not part
+of the contract and may equal a string the arena holds: `MemoryArena`
+answers `""`, which aliases `""` once the arena holds it. Saying that it
+holds nothing needs a resolve that does not return a string (ticket
+`evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of`). A `Str` names
 no interner, so a handle is meaningful only to the interner that
 issued it: one carried to another interner resolves to whatever that
 interner holds at its id, and is not detected.
