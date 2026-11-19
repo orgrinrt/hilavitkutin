@@ -15,14 +15,20 @@
 #[macro_export]
 macro_rules! __script_tools {
     () => {
-        /// The first line a program prints when asked for its version.
+        /// The first two lines a program prints when asked for its
+        /// version, joined by a space: some print a heading first.
         #[rustfmt::skip] // keeps the allow on the signature it governs
         fn version_line(program: &Path) -> Option<impl AsRef<str> + use<>> { // lint:allow(no-bare-option) lint:allow(no-bare-string) reason: a version line as the build script read it, in std's own terms; tracked: #72
             let asked = Command::new(program).arg("--version").output().ok()?;
             if !asked.status.success() {
                 return None;
             }
-            str::from_utf8(&asked.stdout).ok()?.lines().next().map(str::to_owned)
+            let mut lines = str::from_utf8(&asked.stdout).ok()?.lines();
+            let first = lines.next()?;
+            Some(match lines.next() {
+                Some(second) => format!("{first} {}", second.trim()),
+                None => first.to_owned(),
+            })
         }
 
         /// Whether the program at `program` is `tool`, by its version line.
@@ -62,7 +68,7 @@ macro_rules! __script_tools {
         }
 
         /// The tools this script has said the machine lacks.
-        static REFUSED: ::std::sync::Mutex<[&'static str; 16]> = ::std::sync::Mutex::new([""; 16]); // lint:allow(no-bare-static-str) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the build script's own std code, a set has sixteen tools at most; tracked: #72
+        static REFUSED: ::std::sync::Mutex<[&'static str; $crate::TOOLS.len()]> = ::std::sync::Mutex::new([""; $crate::TOOLS.len()]); // lint:allow(no-bare-static-str) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the build script's own std code, one place per row of the table; tracked: #72
 
         /// Find `tool`, or build it where it is a local build and is on
         /// the machine nowhere.

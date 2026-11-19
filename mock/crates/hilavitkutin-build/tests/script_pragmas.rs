@@ -14,6 +14,7 @@ use harness::{
     build,
     build_with,
     host,
+    path_with,
     path_without,
     prototype,
     run_cargo,
@@ -377,6 +378,46 @@ fn a_c_compiler_whose_archiver_the_machine_lacks_writes_no_key() {
         !root.join(".cargo/hilavitkutin-build.toml").exists(),
         "a key the build cannot follow was written"
     );
+}
+
+/// An llvm-ar built with no vendor name prints `LLVM (http://llvm.org/):`
+/// first and its version on the second line. The script reads both, so
+/// the tool is found and the key written. The control is a program under
+/// the same name whose two lines hold no version of LLVM: it is refused.
+#[cfg(unix)]
+#[test]
+fn a_tool_whose_version_is_on_the_second_line_it_prints_is_found() {
+    let sets = "(hilavitkutin_build::ClangCc,)";
+    let items = format!(
+        "struct Compiled;\nimpl hilavitkutin_build::Prototype for Compiled {{\n    type Dev = {sets};\n    type DevOpt \
+         = {sets};\n    type Release = {sets};\n    type Profiling = {sets};\n    type Ci = {sets};\n}}\n"
+    );
+    for (name, second, found) in [
+        ("cc-second-line", "  LLVM version 19.1.0", true),
+        ("cc-no-version", "  Optimized build.", false),
+    ] {
+        let root = workspace_with(name, &items, "crate::Compiled, workspace");
+        let beside = root.parent().expect("a scratch directory");
+        path_with(beside, "clang", "clang version 19.1.0");
+        path_with(beside, "clang++", "clang version 19.1.0");
+        let ar = format!("LLVM (http://llvm.org/):\n{second}");
+        let path = path_with(beside, "llvm-ar", &ar);
+        let built = run_cargo(&root, "build", &[], &[("PATH", path.as_path())]);
+        assert_eq!(built.passed, found, "{name}: {}", built.said);
+        assert_eq!(
+            root.join(".cargo/hilavitkutin-build.toml").exists(),
+            found,
+            "{name}"
+        );
+        assert_eq!(
+            built
+                .said
+                .contains("needs llvm-ar, which this machine lacks"),
+            !found,
+            "{name}: {}",
+            built.said
+        );
+    }
 }
 
 /// A sysroot of the test's own, with the cranelift backend or without.

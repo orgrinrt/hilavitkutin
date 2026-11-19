@@ -107,10 +107,11 @@ fn the_table_names_every_tool_once_with_the_source_the_design_gives_it() {
 }
 
 /// The version lines the eight programs print on the machine this was
-/// written on, and lines that only look like them.
+/// written on, llvm-ar's as an upstream build prints it, and lines that
+/// only look like them.
 #[test]
 fn a_proof_holds_of_the_tools_own_version_line_and_of_no_other() {
-    let table: [(&Tool, &str, bool); 27] = [
+    let table: [(&Tool, &str, bool); 28] = [
         (&CLANGXX, "Ubuntu clang version 18.1.3 (1ubuntu1)", true),
         (
             &CLANGXX,
@@ -118,7 +119,15 @@ fn a_proof_holds_of_the_tools_own_version_line_and_of_no_other() {
             false,
         ),
         (&LLVM_AR, "Ubuntu LLVM version 18.1.3", true),
-        (&LLVM_AR, "LLVM version 19.1.0", true),
+        // A build with no vendor name prints these on two lines, which
+        // the script joins by a space (llvm/lib/Support/CommandLine.cpp
+        // at llvmorg-19.1.0, `VersionPrinter::print`).
+        (
+            &LLVM_AR,
+            "LLVM (http://llvm.org/): LLVM version 19.1.0",
+            true,
+        ),
+        (&LLVM_AR, "LLVM (http://llvm.org/):", false),
         (&LLVM_AR, "GNU ar (GNU Binutils for Ubuntu) 2.42", false),
         (&GXX, "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0", true),
         (&GXX, "g++-13 (Ubuntu) 13.3.0", false),

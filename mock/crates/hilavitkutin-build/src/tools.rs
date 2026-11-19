@@ -50,8 +50,8 @@ pub struct Proof {
 }
 
 impl Proof {
-    /// Whether `line`, the first line a tool printed when asked for its
-    /// version, is this tool's.
+    /// Whether `line`, the first two lines a tool printed when asked for
+    /// its version, joined by a space, is this tool's.
     #[rustfmt::skip] // keeps the allow on the signature it governs
     pub fn holds(&self, line: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a version line as the build script read it; tracked: #72
         match self.line {

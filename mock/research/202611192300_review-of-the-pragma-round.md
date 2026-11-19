@@ -85,3 +85,45 @@ The doc changelist was reopened a third time, for finding 2.
 7. `includes_generated` takes the bare name in quotes alone, and the test line moved to the cases it does not take.
 8. The line says that a `script!` with no path says why in its own error, and that no other script can name the pragma.
 9. Not changed: the crate has no public list of every pragma to hold the count to, and adding one is a surface of its own. It is in the follow-up ticket, with the test of the wait on a held lock and of the driver key at a second target.
+
+## Pass 3, tip `4d093273`
+
+Verdict: MERGE AFTER FIXES. The third and last pass. The canon gate passed, read on its own before this record: the rows on a pragma's requirements, on pragmas per profile by a builder, on the three mechanisms and on the crate being `no_std` agree with the round, and the two open points are with the maintainer as question tickets. That is the second read of the canon that agrees.
+
+### Of pass 2's findings
+
+Addressed: 2, 3 in source and test, 5, 6, 7, 8. Partly: 4, since the two tests of mold and of wild linking still return early on a machine without the program. Not addressed: 1, the kaski branch, which has no commit. Left with a ticket: 9.
+
+### Findings
+
+1. The design said every older version of a tool is removed, and the source keeps one whose lock is held. Code ahead of its design.
+2. llvm-ar is proved by `LLVM version` on the first line it prints. An LLVM built with no vendor name prints `LLVM (http://llvm.org/):` first and the version on the second, so there `ClangCc` is refused while llvm-ar is installed. The test's table held a first line no llvm-ar prints.
+3. The root readme says nothing has to be installed by hand for `Wild`, which needs clang since pass 2.
+4. The kaski migration is uncommitted and edits a design file of kaski outside a round.
+5. Eighty-nine allows cite a tracker number, where the ticket now has an id.
+6. A test calls the lock file of the version it removes another pin's, and lock files of removed versions are never removed, which the design did not say.
+7. The array of refused tools has sixteen places by a comment, where a set can name forty-eight.
+8. Two commit subjects are statements and not imperatives.
+
+### Suite
+
+119 tests passed in 20 s. No tautology. The defects are the ones above, and two edge cases ticketed where a test was owed: the wait on a held lock, and the driver key at a second target.
+
+### Not checked
+
+The bodies of the test binaries that did not change since pass 2, whether the rendered document matches its template, cargo's include on a stable toolchain, hosts other than Linux, and `Proof::mark`, which nothing in the crate reads.
+
+### What was done
+
+The doc changelist was reopened a fourth time, for findings 1, 2 and 6. This was the last pass, so what is not fixed below lands as follow-ups in the ticket `follow_ups_of_the_pragma_round_s_second_review_pass_in_hilav`.
+
+1. The design says an older version whose lock cannot be taken at once stays, and that no lock file is removed and why.
+2. The script reads the first two lines a tool prints, joined by a space, and the design says so. The upstream text was read at `llvm/lib/Support/CommandLine.cpp`, tag `llvmorg-19.1.0`, `VersionPrinter::print`: with no `PACKAGE_VENDOR` it prints `LLVM (http://llvm.org/):`, a newline and two spaces, then the name and version. `tests/tools.rs` holds that text joined and the first line alone, which is refused. `tests/script_pragmas.rs` builds under a stand-in llvm-ar that prints the two lines and finds the key written, beside one whose two lines hold no version, which is refused.
+3. The readme says `Wild` links through clang and that a machine without it is told so.
+4. Not changed before the landing. kaski's commit gate builds its lints against this crate from `dev`, so the branch cannot be committed there until this round has landed, and it lands straight after. Its design edit is checked against kaski's own round rules then.
+5. Follow-up.
+6. The test names the file for what it is and says why it stays.
+7. The array has one place per row of `TOOLS`.
+8. Left as pushed.
+
+Also follow-ups: the two early returns of pass 2's finding 4, the two edge-case tests, and the wording of the error for a missing path in a script written by hand.

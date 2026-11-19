@@ -100,10 +100,10 @@ fn publish_the_stand_in(registry: &Path) {
 
 /// The first build of a workspace that names wild, on a machine that has
 /// it nowhere, builds it into the tools home. Beside it sit an older
-/// version, a newer one, the lock file of another pin and a lock file of
-/// this pin that a process long gone left behind, and a second older
-/// version whose lock the test holds. The older version nobody holds goes
-/// and nothing else does, the stale lock holds nobody up, and no scratch
+/// version with its lock file, a newer one, a lock file of this pin that
+/// a process long gone left behind, and a second older version whose lock
+/// the test holds. The older version nobody holds goes, its lock file
+/// stays as every lock file does, the stale lock holds nobody up, and no scratch
 /// directory of the build is left. The second build finds the tool and
 /// builds nothing, and its rustc is handed the tool by its full path.
 #[test]
@@ -115,12 +115,12 @@ fn a_tool_the_machine_lacks_is_built_into_the_home_and_older_versions_go() {
     let program = dir.join("bin/wild");
     let older = at.join("wild-0.9.0");
     let newer = at.join("wild-0.11.0");
-    let other_lock = at.join("wild-0.9.0.lock");
+    let older_lock = at.join("wild-0.9.0.lock");
     let stale_lock = at.join("wild-0.10.0.lock");
     fs::create_dir_all(older.join("bin")).expect("an older version");
     fs::write(older.join("bin/wild"), "").expect("an older version's program");
     fs::create_dir_all(newer.join("bin")).expect("a newer version");
-    fs::write(&other_lock, "").expect("another pin's lock");
+    fs::write(&older_lock, "").expect("the older version's lock");
     fs::write(&stale_lock, "").expect("a lock nobody holds");
     // A second older version, whose lock this test holds as a clone that
     // pins it and is building it would.
@@ -156,7 +156,10 @@ fn a_tool_the_machine_lacks_is_built_into_the_home_and_older_versions_go() {
     );
     drop(holding);
     assert!(newer.exists(), "a newer version, another clone's pin, went");
-    assert!(other_lock.exists(), "another pin's lock went");
+    assert!(
+        older_lock.exists(),
+        "the lock file of the removed version went, which a waiting script could hold"
+    );
 
     let second = run_cargo(&root, "build", &[], &vars);
     assert!(second.passed, "{}", second.said);
