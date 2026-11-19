@@ -1,0 +1,14 @@
+[[ticket]]
+id = "evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of"
+title = "resolve answers an id the arena did not issue with the empty string"
+kind = "task"
+what = "ArenaInterner::arena_resolve returns &str, so MemoryArena answers an id at or past its live count (the masked overflow sentinel among them) with the empty string, and StringInterner::resolve answers Maybe::Is. evict_str of such a handle stores the hash of the empty string where the persistence design says PersistenceError::Missing. Needs a resolve that can say it holds nothing; goes with the visible refusal of e08a7317ab9e and the op question where_string_deduplication_lives_in_hilavitkutin_and_what_a. Mirrors the workspace ticket of the same id. Red tests: hilavitkutin-providers interner_law an_overflow_handle_resolves_to_nothing, hilavitkutin-persistence archive_str evicting_an_overflow_handle_is_missing."
+related = ["subject::persistence"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261119230455_hila_consumer_surface_d5d9"
+ticket = "evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-19T23:04:55Z"

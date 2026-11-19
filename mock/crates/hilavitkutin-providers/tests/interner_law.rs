@@ -88,43 +88,42 @@ fn the_empty_string_interns_to_one_handle() {
     resolves_to(&interner, a, "");
 }
 
+/// A handle the arena did not issue resolves to none of the strings it
+/// holds. What it resolves to otherwise is not part of the contract.
+fn aliases_none_of(interner: &impl InternerApi, h: Str, held: &[&str]) {
+    if let Maybe::Is(s) = InternerApi::resolve(interner, h) {
+        for want in held {
+            assert_ne!(s, *want, "an unissued handle resolved to a held string");
+        }
+    }
+}
+
 /// The overflow handle reaches the arena masked to the 28-bit id field. It
-/// resolves to the empty string, and every handle issued before still resolves.
+/// resolves to no held string, and every handle issued before still resolves.
 #[test]
-fn the_overflow_handle_resolves_empty_and_the_earlier_handles_hold() {
+fn the_overflow_handle_aliases_no_held_string_and_the_earlier_handles_hold() {
     let interner = default_interner::<8, 2>();
     let first = InternerApi::intern(&interner, "abcd");
     let second = InternerApi::intern(&interner, "efgh");
     let over = InternerApi::intern(&interner, "ijkl");
     assert_ne!(over, first);
     assert_ne!(over, second);
-    resolves_to(&interner, over, "");
+    aliases_none_of(&interner, over, &["abcd", "efgh"]);
     resolves_to(&interner, first, "abcd");
     resolves_to(&interner, second, "efgh");
     assert_eq!(InternerApi::intern(&interner, "abcd"), first);
 }
 
-/// A `Str` names no interner: a handle carried to another arena resolves to
-/// what that arena holds at its id.
+/// An id at or past the live count reads nothing outside the arena and
+/// aliases none of its strings, whichever arena issued it.
 #[test]
-fn a_handle_carried_to_another_arena_resolves_to_what_that_arena_holds() {
-    let first = default_interner::<64, 4>();
-    let foreign = InternerApi::intern(&first, "foreign");
-    let second = default_interner::<64, 4>();
-    let _ = InternerApi::intern(&second, "local");
-    resolves_to(&second, foreign, "local");
-}
-
-/// An id at or past the live count reads nothing and resolves to the empty
-/// string, whichever arena issued it.
-#[test]
-fn a_handle_past_the_live_count_resolves_empty() {
+fn a_handle_past_the_live_count_aliases_no_held_string() {
     let first = default_interner::<64, 4>();
     let _ = InternerApi::intern(&first, "foreign-0");
     let past = InternerApi::intern(&first, "foreign-1");
     let second: StringInterner<MemoryArena<64, 2>> = StringInterner::new(MemoryArena::new());
     let _ = InternerApi::intern(&second, "local");
-    resolves_to(&second, past, "");
+    aliases_none_of(&second, past, &["local"]);
 }
 
 /// The law over an overflowing arena: two different strings keep distinct
@@ -139,14 +138,14 @@ fn two_overflowing_strings_get_distinct_handles() {
     assert_ne!(a, b);
 }
 
-/// The law over an overflowing arena: a handle resolves back to its string.
+/// A handle the arena holds nothing for resolves to nothing.
 #[test]
-#[ignore = "catalogue: the overflow handle resolves to the empty string; needs intern to say the arena is full; tracked #an_overflowing_runtime_intern_breaks_the_interning_law_in_me"]
-fn an_overflow_handle_resolves_to_its_string() {
+#[ignore = "catalogue: the overflow handle resolves as a held string; needs a resolve that can say it holds nothing; tracked #an_overflowing_runtime_intern_breaks_the_interning_law_in_me"]
+fn an_overflow_handle_resolves_to_nothing() {
     let interner = default_interner::<4, 4>();
     let _ = InternerApi::intern(&interner, "abcd");
     let over = InternerApi::intern(&interner, "efgh");
-    resolves_to(&interner, over, "efgh");
+    assert!(matches!(InternerApi::resolve(&interner, over), Maybe::Isnt));
 }
 
 /// Out of entry slots with bytes to spare overflows the same way as out of
@@ -159,7 +158,7 @@ fn running_out_of_entry_slots_overflows_like_running_out_of_bytes() {
     let over = InternerApi::intern(&interner, "ef");
     assert_ne!(over, first);
     assert_ne!(over, second);
-    resolves_to(&interner, over, "");
+    aliases_none_of(&interner, over, &["ab", "cd"]);
     resolves_to(&interner, first, "ab");
     resolves_to(&interner, second, "cd");
     assert_eq!(InternerApi::intern(&interner, "cd"), second);
@@ -176,12 +175,13 @@ fn intern_static_deduplicates_through_the_default_interner() {
     resolves_to(&interner, a, "static-runtime");
 }
 
-/// An arena with no bytes stores no non-empty string: it overflows, and the
-/// handle resolves to the empty string.
+/// An arena with no bytes stores no non-empty string: it overflows, and
+/// the empty string, which takes no bytes, still gets a handle of its own.
 #[test]
 fn an_arena_with_no_bytes_overflows_every_non_empty_string() {
     let interner: StringInterner<MemoryArena<0, 4>> = StringInterner::new(MemoryArena::new());
     let a = InternerApi::intern(&interner, "x");
-    resolves_to(&interner, a, "");
-    resolves_to(&interner, InternerApi::intern(&interner, ""), "");
+    let empty = InternerApi::intern(&interner, "");
+    assert_ne!(a, empty);
+    resolves_to(&interner, empty, "");
 }

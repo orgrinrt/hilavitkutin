@@ -34,8 +34,9 @@ pub trait InternerApi: 'static {
     /// the arena lookup.
     fn intern(&self, s: &str) -> Str; // lint:allow(no-bare-string) reason: interner boundary; the input is the &str the consumer passes; tracked: #72
 
-    /// Resolve a handle back to a string. Returns `Maybe::Isnt` if
-    /// the handle's source is no longer reachable.
+    /// Resolve a handle back to a string. Returns `Maybe::Isnt` for a
+    /// const handle with no string behind it; a runtime id the arena
+    /// did not issue does not come back as `Maybe::Isnt` yet.
     fn resolve(&self, s: Str) -> Maybe<&str>; // lint:allow(no-bare-string) reason: interner boundary; resolved &str; tracked: #72
 }
 
@@ -96,11 +97,10 @@ where
 ///
 /// On capacity overflow (out of bytes or out of entry slots),
 /// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
-/// returns the empty string for any id at or past the live entry
-/// count, the sentinel among them once `StringInterner` masks it to
-/// the 28-bit id field. A handle another arena issued is not told
-/// apart from one of its own. The `StringInterner`
-/// wrapping this arena observes that as `Maybe::Is(&"")`. `ENTRIES`
+/// reads nothing for any id at or past the live entry count, the
+/// sentinel among them once `StringInterner` masks it to the 28-bit
+/// id field, and answers it with no string the arena holds. A handle
+/// another arena issued is not told apart from one of its own. `ENTRIES`
 /// of 2^28 or more, whose last id would equal the masked sentinel,
 /// fails the build at [`MemoryArena::new`].
 pub struct MemoryArena<
@@ -266,6 +266,7 @@ impl<
         // masked to 28 bits through `Str`, so it is caught by the count
         // rather than by a value compare.
         if id == SENTINEL || idx >= self.count.get().0 {
+            // FIXME(evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of): the empty string stands in for nothing held; a `&str` return cannot say the id was not issued.
             return "";
         }
         // SAFETY: pointer-arithmetic-only access into the entry
