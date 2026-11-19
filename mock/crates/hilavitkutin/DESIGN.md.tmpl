@@ -181,8 +181,11 @@ of each phase it takes part in, with its `SyncRole` at the barrier
 convergence), the estimated icache footprint that drives the fallback
 from `ScheduleMega` through `TrunkMega` to `IndirectPerFiber`, and its
 offsets into the pool frame. `DispatchCodegen` and `FiberShape` take
-the crate's one seal, so only the engine implements them;
-`StandardCodegen` is the single implementer.
+the engine's seal, `EngineOnly`, a public trait in a private module
+of the engine, so only the engine implements them; `StandardCodegen`
+is the single implementer. The seal is the engine's own and not the
+api's: the api keeps its seal for the traits a consumer names, and
+the two seal different things.
 
 The fused-pipeline pattern within a fiber:
 
@@ -725,7 +728,7 @@ pipeline lifetime.
 
 Open `trait Executor: Sealed`, monomorphised, declared in `thread`
 with its error `ExecutorError` and its one impl `HybridExecutor`. The
-seal is this crate's, so an executor outside the engine cannot be
+seal is this crate's `EngineOnly`, so an executor outside the engine cannot be
 written; `Scheduler<'frame, Cfg, E: Executor = HybridExecutor>` carries
 the type so a later engine executor can take its place. Sealed bound
 enforces Topic 3 S7 cross-thread atomic-ordering protocol. The pool
