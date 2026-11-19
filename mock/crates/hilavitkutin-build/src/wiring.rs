@@ -27,6 +27,10 @@ pub enum Tree {
     /// A root under `CARGO_HOME`, or one that holds `Cargo.toml.orig`:
     /// a tree cargo fetched or unpacked, where nothing is written.
     Fetched,
+    /// A root other than the one the wrapper cargo names sits in: a
+    /// workspace wired from a `config.toml` above it, where a second
+    /// copy of the wiring would serve nothing.
+    Foreign,
 }
 
 /// The wrapper file as the script found it.
@@ -56,24 +60,85 @@ impl ConfigFile {
     /// where a `rustc-workspace-wrapper` key has a value that ends with
     /// [`WRAPPER_NAME`], [`Unnamed`](ConfigFile::Unnamed) otherwise.
     ///
-    /// The key is read where a line starts with it, bare under `[build]`
-    /// or dotted as `build.rustc-workspace-wrapper`, so a commented line
-    /// names nothing.
-    pub fn read(text: &str) -> ConfigFile {
-        // lint:allow(no-bare-string) reason: a config file's text as the build script read it; tracked: #72
-        let names = text.lines().any(|line| {
-            let line = line.trim_start();
-            let line = line.strip_prefix("build.").unwrap_or(line);
-            let Some(rest) = line.strip_prefix(WRAPPER_KEY) else {
-                return false;
+    /// The key is read in the three places cargo takes it from: at the
+    /// start of a line under the `[build]` table, dotted as
+    /// `build.rustc-workspace-wrapper` before any table, and inside an
+    /// inline `build = { .. }` table. The same key under another table, or
+    /// in a comment, names nothing.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub fn read(text: &str) -> ConfigFile { // lint:allow(no-bare-string) reason: a config file's text as the build script read it; tracked: #72
+        let mut table = Table::Top;
+        for line in text.lines() {
+            let line = line.trim();
+            if let Some(header) = line.strip_prefix('[') {
+                let name = header.split(']').next().unwrap_or(header).trim();
+                table = if name == "build" { Table::Build } else { Table::Other };
+                continue;
+            }
+            let entry = match table {
+                Table::Build => Maybe::Is(line),
+                Table::Top => top_level_entry(line),
+                Table::Other => Maybe::Isnt,
             };
-            let Some(value) = rest.trim_start().strip_prefix('=') else {
-                return false;
-            };
-            let value = value.split(" #").next().unwrap_or(value).trim();
-            value.trim_end_matches(['"', '\'']).ends_with(WRAPPER_NAME)
-        });
-        if names { ConfigFile::Named } else { ConfigFile::Unnamed }
+            if let Maybe::Is(entry) = entry
+                && entry_names_the_wrapper(entry)
+            {
+                return ConfigFile::Named;
+            }
+        }
+        ConfigFile::Unnamed
+    }
+}
+
+/// The table a line of a config file sits in.
+#[derive(Clone, Copy)]
+enum Table {
+    /// Before any table header.
+    Top,
+    /// Under `[build]`.
+    Build,
+    /// Under any other header.
+    Other,
+}
+
+/// The part of a line before any table that could hold the key: what
+/// follows `build.`, or the key onwards inside an inline `build` table.
+#[rustfmt::skip] // keeps the allow on the signature it governs
+fn top_level_entry(line: &str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: a config file's text as the build script read it; tracked: #72
+    if let Some(dotted) = line.strip_prefix("build.") {
+        return Maybe::Is(dotted);
+    }
+    let inline = line
+        .strip_prefix("build")
+        .and_then(|rest| rest.trim_start().strip_prefix('='))
+        .and_then(|rest| rest.trim_start().strip_prefix('{'));
+    match inline {
+        Some(inside) => match inside.find(WRAPPER_KEY) {
+            Some(at) => Maybe::Is(&inside[at..]),
+            None => Maybe::Isnt,
+        },
+        None => Maybe::Isnt,
+    }
+}
+
+/// Whether `entry` starts with the key and gives it a quoted value that
+/// ends with [`WRAPPER_NAME`].
+#[rustfmt::skip] // keeps the allow on the signature it governs
+fn entry_names_the_wrapper(entry: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a config file's text as the build script read it; tracked: #72
+    let quoted = entry
+        .strip_prefix(WRAPPER_KEY)
+        .and_then(|rest| rest.trim_start().strip_prefix('='))
+        .map(str::trim_start);
+    let Some(quoted) = quoted else {
+        return false;
+    };
+    let Some(quote) = quoted.chars().next().filter(|first| matches!(first, '"' | '\'')) else {
+        return false;
+    };
+    let value = &quoted[1..];
+    match value.find(quote) {
+        Some(end) => value[..end].ends_with(WRAPPER_NAME),
+        None => false,
     }
 }
 
@@ -82,8 +147,8 @@ impl ConfigFile {
 pub enum Notice {
     /// Nothing.
     Silent,
-    /// The files were written, this build ran without them and the next
-    /// one takes the flags.
+    /// The files were written, this build ran without them, and a build
+    /// of that workspace takes the flags from the next one on.
     Wired,
     /// A `config.toml` exists without the line, and the line is named.
     AddLine,
@@ -136,7 +201,8 @@ pub(crate) const fn names_the_wrapper(wrapper: Maybe<&str>) -> bool {
 ///
 /// `wrapper` is the value of `RUSTC_WORKSPACE_WRAPPER`, and `flags` is
 /// whether the crate has rustc flags to hand over. A
-/// [`Fetched`](Tree::Fetched) tree is written nothing and told nothing.
+/// [`Fetched`](Tree::Fetched) or [`Foreign`](Tree::Foreign) tree is
+/// written nothing and told nothing.
 /// In the consumer's own tree a wrapper file that is not
 /// [`Current`](WrapperFile::Current) is written, and a config file is
 /// written where there is none. The wrapper variable decides only what
@@ -152,7 +218,7 @@ pub const fn plan(
     config_file: ConfigFile,
     flags: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
 ) -> Plan {
-    if let Tree::Fetched = tree {
+    if let Tree::Fetched | Tree::Foreign = tree {
         return Plan {
             wrapper: false,
             config:  false,
@@ -182,6 +248,19 @@ pub fn write_cargo_config<W: Write>(out: &mut W) -> core::fmt::Result {
     writeln!(out, "[build]\n{WRAPPER_KEY} = \".cargo/{WRAPPER_NAME}\"")
 }
 
+/// Write the two `cargo::rerun-if-changed` lines that name the wrapper
+/// and the config file under `dir`, the workspace's `.cargo` directory.
+///
+/// With them the script runs again when either file changes, so a wrapper
+/// that holds another text is written again by the next build, and a
+/// config file that gains the line stops the notice.
+pub fn write_watch<W: Write, D: core::fmt::Display>(dir: D, out: &mut W) -> core::fmt::Result {
+    writeln!(
+        out,
+        "cargo::rerun-if-changed={dir}/{WRAPPER_NAME}\ncargo::rerun-if-changed={dir}/config.toml"
+    )
+}
+
 /// Write the `cargo::warning` line of `notice`, or nothing for
 /// [`Silent`](Notice::Silent).
 ///
@@ -197,7 +276,8 @@ pub fn write_notice<W: Write, D: core::fmt::Display>(
             writeln!(
                 out,
                 "cargo::warning=hilavitkutin-build wrote {WRAPPER_NAME} and the config.toml that names it under \
-                 {dir}: this build ran without the wrapper, and the next one takes the flags"
+                 {dir}: this build ran without the wrapper, and a build of that workspace takes the flags from \
+                 the next one on"
             )
         },
         Notice::AddLine => {

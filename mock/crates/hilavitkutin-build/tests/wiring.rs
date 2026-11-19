@@ -1,7 +1,7 @@
 //! What a build script does about the workspace's wiring is decided by
-//! `plan`, from what the script read. These hold `plan` to a table written
+//! `plan`, from what the script read. These hold `plan` to tables written
 //! out by hand over every input it has, `ConfigFile::read` to the texts a
-//! config file can carry, and the two texts the crate writes to the letter.
+//! config file can carry, and the texts the crate writes to the letter.
 
 use hilavitkutin_build::{
     ConfigFile,
@@ -13,6 +13,7 @@ use hilavitkutin_build::{
     plan,
     write_cargo_config,
     write_notice,
+    write_watch,
 };
 use notko::Maybe;
 
@@ -24,8 +25,21 @@ const OURS: Maybe<&str> = Maybe::Is("/repo/.cargo/hilavitkutin-rustc-wrapper");
 const CLIPPY: Maybe<&str> = Maybe::Is("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
 const OTHER: Maybe<&str> = Maybe::Is("/usr/bin/sccache");
 
-const WRAPPER_FILES: [WrapperFile; 3] =
-    [WrapperFile::Current, WrapperFile::Stale, WrapperFile::Missing];
+/// Whether the wrapper is written in the consumer's own tree, by what the
+/// script found on disk.
+const WRAPPER_WRITTEN: [(WrapperFile, bool); 3] = [
+    (WrapperFile::Current, false),
+    (WrapperFile::Stale, true),
+    (WrapperFile::Missing, true),
+];
+
+/// Whether the config file is written in the consumer's own tree, by what
+/// the script found on disk.
+const CONFIG_WRITTEN: [(ConfigFile, bool); 3] = [
+    (ConfigFile::Named, false),
+    (ConfigFile::Unnamed, false),
+    (ConfigFile::Missing, true),
+];
 
 /// What the script says in the consumer's own tree, one row for each
 /// wrapper value, config file and whether there are flags. The wrapper
@@ -63,68 +77,90 @@ const SAID: [(Maybe<&str>, ConfigFile, bool, Notice); 30] = [
     (CLIPPY, ConfigFile::Named, false, Notice::Silent),
 ];
 
+/// Every combination of inputs, as a row of the three tables joined: the
+/// wrapper value, the wrapper file, the config file, whether there are
+/// flags, and what the tables say of each.
+fn every_case() -> Vec<(Maybe<&'static str>, WrapperFile, ConfigFile, bool, Plan)> {
+    let mut cases = Vec::new();
+    for (wrapper, config_file, flags, notice) in SAID {
+        let config_written = CONFIG_WRITTEN
+            .iter()
+            .find(|row| row.0 == config_file)
+            .expect("a row for every config file")
+            .1;
+        for (wrapper_file, wrapper_written) in WRAPPER_WRITTEN {
+            cases.push((wrapper, wrapper_file, config_file, flags, Plan {
+                wrapper: wrapper_written,
+                config: config_written,
+                notice,
+            }));
+        }
+    }
+    cases
+}
+
+/// The joined table covers the product of the inputs once each: five
+/// wrapper values, three wrapper files, three config files, flags or none.
 #[test]
-fn the_table_has_a_row_for_every_wrapper_value_config_file_and_flags() {
+fn the_tables_cover_every_input_once() {
+    let cases = every_case();
+    assert_eq!(cases.len(), 5 * 3 * 3 * 2);
     for wrapper in [UNSET, EMPTY, OURS, CLIPPY, OTHER] {
-        for config_file in [ConfigFile::Missing, ConfigFile::Unnamed, ConfigFile::Named] {
-            for flags in [true, false] {
-                let rows = SAID
-                    .iter()
-                    .filter(|row| row.0 == wrapper && row.1 == config_file && row.2 == flags)
-                    .count();
-                assert_eq!(rows, 1, "{wrapper:?} {config_file:?} {flags}");
+        for wrapper_file in [WrapperFile::Current, WrapperFile::Stale, WrapperFile::Missing] {
+            for config_file in [ConfigFile::Missing, ConfigFile::Unnamed, ConfigFile::Named] {
+                for flags in [true, false] {
+                    let rows = cases
+                        .iter()
+                        .filter(|case| {
+                            case.0 == wrapper
+                                && case.1 == wrapper_file
+                                && case.2 == config_file
+                                && case.3 == flags
+                        })
+                        .count();
+                    assert_eq!(
+                        rows, 1,
+                        "{wrapper:?} {wrapper_file:?} {config_file:?} {flags}"
+                    );
+                }
             }
         }
     }
 }
 
 #[test]
-fn the_own_tree_is_written_what_is_missing_and_told_what_the_table_says() {
-    for (wrapper, config_file, flags, notice) in SAID {
-        for wrapper_file in WRAPPER_FILES {
-            let expected = Plan {
-                wrapper: wrapper_file != WrapperFile::Current,
-                config: config_file == ConfigFile::Missing,
-                notice,
-            };
-            assert_eq!(
-                plan(wrapper, Tree::Own, wrapper_file, config_file, flags),
-                expected,
-                "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
-            );
-        }
+fn the_own_tree_is_written_and_told_what_the_tables_say() {
+    for (wrapper, wrapper_file, config_file, flags, expected) in every_case() {
+        assert_eq!(
+            plan(wrapper, Tree::Own, wrapper_file, config_file, flags),
+            expected,
+            "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
+        );
     }
 }
 
 #[test]
-fn a_fetched_tree_is_written_nothing_and_told_nothing() {
+fn a_fetched_and_a_foreign_tree_are_written_nothing_and_told_nothing() {
     let nothing = Plan {
         wrapper: false,
         config:  false,
         notice:  Notice::Silent,
     };
-    for (wrapper, config_file, flags, _) in SAID {
-        for wrapper_file in WRAPPER_FILES {
+    for tree in [Tree::Fetched, Tree::Foreign] {
+        for (wrapper, wrapper_file, config_file, flags, _) in every_case() {
             assert_eq!(
-                plan(wrapper, Tree::Fetched, wrapper_file, config_file, flags),
+                plan(wrapper, tree, wrapper_file, config_file, flags),
                 nothing,
-                "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
+                "{tree:?} {wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
             );
         }
     }
 }
 
-/// The two cases a plan that only looked at the wrapper variable would get
+/// The cases a plan that only looked at the wrapper variable would get
 /// wrong, each beside the own-tree case it must differ from.
 #[test]
 fn the_tree_and_the_wrapper_file_each_change_the_plan() {
-    let fetched = plan(
-        UNSET,
-        Tree::Fetched,
-        WrapperFile::Missing,
-        ConfigFile::Missing,
-        true,
-    );
     let own = plan(
         UNSET,
         Tree::Own,
@@ -132,9 +168,15 @@ fn the_tree_and_the_wrapper_file_each_change_the_plan() {
         ConfigFile::Missing,
         true,
     );
-    assert!(!fetched.wrapper && !fetched.config);
-    assert!(own.wrapper && own.config);
-    assert_ne!(fetched, own);
+    assert_eq!(own, Plan {
+        wrapper: true,
+        config:  true,
+        notice:  Notice::Wired,
+    });
+    for tree in [Tree::Fetched, Tree::Foreign] {
+        let left_alone = plan(UNSET, tree, WrapperFile::Missing, ConfigFile::Missing, true);
+        assert_ne!(left_alone, own, "{tree:?}");
+    }
 
     let stale = plan(OURS, Tree::Own, WrapperFile::Stale, ConfigFile::Named, true);
     let current = plan(
@@ -149,7 +191,11 @@ fn the_tree_and_the_wrapper_file_each_change_the_plan() {
         config:  false,
         notice:  Notice::Silent,
     });
-    assert!(!current.wrapper);
+    assert_eq!(current, Plan {
+        wrapper: false,
+        config:  false,
+        notice:  Notice::Silent,
+    });
 }
 
 #[test]
@@ -165,20 +211,23 @@ fn a_plan_is_made_before_the_program_runs() {
 }
 
 #[test]
-fn a_config_file_names_the_wrapper_by_a_key_that_ends_with_its_name() {
+fn a_config_file_names_the_wrapper_in_the_three_places_cargo_reads_it() {
     for text in [
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\n  rustc-workspace-wrapper=\"/abs/.cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-workspace-wrapper = '.cargo/hilavitkutin-rustc-wrapper' # ours\n",
-        "build.rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nincremental = true\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"",
+        "[env]\nA = \"b\"\n\n[ build ]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
+        "build.rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
+        "build = { rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\" }\n",
+        "build = { incremental = true, rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\", jobs = 2 }\n",
     ] {
         assert_eq!(ConfigFile::read(text), ConfigFile::Named, "{text:?}");
     }
 }
 
 #[test]
-fn a_config_file_without_the_key_or_with_another_wrapper_names_none() {
+fn a_config_file_names_none_without_the_key_or_with_it_anywhere_else() {
     for text in [
         "",
         "[build]\nincremental = true\n",
@@ -186,7 +235,14 @@ fn a_config_file_without_the_key_or_with_another_wrapper_names_none() {
         "[build]\n# rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper-old\"\n",
+        "[build]\nrustc-workspace-wrapper = \"/usr/bin/sccache\" # was hilavitkutin-rustc-wrapper\n",
+        "[build]\nrustc-workspace-wrapper = .cargo/hilavitkutin-rustc-wrapper\n",
+        "[env]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
+        "[build]\nincremental = true\n\n[env]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[env]\nNOTE = \"rustc-workspace-wrapper = .cargo/hilavitkutin-rustc-wrapper\"\n",
+        "rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
+        "build = { rustc-workspace-wrapper = \"/usr/bin/sccache\" }\n",
+        "builder.rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
     ] {
         assert_eq!(ConfigFile::read(text), ConfigFile::Unnamed, "{text:?}");
     }
@@ -222,7 +278,8 @@ fn each_notice_is_one_warning_line_and_silence_is_nothing() {
     assert_eq!(
         notice(Notice::Wired),
         "cargo::warning=hilavitkutin-build wrote hilavitkutin-rustc-wrapper and the config.toml that names it \
-         under /repo/.cargo: this build ran without the wrapper, and the next one takes the flags\n"
+         under /repo/.cargo: this build ran without the wrapper, and a build of that workspace takes the flags \
+         from the next one on\n"
     );
     assert_eq!(
         notice(Notice::AddLine),
@@ -237,6 +294,17 @@ fn each_notice_is_one_warning_line_and_silence_is_nothing() {
     );
 }
 
+#[test]
+fn the_watch_lines_name_the_two_files_of_the_wiring() {
+    let mut out = String::new();
+    write_watch("/repo/.cargo", &mut out).expect("writing to a String cannot fail");
+    assert_eq!(
+        out,
+        "cargo::rerun-if-changed=/repo/.cargo/hilavitkutin-rustc-wrapper\n\
+         cargo::rerun-if-changed=/repo/.cargo/config.toml\n"
+    );
+}
+
 /// A sink that refuses every write.
 struct Refusing;
 
@@ -247,8 +315,9 @@ impl core::fmt::Write for Refusing {
 }
 
 #[test]
-fn a_refusing_writer_is_reported_by_both_texts() {
+fn a_refusing_writer_is_reported_by_every_text() {
     assert!(write_cargo_config(&mut Refusing).is_err());
+    assert!(write_watch("/repo/.cargo", &mut Refusing).is_err());
     for said in [Notice::Wired, Notice::AddLine, Notice::Dropped] {
         assert!(
             write_notice(said, "/repo/.cargo", &mut Refusing).is_err(),

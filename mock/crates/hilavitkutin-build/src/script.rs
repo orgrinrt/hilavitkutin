@@ -19,10 +19,11 @@
 /// `CARGO_MANIFEST_DIR`), reads the wrapper and the `config.toml` under
 /// its `.cargo/`, and does what [`plan`](crate::plan) answers: it writes
 /// the wrapper where the file is missing or holds another text, writes
-/// the config file where there is none, and prints the notice. A root
-/// under `CARGO_HOME`, or one that holds `Cargo.toml.orig`, is written
-/// nothing. Where cargo gives no root the script prints one warning and
-/// writes nothing.
+/// the config file where there is none, prints the notice, and asks to be
+/// run again when either file changes. A root under `CARGO_HOME`, one
+/// that holds `Cargo.toml.orig`, and one other than the root the wrapper
+/// cargo names sits in are written nothing. Where cargo gives no root the
+/// script prints one warning and writes nothing.
 ///
 /// The crate's texts go straight to where they belong, standard output
 /// or a file, through a sink the expansion defines, and the wrapper on
@@ -113,10 +114,20 @@ macro_rules! script {
                 let cargo_home = env::var_os("CARGO_HOME")
                     .map(PathBuf::from)
                     .or_else(|| env::home_dir().map(|home| home.join(".cargo")));
+                let named = env::var("RUSTC_WORKSPACE_WRAPPER").ok();
+                // The wrapper cargo names is ours by its name, and this
+                // root's by its place.
+                let elsewhere = named.as_deref().map(Path::new).is_some_and(|named| {
+                    let placed = |path: &Path| fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+                    named.file_name().is_some_and(|name| name == $crate::WRAPPER_NAME)
+                        && placed(named) != placed(&wrapper_path)
+                });
                 let tree = if cargo_home.is_some_and(|home| root.starts_with(home))
                     || root.join("Cargo.toml.orig").exists()
                 {
                     $crate::Tree::Fetched
+                } else if elsewhere {
+                    $crate::Tree::Foreign
                 } else {
                     $crate::Tree::Own
                 };
@@ -143,7 +154,6 @@ macro_rules! script {
                     Err(_) => $crate::ConfigFile::Missing,
                 };
 
-                let named = env::var("RUSTC_WORKSPACE_WRAPPER").ok();
                 let plan = $crate::plan(
                     named.as_deref().into(),
                     tree,
@@ -184,6 +194,10 @@ macro_rules! script {
                             dir.display()
                         );
                     },
+                }
+                if tree == $crate::Tree::Own {
+                    $crate::write_watch(dir.display(), &mut stdout)
+                        .expect("standard output takes the watch lines");
                 }
             },
         }

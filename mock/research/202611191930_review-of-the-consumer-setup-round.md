@@ -33,4 +33,17 @@ The suite ran green, 66 tests. A first build in an unwired workspace writes the 
 
 ## What was done after pass 1
 
-Written as the fixes land, one line per finding.
+The round was reopened through `cargo mock unlock`, twice, and the numbers below are the findings above.
+
+1. Fixed. In its own tree the script prints `cargo::rerun-if-changed` for the wrapper and the config file (`write_watch`), and the design says what reruns it and why the second build runs the scripts again. A deleted wrapper is stated as what the script cannot help. Held by `a_wrapper_that_holds_another_text_is_written_again` in `tests/script.rs`.
+2. Not fixable in a script, and stated. The first fix told the case from `RUSTC_WORKSPACE_WRAPPER`, and its test failed: cargo names no workspace wrapper to the script of a crate outside the workspace it was run in, wired or not. The script therefore sees what the dependency's own first build would show it. The design now says a path dependency's own workspace is written into and that the dependency takes no flags, and `a_path_dependency_in_another_workspace_has_that_workspace_wired` holds it. The `Wired` notice no longer promises the flags to the build that was run. The `Foreign` tree that came out of this is real for another case, a workspace wired from a config file above it, and has its own test.
+3. Fixed. The root `README.md` section says what ships.
+4. Fixed in `DESIGN.md.tmpl` and the generated `docs/BUILD.md`.
+5. Fixed. The writes are two literal tables beside the thirty rows of what is said.
+6. Fixed for the flags (a rustc that writes its arguments down shows the second build's line ending with them), the stale wrapper, the write failure and the path dependency. Not held by a test, and named in the source changelist: the `CARGO_HOME` branch and the branch where cargo gives no root.
+7. Fixed. Both profile names cargo passes and an unknown one, and `tune` over every `Profile`.
+8. Fixed. The key counts under `[build]`, dotted at the top, or in an inline `build` table, and under no other table.
+9. Kept, and handed to stack-coord. The macro's body is std code by design, and the lint has no way to know a macro body is compiled elsewhere. The two `use` lines name the ticket `forbidden_imports_reads_the_body_of_an_exported_macro_as_the`, as the crate's `no-bare-static-str` allows name theirs. Fixing the lint is in mockspace, outside this job.
+10. Fixed. Thirteen, and the frozen fourteenth named.
+
+Two things the reopening met in the tooling, both in the ticket `a_second_cargo_mock_unlock_in_one_round_overwrites_the_depre`: a second `cargo mock unlock` in one round overwrites the first deprecated changelist, which the `changelist-immutability` lint then refuses, and `unlock` with uncommitted source leaves a tree no commit accepts.

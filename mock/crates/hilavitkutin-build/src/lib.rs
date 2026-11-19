@@ -100,4 +100,5 @@ pub use wiring::{
     plan,
     write_cargo_config,
     write_notice,
+    write_watch,
 };
