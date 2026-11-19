@@ -30,10 +30,12 @@ proc-macro crates. Flat structure.
 - `hilavitkutin-build` is build-dep only. Declared under
  `[build-dependencies]` in the consumer, never under
  `[dependencies]`. No runtime linkage.
-- `hilavitkutin-ctx`, `hilavitkutin-persistence`, `hilavitkutin-str`
- are standalone ecosystem crates. Each is independently usable.
- They do not depend on the engine, on `hilavitkutin-api`, or on
- each other.
+- `hilavitkutin-ctx` and `hilavitkutin-str` are standalone ecosystem
+ crates. Each is independently usable. They do not depend on the
+ engine, on `hilavitkutin-api`, or on each other.
+- `hilavitkutin-persistence` is an opt-in ecosystem crate that builds
+ on `hilavitkutin-str` and `hilavitkutin-api`, never on the engine or
+ `hilavitkutin-ctx`.
 - `hilavitkutin-linking` is the cross-platform dynamic library
  loader primitive in the plugin-host layer. `no_std`, no
  allocator. Provides abstractions that downstream consumer hosts
