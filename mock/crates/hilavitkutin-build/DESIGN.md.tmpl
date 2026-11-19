@@ -152,6 +152,24 @@ written, is decided by functions of this crate that write into a
 `core::fmt::Write`. The reads, the writes and the question to cargo
 are the script's, in the code `script!` expands there.
 
+That code reaches the crate through public items, since a macro's
+expansion sees only what a consumer could name. `Tree` is whose the
+root is and whether the host runs the wrapper, decided by `Tree::of`.
+`WrapperFile` and `ConfigFile` are what the script found on disk, the
+second read from a config file's text by `ConfigFile::read`. `plan`
+takes those and answers a `Plan`: whether each file is written, and
+the `Notice` to print. `write_cargo_config`, `write_notice` and
+`write_watch` are the texts of the config file, of a notice and of the
+two rerun lines, and `WRAPPER_NAME` is the wrapper's file name. They
+are public for the macro and for a script that wants the same wiring
+with its own pragmas, and every one of them is a function of what the
+script hands it, with nothing of the host in it.
+
+A script that writes a `cargo::rerun-if-` line gives up cargo's own
+rule of running it again whenever a file of the package changes, and
+`script!` writes three. A script that does more than configure, and
+reads files of its own, names those files itself.
+
 ## Four-part build configuration model (T4 §Q1)
 
 **1. hilavitkutin-build (this crate):** reads the cargo env values
@@ -215,11 +233,12 @@ crates whose build script builds through this crate. Cargo finds
 manifest, and walks up from it, so the one at the repository root
 reaches cargo run anywhere in the repository. Where a
 crate has flags to hand over and cargo names no wrapper, or one whose
-path does not end with `hilavitkutin-rustc-wrapper` (`clippy-driver`
-under `cargo clippy`, a compile cache set as the workspace wrapper),
-a `cargo::warning` says the flags are dropped: `configure` writes it
-for a script written by hand, and `script!` prints it once it has seen
-that the wiring is in place.
+file name is not `hilavitkutin-rustc-wrapper` (a compile cache set as
+the workspace wrapper), a `cargo::warning` says the flags are dropped:
+`configure` writes it for a script written by hand, and `script!`
+prints it once it has seen that the wiring is in place. Under
+`cargo clippy` cargo names `clippy-driver`, and nothing is said: a
+check generates no code, so the flags it does not get cost it nothing.
 
 **4. Generated config file:** pragmas that need Cargo profile
 settings (ExpandedLto, Pgo, BuildStd) write to
