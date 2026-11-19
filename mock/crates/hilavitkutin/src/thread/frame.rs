@@ -20,9 +20,9 @@
 use core::sync::atomic::Ordering;
 
 use arvo::USize;
-use hilavitkutin_api::platform::PoolFrame;
 
 use super::parking::{atomic_wait, atomic_wake_all};
+use crate::thread::PoolFrame;
 
 /// Scheduler side: publish a new frame. Reset the completion counter, bump the
 /// sequence (Release, so the slot writes the scheduler made before this become

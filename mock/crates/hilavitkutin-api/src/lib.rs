@@ -35,12 +35,8 @@ pub mod accum_refused;
 pub mod adapt;
 pub mod builder;
 pub mod builder_input;
-pub mod capability;
-pub mod ceiling_div;
-pub mod codec;
 pub mod column_value;
 pub mod context;
-pub mod dispatch_codegen;
 pub mod footprint;
 pub mod hint;
 pub mod id;
@@ -51,7 +47,6 @@ pub mod platform;
 pub mod prelude;
 pub mod record_op;
 pub mod run_cfg;
-pub mod sink;
 pub mod storage;
 pub mod store;
 pub mod store_values;
@@ -85,9 +80,6 @@ pub use builder_input::{
     StoreDispatch,
     UnitDispatch,
 };
-pub use capability::{BoundedPush, BulkPush, Capacity, Full, Len, Push};
-pub use ceiling_div::CeilingDiv;
-pub use codec::{DecodeError, Decoder, DecoderExt, Encoder, EncoderExt};
 pub use column_value::ColumnValue;
 pub use context::{
     AccumReaderApi,
@@ -115,18 +107,6 @@ pub use context::{
     ResolveVirtualFire,
     ResourceProviderApi,
     VirtualFirerApi,
-};
-pub use dispatch_codegen::{
-    CoreProgram,
-    DispatchCodegen,
-    FiberId,
-    FiberShape,
-    PhaseEntry,
-    PhaseId,
-    RecordRange,
-    SyncRole,
-    TrunkId,
-    UnitId,
 };
 pub use hint::{
     Adaptive,
@@ -162,17 +142,13 @@ pub use meta::{
 };
 pub use platform::{
     ClockApi,
-    Executor,
-    ExecutorError,
     HasClock,
     HasMemoryProvider,
     HasThreadPool,
     MemoryProviderApi,
     Nanos,
     OnePointerClosure,
-    PoolFrame,
     ThreadPoolApi,
-    WakeStrategy,
 };
 pub use record_op::RecordOp;
 pub use run_cfg::{
@@ -187,7 +163,6 @@ pub use run_cfg::{
     ScheduleEnd,
     ScheduleReady,
 };
-pub use sink::{ByteEmitter, Collector, CountingSink, DiagnosticSink, NullSink, TeeSink};
 pub use storage::{ColumnStorage, Decompose};
 pub use store::{
     Accum,

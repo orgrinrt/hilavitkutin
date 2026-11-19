@@ -61,8 +61,8 @@ behavior?" If yes, it's a trait slot, not a concrete type.
 
 Direct consequence of the two principles above. Trait return types
 use `impl IntoIterator`, `AsRef<[T]>`, or associated types. Sink
-positions take `&mut impl Collector<T>` / `&mut impl DiagnosticSink`
-/ `&mut impl ByteEmitter`. Concrete collection types are
+positions take notko's sink, `&mut impl Push<T>` or
+`&mut impl BulkPush<T>`, bytes included. Concrete collection types are
 implementation choices, not contracts.
 
 Collections never cross ecosystem API boundaries. They live below
@@ -168,8 +168,8 @@ the bare primitive might otherwise appear.
 | `Option<T>` | `Maybe<T>` | `notko` |
 | `Result<T, E>` | `Outcome<T, E>` | `notko` |
 | `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
-| `&mut Vec<T>` param | `&mut impl Collector<T>` | hilavitkutin-api contracts |
-| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `&mut Vec<T>` param | `&mut impl Push<T>` | `notko::sink` |
+| `HashMap<K, V>` | `Map<K, V, N>` | hilavitkutin-api |
 | `String` owned | `Str` | `hilavitkutin-str` |
 | `&str` non-static | `&'static str` or `Str` | as above |
 | `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |

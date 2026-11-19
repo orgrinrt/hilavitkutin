@@ -68,7 +68,7 @@ pub trait WorkUnit<Schedule = Always>: BuilderInput<Init = Self> + Send + Sync +
     ///
     /// GAT-shaped: the `'frame`
     /// lifetime threads through from `Scheduler<'frame, ...>` so
-    /// the Ctx can carry `Pin<&'frame PoolFrame>` and per-phase
+    /// the Ctx can carry a pinned borrow of the engine pool frame and per-phase
     /// `ResourceSnapshot<'phase, R>` views without forcing every
     /// consumer WU declaration to also thread a lifetime.
     /// Monomorphisation resolves `HasX<...>` bounds to the concrete

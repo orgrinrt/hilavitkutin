@@ -7,10 +7,10 @@
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-use hilavitkutin_api::FiberShape;
 use notko::Maybe;
 
 use super::{MorselRange, SyncPoint, WuFn};
+use crate::dispatch::codegen::FiberShape;
 use crate::plan::{FiberId, PhaseId};
 
 /// Per-fiber dispatch record.

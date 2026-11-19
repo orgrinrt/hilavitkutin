@@ -14,9 +14,10 @@
 use core::sync::atomic::Ordering;
 
 use arvo::USize;
-use hilavitkutin_api::platform::{Nanos, PoolFrame};
+use hilavitkutin_api::platform::Nanos;
 
 use super::parking::{atomic_wait, atomic_wake_all};
+use crate::thread::PoolFrame;
 
 /// Worker-side sense-reversing waist barrier. Blocks until all `expected`
 /// workers have arrived, then releases all; reusable across the many waists of

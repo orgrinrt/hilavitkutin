@@ -32,9 +32,9 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
-use hilavitkutin_api::platform::{PoolFrame, WakeStrategy};
 
 use super::class::CoreClass;
+use crate::thread::{PoolFrame, WakeStrategy};
 
 /// Park tier picked for the current phase.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

@@ -12,7 +12,6 @@ use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_bitmask::NodeId;
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::{TrunkId, UnitId};
 
 use super::step6_spectral::spectral_partition;
 use super::{
@@ -26,6 +25,7 @@ use super::{
     SpectralFloat,
     Trunk,
 };
+use crate::dispatch::codegen::{TrunkId, UnitId};
 
 /// Step 7: greedy fiber grouping.
 ///
@@ -39,7 +39,7 @@ pub fn group_fibers<D: PlanDims>(
     graph: &DependencyGraph<D>,
     topo: &<D::Units as Capacity>::Array<UnitId>,
 ) -> FiberGrouping<D> {
-    use hilavitkutin_api::FiberId;
+    use crate::dispatch::codegen::FiberId;
     let mut g: FiberGrouping<D> = FiberGrouping::new();
     let n = graph.unit_count.0;
     if n == 0 {
@@ -89,7 +89,7 @@ fn group_fibers_in_block<D: PlanDims>(
     graph: &DependencyGraph<D>,
     block_units: &[UnitId],
 ) -> FiberGrouping<D> {
-    use hilavitkutin_api::FiberId;
+    use crate::dispatch::codegen::FiberId;
     let mut g: FiberGrouping<D> = FiberGrouping::new();
     let n = block_units.len();
     if n == 0 {
@@ -132,7 +132,7 @@ fn spectral_grouping_in_block<D: PlanDims>(
     global: &FiberGrouping<D>,
     block_units: &[UnitId],
 ) -> FiberGrouping<D> {
-    use hilavitkutin_api::FiberId;
+    use crate::dispatch::codegen::FiberId;
     let mut g: FiberGrouping<D> = FiberGrouping::new();
     // Remap global spectral id -> block-local id in first-seen order.
     let mut remap: <D::Fibers as Capacity>::Array<USize> =
@@ -191,7 +191,7 @@ where
     <D::Units as Capacity>::Array<USize>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
-    use hilavitkutin_api::FiberId;
+    use crate::dispatch::codegen::FiberId;
     let mut trunks: <D::Trunks as Capacity>::Array<Trunk> =
         <D::Trunks as Capacity>::filled(Trunk::new());
     let mut fibers: <D::Fibers as Capacity>::Array<Fiber<D>> =

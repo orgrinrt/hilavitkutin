@@ -8,7 +8,7 @@ must satisfy on the static-devirt path. The checks are run by
 `bench-disasm`, from the bench hooks and the `asm_gate_fixtures`
 gate; this file is the statement of intent.
 
-`StandardCodegen` (see `mock/crates/hilavitkutin-api/src/dispatch_codegen.rs` and `mock/crates/hilavitkutin/src/dispatch/standard.rs`)
+`StandardCodegen` (see `mock/crates/hilavitkutin/src/dispatch/codegen.rs` and `mock/crates/hilavitkutin/src/dispatch/standard.rs`)
 emits per-core dispatch closures via TAIT; per Topic 4 Axis A
 Rider 1 the lowering must preserve full LLVM transparency. Sketch
 heritage `mock/research/sketches/202605101036-codegen-entrypoint-tait/`
