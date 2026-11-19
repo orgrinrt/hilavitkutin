@@ -1,0 +1,40 @@
+error[E0277]: the trait bound `Bodiless: RunUnit<ColumnBinding<Pos, BindingNil>, _>` is not satisfied
+  --> ui/attempts/d2_no_body.rs:37:19
+   |
+37 |     let _ = sched.run();
+   |                   ^^^ unsatisfied trait bound
+   |
+help: the trait `RunUnit<ColumnBinding<Pos, BindingNil>, _>` is not implemented for `Bodiless`
+  --> ui/attempts/d2_no_body.rs:17:1
+   |
+17 | struct Bodiless;
+   | ^^^^^^^^^^^^^^^
+help: the trait `RunTrunkDispatch<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS>` is implemented for `WuCons<W, Tail>`
+  --> $WORKSPACE/engine/src/dispatch/trunk_dispatch.rs
+   |
+   | / impl<
+   | |     Full,
+   | |     A,
+   | |     W,
+...  |
+   | |     Full: const BundleMasks<Stores, GW, CS>,
+   | |     Full: RunGatedTrunk<Full, A, Witnesses, GW, Stores, CU, CS, Adj, POS, Here>,
+   | |________________________________________________________________________________^
+   = note: required for `WuCons<Bodiless, WuNil>` to implement `RunFiber<ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+   = note: required for `WuCons<Bodiless, WuNil>` to implement `RunGatedTrunk<WuCons<Bodiless, WuNil>, ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>, Cons<Column<Pos>, hilavitkutin_api::Empty>, arvo_tensor::capacity::Dim<64>, arvo_tensor::capacity::Dim<64>, Bits<64>, 0, hilavitkutin::dispatch::engine_ctx::Here>`
+   = note: required for `WuCons<Bodiless, WuNil>` to implement `RunTrunkDispatch<WuCons<Bodiless, WuNil>, ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>, Cons<Column<Pos>, hilavitkutin_api::Empty>, arvo_tensor::capacity::Dim<64>, arvo_tensor::capacity::Dim<64>, Bits<64>, 0>`
+note: required by a bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run`
+  --> $WORKSPACE/engine/src/scheduler/run.rs
+   |
+   |       pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position...
+   |              --- required by a bound in this associated function
+   |       where
+   |           WuVals: RunTrunkDispatch<
+   |  _________________^
+   | |                 WuVals,
+   | |                 <Vals as BindingsFor>::Bindings,
+   | |                 Witnesses,
+...  |
+   | |                 0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+   | |             >,
+   | |_____________^ required by this bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run`

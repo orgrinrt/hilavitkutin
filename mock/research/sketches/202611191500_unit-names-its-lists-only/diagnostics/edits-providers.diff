@@ -1,0 +1,43 @@
+diff --git a/crates/hilavitkutin-providers/src/adapt_wu.rs b/research/sketches/202611191500_unit-names-its-lists-only/providers/src/adapt_wu.rs
+index 8e231f8e..045caa76 100644
+--- a/crates/hilavitkutin-providers/src/adapt_wu.rs
++++ b/research/sketches/202611191500_unit-names-its-lists-only/providers/src/adapt_wu.rs
+@@ -76,8 +76,21 @@ impl BuilderInput for AdaptWu {
+     type Init = Self;
+ }
+ 
+-impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
++// Sketch edit (202611191500): the context and `execute` moved to `Positional`.
++impl hilavitkutin_api::Positional<On<ScheduleEnd>> for AdaptWu {
+     type Ctx<'frame> = AdaptCtxUnimplementedStub<'frame>;
++
++    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
++        // FIXME(hilavitkutin_providers_2_unmarked_placeholders): the body is not written, so no anomaly is ever raised.
++        // The body is to walk the
++        // nine metrics Resources, threshold-compare each `last_sample`
++        // against per-axis thresholds, set the anomaly bool on every
++        // tripped axis, and fire `Virtual<AnomalyFired>` once if any
++        // tripped.
++    }
++}
++
++impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
+     type Hint = (Steady, Adaptive, Important);
+     type Read = read![
+         Resource<PassDurationMetrics>,
+@@ -102,15 +115,6 @@ impl WorkUnit<On<ScheduleEnd>> for AdaptWu {
+         Resource<CoreIdleTimeMetrics>,
+         Virtual<AnomalyFired>,
+     ];
+-
+-    fn execute<'frame>(&self, _ctx: &Self::Ctx<'frame>) {
+-        // FIXME(hilavitkutin_providers_2_unmarked_placeholders): the body is not written, so no anomaly is ever raised.
+-        // The body is to walk the
+-        // nine metrics Resources, threshold-compare each `last_sample`
+-        // against per-axis thresholds, set the anomaly bool on every
+-        // tripped axis, and fire `Virtual<AnomalyFired>` once if any
+-        // tripped.
+-    }
+ }
+ 
+ // ---------------------------------------------------------------------

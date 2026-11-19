@@ -1,0 +1,64 @@
+# Sketch: a unit that names its read list, its write list and its hint, and
+# whose body names those lists and nothing else. No context type, no trait in
+# the body's signature, no wrapper at registration.
+#
+# Its own workspace, so the repository's build never sees it. `api` and
+# `engine` are copies of `mock/crates/hilavitkutin-api` and
+# `mock/crates/hilavitkutin` (manifest, build script and `src/`), each with the
+# edits `EDITS.md` lists. `kit` and `providers` are manifests alone: each
+# builds the shipped source of its crate against the api copy, so the graph
+# holds one api. `unit` holds the units of the form under test and depends on
+# the api copy and arvo alone. `native` holds the same units with a positional
+# body, naming the engine's context. `check` runs both under `Scheduler::run`
+# and holds the compile-fail fixtures. `probe` is the one crate built in the
+# release profile, for the emitted code of the bodies.
+
+[workspace]
+resolver = "3"
+members = ["carrier-model", "api", "engine", "kit", "providers", "unit", "native", "check", "probe"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.1.0"
+license = "MPL-2.0"
+repository = "https://github.com/orgrinrt/hilavitkutin"
+
+[workspace.dependencies]
+hilavitkutin = { path = "engine" }
+hilavitkutin-api = { path = "api" }
+hilavitkutin-kit = { path = "kit" }
+hilavitkutin-providers = { path = "providers" }
+hilavitkutin-ctx = { path = "../../../crates/hilavitkutin-ctx" }
+hilavitkutin-build = { path = "../../../crates/hilavitkutin-build" }
+hilavitkutin-str = { path = "../../../crates/hilavitkutin-str" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1" }
+libc = { version = "0.2", default-features = false }
+carrier-model = { path = "carrier-model" }
+unit = { path = "unit" }
+native = { path = "native" }
+
+# The pinned arvo crates name notko by its `ssh` spelling; one notko in the
+# graph, as in the repository's own manifest.
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
+
+# The release profile of the repository's own manifest, for the emitted code.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+# The same profile under a name of its own, so the probe's build takes a
+# directory of its own inside the one target directory.
+[profile.probe]
+inherits = "release"
