@@ -1,0 +1,11 @@
+# The tests red on `dev`, one row each. Written by `mock known-red-set`, asked by `mock known-red`.
+# A row is a claim about `dev` at its `sha`, cleared by whoever fixes the test.
+
+[[known_red]]
+id = "hilavitkutin_compile_fail_fixtures"
+crate = "hilavitkutin"
+test = "compile_fail_fixtures"
+sha = "07a9e9a3295e"
+by = "build-pragmas"
+at = "2026-11-19T15:34:15Z"
+why = "hilavitkutin_dev_two_ui_fixtures_expect_stderr_three_lines_b"

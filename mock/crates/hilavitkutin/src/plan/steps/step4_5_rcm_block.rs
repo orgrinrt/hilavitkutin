@@ -8,9 +8,9 @@ use arvo::{Bool, USize};
 use arvo_bitmask::NodeId;
 use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::UnitId;
 
 use super::{BlockPartition, DependencyGraph, PhaseBoundaries, PlanDims};
+use crate::dispatch::codegen::UnitId;
 
 /// Step 4: Reverse Cuthill-McKee bandwidth-reduction reordering.
 ///

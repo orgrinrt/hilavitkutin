@@ -1,0 +1,27 @@
+[package]
+name = "check"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+# Composes the units with the engine copy. The compile-fail fixtures under
+# `ui/` are built by trybuild against these dependencies; the twins name only
+# the api copy, `unit` and arvo.
+[dev-dependencies]
+arvo.workspace = true
+hilavitkutin.workspace = true
+# Spelled by path rather than from the workspace, so trybuild reads it as a
+# path dependency and writes its source paths in the recorded compiler output
+# as `$HILAVITKUTIN_API` instead of the machine's absolute path.
+hilavitkutin-api = { path = "../api" }
+hilavitkutin-providers.workspace = true
+native.workspace = true
+notko.workspace = true
+unit.workspace = true
+trybuild = "=1.0.122"
+
+[features]
+# The engine copy applies each value function one record short of the window.
+mutant-short-window = ["hilavitkutin/mutant-short-window"]
+# The units of `unit` through the api copy's one-impl trait.
+one-impl = ["unit/one-impl"]

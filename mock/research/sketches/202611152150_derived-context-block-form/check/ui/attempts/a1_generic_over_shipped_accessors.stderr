@@ -1,0 +1,48 @@
+error[E0277]: the trait bound `<C as HasColumnReader<Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>>>::Provider: ResolveColumnRead<Pos, _>` is not satisfied
+  --> ui/attempts/a1_generic_over_shipped_accessors.rs:49:36
+   |
+49 |             let pos = ctx.reader().read::<Pos, _>(i);
+   |                                    ^^^^ unsatisfied trait bound
+   |
+   = help: the trait `ResolveColumnRead<Pos, _>` is not implemented for `<C as HasColumnReader<Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>>>::Provider`
+note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
+  --> $HILAVITKUTIN_API/src/context.rs
+   |
+   |     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+...
+   |         Self: ResolveColumnRead<T, I>;
+   |               ^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnReaderApi::read`
+
+error[E0277]: the trait bound `<C as HasColumnReader<Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>>>::Provider: ResolveColumnRead<Vel, _>` is not satisfied
+  --> ui/attempts/a1_generic_over_shipped_accessors.rs:50:36
+   |
+50 |             let vel = ctx.reader().read::<Vel, _>(i);
+   |                                    ^^^^ unsatisfied trait bound
+   |
+   = help: the trait `ResolveColumnRead<Vel, _>` is not implemented for `<C as HasColumnReader<Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>>>::Provider`
+note: required by a bound in `hilavitkutin_api::ColumnReaderApi::read`
+  --> $HILAVITKUTIN_API/src/context.rs
+   |
+   |     unsafe fn read<T: ColumnValue, I>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+...
+   |         Self: ResolveColumnRead<T, I>;
+   |               ^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnReaderApi::read`
+
+error[E0277]: a column of `Pos` cannot be written by position here
+  --> ui/attempts/a1_generic_over_shipped_accessors.rs:51:26
+   |
+51 |             ctx.writer().write::<Pos, _>(i, Pos(pos.0 + vel.0));
+   |                          ^^^^^ unsatisfied trait bound
+   |
+   = help: the trait `WriteAt<Pos, (AtBare, _)>` is not implemented for `(Cons<Column<Pos>, hilavitkutin_api::Empty>, <C as HasColumnWriter<Cons<Column<Pos>, hilavitkutin_api::Empty>>>::Provider)`
+   = note: The positional `write` reaches a `Column<T>` the unit lists in `type Write` bare, under `Written<_>` or under `Differs<_>`. A `Buffered<T, M>` is written through the value function alone.
+note: required by a bound in `hilavitkutin_api::ColumnWriterApi::write`
+  --> $HILAVITKUTIN_API/src/context.rs
+   |
+   |     unsafe fn write<T: ColumnValue, I>(&self, i: USize, v: T)
+   |               ----- required by a bound in this associated function
+   |     where
+   |         (W, Self): WriteAt<T, I, Ctx = Self>,
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ColumnWriterApi::write`

@@ -21,6 +21,7 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
 use arvo::USize;
 use hilavitkutin::thread::{
+    PoolFrame,
     atomic_wait,
     frame_await,
     frame_await_done,
@@ -28,7 +29,6 @@ use hilavitkutin::thread::{
     frame_exit_arrive,
     frame_publish,
 };
-use hilavitkutin_api::platform::PoolFrame;
 
 /// Wait-policy axis for the round-2 arms: how the bounded pre-roll
 /// iterates before the (identical) lost-wakeup-safe park. `Shipped`

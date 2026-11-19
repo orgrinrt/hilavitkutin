@@ -1,0 +1,16 @@
+# The shipped source of `hilavitkutin-kit`, unedited, built against the api
+# copy of this sketch. A manifest alone: no file of the crate is copied. The
+# shipped build script is not run.
+[package]
+name = "hilavitkutin-kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+build = false
+
+[lib]
+path = "../../../../crates/hilavitkutin-kit/src/lib.rs"
+
+[dependencies]
+hilavitkutin-api.workspace = true

@@ -29,7 +29,7 @@ where
     <D::Units as Capacity>::Array<USize>: Copy,
     <D::Edges as Capacity>::Array<NodeId>: Copy,
 {
-    use hilavitkutin_api::FiberId;
+    use crate::dispatch::codegen::FiberId;
     let csr = graph.to_csr_bidirectional();
     let lap: SymmetricLaplacian<D::Units, D::Edges, SpectralFloat> = SymmetricLaplacian::new(&csr);
     let sigma = lap.lambda_max_bound();

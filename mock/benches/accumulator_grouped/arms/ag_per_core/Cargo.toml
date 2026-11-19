@@ -1,0 +1,15 @@
+[package]
+name = "ag-per-core"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "ag_per_core"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+accum-group-support = { path = "../../../support/accum-group-support" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }

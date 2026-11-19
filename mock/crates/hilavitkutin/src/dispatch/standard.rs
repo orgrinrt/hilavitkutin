@@ -1,11 +1,9 @@
 //! Engine-side home for `StandardCodegen` emit code (Topic 4 axis A).
 //!
-//! `StandardCodegen` itself (the marker) and the trait impls
-//! (`DispatchCodegen<Cfg>`, `LockFreeDispatch`, `Scheduled`) live in
-//! `hilavitkutin_api::dispatch_codegen`. The seal is api-internal,
-//! and the orphan rule requires the trait impls to live with the
-//! marker; ergo the api crate carries both. This module hosts the
-//! engine-side emit code that consumes the marker.
+//! `StandardCodegen` itself (the marker) and its `DispatchCodegen<Cfg>`
+//! impl are declared in `dispatch::codegen`, beside the trait and the
+//! engine's seal. This module hosts the engine-side emit code that
+//! consumes the marker.
 //!
 //! Currently re-exports `StandardCodegen` for convenience. The
 //! per-core dispatch emit entrypoint, `dispatch_for_core<Cfg>()`,
@@ -23,4 +21,4 @@
 //! - `mock/research/sketches/202605101036-progress-counter-arena/`
 //!   (single `stlr`/`ldar` per progress operation).
 
-pub use hilavitkutin_api::dispatch_codegen::StandardCodegen;
+pub use super::codegen::StandardCodegen;

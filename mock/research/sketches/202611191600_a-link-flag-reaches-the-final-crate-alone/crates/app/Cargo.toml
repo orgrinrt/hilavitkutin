@@ -1,0 +1,13 @@
+[package]
+name = "link-flag-app"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "link-flag-app"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+link-flag-dep = { path = "../dep" }

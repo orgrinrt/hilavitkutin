@@ -7,9 +7,9 @@ use arvo::{Bool, USize};
 use arvo_bitmask::{BitMatrix, Mask, NodeId};
 use arvo_graph::waist_detect;
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::UnitId;
 
 use super::{DependencyGraph, PhaseBoundaries, PlanDims};
+use crate::dispatch::codegen::UnitId;
 
 /// Step 3: waist detection. Produces phase boundaries.
 ///

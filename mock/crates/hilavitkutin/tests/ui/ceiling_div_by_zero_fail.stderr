@@ -1,0 +1,17 @@
+error[E0080]: attempt to divide `8_usize` by zero
+ --> src/plan/ceiling_div.rs
+  |
+  | ... = N.div_ceil(D); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the value is named as a const generic, and r...
+  |       ^^^^^^^^^^^^^ evaluation of `<hilavitkutin::plan::Ceil<8, 0> as hilavitkutin::plan::CeilingDiv<8, 0>>::RESULT` failed here
+
+note: erroneous constant encountered
+ --> tests/ui/ceiling_div_by_zero_fail.rs:6:20
+  |
+6 | const BAD: usize = <Ceil<8, 0> as CeilingDiv<8, 0>>::RESULT;
+  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+ --> tests/ui/ceiling_div_by_zero_fail.rs:9:13
+  |
+9 |     let _ = BAD;
+  |             ^^^

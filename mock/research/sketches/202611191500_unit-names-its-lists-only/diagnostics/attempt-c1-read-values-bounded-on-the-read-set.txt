@@ -1,0 +1,44 @@
+error[E0283]: type annotations needed: cannot satisfy `R: model::Project<Read<'a>>`
+  --> api/src/attempt_read_vals_on_the_read_set.rs:17:12
+   |
+17 |         R: model::Has<Read<'a>, M, P>,
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: multiple `impl`s or `where` clauses satisfying `R: model::Project<Read<'a>>` found
+  --> api/src/attempt_read_vals_on_the_read_set.rs:13:13
+   |
+13 | impl<'a, R: ReadSet> ReadValsOnSet<'a, R> {
+   |             ^^^^^^^
+...
+17 |         R: model::Has<Read<'a>, M, P>,
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required by a bound in `model::Has`
+  --> carrier-model/src/lib.rs:91:50
+   |
+91 | pub const trait Has<C: Carrier<M>, M, P: Place>: Project<C> + PlaceOf<M, P> {
+   |                                                  ^^^^^^^^^^ required by this bound in `Has`
+
+error[E0283]: type annotations needed: cannot satisfy `R: model::Project<Read<'a>>`
+  --> api/src/attempt_read_vals_on_the_read_set.rs:20:11
+   |
+20 |         *<R as model::Has<Read<'a>, M, P>>::pick(&self.0)
+   |           ^
+   |
+note: multiple `impl`s or `where` clauses satisfying `R: model::Project<Read<'a>>` found
+  --> api/src/attempt_read_vals_on_the_read_set.rs:13:13
+   |
+13 | impl<'a, R: ReadSet> ReadValsOnSet<'a, R> {
+   |             ^^^^^^^
+...
+17 |         R: model::Has<Read<'a>, M, P>,
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required by a bound in `model::Has::pick`
+  --> carrier-model/src/lib.rs:91:50
+   |
+91 | pub const trait Has<C: Carrier<M>, M, P: Place>: Project<C> + PlaceOf<M, P> {
+   |                                                  ^^^^^^^^^^ required by this bound in `Has::pick`
+92 |     fn pick(p: &Self::Prod) -> &<C as Carrier<M>>::Of;
+   |        ---- required by a bound in this associated function
+
+For more information about this error, try `rustc --explain E0283`.
+error: could not compile `hilavitkutin-api` (lib) due to 2 previous errors

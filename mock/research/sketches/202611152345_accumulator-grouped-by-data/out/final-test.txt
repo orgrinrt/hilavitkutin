@@ -1,0 +1,70 @@
+warning: hilavitkutin-ctx@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-api@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-kit@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-sym@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-str@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin-providers@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+warning: hilavitkutin@0.1.0: hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper to append them, so they are dropped: run cargo where `.cargo/config.toml` names `.cargo/hilavitkutin-rustc-wrapper`
+    Finished `test` profile [unoptimized] target(s) in 0.02s
+     Running unittests src/lib.rs (<target>/debug/deps/accumulator_grouped_by_data-4cd87fef7b9e7efe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/grouping.rs (<target>/debug/deps/grouping-6590936092149f79)
+
+running 6 tests
+test control_grouping_by_worker_differs_across_counts_on_the_copy ... aligned per worker, 1001: workers 1: 1 partials, combined -42
+aligned per worker, 1001: workers 2: 2 partials, combined -128
+aligned per worker, 1001: workers 3: 3 partials, combined -126
+aligned per worker, 1001: workers 4: 4 partials, combined -31
+aligned per worker, 1001: workers 256: 126 partials, combined -110
+aligned per worker, 1001: Err((1, 2))
+ok
+test control_grouping_by_worker_differs_across_counts_on_the_shipped_engine ... shipped per worker, 6144: workers 1: 1 partials, combined -1
+shipped per worker, 6144: workers 2: 2 partials, combined 23
+shipped per worker, 6144: workers 3: 3 partials, combined 126
+shipped per worker, 6144: workers 4: 4 partials, combined 126
+shipped per worker, 6144: workers 256: 256 partials, combined 39
+shipped per worker, 6144: Err((1, 2))
+ok
+test grouping_by_data_differs_on_the_shipped_engine_when_a_slice_cuts_a_group ... shipped per group, 1001: workers 1: 126 partials, combined -110
+shipped per group, 1001: workers 2: 126 partials, combined -128
+shipped per group, 1001: workers 3: 126 partials, combined -10
+shipped per group, 1001: workers 4: 127 partials, combined 9
+shipped per group, 1001: workers 256: 251 partials, combined 0
+shipped per group, 1001: Err((1, 2))
+ok
+test grouping_by_data_is_byte_equal_on_the_copy_at_every_record_count_tried ... aligned per group, 1001: workers 1: 126 partials, combined -110
+aligned per group, 1001: workers 2: 126 partials, combined -110
+aligned per group, 1001: workers 3: 126 partials, combined -110
+aligned per group, 1001: workers 4: 126 partials, combined -110
+aligned per group, 1001: workers 256: 126 partials, combined -110
+aligned per group, 6144: workers 1: 768 partials, combined -102
+aligned per group, 6144: workers 2: 768 partials, combined -102
+aligned per group, 6144: workers 3: 768 partials, combined -102
+aligned per group, 6144: workers 4: 768 partials, combined -102
+aligned per group, 6144: workers 256: 768 partials, combined -102
+ok
+test grouping_by_data_is_byte_equal_on_the_shipped_engine_when_slices_fall_on_groups ... shipped per group, 6144: workers 1: 768 partials, combined -102
+shipped per group, 6144: workers 2: 768 partials, combined -102
+shipped per group, 6144: workers 3: 768 partials, combined -102
+shipped per group, 6144: workers 4: 768 partials, combined -102
+shipped per group, 6144: workers 256: 768 partials, combined -102
+ok
+test the_copy_counts_the_same_group_as_the_shipped_suite ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+     Running tests/law.rs (<target>/debug/deps/law-4f485ded1d57a894)
+
+running 3 tests
+test a_grouping_changes_the_result_on_the_engine_inputs ... records 1001: flat -42, groups of 8 -110, groups of 7 9
+records 6144: flat -1, groups of 8 -102, groups of 7 -128
+ok
+test the_law_is_not_associative ... ok
+test the_law_saturates_at_both_logical_bounds ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

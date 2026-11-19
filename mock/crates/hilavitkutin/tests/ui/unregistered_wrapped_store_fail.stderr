@@ -1,15 +1,15 @@
 error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<Lift, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, DefaultStoreValues, WuCons<Lift, WuNil>>`, but its trait bounds were not satisfied
-  --> tests/ui/unregistered_wrapped_store_fail.rs:77:10
+  --> tests/ui/unregistered_wrapped_store_fail.rs:74:10
    |
-75 |       let mut scheduler = Scheduler::builder()
+72 |       let mut scheduler = Scheduler::builder()
    |  _________________________-
-76 | |         .with(Lift)
-77 | |         .build(store(provider), USize(RECORDS))
+73 | |         .with(Lift)
+74 | |         .build(store(provider), USize(RECORDS))
    | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
    | |_________|
    |
    |
-  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:20:1
+  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/15a9531/notko-hlist/src/list.rs:20:1
    |
 20 |   pub struct Empty;
    |   ---------------- doesn't satisfy `_: HoldsAll<Cons<Differs<Column<Height>>, Empty>>`, `_: HoldsAll<Cons<Reach<Column<Slot>, Cap(USize(1))>, Empty>>`, `hilavitkutin_api::Empty: Contains<Column<Height>>` or `hilavitkutin_api::Empty: Contains<Column<Slot>>`

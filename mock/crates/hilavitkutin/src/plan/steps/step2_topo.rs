@@ -5,9 +5,9 @@
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::{Capacity, cap_size};
-use hilavitkutin_api::UnitId;
 
 use super::{DependencyGraph, PlanDims};
+use crate::dispatch::codegen::UnitId;
 
 /// Sentinel value marking an already-placed unit in the in-degree
 /// counter array used by `topo_sort`. Distinguished from a real

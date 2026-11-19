@@ -1,0 +1,15 @@
+error[E0277]: the read list `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>` holds no column of `Glow`
+  --> ui/fail/read_undeclared.rs:23:35
+   |
+23 |                 let vel = records.read::<Glow, _>(i);
+   |                                   ^^^^ the trait `ReadsColumn<Glow, There<There<_>>>` is not implemented for `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>`
+   |
+   = note: A block unit reads a `Column<T>` it lists in `type Read`.
+note: required by a bound in `hilavitkutin_api::block::Records::read`
+  --> $WORKSPACE/api/src/block.rs
+   |
+   |     unsafe fn read<T: ColumnValue, K>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+   |     where
+   |         R: ReadsColumn<T, K>;
+   |            ^^^^^^^^^^^^^^^^^ required by this bound in `Records::read`

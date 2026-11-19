@@ -1,0 +1,58 @@
+# Sketch: an accumulator grouped by the data gives the same bytes at every
+# worker count under signed saturating addition. Its own workspace, so the
+# repository's build never sees it. The lockfile beside it starts as a copy of
+# `mock/Cargo.lock`, so the git dependencies resolve to the revisions the
+# repository builds with.
+#
+# Two engines are in the graph at once: the shipped one, by path, under the
+# name `shipped`, and the copy in `engine-aligned/` under the name `aligned`.
+# The copy differs from the shipped crate only where `engine-aligned/EDITS.md`
+# says.
+
+[workspace]
+members = ["engine-aligned"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+repository = "https://github.com/orgrinrt/hilavitkutin"
+
+# The dependencies the engine copy inherits, spelled as `mock/Cargo.toml`
+# spells them, with the paths taken from here.
+[workspace.dependencies]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+libc = { version = "0.2", default-features = false }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api", version = "0.1.0" }
+hilavitkutin-kit = { path = "../../../crates/hilavitkutin-kit", version = "0.1.0" }
+hilavitkutin-build = { path = "../../../crates/hilavitkutin-build", version = "0.1.0" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers", version = "0.1.0" }
+
+[package]
+name = "accumulator-grouped-by-data"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+shipped = { package = "hilavitkutin", path = "../../../crates/hilavitkutin" }
+aligned = { package = "hilavitkutin-aligned", path = "engine-aligned" }
+hilavitkutin-api = { workspace = true }
+hilavitkutin-providers = { workspace = true }
+arvo = { workspace = true }
+notko = { workspace = true }
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

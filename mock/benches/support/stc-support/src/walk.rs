@@ -120,7 +120,7 @@ impl Regions for Ceil {
 /// reversed tail the fallback exists to avoid.
 impl Regions for HeadTailMid {
     fn region(&self, core: usize, walkers: usize, n: usize) -> Range<usize> {
-        use hilavitkutin_api::dispatch_codegen::RecordRange;
+        use hilavitkutin::dispatch::codegen::RecordRange;
         match head_tail_range(core, walkers, n) {
             RecordRange::Head {
                 mid_slot,

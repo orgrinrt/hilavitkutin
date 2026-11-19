@@ -25,6 +25,7 @@ use std::thread::JoinHandle;
 use arvo::USize;
 use hilavitkutin::thread::{
     MAX_CORES,
+    PoolFrame,
     await_exit,
     frame_await,
     frame_await_done,
@@ -33,7 +34,6 @@ use hilavitkutin::thread::{
     frame_publish,
     request_shutdown,
 };
-use hilavitkutin_api::platform::PoolFrame;
 use hilavitkutin_api::{DefaultRunCfg, RunCfg};
 
 /// The spin budget the engine's frame waits take by default, so the crew waits
@@ -103,7 +103,7 @@ impl Crew {
     /// Spawn `workers` threads and park them. Clamped to `1..=MAX_CORES`,
     /// as the scheduler clamps its executor's count.
     pub fn new(workers: usize) -> Self {
-        let workers = workers.clamp(1, MAX_CORES);
+        let workers = Self::clamped(workers);
         let shared = Arc::new(Shared {
             frame: pool_frame(),
             job: UnsafeCell::new(Job {
@@ -123,6 +123,12 @@ impl Crew {
             shared,
             handles,
         }
+    }
+
+    /// The worker count a crew asked for `workers` runs: clamped to
+    /// `1..=MAX_CORES`, as the scheduler clamps its executor's count.
+    pub fn clamped(workers: usize) -> usize {
+        workers.clamp(1, MAX_CORES)
     }
 
     /// How many workers the crew runs.

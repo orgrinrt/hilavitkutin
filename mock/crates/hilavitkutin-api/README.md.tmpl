@@ -2,5 +2,6 @@
 
 Consumer-facing types, traits, and platform contracts for the
 hilavitkutin pipeline execution engine. Consumers write WorkUnits
-against this crate and pipe diagnostics / byte output through the
-capability / sink / codec contracts. `#![no_std]`, no alloc.
+against this crate; diagnostic and byte output goes through notko's
+sink. What only the engine reads lives in the engine. `#![no_std]`,
+no alloc.

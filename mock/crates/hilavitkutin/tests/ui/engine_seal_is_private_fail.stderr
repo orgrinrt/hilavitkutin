@@ -1,0 +1,13 @@
+error[E0603]: module `sealed` is private
+ --> tests/ui/engine_seal_is_private_fail.rs:5:19
+  |
+5 | use hilavitkutin::sealed::EngineOnly;
+  |                   ^^^^^^  ---------- trait `EngineOnly` is not publicly re-exported
+  |                   |
+  |                   private module
+  |
+note: the module `sealed` is defined here
+ --> src/lib.rs
+  |
+  | mod sealed {
+  | ^^^^^^^^^^

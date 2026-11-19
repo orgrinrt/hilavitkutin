@@ -205,8 +205,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "provisional"
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
+superseded_by = ["the_api_crate_carries_the_unit_vocabulary_the_store_types_the_context_and_the_platform_contracts_and_nothing_only_the_engine_reads"]
 keywords = ["hilavitkutin-api", "consumer contract", "platform contracts", "capability", "sink", "codec", "WorkUnit", "AccessSet"]
 related = ["tenet::the_crates_are_the_api_the_engine_the_build_crate_and_the_arvo_family"]
 
