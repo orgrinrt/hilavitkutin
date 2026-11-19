@@ -9,13 +9,21 @@ it does. A build-dependency only, it never links into a binary.
 ## Entry point
 
 ```rust
-// what the `default` prototype runs:
+// a consumer's build script, at whatever path the consumer keeps it:
 fn main() {
-    let mut out = String::new();
-    hilavitkutin_build::configure(|key| std::env::var(key).ok().into(), &mut out)
-        .expect("a String takes every write");
-    print!("{out}");
+    hilavitkutin_build::script!(Default);
 }
+```
+
+`script!` is the whole of a script that only configures, and one line
+of a script that does more. It expands, in the script's own std
+context, to the call below and to the wiring the next section states:
+
+```rust
+let mut out = String::new();
+hilavitkutin_build::configure(|key| std::env::var(key).ok().into(), &mut out)
+    .expect("a String takes every write");
+print!("{out}");
 ```
 
 A crate that tunes its pragmas calls `configure_with` instead, with a
@@ -47,43 +55,45 @@ the platform's own interfaces without std.
 
 ## Prototypes and the wiring a workspace takes
 
-No crate writes or keeps a build script of its own. `Prototype` names
-the scripts this crate offers: `Default` calls `configure`, and
-`Deterministic` calls `configure_with` without FastMath.
-`Prototype::configure(env, out)` is the whole of what either does,
-and `write_script` writes the file that calls it. A crate chooses one
-in its manifest:
+A build script is its project's. A consumer keeps one per crate, or
+one file that several crates name with `package.build`, or anything
+else cargo takes, at whatever path it chooses, and this crate asks
+nothing about where. What the crate gives is the body: `Prototype`
+names the scripts it offers, `Default` for `configure` and
+`Deterministic` for `configure_with` without FastMath, and
+`script!(<prototype>)` is the one line that runs the chosen one. A
+script that does more than configure writes that line and goes on with
+its own work. Nothing a prototype does is written out in a consumer, so
+there is nothing in a consumer to drift.
 
-```toml
-[package.metadata.hilavitkutin-build]
-prototype = "deterministic"
-```
+Taking the crate is two lines the consumer writes: the workspace's
+dependency on `hilavitkutin-build`, spelled over ssh while hilavitkutin
+is private (git over https waits for a credential nobody gives), and
+the `[build-dependencies]` line of each crate that builds through it.
+Everything after that follows from the first build with nothing done
+by hand. Where `RUSTC_WORKSPACE_WRAPPER` does not name the wrapper,
+`script!` asks cargo for the workspace root
+(`cargo locate-project --workspace`, from `CARGO_MANIFEST_DIR`) and
+puts the wiring there: the wrapper at `.cargo/hilavitkutin-rustc-wrapper`
+with the text of `write_wrapper` and its executable bit, and the
+`build.rustc-workspace-wrapper` line in `.cargo/config.toml`. A wrapper
+whose text differs from `write_wrapper` is written again, so a
+consumer keeps no test of its copy. A `config.toml` that exists and
+has a `[build]` table without the line is left as it is, and the
+script's warning names the line to add. A root under `CARGO_HOME` is a
+checkout cargo fetched for a dependency, and nothing is written there.
 
-and its `build.rs` is a symbolic link to `<mock>/build/hilavitkutin-deterministic.rs`,
-one file the whole workspace shares. A link rather than
-`package.build`, since `cargo package` refuses a build script outside
-the package and packages a link with its content. A name that is not
-one of the crate's own is a prototype the project keeps at
-`<mock>/build/<name>.rs`, for a script that does more than configure,
-and the crates choosing it link to it the same way.
+Cargo reads its configuration when it starts, so the build that writes
+the wiring runs without the wrapper, and says so in one `cargo::warning`.
+The next build takes the flags, and cargo starts it over by itself,
+since the script asks to be rerun when `RUSTC_WORKSPACE_WRAPPER`
+changes. Both files are committed, so this happens once per workspace
+and never on a fresh clone.
 
-The wiring lives in `hilavitkutin-build-pack`, a mockspace lint pack
-at `<mock>/tools/hilavitkutin-build-pack/` of this repository, which a
-workspace takes by naming it under `[lint-crates]`. The pack is
-tooling: it reads and writes files, so it has std, it is no member of
-the workspace beside the engine's crates, and nothing of it reaches a
-build. It takes `hilavitkutin-build` as a dependency for `Prototype`,
-`write_script` and `write_wrapper`, so the texts it writes have one
-owner. Its maker tool, `mock hilavitkutin-build`, writes
-everything the choices imply: the prototype files, each member's
-link, its `hilavitkutin-build` build-dependency, the workspace's
-dependency on the crate over ssh (hilavitkutin is private, and git
-over https waits for a credential nobody gives), the wrapper and the
-`.cargo/config.toml` that names it. Its lint,
-`hilavitkutin-build-is-wired`, computes the same plan and refuses a
-tree that differs from it, a build script copied where a link would
-do included. A workspace takes the crate in one step, the pack's line,
-and the tool's run does the rest.
+The crate stays `no_std`: which file holds what text, and when it is
+written, is decided by functions of this crate that write into a
+`core::fmt::Write`. The reads, the writes and the question to cargo
+are the script's, in the code `script!` expands there.
 
 ## Four-part build configuration model (T4 §Q1)
 
@@ -126,16 +136,17 @@ directory rustc runs in.
 
 Where the variable is unset (a build script's own compilation, cargo's
 `rustc -vV`, a crate with no build script) the wrapper is rustc
-unchanged. The script cannot be generated by the build it wraps, since
-cargo runs it before the first build script, so `mock hilavitkutin-build`
-writes it at the repository's `.cargo/hilavitkutin-rustc-wrapper`,
-executable, and the pack's lint holds the committed copy to
-`write_wrapper`, which owns the text. It is plain `sh` because
+unchanged. Cargo runs the wrapper before the first build script, so
+the build that writes it cannot use it: `script!` writes it at the
+workspace's `.cargo/hilavitkutin-rustc-wrapper`, executable, with the
+text `write_wrapper` owns, and the builds after that one run through
+it. It is plain `sh` because
 cargo runs it for every rustc call before anything else is built, so
 it needs a host with a POSIX `sh`; Windows waits on the backlog entry.
 
-The same tool writes the repository's `.cargo/config.toml`, a path
-with a slash being relative to the directory holding `.cargo`:
+The same call writes the workspace's `.cargo/config.toml` where there
+is none, a path with a slash being relative to the directory holding
+`.cargo`:
 ```toml
 [build]
 rustc-workspace-wrapper = ".cargo/hilavitkutin-rustc-wrapper"
@@ -397,19 +408,16 @@ Silicon. No VM overhead, no Rosetta, no cross-compilation.
 
 ## Config files (T4 §Q7)
 
-Seven files, six committed, one generated. `mock hilavitkutin-build`
-writes four of the committed ones and the dependency lines of the
-manifests, and its lint holds them to what it
-writes:
+Six kinds of file, five committed, one generated. The first build's
+`script!` writes the wrapper, and the config file where there is none:
 
 | File | Committed | What |
 |---|---|---|
 | `rust-toolchain.toml` | yes | Nightly channel + components |
-| `Cargo.toml` | yes | Profiles, features, workspace lints |
-| `.cargo/config.toml` | yes, written by the tool | Wrapper path, minimal settings |
-| `.cargo/hilavitkutin-rustc-wrapper` | yes, written by the tool from `write_wrapper` | The wrapper |
-| `<mock>/build/hilavitkutin-<prototype>.rs` | yes, written by the tool from `Prototype::write_script` | The shared build scripts |
-| each member's `build.rs` | yes, a link written by the tool | The member's prototype |
+| `Cargo.toml` | yes | Profiles, features, workspace lints, the dependency on this crate |
+| `.cargo/config.toml` | yes, written by `script!` where missing | Wrapper path, minimal settings |
+| `.cargo/hilavitkutin-rustc-wrapper` | yes, written by `script!` from `write_wrapper` | The wrapper |
+| the consumer's build scripts | yes, written by the consumer, wherever it keeps them | One `script!` line each, and the script's own work |
 | `target/hilavitkutin-build/hilavitkutin-config.toml` | no (generated) | ExpandedLto, Pgo, BuildStd settings |
 
 ## Plugin and container sources

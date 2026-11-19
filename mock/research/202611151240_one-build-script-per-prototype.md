@@ -17,3 +17,5 @@ Considered and not taken: `package.build` alone, refused by packaging for every 
 ## Status
 
 The round `202611151157` carrying it is at its doc changelist. On 15 November its commits were refused by the bench lints mockspace landed that day, ticket `hilavitkutin_kirjo_and_arvo_port_their_benches_to_the_one_mo`. On 19 November, with `dev` merged in at `4acfbc7a`, the lint pipeline is green on the branch and the changelist names where the pack lives and the branch the round supersedes.
+
+Later on 19 November op turned the vehicle of this note down: "What does this even mean? Every project has their own build scripts. And every one has them wherever the fuck they want. What the fuck are you in about ?" The shared prototype files, the links and the pack are dropped. The round's doc changelist carries his answer and the rework: a script stays with its consumer, runs a prototype with one line, and that line wires the wrapper (sketch `sketches/202611191650_a-build-script-wires-its-own-workspace/`). The counts above still hold; the vehicle section does not.

@@ -32,8 +32,8 @@ the paths.
 ## Windows wrapper
 
 The generated wrapper is POSIX sh. A Windows host without a POSIX
-shell needs a second text and a way for the tool to pick it, and
-Windows has no `build.rs` link without developer mode. Until it lands a
+shell needs a second text and a way for the build script's call to
+pick it by host. Until it lands a
 Windows host without `sh` fails every rustc call of a configured
 workspace, since cargo runs the wrapper for each one.
 
