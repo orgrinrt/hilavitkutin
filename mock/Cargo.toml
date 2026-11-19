@@ -31,9 +31,10 @@ repository = "https://github.com/orgrinrt/hilavitkutin"
 
 [workspace.dependencies]
 # notko foundation — Just / Maybe / Outcome / Boundable / NonZeroable
-# primitives. Consumed by hilavitkutin-api for its contract traits
-# (BoundedPush, Decoder) and by any downstream crate needing the
-# fallibility ladder.
+# primitives. Consumed by hilavitkutin-api for the Maybe and Outcome
+# its contract traits return, and by any downstream crate needing the
+# fallibility ladder. Its sink (Push, BulkPush) is the one a consumer
+# takes for items outside unit execution.
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
 # The type-level list the access sets are made of, with membership, append
 # and the product of values over a list.

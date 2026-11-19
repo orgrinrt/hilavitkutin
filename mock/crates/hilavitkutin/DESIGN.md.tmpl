@@ -726,7 +726,7 @@ pipeline lifetime.
 
 ### Executor trait
 
-Open `trait Executor: Sealed`, monomorphised, declared in `thread`
+Sealed `trait Executor: EngineOnly`, monomorphised, declared in `thread`
 with its error `ExecutorError` and its one impl `HybridExecutor`. The
 seal is this crate's `EngineOnly`, so an executor outside the engine cannot be
 written; `Scheduler<'frame, Cfg, E: Executor = HybridExecutor>` carries
@@ -1137,6 +1137,14 @@ pub trait PlanDims {
     type AdjRow: BitSequence + BitAccess + BitLogic + Copy + Default + Identity;
 }
 ```
+
+A derived dimension such as units per fiber is the consumer's own
+associated type, worst case by default, and never computed from two
+others. Where a consumer wants the ceiling of one capacity over another
+as its pick, `plan::CeilingDiv`, implemented by `plan::Ceil<N, D>`,
+gives `(N + D - 1) / D` as a constant, so the division sits in an impl
+rather than in an array-length position. It is a heuristic offered,
+and the engine reads none of it.
 
 `AccumsPerCore` and `PlanAffecting` are the consumer-tunable replacements
 for two formerly-hardcoded engine caps. `AccumsPerCore` sizes the accumulator

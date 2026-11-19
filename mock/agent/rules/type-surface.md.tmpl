@@ -74,7 +74,7 @@ There is no fourth "bare primitive" category.
 
 ## DO ✓ (trait-first)
 
-- Trait bounds for data flow: `&mut impl Collector<T>`, `impl
+- Trait bounds for data flow: `&mut impl notko::sink::Push<T>`, `impl
  IntoIterator<Item = T>`, `&[T]`
 - Arithmetic generic: `<T: UArith<BITS>>` instead of concrete `u8` /
  `u16`
@@ -102,7 +102,7 @@ There is no fourth "bare primitive" category.
 | `fn add(a: u32, b: u32) -> u32` | `fn add<T: UArith<32>>(a: T::T, b: T::T) -> T::T` |
 | `fn lookup(k) -> Option<&V>` | `fn lookup(k) -> Maybe<&V>` |
 | `fn try_x(...) -> Result<T, E>` | `fn try_x(...) -> Outcome<T, E>` |
-| `fn sum() -> Vec<T>` | `fn sum<C: Collector<T>>(sink: &mut C) -> Outcome<(), _>` |
+| `fn sum() -> Vec<T>` | `fn sum<C: Push<T>>(sink: &mut C) -> Outcome<(), _>` (notko's sink) |
 
 ## The canonical example: arvo's arithmetic surface
 

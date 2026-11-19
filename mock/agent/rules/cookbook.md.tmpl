@@ -24,19 +24,18 @@ Err→panic in internal release).
 
 ## "I need to emit errors / diagnostics from a phase"
 
-Take `&mut impl DiagnosticSink<E>` as a parameter. Return
-`Outcome<Success, Aborted>`. DO NOT return `Vec<Error>`. The sink
-trait ships in `hilavitkutin-api` (pending #83); until then, author a
-local trait and promote later.
+Take `&mut impl notko::sink::Push<E>` as a parameter. Return
+`Outcome<Success, Aborted>`. DO NOT return `Vec<Error>`. The sink is
+notko's; hilavitkutin ships no sink of its own.
 
 ## "I need to emit bytes (serialization, codegen)"
 
-Take `&mut impl ByteEmitter` as a parameter. Return
+Take `&mut impl notko::sink::BulkPush<u8>` as a parameter. Return
 `Outcome<Meta, EmitterFull>`. DO NOT return `Vec<u8>`.
 
 ## "I need to collect items into bounded storage"
 
-Take `&mut impl Collector<T>` as a parameter. Implementors can be
+Take `&mut impl notko::sink::Push<T>` as a parameter. Implementors can be
 Seq-backed, array-backed, channel-backed, etc.
 
 ## "I need to declare a WorkUnit's access set"

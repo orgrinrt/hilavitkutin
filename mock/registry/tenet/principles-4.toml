@@ -121,3 +121,61 @@ stamped_by = "maintainer"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["exact capacity", "round-up to rung", "Dim<N>", "PlanDims", "bare usize literal", "declare the budget once", "Capacity bound"]
 related = ["tenet::fixed_capacity_is_one_generic_dimension_marker_implementing_the_capacity_trait_and_the_macro_rung_ladder_is_dropped", "tenet::container_capacity_lives_at_type_level_and_a_consumer_needing_more_picks_the_bigger_type"]
+
+[[tenet]]
+id = "the_primitive_vocabulary_table_names_the_stack_type_that_replaces_each_bare_primitive_and_a_mutable_vector_parameter_becomes_notko_s_push"
+subject = "principles"
+what = "The primitive vocabulary documents which stack type replaces which bare primitive. It is not a table for the public interface only, and every mapping applies everywhere the bare primitive might otherwise appear. A mutable vector parameter becomes notko's push sink, since hilavitkutin ships no sink of its own."
+mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to `&mut impl Push<T>` from `notko::sink`; HashMap to a KeyValueStore sink or `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
+source = "mock/PRINCIPLES.md.tmpl:159-178"
+provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+quote = '''
+## Primitive vocabulary (the stack's own)
+
+The rule is "no bare primitives anywhere" (section above); the table
+here documents WHICH stack type replaces WHICH bare primitive. It is
+not a "for public API only" table. Every mapping applies everywhere
+the bare primitive might otherwise appear.
+
+| Don't | Do | Lives in |
+|-------|----|----------|
+| `Option<T>` | `Maybe<T>` | `notko` |
+| `Result<T, E>` | `Outcome<T, E>` | `notko` |
+| `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
+| `&mut Vec<T>` param | `&mut impl Push<T>` | `notko::sink` |
+| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `String` owned | `Str` | `hilavitkutin-str` |
+| `&str` non-static | `&'static str` or `Str` | as above |
+| `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |
+| `u8..u128` / `i8..i128` | `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable` | `arvo` / `notko` traits |
+| `f32` / `f64` | `FastFloat` / `StrictFloat` | `arvo::newtype` |
+| `bool` | `Bool` | `arvo::newtype` |
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202611191514 'api placement review fixes', 2026-11-19, agent-written: the row it supersedes with the sink line applying op's ruling op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink"
+standing = "held"
+keywords = ["primitive vocabulary", "Maybe", "Outcome", "Push", "notko sink", "Str", "USize", "FastFloat", "Bool", "replacement table"]
+related = ["tenet::no_bare_primitive_exists_anywhere_in_the_stack", "tenet::op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink"]
+
+[[tenet]]
+id = "trait_signatures_return_iterators_and_take_notko_s_sink_and_never_name_a_vector_or_boxed_slice"
+subject = "principles"
+what = "As a direct consequence of the two principles stated above it, trait return types use an iterator, a slice reference bound or an associated type, and sink positions take notko's push or bulk push sink, bytes included. Concrete collection types are implementation choices and not contracts."
+mechanism = "Returns: `impl IntoIterator`, `AsRef<[T]>`, associated types. Sinks: `&mut impl Push<T>` / `&mut impl BulkPush<T>` from `notko::sink`."
+rejects = ["Vec in trait signatures", "Box<[T]> in trait signatures", "concrete collection types as contracts", "a sink surface of hilavitkutin's own"]
+source = "mock/PRINCIPLES.md.tmpl:60-66"
+provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+quote = '''
+## No `Vec` or `Box<[T]>` in trait signatures
+
+Direct consequence of the two principles above. Trait return types
+use `impl IntoIterator`, `AsRef<[T]>`, or associated types. Sink
+positions take notko's sink, `&mut impl Push<T>` or
+`&mut impl BulkPush<T>`, bytes included. Concrete collection types are
+implementation choices, not contracts.
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202611191514 'api placement review fixes', 2026-11-19, agent-written: the row it supersedes with the sink positions applying op's ruling op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink"
+standing = "held"
+keywords = ["no Vec", "Box<[T]>", "IntoIterator", "Push", "BulkPush", "notko sink", "trait signature", "sink"]
+related = ["tenet::allocation_is_managed_by_the_scheduler_and_declared_at_compile_time_and_never_fabricated_at_runtime", "tenet::op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink"]
