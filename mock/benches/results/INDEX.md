@@ -2,6 +2,276 @@
 
 Generated from the runs under `results/`, one directory per run at `<bench>/<cell>/<machine class>/<run>/`, and regenerated from them on every run. Each run holds its samples, meta, report and summary.
 
+## accumulator_grouped/w1_g64_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 4.89 ms | 1.07x |
+| per_core | 4.57 ms | 1.00x |
+| sequential | 4.76 ms | 1.04x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w1_g64_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w1_g64_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w1_g64_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 29.46 us | 1.00x |
+| per_core | 31.32 us | 1.06x |
+| sequential | 29.64 us | 1.01x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w1_g64_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w1_g64_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w1_g64_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 337.76 us | 1.08x |
+| per_core | 313.11 us | 1.00x |
+| sequential | 323.28 us | 1.03x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w1_g64_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w1_g64_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w2_g64_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 2.55 ms | 1.03x |
+| per_core | 2.49 ms | 1.00x |
+| sequential | 4.54 ms | 1.83x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w2_g64_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w2_g64_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w2_g64_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 32.25 us | 1.26x |
+| per_core | 31.34 us | 1.23x |
+| sequential | 25.54 us | 1.00x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w2_g64_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w2_g64_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w2_g64_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 164.57 us | 1.22x |
+| per_core | 134.79 us | 1.00x |
+| sequential | 321.31 us | 2.38x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w2_g64_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w2_g64_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w3_g64_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 1.81 ms | 1.02x |
+| per_core | 1.78 ms | 1.00x |
+| sequential | 4.59 ms | 2.58x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w3_g64_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w3_g64_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w3_g64_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 40.75 us | 1.46x |
+| per_core | 47.54 us | 1.70x |
+| sequential | 27.93 us | 1.00x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w3_g64_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w3_g64_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w3_g64_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 125.62 us | 1.12x |
+| per_core | 111.92 us | 1.00x |
+| sequential | 315.19 us | 2.82x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w3_g64_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w3_g64_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g1024_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 2.28 ms | 1.00x |
+| per_core | 2.28 ms | 1.00x |
+| sequential | 4.69 ms | 2.06x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g1024_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g1024_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g1024_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 40.96 us | 1.50x |
+| per_core | 48.33 us | 1.77x |
+| sequential | 27.31 us | 1.00x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g1024_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g1024_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g1024_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 131.57 us | 1.00x |
+| per_core | 143.63 us | 1.09x |
+| sequential | 289.81 us | 2.20x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g1024_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g1024_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g64_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 2.56 ms | 1.09x |
+| per_core | 2.34 ms | 1.00x |
+| sequential | 4.97 ms | 2.13x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g64_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g64_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g64_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 46.35 us | 1.57x |
+| per_core | 41.21 us | 1.39x |
+| sequential | 29.60 us | 1.00x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g64_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g64_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g64_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 166.92 us | 1.21x |
+| per_core | 138.29 us | 1.00x |
+| sequential | 296.03 us | 2.14x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g64_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g64_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g8_n1048576
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 3.17 ms | 1.30x |
+| per_core | 2.45 ms | 1.00x |
+| sequential | 4.76 ms | 1.95x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g8_n1048576/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g8_n1048576/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g8_n4096
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 53.77 us | 2.06x |
+| per_core | 44.67 us | 1.71x |
+| sequential | 26.10 us | 1.00x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g8_n4096/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g8_n4096/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
+## accumulator_grouped/w4_g8_n65536
+
+### linux-x86_64-c4-container-intel, 2 run(s)
+
+Latest: `20261119T215331Z-a2c60c57-dirty`
+
+| variant | median | vs best |
+|---|---|---|
+| grouped | 209.94 us | 1.22x |
+| per_core | 171.78 us | 1.00x |
+| sequential | 346.37 us | 2.02x |
+
+- [20261119T211727Z-abb93e97](accumulator_grouped/w4_g8_n65536/linux-x86_64-c4-container-intel/20261119T211727Z-abb93e97/report.md)
+- [20261119T215331Z-a2c60c57-dirty](accumulator_grouped/w4_g8_n65536/linux-x86_64-c4-container-intel/20261119T215331Z-a2c60c57-dirty/report.md)
+
 ## atomic_inc_strategy/atomic_inc_strategy_n1024
 
 ### linux-x86_64-c16-bare-intel, 1 run(s)

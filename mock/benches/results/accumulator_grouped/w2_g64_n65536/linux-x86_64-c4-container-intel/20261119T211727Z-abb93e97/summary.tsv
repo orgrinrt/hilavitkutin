@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795123378	abb93e97	w2_g64_n65536	grouped	65536	warm	202152.0	202152.0	211499.9
+1795123378	abb93e97	w2_g64_n65536	per_core	65536	warm	170616.0	170616.0	177967.6
+1795123378	abb93e97	w2_g64_n65536	sequential	65536	warm	390131.9	390131.9	402944.8
