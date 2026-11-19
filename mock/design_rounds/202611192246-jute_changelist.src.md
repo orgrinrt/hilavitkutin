@@ -20,6 +20,7 @@ Round topic `202611192246-jute_topic.a-handle-names-no-interner.md`, against the
 - `a_handle_carried_to_another_arena_resolves_to_what_that_arena_holds` asserts what the design now says: a first arena's id-0 handle resolves, in a second arena holding one string, to that string.
 - `a_handle_past_the_live_count_resolves_empty` keeps the bound check asked: an id past the count of the second arena resolves to the empty string.
 - `two_overflowing_strings_get_distinct_handles` and `an_overflow_handle_resolves_to_its_string` state the interning law over an overflowing arena and fail today; each is `#[ignore]` naming ticket `an_overflowing_runtime_intern_breaks_the_interning_law_in_me`.
+- `mock/catalogue.md` gains the ticket's row, the ledger the `catalogue-ignore` lint reads.
 - `running_out_of_entry_slots_overflows_like_running_out_of_bytes` overflows a `default_interner::<64, 2>` on its third distinct string.
 - `intern_static_deduplicates_through_the_default_interner` asks `intern_static` and `intern` of one runtime string give one handle.
 - `an_arena_with_no_bytes_overflows_every_non_empty_string` asks a `MemoryArena<0, 4>`: a non-empty string gets the overflow handle and resolves to the empty string.
