@@ -1,0 +1,33 @@
+error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<InternsAName, Empty>, ..., ..., ..., ...>`, but its trait bounds were not satisfied
+  --> reach/src/lib.rs:67:10
+   |
+23 |   pub struct Held(pub StringInterner<MemoryArena<256, 16>>);
+   |   --------------- doesn't satisfy `Held: Copy`
+...
+64 |       let mut scheduler = match Scheduler::builder()
+   |  _______________________________-
+65 | |         .with(Resource::new(value))
+66 | |         .with(InternsAName)
+67 | |         .build(ArenaColumnStorage::new(provider), USize(4))
+   | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+   | |_________|
+   |
+   |
+  ::: /home/user/.worktrees/hila-seat/mock/crates/hilavitkutin-api/src/store_values.rs:47:1
+   |
+47 |   pub struct Sv<H, T: StoreValues> {
+   |   -------------------------------- doesn't satisfy `_: DrainStores`
+   |
+   = note: the following trait bounds were not satisfied:
+           `Held: Copy`
+           which is required by `Sv<StagedResource<Held>, DefaultStoreValues>: DrainStores`
+   = note: the full name for the type has been written to '/home/user/target/debug/deps/consumer_surface_reach-3ca5537f8f86fe43.long-type-12423822655243798522.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+help: consider annotating `Held` with `#[derive(Clone, Copy)]`
+   |
+23 + #[derive(Clone, Copy)]
+24 | pub struct Held(pub StringInterner<MemoryArena<256, 16>>);
+   |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `consumer-surface-reach` (lib) due to 1 previous error

@@ -1,0 +1,13 @@
+[package]
+name = "consumer-surface-probe"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+hilavitkutin-providers.workspace = true
+hilavitkutin-str.workspace = true
+hilavitkutin-sym.workspace = true
+notko.workspace = true
+arvo-bits.workspace = true
+hilavitkutin-api.workspace = true
