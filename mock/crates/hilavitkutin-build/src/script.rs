@@ -37,7 +37,9 @@
 /// cargo names sits in are written nothing. Where cargo gives no root the
 /// script prints one warning and writes nothing. The script that claims
 /// the workspace then keeps the generated cargo file to the text of
-/// [`write_generated`](crate::write_generated).
+/// [`write_generated`](crate::write_generated), and leaves it as it was
+/// where [`write_uncarried`](crate::write_uncarried) names a pragma the
+/// build cannot carry.
 ///
 /// The crate's texts go straight to where they belong, standard output
 /// or a file, through a sink the expansion defines, and a file on disk is
@@ -88,24 +90,35 @@ macro_rules! __script {
     (@checks workspace, $p:ty) => {
         const _: () = $crate::claimed::<$p>();
     };
-    (@generated crate, $p:ty, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {};
-    (@generated workspace, $p:ty, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {
+    (@generated crate, $p:ty, $cfg:ident, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {};
+    (@generated workspace, $p:ty, $cfg:ident, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {
         if $tree == $crate::Tree::Own {
+            /// Say that two crates claim the workspace, by a `cargo::error`.
+            fn two_claim<D: fmt::Display>(krate: D, path: &Path, other: D) {
+                println!(
+                    "cargo::error=hilavitkutin-build: {krate} claims the workspace with `script!(.., workspace)` and \
+                     {} was written for {other}: one crate of a workspace claims it, so take `, workspace` out of \
+                     one of the two scripts, or remove the file where nobody claims it",
+                    path.display()
+                );
+            }
+
             let path = $dir.join($crate::GENERATED_NAME);
             let krate = env::var("CARGO_PKG_NAME").unwrap_or_default();
             let triple = env::var("TARGET").unwrap_or_default();
             let have = fs::read(&path).ok();
             let text = have.as_deref().map(|bytes| str::from_utf8(bytes).unwrap_or_default());
+            // Cargo reads the file before any script runs, so it holds no
+            // key this build cannot follow.
+            let mut uncarried = "".to_owned();
+            $crate::write_uncarried::<$p, _>(&$cfg.target, |tool| provide(tool).is_none(), &mut uncarried)
+                .expect("a string takes the errors");
+            print!("{uncarried}");
             match $crate::claim(text.into(), &krate) {
                 $crate::Claim::Theirs(other) => {
-                    let other = if other.is_empty() { "somebody else" } else { other };
-                    println!(
-                        "cargo::error=hilavitkutin-build: {krate} claims the workspace with `script!(.., workspace)` \
-                         and {} was written for {other}: one crate of a workspace claims it, so take \
-                         `, workspace` out of one of the two scripts, or remove the file where nobody claims it",
-                        path.display()
-                    );
+                    two_claim(krate.as_str(), &path, if other.is_empty() { "somebody else" } else { other });
                 },
+                _ if !uncarried.is_empty() => {},
                 claim => {
                     let current = claim == $crate::Claim::Mine && {
                         let mut held = Same {
@@ -115,22 +128,41 @@ macro_rules! __script {
                         let written = $crate::write_generated::<$p, _>(&krate, &triple, &mut held).is_ok();
                         written && held.same && held.rest.is_empty()
                     };
-                    let wrote = (|| -> io::Result<()> {
+                    // Whether the file in place is this script's own.
+                    let wrote = (|| -> io::Result<_> {
                         if current {
-                            return Ok(());
+                            return Ok(true);
                         }
                         fs::create_dir_all(&$dir)?;
                         let whole = $dir.join(format!(".{}.{}", $crate::GENERATED_NAME, process::id()));
                         let mut file = Sink::over(fs::File::create(&whole)?);
                         let wrote = $crate::write_generated::<$p, _>(&krate, &triple, &mut file);
                         file.finish(wrote)?;
-                        fs::rename(&whole, &path)
+                        if claim == $crate::Claim::Mine {
+                            return fs::rename(&whole, &path).map(|()| true);
+                        }
+                        // Two scripts that both found no file run side by
+                        // side. A link refuses where a file is already
+                        // there, so one of them places its own.
+                        let placed = fs::hard_link(&whole, &path);
+                        fs::remove_file(&whole)?;
+                        match placed {
+                            Ok(()) => Ok(true),
+                            Err(why) if why.kind() == io::ErrorKind::AlreadyExists => Ok(false),
+                            Err(why) => Err(why),
+                        }
                     })();
                     match wrote {
-                        Ok(()) if current => {},
-                        Ok(()) => {
+                        Ok(true) if current => {},
+                        Ok(true) => {
                             $crate::write_notice($crate::Notice::Generated, $dir.display(), &mut $stdout)
                                 .expect("standard output takes the notice");
+                        },
+                        Ok(false) => {
+                            let theirs = fs::read_to_string(&path).unwrap_or_default();
+                            if let $crate::Claim::Theirs(other) = $crate::claim(Some(theirs.as_str()).into(), &krate) {
+                                two_claim(krate.as_str(), &path, if other.is_empty() { "somebody else" } else { other });
+                            }
                         },
                         Err(why) => {
                             println!(
@@ -161,8 +193,6 @@ macro_rules! __script {
             io,
             path::{Path, PathBuf},
             process::{self, Command},
-            thread,
-            time::{Duration, Instant},
         };
 
         $crate::__script!(@checks $claim, $p);
@@ -374,7 +404,7 @@ macro_rules! __script {
                     $crate::write_watch(dir.display(), &mut stdout)
                         .expect("standard output takes the watch lines");
                 }
-                $crate::__script!(@generated $claim, $p, dir, tree, config_text, plan, stdout);
+                $crate::__script!(@generated $claim, $p, cfg, dir, tree, config_text, plan, stdout);
             },
         }
     }};

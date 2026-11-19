@@ -32,4 +32,14 @@ Whether clang's `--ld-path` takes the bare `wild` a tool on the path is handed a
 
 ### What was done
 
-The doc changelist was reopened for findings 1 to 5. The rest of this section is written when the fixes are in.
+The doc changelist was reopened for findings 1 to 5, the design and both changelists were revised, and the source and tests follow them.
+
+1. `Mold` and `Bfd` go through the wrapper as `-Clink-arg=-fuse-ld=..`, the way `Wild` already did, and the trait has three writers, one for each mechanism the row names. The cfg route of `FastMath` is not changed here: it is older than the round, and the question to the maintainer that lands with the round carries it.
+2. `tests/script_build.rs` runs the local build whole over a directory registry and a stand-in crate, with a control whose registry is empty. The lock is the operating system's on a file that stays, so an interrupted build holds nobody up. Only versions below the pin are removed, by `older`, which `tests/tools.rs` holds; a newer version and another pin's lock stay.
+3. The generated file is placed by a hard link where there was none, so the second of two claiming scripts is refused whichever order they run in. The test builds in parallel and checks that no scratch file is left.
+4. The claiming script asks `write_uncarried` first and writes the file only where it says nothing. The cranelift test fixes what the toolchain has by the sysroot it answers with, runs both branches on every machine, and reads the file.
+5. The design says the driver key follows the target built, and why.
+6. The root `README.md` is rewritten for the crate as it is.
+7. The rustdoc of the linkers says both flags go through the wrapper.
+8. The kept case of `tests/refused.rs` holds a driver in all five sets. `tests/generated.rs` asserts over prototypes that `claimed` passes, each checked by a `const` item.
+9. Kept on purpose: `Workspace`'s `Ci` set holds `ExpandedLto` and the design says no build selects the ci set yet; `mock/Cargo.toml` keeps its two keys because a run started outside `mock/` reads no `.cargo/`. The slow tests and the `#72` allows go to tickets.

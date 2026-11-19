@@ -1,4 +1,4 @@
-//! The seven build choices: what each pragma writes on each of its four
+//! The seven build choices: what each pragma writes on each of its three
 //! routes, as literal text, and which targets each admits.
 
 mod common;
@@ -28,14 +28,13 @@ use hilavitkutin_build::{
 };
 use notko::Maybe;
 
-/// What a pragma writes on its four routes: flags, link arguments, cfgs
-/// and cargo configuration.
-fn routes<P: Pragma>(with: &Written<'_>) -> [String; 4] {
-    let mut out = [String::new(), String::new(), String::new(), String::new()];
+/// What a pragma writes on its three routes: flags, cfgs and cargo
+/// configuration.
+fn routes<P: Pragma>(with: &Written<'_>) -> [String; 3] {
+    let mut out = [String::new(), String::new(), String::new()];
     P::write_rustflags(with, &mut out[0]).expect("a String takes every write");
-    P::write_link_args(with, &mut out[1]).expect("a String takes every write");
-    P::write_cfgs(&mut out[2]).expect("a String takes every write");
-    P::write_cargo_config(with, &mut out[3]).expect("a String takes every write");
+    P::write_cfgs(&mut out[1]).expect("a String takes every write");
+    P::write_cargo_config(with, &mut out[2]).expect("a String takes every write");
     out
 }
 
@@ -49,15 +48,20 @@ fn written(profile: &'static str) -> Written<'static> {
     Written::new(profile, TRIPLE, Maybe::Isnt, Shared::Written)
 }
 
+/// A linker's argument is a rustc flag, which the wrapper appends: the
+/// row of the canon names no route of a script's own for it.
 #[test]
-fn a_linker_writes_its_link_argument() {
+fn a_linker_writes_its_argument_as_a_rustc_flag() {
     assert_eq!(routes::<Mold>(&owed("dev")), [
-        "",
-        "-fuse-ld=mold\n",
+        "-Clink-arg=-fuse-ld=mold",
         "",
         ""
     ]);
-    assert_eq!(routes::<Bfd>(&owed("dev")), ["", "-fuse-ld=bfd\n", "", ""]);
+    assert_eq!(routes::<Bfd>(&owed("dev")), [
+        "-Clink-arg=-fuse-ld=bfd",
+        "",
+        ""
+    ]);
 }
 
 /// Wild is named to clang by the path it is handed, the driver and the
@@ -74,17 +78,15 @@ fn wild_is_named_to_clang_by_its_path() {
     assert_eq!(routes::<Wild>(&found), [
         "-Clinker=clang -Clink-arg=--ld-path=/home/u/.cache/tools/wild-0.10.0/bin/wild",
         "",
-        "",
         ""
     ]);
-    assert_eq!(routes::<Wild>(&owed("release")), ["", "", "", ""]);
+    assert_eq!(routes::<Wild>(&owed("release")), ["", "", ""]);
 }
 
 #[test]
 fn the_dylib_edge_writes_its_flag() {
     assert_eq!(routes::<DylibDomain>(&owed("dev")), [
         "-Cprefer-dynamic",
-        "",
         "",
         ""
     ]);
@@ -95,11 +97,9 @@ fn a_profile_key_is_written_for_the_profile_it_is_handed() {
     assert_eq!(routes::<ThinLto>(&owed("release")), [
         "",
         "",
-        "",
         "profile.release.lto = \"thin\"\n"
     ]);
     assert_eq!(routes::<ThinLto>(&owed("dev")), [
-        "",
         "",
         "",
         "profile.dev.lto = \"thin\"\n"
@@ -107,17 +107,14 @@ fn a_profile_key_is_written_for_the_profile_it_is_handed() {
     assert_eq!(routes::<ExpandedLto>(&owed("release")), [
         "",
         "",
-        "",
         "profile.release.lto = \"fat\"\nprofile.release.codegen-units = 1\n"
     ]);
     assert_eq!(routes::<Incremental>(&owed("release")), [
         "",
         "",
-        "",
         "profile.release.incremental = true\n"
     ]);
     assert_eq!(routes::<NoIncremental>(&owed("dev")), [
-        "",
         "",
         "",
         "profile.dev.incremental = false\n"
@@ -140,11 +137,9 @@ fn cranelift_writes_the_unstable_flag_once_and_its_profile_key_each_time() {
     assert_eq!(routes::<Cranelift>(&owed("dev")), [
         "",
         "",
-        "",
         "unstable.codegen-backend = true\nprofile.dev.codegen-backend = \"cranelift\"\n"
     ]);
     assert_eq!(routes::<Cranelift>(&written("release")), [
-        "",
         "",
         "",
         "profile.release.codegen-backend = \"cranelift\"\n"
@@ -158,28 +153,24 @@ fn a_shared_key_is_written_where_owed_and_left_where_written() {
     assert_eq!(routes::<GccDriver>(&owed("dev")), [
         "",
         "",
-        "",
         "target.\"x86_64-unknown-linux-gnu\".linker = \"gcc\"\n"
     ]);
     assert_eq!(routes::<ClangDriver>(&owed("release")), [
-        "",
         "",
         "",
         "target.\"x86_64-unknown-linux-gnu\".linker = \"clang\"\n"
     ]);
     let dotted = Written::new("dev", "thumbv8m.main-none-eabi", Maybe::Isnt, Shared::Owed);
     assert_eq!(
-        routes::<ClangDriver>(&dotted)[3],
+        routes::<ClangDriver>(&dotted)[2],
         "target.\"thumbv8m.main-none-eabi\".linker = \"clang\"\n"
     );
     assert_eq!(routes::<GccCc>(&owed("dev")), [
         "",
         "",
-        "",
         "env.CC = \"gcc\"\nenv.CXX = \"g++\"\nenv.AR = \"ar\"\n"
     ]);
     assert_eq!(routes::<ClangCc>(&owed("dev")), [
-        "",
         "",
         "",
         "env.CC = \"clang\"\nenv.CXX = \"clang++\"\nenv.AR = \"llvm-ar\"\n"
@@ -190,14 +181,13 @@ fn a_shared_key_is_written_where_owed_and_left_where_written() {
         routes::<GccCc>(&written("release")),
         routes::<ClangCc>(&written("release")),
     ] {
-        assert_eq!(left, ["", "", "", ""]);
+        assert_eq!(left, ["", "", ""]);
     }
 }
 
 #[test]
 fn fast_math_writes_its_cfg_and_nothing_else() {
     assert_eq!(routes::<FastMath>(&owed("release")), [
-        "",
         "",
         "arvo_fast_math\n",
         ""

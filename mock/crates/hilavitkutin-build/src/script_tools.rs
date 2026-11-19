@@ -61,6 +61,9 @@ macro_rules! __script_tools {
             Some(PathBuf::from(dir))
         }
 
+        /// The tools this script has said the machine lacks.
+        static REFUSED: ::std::sync::Mutex<[&'static str; 16]> = ::std::sync::Mutex::new([""; 16]); // lint:allow(no-bare-static-str) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the build script's own std code, a set has sixteen tools at most; tracked: #72
+
         /// Find `tool`, or build it where it is a local build and is on
         /// the machine nowhere.
         #[rustfmt::skip] // keeps the allow on the signature it governs
@@ -78,8 +81,16 @@ macro_rules! __script_tools {
                 $crate::Provision::Path => Some(PathBuf::from(tool.name)),
                 $crate::Provision::Home => program,
                 $crate::Provision::Refuse => {
-                    let mut stdout = Sink::over(io::stdout());
-                    $crate::write_refusal(tool, &mut stdout).expect("standard output takes the refusal");
+                    // A tool is asked for by the profile's set and again
+                    // by the workspace's check, and refused in one line.
+                    let mut said = REFUSED.lock().unwrap_or_else(|held| held.into_inner());
+                    if !said.contains(&tool.name) {
+                        if let Some(free) = said.iter_mut().find(|name| name.is_empty()) {
+                            *free = tool.name;
+                        }
+                        let mut stdout = Sink::over(io::stdout());
+                        $crate::write_refusal(tool, &mut stdout).expect("standard output takes the refusal");
+                    }
                     None
                 },
                 $crate::Provision::Build => {
@@ -112,9 +123,9 @@ macro_rules! __script_tools {
         }
 
         /// Build `tool` into `dir` with `cargo install`, and remove the
-        /// other versions beside it. Scripts of one workspace run side by
-        /// side, so the one that builds holds a lock directory and the
-        /// others wait for it to go.
+        /// older versions beside it. Scripts of one workspace run side by
+        /// side, so the one that builds holds a lock and the others wait
+        /// for it, and then find the tool built.
         #[rustfmt::skip] // keeps the allow on the signature it governs
         fn build(tool: &$crate::Tool, krate: &'static str, pin: &'static str, dir: &Path, program: &Path) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: whether the build script has the tool; tracked: #72
             let name = tool.name;
@@ -124,28 +135,18 @@ macro_rules! __script_tools {
             if let Err(why) = fs::create_dir_all(beside) {
                 return build_failed(name, pin, dir, why);
             }
+            // The lock is the operating system's, on a file that stays: it
+            // goes with the process that holds it, so a build that was
+            // interrupted holds nobody up.
             let lock = beside.join(format!("{name}-{pin}.lock"));
-            let waiting = Instant::now();
-            loop {
-                match fs::create_dir(&lock) {
-                    Ok(()) => break,
-                    Err(why) if why.kind() == io::ErrorKind::AlreadyExists => {
-                        if is_tool(tool, program) {
-                            return true;
-                        }
-                        if waiting.elapsed() > Duration::from_secs(45 * 60) {
-                            return build_failed(name, pin, dir, format_args!(
-                                "another build has held {} for 45 minutes; remove it where no build is running",
-                                lock.display()
-                            ));
-                        }
-                        thread::sleep(Duration::from_secs(2));
-                    },
-                    Err(why) => return build_failed(name, pin, dir, why),
-                }
-            }
+            let held = match fs::File::create(&lock).and_then(|file| file.lock().map(|()| file)) {
+                Ok(held) => held,
+                Err(why) => {
+                    return build_failed(name, pin, dir, format_args!("the lock {} was not taken: {why}", lock.display()));
+                },
+            };
             // The lock is held from here. Another script may have built
-            // the tool between the look and the lock.
+            // the tool while this one waited for it.
             let built = is_tool(tool, program) || {
                 println!(
                     "cargo::warning=hilavitkutin-build is building {name} {pin} into {} with cargo install, once \
@@ -170,19 +171,24 @@ macro_rules! __script_tools {
                 let _ = fs::remove_dir_all(&scratch);
                 let installed = ran.is_ok_and(|ran| ran.status.success()) && is_tool(tool, program);
                 if installed {
-                    // A pin that moved leaves no older version behind.
+                    // A pin that moved up leaves no older version behind. A
+                    // newer one is another clone's pin and stays.
                     let prefix = format!("{name}-");
                     for other in fs::read_dir(beside).into_iter().flatten().flatten() {
                         let other = other.path();
-                        let is_version = other.file_name().is_some_and(|file| file.to_string_lossy().starts_with(&prefix));
-                        if is_version && other != dir && other != lock {
+                        let below = other
+                            .file_name()
+                            .and_then(|file| file.to_str())
+                            .and_then(|file| file.strip_prefix(&prefix))
+                            .is_some_and(|version| $crate::older(version, pin));
+                        if below {
                             let _ = fs::remove_dir_all(&other);
                         }
                     }
                 }
                 installed
             };
-            let _ = fs::remove_dir(&lock);
+            drop(held);
             built
                 || build_failed(name, pin, dir, format_args!(
                     "run `cargo install --locked --version {pin} --root {} {krate}` to see why",

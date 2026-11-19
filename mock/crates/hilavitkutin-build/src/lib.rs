@@ -60,7 +60,7 @@
 //! | `SharedGenerics` | Generic instances shared across crates. | `-Zshare-generics=y`. |
 //! | `LoopFusion` | Adjacent loops fused. | Nothing. |
 //! | `MimallocAllocator` | A recommendation of mimalloc. | Nothing. |
-//! | `Mold`, `Wild`, `Bfd` | The linker of what the crate links. | A link argument; `Wild` also `-Clinker=clang`. |
+//! | `Mold`, `Wild`, `Bfd` | The linker of what the crate links. | Rustc flags the wrapper appends: `-Clink-arg=-fuse-ld=` for `Mold` and `Bfd`, and for `Wild` clang as the driver and its path. |
 //! | `DylibDomain` | The crate as a dylib its dependents link dynamically. | `-Cprefer-dynamic`. |
 //! | `ThinLto` | Thin LTO for the profile. | Its profile key, in the generated cargo file. |
 //! | `Incremental`, `NoIncremental` | Whether the profile builds incrementally. | Its profile key, in the generated cargo file. |
@@ -112,7 +112,14 @@ pub use choice::{
 };
 pub use config::BuildConfig;
 pub use flags::{write_rustflags, writes_flags};
-pub use generated::{Claim, GENERATED_NAME, claim, includes_generated, write_generated};
+pub use generated::{
+    Claim,
+    GENERATED_NAME,
+    claim,
+    includes_generated,
+    write_generated,
+    write_uncarried,
+};
 pub use pragma::{
     All,
     Any,
@@ -155,6 +162,7 @@ pub use tools::{
     Source,
     TOOLS,
     Tool,
+    older,
     provision,
     tools_home,
     write_refusal,

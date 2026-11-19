@@ -99,6 +99,10 @@ fn not_wasm(target: &Target) -> Maybe<&'static str> {
 }
 
 /// Link with mold, `-fuse-ld=mold`.
+///
+/// The argument is a rustc flag the wrapper appends, like every flag of
+/// the crate, so the first build of a workspace, which runs without the
+/// wrapper, links as the toolchain does by itself.
 #[derive(Debug, Clone, Copy)]
 pub struct Mold;
 
@@ -114,8 +118,8 @@ impl Pragma for Mold {
         elf_only(target)
     }
 
-    fn write_link_args<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
-        out.write_str("-fuse-ld=mold\n")
+    fn write_rustflags<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
+        out.write_str("-Clink-arg=-fuse-ld=mold")
     }
 }
 
@@ -134,8 +138,8 @@ impl Pragma for Bfd {
         elf_only(target)
     }
 
-    fn write_link_args<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
-        out.write_str("-fuse-ld=bfd\n")
+    fn write_rustflags<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
+        out.write_str("-Clink-arg=-fuse-ld=bfd")
     }
 }
 
@@ -143,11 +147,9 @@ impl Pragma for Bfd {
 ///
 /// A gcc older than 15 knows a fixed list of linkers and wild is not on
 /// it, so the crate links through clang, which takes any linker by
-/// `--ld-path`. The driver and the path are one pair of flags and both go
-/// through the wrapper: a link argument of the script would reach the
-/// first build of a workspace, which runs without the wrapper, and gcc
-/// refuses `--ld-path`. Without a path for the tool nothing is written,
-/// and the directives say the path is missing.
+/// `--ld-path`. The driver and the path are one pair of flags the
+/// wrapper appends. Without a path for the tool nothing is written, and
+/// the directives say the path is missing.
 #[derive(Debug, Clone, Copy)]
 pub struct Wild;
 

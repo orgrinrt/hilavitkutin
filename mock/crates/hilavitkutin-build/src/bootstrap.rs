@@ -14,8 +14,7 @@
 //! ```
 //!
 //! The directives set the crate's rustc flags in
-//! `HILAVITKUTIN_BUILD_RUSTFLAGS`, which the workspace wrapper appends,
-//! and name the arguments of what the crate links.
+//! `HILAVITKUTIN_BUILD_RUSTFLAGS`, which the workspace wrapper appends.
 
 use core::fmt::Write;
 
@@ -78,18 +77,6 @@ impl<W: Write> Visit for Cfgs<'_, W> {
     }
 }
 
-/// The walk that writes every member's link arguments.
-struct LinkArgs<'a, 's, W: Write> {
-    site: &'a Site<'s>,
-    out:  Directive<'a, W>,
-}
-
-impl<W: Write> Visit for LinkArgs<'_, '_, W> {
-    fn pragma<P: Pragma>(&mut self) -> core::fmt::Result {
-        P::write_link_args(&self.site.written::<P>(), &mut self.out)
-    }
-}
-
 /// The walk that writes an error for every member the build cannot carry.
 struct Refusals<'a, 's, W: Write> {
     target: &'a Target,
@@ -146,10 +133,10 @@ impl<W: Write> Visit for Refusals<'_, '_, W> {
 /// `arvo_fast_math` cfg is declared always, and every cfg a pragma of the
 /// set writes is set. The crate's rustc flags go to
 /// `HILAVITKUTIN_BUILD_RUSTFLAGS` on its own rustc, empty when no pragma
-/// writes one. After them come one `cargo::rustc-link-arg` per link
-/// argument, and one `cargo::error` per pragma the target does not admit
-/// and per pragma whose locally built tool the site has no path for,
-/// which fails the build.
+/// writes one, a linker's flags among them. After them comes one
+/// `cargo::error` per pragma the target does not admit and per pragma
+/// whose locally built tool the site has no path for, which fails the
+/// build.
 pub fn write_directives<S: Set, W: Write>(
     cfg: &BuildConfig,
     site: &Site<'_>,
@@ -163,10 +150,6 @@ pub fn write_directives<S: Set, W: Write>(
     write!(out, "cargo::rustc-env={RUSTFLAGS_VAR}=")?;
     write_rustflags::<S, W>(site, out)?;
     out.write_char('\n')?;
-    S::each(&mut LinkArgs {
-        site,
-        out: Directive::of("cargo::rustc-link-arg=", out),
-    })?;
     S::each(&mut Refusals {
         target: &cfg.target,
         site,

@@ -335,7 +335,10 @@ fn a_sets_flags_are_its_members_flags_with_one_space_between() {
         )>(),
         format!("{LOOP} -Zthreads=0 -Zshare-generics=y")
     );
-    assert_eq!(flags::<(Mold, DylibDomain, Pgo)>(), "-Cprefer-dynamic");
+    assert_eq!(
+        flags::<(Mold, DylibDomain, Pgo)>(),
+        "-Clink-arg=-fuse-ld=mold -Cprefer-dynamic"
+    );
     assert_eq!(flags::<(ParallelCodegen<255>,)>(), "-Zthreads=255");
 
     // A member's flags are written with the tool its site has for it.
@@ -363,9 +366,10 @@ fn a_set_has_flags_where_a_member_writes_one() {
     let bare = Site::new(Profile::Release, "", &[]);
     assert_eq!(writes_flags::<()>(&bare), Flags::Nothing);
     assert_eq!(
-        writes_flags::<(Pgo, FastMath, Mold, ThinLto)>(&bare),
+        writes_flags::<(Pgo, FastMath, ThinLto)>(&bare),
         Flags::Nothing
     );
+    assert_eq!(writes_flags::<(Pgo, Mold)>(&bare), Flags::Written);
     assert_eq!(writes_flags::<(Pgo, SharedGenerics)>(&bare), Flags::Written);
     assert_eq!(writes_flags::<(Wild,)>(&bare), Flags::Nothing);
     let tools = [ToolPath::new(&WILD, "/t/wild")];

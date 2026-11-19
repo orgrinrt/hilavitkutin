@@ -62,14 +62,15 @@ const LOOP_FLAGS: &str = "-Cllvm-args=-enable-loop-distribute \
     -Cllvm-args=-loop-prefetch-writes \
     -Cllvm-args=-enable-histogram-loop-vectorization";
 
+/// A linker's argument is among the flags the wrapper appends, and the
+/// script prints no link-argument directive of its own.
 #[test]
-fn a_set_writes_its_cfg_its_flags_and_its_link_arguments() {
+fn a_set_writes_its_cfg_and_its_flags_the_linkers_among_them() {
     assert_eq!(
         directives::<(Mold, FastMath, SharedGenerics)>(elf(), &[]),
         format!(
             "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
-             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Zshare-generics=y\n\
-             cargo::rustc-link-arg=-fuse-ld=mold\n"
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Zshare-generics=y\n"
         )
     );
     assert_eq!(
@@ -142,8 +143,7 @@ fn a_pragma_the_target_does_not_admit_fails_the_build() {
         wasm,
         format!(
             "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
-             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Cprefer-dynamic\n\
-             cargo::rustc-link-arg=-fuse-ld=mold\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Cprefer-dynamic\n\
              cargo::error=hilavitkutin-build: Mold links ELF only, and this target's objects are not ELF: name a \
              prototype whose set for this profile leaves Mold out on this target\n\
              cargo::error=hilavitkutin-build: DylibDomain has no meaning on wasm, which this target is: name a \
@@ -300,8 +300,7 @@ fn configure_as_writes_the_named_prototypes_set_for_the_profile() {
     assert_eq!(
         configured::<Linked>(release_env),
         format!(
-            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Zshare-generics=y\n\
-             cargo::rustc-link-arg=-fuse-ld=mold\n"
+            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Zshare-generics=y\n"
         )
     );
     let dev = configured::<Linked>(|key| {

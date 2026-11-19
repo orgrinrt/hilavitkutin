@@ -13,6 +13,8 @@ use harness::{
     WRITTEN_CONFIG,
     build,
     build_with,
+    host,
+    prototype,
     run_cargo,
     scratch,
     workspace,
@@ -107,9 +109,10 @@ fn the_claiming_script_writes_the_generated_file_and_a_later_build_takes_its_key
     assert!(!link_of(&release, "scratch_claims_control").contains("lto=fat"));
 }
 
-/// Two crates of one workspace that both claim it: the second finds the
-/// file written for the first, the build fails naming both, and the file
-/// stays the first one's.
+/// Two crates of one workspace that both claim it: one places its file,
+/// the other finds it written for the first, the build fails naming both,
+/// and the file stays the first one's. Cargo runs the two scripts side by
+/// side here, so both may look before either has written.
 #[test]
 fn a_second_crate_that_claims_the_workspace_fails_the_build() {
     let root = scratch("two-claims").join("ws");
@@ -122,8 +125,18 @@ fn a_second_crate_that_claims_the_workspace_fails_the_build() {
     write_crate_with(&root.join("a"), "scratch-two-a", "", "", CLAIMING);
     write_crate_with(&root.join("b"), "scratch-two-b", "", "", CLAIMING);
 
-    let built = run_cargo(&root, "build", &["-j", "1"], &[]);
+    let built = run_cargo(&root, "build", &[], &[]);
     assert!(!built.passed, "{}", built.said);
+    let left: Vec<_> = fs::read_dir(root.join(".cargo"))
+        .expect("the config directory")
+        .flatten()
+        .map(|file| file.file_name())
+        .filter(|name| name.to_string_lossy().starts_with('.'))
+        .collect();
+    assert!(
+        left.is_empty(),
+        "a file under a script's own name is left: {left:?}"
+    );
     let text = fs::read_to_string(root.join(".cargo/hilavitkutin-build.toml"))
         .expect("one of the two wrote the file");
     let (first, second) = if text == generated_for("scratch-two-a") {
@@ -243,14 +256,6 @@ fn a_config_file_without_the_include_line_is_left_and_the_line_is_named() {
     );
 }
 
-/// A prototype of the script's own file, named by its path.
-fn prototype(name: &str, dev: &str) -> String {
-    format!(
-        "struct {name};\nimpl hilavitkutin_build::Prototype for {name} {{\n    type Dev = {dev};\n    type DevOpt = \
-         ();\n    type Release = ();\n    type Profiling = ();\n    type Ci = ();\n}}\n"
-    )
-}
-
 fn machine_has(program: &str) -> bool {
     Command::new(program)
         .arg("--version")
@@ -258,9 +263,11 @@ fn machine_has(program: &str) -> bool {
         .is_ok_and(|asked| asked.status.success())
 }
 
-/// A set that names a package tool. Where the machine has mold, the link
-/// takes the argument in the first build, with no wrapper. Where it has
-/// none, the build fails with the command that brings it.
+/// A set that names a package tool. Where the machine has mold, the first
+/// build links as the toolchain does by itself, like every flag of a
+/// first build, and the second links with mold by the flag the wrapper
+/// appends. Where it has none, the build fails with the command that
+/// brings it.
 #[test]
 fn a_linker_from_the_machines_packages_is_used_or_the_build_says_how_to_get_it() {
     let root = workspace_with(
@@ -269,47 +276,92 @@ fn a_linker_from_the_machines_packages_is_used_or_the_build_says_how_to_get_it()
         "crate::Linked",
     );
     with_a_binary(&root);
-    let built = run_cargo(&root, "build", &[], &[]);
+    let first = run_cargo(&root, "build", &[], &[]);
+    assert!(
+        !first.said.contains("rustc-link-arg") && !first.rustc.contains("fuse-ld"),
+        "the script named a link argument of its own\n{}\n{}",
+        first.said,
+        first.rustc
+    );
     if machine_has("mold") {
-        assert!(built.passed, "{}", built.said);
-        assert!(
-            link_of(&built, "scratch_mold").contains("-C link-arg=-fuse-ld=mold"),
-            "{}",
-            built.rustc
-        );
+        assert!(first.passed, "{}", first.said);
+        let second = run_cargo(&root, "build", &[], &[]);
+        assert!(second.passed, "{}", second.said);
+        let link = link_of(&second, "scratch_mold");
+        assert!(link.ends_with(" -Clink-arg=-fuse-ld=mold"), "{link}");
     } else {
-        assert!(!built.passed, "{}", built.said);
+        assert!(!first.passed, "{}", first.said);
         assert!(
-            built.said.contains("install the package `mold`"),
+            first.said.contains("install the package `mold`"),
             "{}",
-            built.said
+            first.said
         );
     }
 }
 
-/// A set that names a toolchain component. Where the sysroot has the
-/// backend the script goes on; where it has none, the build fails with
-/// the rustup command, which is the case on a toolchain as pinned.
-#[test]
-fn a_backend_the_toolchain_lacks_fails_the_build_with_the_rustup_command() {
-    let sysroot = Command::new("rustc")
-        .args(["--print", "sysroot"])
-        .output()
-        .expect("rustc on the path");
-    let sysroot = String::from_utf8_lossy(&sysroot.stdout).trim().to_owned();
-    let has_backend = Command::new("find")
-        .args([&sysroot, "-name", "librustc_codegen_cranelift*"])
-        .output()
-        .is_ok_and(|found| !found.stdout.is_empty());
+/// A sysroot of the test's own, with the cranelift backend or without.
+fn sysroot(beside: &Path, with_backend: bool) -> std::path::PathBuf {
+    let sysroot = beside.join("sysroot");
+    let backends = sysroot
+        .join("lib/rustlib")
+        .join(host())
+        .join("codegen-backends");
+    fs::create_dir_all(&backends).expect("the sysroot");
+    if with_backend {
+        fs::write(backends.join("librustc_codegen_cranelift-stand-in.so"), "")
+            .expect("the backend");
+    }
+    sysroot
+}
 
+/// A set that names a toolchain component, in the workspace's script. The
+/// test hands the script a sysroot, so both answers are run on every
+/// machine. With the backend there the script writes the backend's keys.
+/// Without it the build fails with the rustup command, said once, and no
+/// generated file is written: cargo reads the file before any script
+/// runs, and a key for a backend the toolchain lacks would stop every
+/// build after this one before a script could say why.
+#[test]
+fn a_backend_the_toolchain_lacks_fails_the_build_and_writes_no_key() {
     let items = prototype("Backend", "(hilavitkutin_build::Cranelift,)");
-    let root = workspace_with("cranelift", &items, "crate::Backend, workspace");
-    let built = run_cargo(&root, "build", &[], &[]);
-    let refused = built
-        .said
-        .contains("run `rustup component add rustc-codegen-cranelift-preview`");
-    assert_eq!(refused, !has_backend, "{}", built.said);
-    assert_eq!(built.passed, has_backend, "{}", built.said);
+
+    let root = workspace_with("cranelift-there", &items, "crate::Backend, workspace");
+    let there = sysroot(root.parent().expect("a scratch directory"), true);
+    let built = run_cargo(&root, "build", &[], &[("SPY_SYSROOT", there.as_path())]);
+    assert!(built.passed, "{}", built.said);
+    assert_eq!(
+        fs::read_to_string(root.join(".cargo/hilavitkutin-build.toml"))
+            .expect("the generated file"),
+        "# written by hilavitkutin-build for scratch-cranelift-there: edits are lost\n\
+         unstable.codegen-backend = true\n\
+         profile.dev.codegen-backend = \"cranelift\"\n"
+    );
+
+    let root = workspace_with("cranelift-gone", &items, "crate::Backend, workspace");
+    let gone = sysroot(root.parent().expect("a scratch directory"), false);
+    let built = run_cargo(&root, "build", &[], &[("SPY_SYSROOT", gone.as_path())]);
+    assert!(!built.passed, "{}", built.said);
+    assert_eq!(
+        built
+            .said
+            .matches("run `rustup component add rustc-codegen-cranelift-preview`")
+            .count(),
+        1,
+        "{}",
+        built.said
+    );
+    assert!(
+        built.said.contains(
+            "Cranelift, in the dev set of the prototype that claims the workspace, waits on cranelift, which this \
+             build has not got: the generated cargo file is left as it was"
+        ),
+        "{}",
+        built.said
+    );
+    assert!(
+        !root.join(".cargo/hilavitkutin-build.toml").exists(),
+        "a key the build cannot follow was written"
+    );
 }
 
 /// A set that names wild takes it from the tools home, by its full path,
@@ -336,17 +388,8 @@ fn wild_is_taken_from_the_tools_home_by_its_full_path() {
         .parent()
         .expect("the workspace sits in a scratch directory");
     let home = beside.join("tools");
-    let host = Command::new("rustc")
-        .arg("-vV")
-        .output()
-        .expect("rustc on the path");
-    let host = String::from_utf8_lossy(&host.stdout);
-    let host = host
-        .lines()
-        .find_map(|line| line.strip_prefix("host: "))
-        .expect("rustc names its host");
-    let dir = home.join(host).join("wild-0.10.0");
-    let older = home.join(host).join("wild-0.9.0");
+    let dir = home.join(host()).join("wild-0.10.0");
+    let older = home.join(host()).join("wild-0.9.0");
     fs::create_dir_all(dir.join("bin")).expect("the tool's directory");
     fs::create_dir_all(&older).expect("an older version's directory");
     let ran = beside.join("wild-ran");

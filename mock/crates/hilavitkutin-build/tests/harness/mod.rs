@@ -121,9 +121,13 @@ pub fn run_cargo(root: &Path, verb: &str, more: &[&str], vars: &[(&str, &Path)])
         .expect("the workspace sits in a scratch directory");
     let spy = beside.join("rustc-spy");
     let log = beside.join("rustc.log");
+    // Asked for its sysroot alone, which is how a script looks for a
+    // toolchain component, the spy answers with `SPY_SYSROOT` where a test
+    // set one, so the test decides what the toolchain has.
     fs::write(
         &spy,
-        "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$SPY_LOG\"\nexec rustc \"$@\"\n",
+        "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$SPY_LOG\"\nif [ -n \"$SPY_SYSROOT\" ] && [ \"$*\" = '--print sysroot' \
+         ]; then\n    printf '%s\\n' \"$SPY_SYSROOT\"\n    exit 0\nfi\nexec rustc \"$@\"\n",
     )
     .expect("the spying rustc");
     #[cfg(unix)]
@@ -143,7 +147,8 @@ pub fn run_cargo(root: &Path, verb: &str, more: &[&str], vars: &[(&str, &Path)])
         .env("SPY_LOG", &log)
         .env_remove("RUSTC_WORKSPACE_WRAPPER")
         .env_remove("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER")
-        .env_remove("HILAVITKUTIN_BUILD_TOOLS_HOME");
+        .env_remove("HILAVITKUTIN_BUILD_TOOLS_HOME")
+        .env_remove("SPY_SYSROOT");
     for (name, value) in vars {
         cargo.env(name, value);
     }
@@ -153,6 +158,28 @@ pub fn run_cargo(root: &Path, verb: &str, more: &[&str], vars: &[(&str, &Path)])
         said:   String::from_utf8_lossy(&output.stderr).into_owned(),
         rustc:  fs::read_to_string(&log).unwrap_or_default(),
     }
+}
+
+/// A prototype of the script's own file whose dev set is `dev` and whose
+/// other sets are empty, named in `script!` by its path, `crate::<name>`.
+pub fn prototype(name: &str, dev: &str) -> String {
+    format!(
+        "struct {name};\nimpl hilavitkutin_build::Prototype for {name} {{\n    type Dev = {dev};\n    type DevOpt = \
+         ();\n    type Release = ();\n    type Profiling = ();\n    type Ci = ();\n}}\n"
+    )
+}
+
+/// The host triple of the rustc on the path.
+pub fn host() -> String {
+    let asked = Command::new("rustc")
+        .arg("-vV")
+        .output()
+        .expect("rustc on the path");
+    String::from_utf8_lossy(&asked.stdout)
+        .lines()
+        .find_map(|line| line.strip_prefix("host: "))
+        .expect("rustc names its host")
+        .to_owned()
 }
 
 pub fn wrapper_text() -> String {

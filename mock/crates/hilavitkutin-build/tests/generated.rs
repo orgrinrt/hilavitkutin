@@ -13,15 +13,19 @@ use hilavitkutin_build::{
     GccDriver,
     INCLUDE_LINE,
     Incremental,
+    Mold,
     NoIncremental,
     Pgo,
     Prototype,
+    Target,
     ThinLto,
     Workspace,
     claim,
+    claimed,
     includes_generated,
     write_cargo_config,
     write_generated,
+    write_uncarried,
 };
 use notko::Maybe;
 
@@ -42,14 +46,16 @@ fn generated<P: Prototype>(krate: &str) -> String {
     out
 }
 
-/// Every pragma of workspace reach, the shared ones in both profiles.
+/// Every pragma of workspace reach but the second driver and C compiler,
+/// the shared ones in every profile, as a claiming script has to have
+/// them.
 struct Everything;
 
 impl Prototype for Everything {
-    type Ci = ();
+    type Ci = (ClangDriver, ClangCc);
     type Dev = (Cranelift, Incremental, ClangDriver, ClangCc, FastMath);
-    type DevOpt = ();
-    type Profiling = ();
+    type DevOpt = (ClangDriver, ClangCc);
+    type Profiling = (ClangDriver, ClangCc);
     type Release = (ExpandedLto, NoIncremental, ClangDriver, ClangCc, Pgo);
 }
 
@@ -64,16 +70,22 @@ impl Prototype for BothCranelift {
     type Release = (Cranelift, NoIncremental);
 }
 
-/// A shared key in the second profile alone, which nothing wrote before.
-struct ReleaseDriver;
+/// The other driver, in every profile, beside a key of each profile.
+struct GccDriven;
 
-impl Prototype for ReleaseDriver {
-    type Ci = ();
-    type Dev = (ThinLto,);
-    type DevOpt = ();
-    type Profiling = ();
+impl Prototype for GccDriven {
+    type Ci = (GccDriver,);
+    type Dev = (ThinLto, GccDriver);
+    type DevOpt = (GccDriver,);
+    type Profiling = (GccDriver,);
     type Release = (GccDriver, ThinLto);
 }
+
+// The text below is asserted of files a claiming script can write: each
+// of the three is a prototype `claimed` accepts.
+const _: () = claimed::<Everything>();
+const _: () = claimed::<BothCranelift>();
+const _: () = claimed::<GccDriven>();
 
 #[test]
 fn the_file_is_the_claim_then_the_keys_of_dev_and_of_release() {
@@ -103,13 +115,114 @@ fn a_key_of_no_profile_is_in_the_file_once() {
          profile.release.codegen-backend = \"cranelift\"\n\
          profile.release.incremental = false\n"
     );
+    // The driver's key is written by the dev set and left by the release
+    // set, wherever in its set the pragma stands.
     assert_eq!(
-        generated::<ReleaseDriver>("a"),
+        generated::<GccDriven>("a"),
         "# written by hilavitkutin-build for a: edits are lost\n\
          profile.dev.lto = \"thin\"\n\
          target.\"x86_64-unknown-linux-gnu\".linker = \"gcc\"\n\
          profile.release.lto = \"thin\"\n"
     );
+}
+
+fn target(os: &'static str, arch: &'static str) -> Target {
+    Target::from_cargo(Maybe::Is(os), Maybe::Isnt, Maybe::Is(arch), Maybe::Isnt)
+}
+
+fn uncarried<P: Prototype>(target: Target, lacked: &[&str]) -> String {
+    let mut out = String::new();
+    write_uncarried::<P, _>(&target, |tool| lacked.contains(&tool.name), &mut out)
+        .expect("a String takes every write");
+    out
+}
+
+/// A pragma whose key would be in the file and which the build cannot
+/// carry is named once for each set that holds it, with the set's
+/// profile. The same prototype on a build that carries it writes nothing.
+#[test]
+fn a_pragma_the_build_cannot_carry_is_named_with_its_profile() {
+    let elf = || target("linux", "x86_64");
+    assert_eq!(uncarried::<Everything>(elf(), &[]), "");
+    assert_eq!(
+        uncarried::<Workspace>(elf(), &["cranelift", "clang", "gcc"]),
+        ""
+    );
+
+    // In one set alone, and in both.
+    assert_eq!(
+        uncarried::<Everything>(elf(), &["cranelift"]),
+        "cargo::error=hilavitkutin-build: Cranelift, in the dev set of the prototype that claims the workspace, \
+         waits on cranelift, which this build has not got: the generated cargo file is left as it was\n"
+    );
+    assert_eq!(
+        uncarried::<BothCranelift>(elf(), &["cranelift"]),
+        "cargo::error=hilavitkutin-build: Cranelift, in the dev set of the prototype that claims the workspace, \
+         waits on cranelift, which this build has not got: the generated cargo file is left as it was\n\
+         cargo::error=hilavitkutin-build: Cranelift, in the release set of the prototype that claims the workspace, \
+         waits on cranelift, which this build has not got: the generated cargo file is left as it was\n"
+    );
+    // One tool two pragmas of a set wait on is said of each.
+    let no_clang = uncarried::<Everything>(elf(), &["clang"]);
+    assert_eq!(no_clang.lines().count(), 4, "{no_clang}");
+    assert!(
+        no_clang.starts_with(
+            "cargo::error=hilavitkutin-build: ClangDriver, in the dev set of the prototype that claims the \
+             workspace, waits on clang,"
+        ),
+        "{no_clang}"
+    );
+
+    // A target that does not admit the pragma, with its tool there.
+    assert_eq!(
+        uncarried::<BothCranelift>(target("unknown", "wasm32"), &[]),
+        "cargo::error=hilavitkutin-build: Cranelift, in the dev set of the prototype that claims the workspace, has \
+         no meaning on wasm, which this target is: the generated cargo file is left as it was\n\
+         cargo::error=hilavitkutin-build: Cranelift, in the release set of the prototype that claims the workspace, \
+         has no meaning on wasm, which this target is: the generated cargo file is left as it was\n"
+    );
+}
+
+/// A pragma of crate reach has no key in the file, and a tool with no
+/// source yet is lacked by nobody, so neither is asked about: the walk
+/// never calls the script for them.
+#[test]
+fn only_a_workspace_pragma_with_a_tool_that_has_a_source_is_asked_about() {
+    struct Crateish;
+
+    impl Prototype for Crateish {
+        type Ci = ();
+        type Dev = (Mold, FastMath);
+        type DevOpt = ();
+        type Profiling = ();
+        type Release = (Mold, Pgo, ExpandedLto);
+    }
+
+    let mut asked = Vec::new();
+    let mut out = String::new();
+    write_uncarried::<Crateish, _>(
+        &target("unknown", "wasm32"),
+        |tool| {
+            asked.push(tool.name);
+            true
+        },
+        &mut out,
+    )
+    .expect("a String takes every write");
+    assert_eq!(asked, Vec::<&str>::new());
+    assert_eq!(out, "");
+
+    let mut asked = Vec::new();
+    write_uncarried::<Everything, _>(
+        &target("linux", "x86_64"),
+        |tool| {
+            asked.push(tool.name);
+            false
+        },
+        &mut out,
+    )
+    .expect("a String takes every write");
+    assert_eq!(asked, ["cranelift", "clang", "clang", "clang", "clang"]);
 }
 
 #[test]

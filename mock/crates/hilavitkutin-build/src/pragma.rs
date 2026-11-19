@@ -85,7 +85,7 @@ impl GroupSlot {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Reach {
     /// The crate whose script names the set: the flags the wrapper
-    /// appends to its rustc, the arguments of what it links, its cfg.
+    /// appends to its rustc, the linker's among them, and its cfg.
     Crate,
     /// Cargo's configuration, which cargo reads before any script runs
     /// and applies to every crate it builds.
@@ -233,10 +233,11 @@ impl<L: Set> Requirement for Not<L> {
 
 /// One build choice.
 ///
-/// The four writers are the four routes a pragma's text takes, and each
+/// The three writers are the routes a pragma's text takes, and each
 /// writes nothing unless the pragma says otherwise. Rustc flags are
 /// separated by single spaces, with none before the first or after the
-/// last. Link arguments and cfgs are one to a line. Cargo configuration
+/// last, and a linker's argument is one of them, `-Clink-arg=`. Cfgs are
+/// one to a line. Cargo configuration
 /// is whole lines in dotted keys with no table header, since two pragmas
 /// write keys of one table and TOML takes a header once.
 pub trait Pragma {
@@ -266,12 +267,6 @@ pub trait Pragma {
     /// The flags the wrapper appends to the crate's rustc.
     #[allow(unused_variables)]
     fn write_rustflags<W: Write>(with: &Written<'_>, out: &mut W) -> core::fmt::Result {
-        Ok(())
-    }
-
-    /// The arguments of what the crate links, one to a line.
-    #[allow(unused_variables)]
-    fn write_link_args<W: Write>(with: &Written<'_>, out: &mut W) -> core::fmt::Result {
         Ok(())
     }
 

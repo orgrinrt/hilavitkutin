@@ -155,8 +155,9 @@ fn the_workspace_prototype_is_refused_without_the_claim() {
 }
 
 /// A claiming prototype whose sets hold two link drivers across profiles
-/// would write one key twice, so it is refused. The kept one holds a
-/// driver in every profile, the empty ones among them.
+/// would write one key twice, so it is refused. Two prototypes are kept:
+/// one with no driver in any set, and one with the same driver in all
+/// five, which is the case a check that refused every driver would fail.
 #[test]
 fn a_claiming_prototype_whose_shared_groups_differ_is_refused() {
     const DIFFER: &str = "hold the same link driver and the same C compiler in every profile";
@@ -186,4 +187,15 @@ fn a_claiming_prototype_whose_shared_groups_differ_is_refused() {
     let none = checked("shared-kept", ["(ThinLto,)", "(ExpandedLto,)", "()"], true);
     assert!(none.passed, "{}", none.said);
     assert!(!none.said.contains(DIFFER), "{}", none.said);
+
+    // gcc is the driver this toolchain links through by itself, so the
+    // script that runs after the check finds its tool on any machine that
+    // builds the suite.
+    let every = "use hilavitkutin_build::*;\nstruct Mine;\nimpl Prototype for Mine {\n    type Dev = (GccDriver,);\n    \
+                 type DevOpt = (GccDriver,);\n    type Release = (GccDriver, ThinLto);\n    type Profiling = \
+                 (GccDriver,);\n    type Ci = (GccDriver,);\n}\n";
+    let root = workspace_with("shared-every", every, "crate::Mine, workspace");
+    let all = run_cargo(&root, "check", &[], &[]);
+    assert!(all.passed, "{}", all.said);
+    assert!(!all.said.contains(DIFFER), "{}", all.said);
 }

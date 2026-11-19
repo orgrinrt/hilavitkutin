@@ -258,6 +258,34 @@ pub fn write_tool_dir<W: Write, H: Display>(
     }
 }
 
+/// Whether `version` is below `pin`, both dotted numbers.
+///
+/// A script asks this of every `<name>-<version>` directory beside a
+/// tool it has just built, and removes the ones that are. Text that is
+/// not dotted numbers, a lock file's name among it, is older than
+/// nothing, and so is a version equal to the pin or above it, which is
+/// another clone's pin.
+#[rustfmt::skip] // keeps the allow on the signature it governs
+pub fn older(version: &str, pin: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a directory's name as the build script read it; tracked: #72
+    let dotted = |text: &str| text.split('.').all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())); // lint:allow(no-bare-string) reason: a directory's name as the build script read it; tracked: #72
+    if !dotted(version) || !dotted(pin) {
+        return false;
+    }
+    let mut have = version.split('.').map(str::parse::<u64>); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one number of a version, the crate takes no arvo dependency; tracked: #72
+    let mut want = pin.split('.').map(str::parse::<u64>); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: one number of a version, the crate takes no arvo dependency; tracked: #72
+    loop {
+        match (have.next(), want.next()) {
+            (Some(Ok(have)), Some(Ok(want))) if have == want => {},
+            (Some(Ok(have)), Some(Ok(want))) => return have < want,
+            // A number left out is a zero: `0.10` is `0.10.0`, and below
+            // `0.10.1`.
+            (None, Some(Ok(0))) => {},
+            (None, Some(Ok(_))) => return true,
+            _ => return false,
+        }
+    }
+}
+
 /// What a script does about one tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Provision {

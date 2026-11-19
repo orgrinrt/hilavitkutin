@@ -9,12 +9,53 @@ use hilavitkutin_build::{
     Source,
     TOOLS,
     Tool,
+    older,
     provision,
     tools_home,
     write_refusal,
     write_tool_dir,
 };
 use notko::Maybe;
+
+/// What a script removes beside a tool it built: the directories whose
+/// version is below the pin, and nothing else. A newer version is another
+/// clone's pin, and a name that is not a version, a lock file's among
+/// them, is nobody's to remove.
+#[test]
+fn only_a_version_below_the_pin_is_older() {
+    for below in ["0.9.0", "0.9.12", "0.9", "0", "0.09.99"] {
+        assert!(older(below, "0.10.0"), "{below}");
+    }
+    assert!(older("0.10.0", "0.10.1"));
+    assert!(older("0.10", "0.10.1"), "a number left out is a zero");
+    assert!(!older("0.10", "0.10.0"), "a number left out is a zero");
+    assert!(older("0.10.9", "1.0.0"));
+    assert!(older("9", "10"), "numbers, not text");
+    for not_below in [
+        "0.10.0",
+        "0.10.0.0",
+        "0.10.1",
+        "0.11.0",
+        "1.0.0",
+        "10",
+        "",
+        "0.9.0.lock",
+        "0.10.0.lock",
+        "0.9.0-rc1",
+        "0.9.",
+        ".9",
+        "0..9",
+        "linker",
+        "0.9.0 ",
+        "-1.0.0",
+        "+0.9.0",
+    ] {
+        assert!(!older(not_below, "0.10.0"), "{not_below:?}");
+    }
+    // A pin that is not dotted numbers has nothing below it.
+    assert!(!older("0.9.0", "nightly"));
+    assert!(!older("0.9.0", ""));
+}
 
 #[test]
 fn the_table_names_every_tool_once_with_the_source_the_design_gives_it() {
