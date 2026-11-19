@@ -65,8 +65,8 @@ is scheduler-managed.
 
 ## "I need key→value lookup"
 
-Take `&impl KeyValueStore<K, V>`. Internally use `Map<K, V, CAP>`
-(type-level descriptor).
+Use `Map<K, V, CAP>`, the type-level descriptor in
+`hilavitkutin-api::store`; the scheduler owns its storage.
 
 ## "I need an interned string"
 

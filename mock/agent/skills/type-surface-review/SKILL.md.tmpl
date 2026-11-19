@@ -30,7 +30,7 @@ Search the proposed signature for these forbidden shapes:
 | `Option<T>` | `notko::Maybe<T>` |
 | `Result<T, E>` | `notko::Outcome<T, E>` (or `notko::Just<T>` on hot paths) |
 | `Vec<T>` | `impl IntoIterator<Item = T>`, `&[T]`, or `&mut impl notko::sink::Push<T>` |
-| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` or `Map<K, V, N: Cap>` |
+| `HashMap<K, V>` | `Map<K, V, N: Cap>` |
 | `String`, non-static `&str` | `&'static str` or `hilavitkutin_str::Str` |
 | `usize` | `arvo::USize` (or `arvo::Cap` for const-generic capacity) |
 | `u8..u128`, `i8..i128` | `arvo::UFixed<I, F, S>` / `arvo::IFixed<I, F, S>` / trait bound like `<T: UArith<BITS>>` |

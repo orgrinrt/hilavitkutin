@@ -169,7 +169,7 @@ the bare primitive might otherwise appear.
 | `Result<T, E>` | `Outcome<T, E>` | `notko` |
 | `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
 | `&mut Vec<T>` param | `&mut impl Push<T>` | `notko::sink` |
-| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `HashMap<K, V>` | `Map<K, V, N>` | hilavitkutin-api |
 | `String` owned | `Str` | `hilavitkutin-str` |
 | `&str` non-static | `&'static str` or `Str` | as above |
 | `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |

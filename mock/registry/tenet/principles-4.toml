@@ -126,7 +126,7 @@ related = ["tenet::fixed_capacity_is_one_generic_dimension_marker_implementing_t
 id = "the_primitive_vocabulary_table_names_the_stack_type_that_replaces_each_bare_primitive_and_a_mutable_vector_parameter_becomes_notko_s_push"
 subject = "principles"
 what = "The primitive vocabulary documents which stack type replaces which bare primitive. It is not a table for the public interface only, and every mapping applies everywhere the bare primitive might otherwise appear. A mutable vector parameter becomes notko's push sink, since hilavitkutin ships no sink of its own."
-mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to `&mut impl Push<T>` from `notko::sink`; HashMap to a KeyValueStore sink or `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
+mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to `&mut impl Push<T>` from `notko::sink`; HashMap to `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
 source = "mock/PRINCIPLES.md.tmpl:159-178"
 provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
 quote = '''
@@ -143,7 +143,7 @@ the bare primitive might otherwise appear.
 | `Result<T, E>` | `Outcome<T, E>` | `notko` |
 | `Vec<T>` return | `impl IntoIterator<Item=T>` / trait-bound sink | trait at the API boundary |
 | `&mut Vec<T>` param | `&mut impl Push<T>` | `notko::sink` |
-| `HashMap<K, V>` | `&mut impl KeyValueStore<K, V>` / `Map<K, V, N>` | hilavitkutin-api |
+| `HashMap<K, V>` | `Map<K, V, N>` | hilavitkutin-api |
 | `String` owned | `Str` | `hilavitkutin-str` |
 | `&str` non-static | `&'static str` or `Str` | as above |
 | `usize` / `isize` | `USize` / `ISize` / `Cap` / domain newtype | `arvo::newtype` |
