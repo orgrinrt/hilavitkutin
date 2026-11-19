@@ -50,16 +50,17 @@ impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
 ///
 /// The arena keeps the interning law for runtime strings: equal
 /// strings get one id, so they give equal handles through
-/// `StringInterner`. Resolving an id the arena did not issue returns
-/// the empty string and reads nothing outside the arena's storage; a
-/// handle from another interner, or an overflow id masked into the
-/// 28-bit handle, lands there.
+/// `StringInterner`. Resolving an id at or past the arena's live count
+/// returns the empty string and reads nothing outside the arena's
+/// storage; an overflow id masked into the 28-bit handle lands there.
+/// A `Str` names no interner, so a handle carried to another interner
+/// resolves to whatever that interner holds at its id.
 pub trait ArenaInterner {
     /// Return the 28-bit ID of `s`: the ID already given to an equal
     /// string, or a new one with `s` stored.
     fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
     /// Resolve a previously-returned arena ID back to the stored string,
-    /// or to the empty string for an ID this arena did not issue.
+    /// or to the empty string for an ID at or past the live count.
     fn arena_resolve(&self, id: u32) -> &str; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: resolved &str; u32 is the 28-bit id width; tracked: #72
 }
 

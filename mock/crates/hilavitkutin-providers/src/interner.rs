@@ -97,8 +97,9 @@ where
 /// On capacity overflow (out of bytes or out of entry slots),
 /// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
 /// returns the empty string for any id at or past the live entry
-/// count: the sentinel, which `StringInterner` masks to the 28-bit id
-/// field, and an id another arena issued. The `StringInterner`
+/// count, the sentinel among them once `StringInterner` masks it to
+/// the 28-bit id field. A handle another arena issued is not told
+/// apart from one of its own. The `StringInterner`
 /// wrapping this arena observes that as `Maybe::Is(&"")`. `ENTRIES`
 /// of 2^28 or more, whose last id would equal the masked sentinel,
 /// fails the build at [`MemoryArena::new`].
@@ -261,9 +262,8 @@ impl<
         id: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
     ) -> &str { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
         let idx = id as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widens to usize for array index; tracked: #121
-        // Only ids this arena issued are read. The sentinel arrives
-        // masked to 28 bits through `Str`, and a handle from another
-        // arena carries any id, so both are caught by the live count
+        // Only ids below the live count are read. The sentinel arrives
+        // masked to 28 bits through `Str`, so it is caught by the count
         // rather than by a value compare.
         if id == SENTINEL || idx >= self.count.get().0 {
             return "";
