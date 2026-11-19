@@ -47,10 +47,19 @@ impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
 
 /// Host-implemented arena contract. Only handles runtime strings;
 /// const strings are short-circuited by `StringInterner`.
+///
+/// The arena keeps the interning law for runtime strings: equal
+/// strings get one id, so they give equal handles through
+/// `StringInterner`. Resolving an id the arena did not issue returns
+/// the empty string and reads nothing outside the arena's storage; a
+/// handle from another interner, or an overflow id masked into the
+/// 28-bit handle, lands there.
 pub trait ArenaInterner {
-    /// Insert `s` into the arena and return its 28-bit ID.
+    /// Return the 28-bit ID of `s`: the ID already given to an equal
+    /// string, or a new one with `s` stored.
     fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
-    /// Resolve a previously-returned arena ID back to the stored string.
+    /// Resolve a previously-returned arena ID back to the stored string,
+    /// or to the empty string for an ID this arena did not issue.
     fn arena_resolve(&self, id: u32) -> &str; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: resolved &str; u32 is the 28-bit id width; tracked: #72
 }
 
@@ -74,7 +83,8 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     }
 
     /// Intern a string. Checks the const linker section first; on miss,
-    /// falls back to the arena and tags the result as runtime.
+    /// falls back to the arena and tags the result as runtime. A runtime
+    /// string is deduplicated by the arena, as `ArenaInterner` requires.
     #[rustfmt::skip]
     pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
         if let Maybe::Is(h) = lookup_const_by_value(s) {

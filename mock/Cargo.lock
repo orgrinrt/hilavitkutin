@@ -358,7 +358,9 @@ dependencies = [
  "hilavitkutin-build",
  "hilavitkutin-kit",
  "hilavitkutin-str",
+ "hilavitkutin-sym",
  "notko",
+ "trybuild",
 ]
 
 [[package]]

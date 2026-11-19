@@ -89,11 +89,19 @@ where
 /// consumer-supplied Mutex shim or a future SyncArena variant
 /// (tracked in BACKLOG).
 ///
+/// `arena_intern` keeps the interning law of [`ArenaInterner`]: a
+/// string equal to one already held gets that entry's id back, found
+/// by a scan of the entries that compares length before bytes, so a
+/// repeat spends neither bytes nor an entry slot.
+///
 /// On capacity overflow (out of bytes or out of entry slots),
-/// `arena_intern` returns sentinel id `u32::MAX`. The companion
-/// `arena_resolve` returns an empty slice for the sentinel; the
-/// `StringInterner` wrapping this arena observes the empty
-/// resolution as `Maybe::Is(&"")`.
+/// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
+/// returns the empty string for any id at or past the live entry
+/// count: the sentinel, which `StringInterner` masks to the 28-bit id
+/// field, and an id another arena issued. The `StringInterner`
+/// wrapping this arena observes that as `Maybe::Is(&"")`. `ENTRIES`
+/// above 2^28, more than the 28-bit id addresses, fails the build at
+/// [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
@@ -115,9 +123,18 @@ impl<
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
 > MemoryArena<BYTES, ENTRIES>
 {
+    /// The 28-bit id addresses at most 2^28 entries; a larger arena
+    /// would hand out ids that alias once masked into a `Str`.
+    const ENTRIES_FIT_THE_ID: () = assert!(
+        ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
+        "MemoryArena: ENTRIES above 2^28 cannot be addressed by the 28-bit Str id; use at most 268435456 entries",
+    );
+
     /// Construct an empty arena. Buffer initialised to zero, entry
-    /// table initialised with zero offsets and zero lengths.
+    /// table initialised with zero offsets and zero lengths. An
+    /// `ENTRIES` above 2^28 fails the build here.
     pub const fn new() -> Self {
+        let () = Self::ENTRIES_FIT_THE_ID;
         Self {
             bytes:   UnsafeCell::new([0u8; BYTES]), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic byte buffer initialisation; tracked: #121
             entries: UnsafeCell::new(
@@ -129,6 +146,34 @@ impl<
             cursor:  Cell::new(<USize as Identity<Additive>>::IDENTITY),
             count:   Cell::new(<USize as Identity<Additive>>::IDENTITY),
         }
+    }
+
+    /// The entry index holding `bytes`, if one does: entries are
+    /// compared by length first and by bytes only on an equal length.
+    #[rustfmt::skip]
+    fn held_id(&self, bytes: &[u8]) -> Maybe<USize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the byte view of the &str the ArenaInterner contract takes; tracked: #72
+        let count = self.count.get().0;
+        let mut idx = 0;
+        while idx < count {
+            // SAFETY: `idx < count <= ENTRIES`, and every entry below
+            // `count` was written by a prior `arena_intern`. Read by
+            // value through the raw pointer, as `arena_resolve` does, so
+            // no reference into the table outlives the read.
+            let entry: Entry = unsafe { (self.entries.get() as *const Entry).add(idx).read() };
+            if entry.len.0 == bytes.len() {
+                // SAFETY: `[offset..offset+len]` was written by the
+                // `arena_intern` that recorded this entry and lies below
+                // the cursor, so no write of this arena touches it.
+                let held = unsafe {
+                    core::slice::from_raw_parts((self.bytes.get() as *const u8).add(entry.offset.0), entry.len.0) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the arena's byte buffer is u8 by the ArenaInterner contract; tracked: #121
+                };
+                if held == bytes {
+                    return Maybe::Is(USize(idx));
+                }
+            }
+            idx += 1;
+        }
+        Maybe::Isnt
     }
 }
 
@@ -159,6 +204,11 @@ impl<
         let len = bytes.len();
         let cursor = self.cursor.get().0;
         let count = self.count.get().0;
+
+        // The interning law: a string already held keeps its id.
+        if let Maybe::Is(held) = self.held_id(bytes) {
+            return held.0 as u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ArenaInterner contract returns u32 ids; an entry index is below 2^28 by ENTRIES_FIT_THE_ID; tracked: #72
+        }
 
         if count >= ENTRIES || cursor.saturating_add(len) > BYTES {
             return SENTINEL;
@@ -208,10 +258,14 @@ impl<
         &self,
         id: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
     ) -> &str { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
-        if id == SENTINEL {
+        let idx = id as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widens to usize for array index; tracked: #121
+        // Only ids this arena issued are read. The sentinel arrives
+        // masked to 28 bits through `Str`, and a handle from another
+        // arena carries any id, so both are caught by the live count
+        // rather than by a value compare.
+        if id == SENTINEL || idx >= self.count.get().0 {
             return "";
         }
-        let idx = id as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widens to usize for array index; tracked: #121
         // SAFETY: pointer-arithmetic-only access into the entry
         // table avoids the implicit-autoref pitfall on raw pointer
         // deref. The arena is !Sync so no concurrent mutator can
