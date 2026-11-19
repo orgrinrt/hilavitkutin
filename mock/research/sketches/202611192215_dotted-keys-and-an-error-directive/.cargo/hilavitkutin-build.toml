@@ -1,0 +1,9 @@
+# written by hilavitkutin-build for dotted-taker: edits are lost
+profile.dev.incremental = false
+unstable.codegen-backend = true
+target.x86_64-unknown-linux-gnu.linker = "clang"
+env.CC = "clang"
+env.CXX = "clang++"
+profile.release.lto = "fat"
+profile.release.codegen-units = 1
+profile.release.incremental = false
