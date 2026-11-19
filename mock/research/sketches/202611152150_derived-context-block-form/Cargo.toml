@@ -1,0 +1,37 @@
+# Sketch: a unit in the block form, in a crate that takes no engine crate and
+# names no context type, built and run under the engine.
+#
+# Its own workspace, so the repository's build never sees it. `derived` stands
+# in for an addition beside `hilavitkutin-api` (it depends on the api and on
+# what the api depends on, nothing else): the block trait, the context derived
+# from the declaration, and the trait the unit's body is written against.
+# `unit` holds the block-form units and depends on `derived`, the api and arvo
+# alone. `bridge` is engine-side: the wrapper that registers a block unit with
+# the real scheduler and fills the derived context from the engine's own.
+# `check` runs the units under `Scheduler::run` and holds the compile-fail
+# fixtures.
+
+[workspace]
+resolver = "3"
+members = ["derived", "unit", "bridge", "check"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[workspace.dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+notko-hlist = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1" }
+derived = { path = "derived" }
+unit = { path = "unit" }
+bridge = { path = "bridge" }
+
+# The pinned arvo crates name notko by its `ssh` spelling; one notko in the
+# graph, as in the repository's own manifest.
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
