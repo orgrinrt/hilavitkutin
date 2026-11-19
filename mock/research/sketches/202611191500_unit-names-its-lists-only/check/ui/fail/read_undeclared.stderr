@@ -1,7 +1,7 @@
 error[E0277]: the read list `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>` has no value for `Column<Glow>`
-  --> ui/fail/read_undeclared.rs:29:24
+  --> ui/fail/read_undeclared.rs:28:24
    |
-29 |         let vel = read.get(Column::<Glow>::new());
+28 |         let vel = read.get(Column::<Glow>::new());
    |                        ^^^ the trait `ReadAt<Column<Glow>, There<There<_>>>` is not implemented for `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>`
    |
    = note: A value function reads the members its unit declared in `type Read`, each named as it is written there (a `Reach` is read as the `Reach`). If the compiler reports `type annotations needed` instead, the list names the member twice.

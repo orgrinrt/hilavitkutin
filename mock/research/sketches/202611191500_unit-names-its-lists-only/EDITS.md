@@ -4,6 +4,8 @@ This sketch carries its own copies of three shipped crates, because the form it 
 
 Every difference between a copy and the shipped crate is listed here, and the same differences are kept as diffs under `diagnostics/`, made with `git diff --no-index` from `mock/` between the shipped path and the copy. A file not named below is identical to the shipped one. The tests of the three crates were not copied.
 
+The repository's commit hook formats what a commit stages, and it reformatted eight files of the copies that the shipped tree holds unformatted. Seven carry no edit of this sketch and differ from the shipped file in layout alone: `engine/src/dispatch/sync.rs`, `engine/src/plan/laplacian.rs`, `engine/src/resource/accumulator.rs`, `engine/src/resource/mod.rs`, `engine/src/resource/provenance.rs`, `engine/src/scheduler/plan.rs` and, in the api copy, `api/src/work_unit_values.rs`. The eighth, `engine/src/dispatch/trunk_gate.rs`, carries an edit as well. The diffs under `diagnostics/` were made after the formatter ran, so they show these too.
+
 `kit/` is not a copy. It is a manifest alone whose `[lib] path` points at the shipped source, with `build = false`, so the workspace holds one api (the copy) and the shipped kit compiles against it unchanged. The build scripts of kit and providers do not run here.
 
 ## The api copy
@@ -14,13 +16,15 @@ The diff of the source is `diagnostics/edits-api-src.diff`.
 
 `api/src/unit.rs` is new and compiles only under the feature `unit-blanket`. It holds `Unit`, the one-impl spelling, and its three blankets. The form runs without it.
 
-`api/src/lib.rs` gains the gated `pub mod unit;` and the re-export of `Positional`.
+`api/src/attempt_unit_sched.rs` is new and compiles only under the feature `attempt-unit-sched`. It holds attempt s1, which does not compile, and is no part of the form.
 
-`api/Cargo.toml` gains the feature `unit-blanket`, empty.
+`api/src/lib.rs` gains the two gated module declarations and the re-export of `Positional`.
+
+`api/Cargo.toml` gains the features `unit-blanket` and `attempt-unit-sched`, both empty.
 
 ## The engine copy
 
-The diff of the source is `diagnostics/edits-engine-src.diff`: five files, 160 lines added and 32 removed.
+The diff of the source is `diagnostics/edits-engine-src.diff`: eleven files, of which five carry the edits below and six the formatter's layout alone.
 
 `engine/src/dispatch/fiber_run.rs` is the change the form needs. The step that built one unit's context and ran its body was inline in the `WuCons` impl of `RunFiber`. It is now a trait, `RunUnit<A, Wit>`, with two impls told apart by the witness: `ByCtx` for a unit that offers `Positional` (the shipped step, moved) and `ByValue` for a unit that offers `RecordOp` (new: the engine's context over the unit's lists applies the value function). The `WuCons` impl of `RunFiber` calls it, and its witness element is the pair `(U, GI)` where it was a tuple of six.
 

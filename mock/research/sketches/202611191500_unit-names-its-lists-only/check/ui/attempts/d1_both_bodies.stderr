@@ -1,10 +1,10 @@
 error[E0283]: type annotations needed for `arvo_tensor::capacity::Dim<N>`
-  --> ui/attempts/d1_both_bodies.rs:52:9
+  --> ui/attempts/d1_both_bodies.rs:51:9
    |
-52 |     let mut sched = Scheduler::builder()
+51 |     let mut sched = Scheduler::builder()
    |         ^^^^^^^^^
 ...
-55 |         .build(ArenaColumnStorage::new(memory), USize(8))
+54 |         .build(ArenaColumnStorage::new(memory), USize(8))
    |                ------------------ type must be known at this point
    |
    = note: the type must implement `arvo_tensor::capacity::Capacity`
@@ -20,13 +20,13 @@ note: required by a bound in `ArenaColumnStorage`
    |                                                        ^^^^^^^^ required by this bound in `ArenaColumnStorage`
 help: consider giving `sched` an explicit type, where the type for type parameter `D` is specified
    |
-52 |     let mut sched: /* Type */ = Scheduler::builder()
+51 |     let mut sched: /* Type */ = Scheduler::builder()
    |                  ++++++++++++
 
 error[E0283]: type annotations needed
-  --> ui/attempts/d1_both_bodies.rs:57:19
+  --> ui/attempts/d1_both_bodies.rs:56:19
    |
-57 |     let _ = sched.run();
+56 |     let _ = sched.run();
    |                   ^^^ cannot infer type of the type parameter `Witnesses` declared on the method `run`
    |
    = note: multiple `impl`s satisfying `Both: RunUnit<ColumnBinding<Pos, BindingNil>, _>` found in the `hilavitkutin` crate:
@@ -54,5 +54,5 @@ note: required by a bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals,
    | |_____________^ required by this bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run`
 help: consider specifying the generic arguments
    |
-57 |     let _ = sched.run::<Cons<(U, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>>();
+56 |     let _ = sched.run::<Cons<(U, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>>();
    |                      +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
