@@ -83,6 +83,11 @@ impl Built {
 /// the workspace that appends its arguments to a log and runs the real
 /// one, so what the wrapper appended can be read back.
 fn build(root: &Path) -> Built {
+    build_with(root, &[])
+}
+
+/// [`build`] with more arguments for cargo.
+fn build_with(root: &Path, more: &[&str]) -> Built {
     let beside = root
         .parent()
         .expect("the workspace sits in a scratch directory");
@@ -103,6 +108,7 @@ fn build(root: &Path) -> Built {
     }
     let output = Command::new(std::env::var_os("CARGO").expect("cargo runs the suite"))
         .args(["build", "--offline"])
+        .args(more)
         .current_dir(root)
         .env("RUSTC", &spy)
         .env("SPY_LOG", &log)
@@ -154,7 +160,7 @@ fn the_first_build_wires_the_workspace_and_the_second_takes_the_flags() {
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
     );
     assert_eq!(
-        first.said.matches("hilavitkutin-build wrote").count(),
+        first.said.matches("in place under").count(),
         1,
         "{}",
         first.said
@@ -173,6 +179,67 @@ fn the_first_build_wires_the_workspace_and_the_second_takes_the_flags() {
         "{}",
         compiles[0]
     );
+}
+
+/// A workspace of eight members built with eight jobs, so the scripts run
+/// side by side: several find no wiring at the same moment, and the rest
+/// find a config file written by another with no wrapper named.
+#[test]
+fn several_members_wire_the_workspace_together_and_all_take_the_flags() {
+    const MEMBERS: usize = 8;
+    let base = scratch("several");
+    let root = base.join("ws");
+    fs::create_dir_all(&root).expect("the workspace");
+    let names: Vec<String> = (0 .. MEMBERS).map(|n| format!("m{n}")).collect();
+    fs::write(
+        root.join("Cargo.toml"),
+        format!(
+            "[workspace]\nresolver = \"3\"\nmembers = [{}]\n",
+            names
+                .iter()
+                .map(|name| format!("\"{name}\""))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+    )
+    .expect("the workspace's manifest");
+    for name in &names {
+        write_crate(&root.join(name), &format!("scratch-several-{name}"), "");
+    }
+    let wrapper = root.join(".cargo/hilavitkutin-rustc-wrapper");
+    let config = root.join(".cargo/config.toml");
+
+    let first = build_with(&root, &["-j", "8"]);
+    assert_eq!(
+        fs::read_to_string(&wrapper).expect("the wrapper was written"),
+        wrapper_text()
+    );
+    assert_eq!(
+        fs::read_to_string(&config).expect("the config file was written"),
+        "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
+    );
+    // Nothing of a script's own is left beside the two files.
+    let left: Vec<_> = fs::read_dir(root.join(".cargo"))
+        .expect("the config directory")
+        .map(|entry| entry.expect("an entry").file_name())
+        .collect();
+    assert_eq!(left.len(), 2, "{left:?}");
+    assert!(!first.said.contains("could not write"), "{}", first.said);
+    let wired = first.said.matches("in place under").count();
+    let dropped = first
+        .said
+        .matches("so they are dropped in this build")
+        .count();
+    assert!(wired >= 1, "{}", first.said);
+    assert_eq!(wired + dropped, MEMBERS, "{}", first.said);
+
+    let second = build_with(&root, &["-j", "8"]);
+    assert!(!second.said.contains("warning:"), "{}", second.said);
+    for name in &names {
+        let compiles = second.compiles_of(&format!("scratch_several_{name}"));
+        assert_eq!(compiles.len(), 1, "{name}: {}", second.rustc);
+        assert!(compiles[0].ends_with(A_FLAG_OF_OURS), "{}", compiles[0]);
+    }
 }
 
 #[test]
@@ -229,11 +296,7 @@ fn a_config_file_without_the_line_is_left_as_it_is() {
         "{}",
         built.said
     );
-    assert!(
-        !built.said.contains("hilavitkutin-build wrote"),
-        "{}",
-        built.said
-    );
+    assert!(!built.said.contains("in place under"), "{}", built.said);
     assert_eq!(
         fs::read_to_string(root.join(".cargo/hilavitkutin-rustc-wrapper"))
             .expect("the wrapper was written"),
@@ -269,11 +332,7 @@ fn a_wiring_that_cannot_be_written_is_said_and_the_build_passes() {
         "{}",
         built.said
     );
-    assert!(
-        !built.said.contains("hilavitkutin-build wrote"),
-        "{}",
-        built.said
-    );
+    assert!(!built.said.contains("in place under"), "{}", built.said);
     assert!(root.join(".cargo").is_file());
 }
 

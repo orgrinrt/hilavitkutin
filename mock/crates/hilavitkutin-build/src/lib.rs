@@ -15,11 +15,12 @@
 //!
 //! Like every hilavitkutin crate, this one is `no_std` and does not
 //! allocate. Everything that touches the host stays in the build
-//! script, which owns it: reading `$PROFILE` and
-//! `$CARGO_CFG_TARGET_FEATURE`, printing the `cargo::` directives, and
-//! writing the generated config file. The crate takes the values the
-//! script read, and hands back the text through `core::fmt::Write`.
-//! [`bootstrap`] carries the whole `build.rs`.
+//! script, which owns it: reading the environment, asking cargo for the
+//! workspace root, printing the `cargo::` directives, and reading and
+//! writing the two files of the wiring. The crate takes the values the
+//! script read, decides, and hands back the text through
+//! `core::fmt::Write`. [`script!`] is that script's code, compiled in the
+//! script and never in this crate.
 //!
 //! # Layout
 //!

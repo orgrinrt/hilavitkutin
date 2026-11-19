@@ -414,9 +414,17 @@ fn clippy_driver_as_the_wrapper_is_not_warned_of() {
     };
     let clippy = run("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
     assert!(!clippy.contains("cargo::warning"), "{clippy}");
-    let other = run("/usr/bin/sccache");
-    assert!(
-        other.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
-        "{other}"
-    );
+    // Somebody else's wrapper, and two whose file names only end with a
+    // name that would have been let through.
+    for name in [
+        "/usr/bin/sccache",
+        "/repo/.cargo/my-hilavitkutin-rustc-wrapper",
+        "/usr/bin/not-clippy-driver",
+    ] {
+        let other = run(name);
+        assert!(
+            other.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
+            "{name}: {other}"
+        );
+    }
 }

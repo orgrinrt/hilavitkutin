@@ -19,7 +19,7 @@ const CLIPPY_DRIVER: &str = "clippy-driver"; // lint:allow(no-bare-static-str) r
 /// The key a cargo config file names a workspace wrapper under.
 const WRAPPER_KEY: &str = "rustc-workspace-wrapper"; // lint:allow(no-bare-static-str) reason: a build-dependency only, it reaches no binary; tracked: no_bare_static_str_does_not_know_a_build_dependency_only_cra
 
-/// Whose the workspace root is.
+/// Whose the workspace root is, and whether the host can run the wrapper.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tree {
     /// The consumer's own workspace, which the script may write into.
@@ -27,10 +27,82 @@ pub enum Tree {
     /// A root under `CARGO_HOME`, or one that holds `Cargo.toml.orig`:
     /// a tree cargo fetched or unpacked, where nothing is written.
     Fetched,
+    /// A host that is not unix. The wrapper is a POSIX `sh` script, and a
+    /// config file naming one there stops every later build, so nothing
+    /// is written.
+    NoShell,
     /// A root other than the one the wrapper cargo names sits in: a
     /// workspace wired from a `config.toml` above it, where a second
     /// copy of the wiring would serve nothing.
     Foreign,
+}
+
+impl Tree {
+    /// Decide the tree from what the script found.
+    ///
+    /// `root` is the workspace root and `cargo_home` cargo's home, both as
+    /// the script shows them. `unpacked` is whether the root holds
+    /// `Cargo.toml.orig`, `elsewhere` whether cargo names a wrapper of ours
+    /// that is not this root's own file, and `unix` whether the host is
+    /// unix. A fetched tree comes first, so it is told nothing on any
+    /// host. A root is under the cargo home by whole path components: one
+    /// that only starts with the same letters is not.
+    #[rustfmt::skip] // keeps the allows on the parameters they govern
+    pub const fn of(
+        root: &str, // lint:allow(no-bare-string) reason: a path as the build script read it; tracked: #72
+        cargo_home: Maybe<&str>, // lint:allow(no-bare-string) reason: a path as the build script read it; tracked: #72
+        unpacked: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+        elsewhere: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+        unix: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+    ) -> Tree {
+        let under_home = match cargo_home {
+            Maybe::Is(home) => is_under(root, home),
+            Maybe::Isnt => false,
+        };
+        if under_home || unpacked {
+            Tree::Fetched
+        } else if !unix {
+            Tree::NoShell
+        } else if elsewhere {
+            Tree::Foreign
+        } else {
+            Tree::Own
+        }
+    }
+}
+
+/// Whether the byte separates the components of a path on some host.
+const fn is_separator(byte: u8) -> bool {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a path's bytes as the build script read them; tracked: #72
+    byte == b'/' || byte == b'\\'
+}
+
+/// Whether `path` is `dir` or lies under it, by whole components.
+#[rustfmt::skip] // keeps the allow on the signature it governs
+const fn is_under(path: &str, dir: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: paths as the build script read them; tracked: #72
+    let path = path.as_bytes();
+    let dir = dir.as_bytes();
+    if dir.is_empty() || dir.len() > path.len() {
+        return false;
+    }
+    let mut at = 0;
+    while at < dir.len() {
+        if path[at] != dir[at] {
+            return false;
+        }
+        at += 1;
+    }
+    path.len() == dir.len() || is_separator(dir[dir.len() - 1]) || is_separator(path[dir.len()])
+}
+
+/// Whether the last component of `path` is `name`.
+#[rustfmt::skip] // keeps the allow on the signature it governs
+const fn has_file_name(path: &str, name: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a path as the build script read it; tracked: #72
+    if !ends_with(path, name) {
+        return false;
+    }
+    let path = path.as_bytes();
+    path.len() == name.len() || is_separator(path[path.len() - name.len() - 1])
 }
 
 /// The wrapper file as the script found it.
@@ -57,7 +129,7 @@ pub enum ConfigFile {
 
 impl ConfigFile {
     /// What a config file of this text is: [`Named`](ConfigFile::Named)
-    /// where a `rustc-workspace-wrapper` key has a value that ends with
+    /// where a `rustc-workspace-wrapper` key has a path whose file name is
     /// [`WRAPPER_NAME`], [`Unnamed`](ConfigFile::Unnamed) otherwise.
     ///
     /// The key is read in the three places cargo takes it from: at the
@@ -121,8 +193,8 @@ fn top_level_entry(line: &str) -> Maybe<&str> { // lint:allow(no-bare-string) re
     }
 }
 
-/// Whether `entry` starts with the key and gives it a quoted value that
-/// ends with [`WRAPPER_NAME`].
+/// Whether `entry` starts with the key and gives it a quoted path whose
+/// file name is [`WRAPPER_NAME`].
 #[rustfmt::skip] // keeps the allow on the signature it governs
 fn entry_names_the_wrapper(entry: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a config file's text as the build script read it; tracked: #72
     let quoted = entry
@@ -137,7 +209,7 @@ fn entry_names_the_wrapper(entry: &str) -> bool { // lint:allow(no-bare-string) 
     };
     let value = &quoted[1..];
     match value.find(quote) {
-        Some(end) => value[..end].ends_with(WRAPPER_NAME),
+        Some(end) => has_file_name(&value[..end], WRAPPER_NAME),
         None => false,
     }
 }
@@ -147,14 +219,18 @@ fn entry_names_the_wrapper(entry: &str) -> bool { // lint:allow(no-bare-string) 
 pub enum Notice {
     /// Nothing.
     Silent,
-    /// The files were written, this build ran without them, and a build
-    /// of that workspace takes the flags from the next one on.
+    /// The wiring was put in place, this build ran without it, and a
+    /// build of that workspace takes the flags from the next one on.
     Wired,
     /// A `config.toml` exists without the line, and the line is named.
     AddLine,
-    /// The wiring is in place, cargo runs without it or names another
-    /// wrapper, and the flags are dropped.
+    /// The wiring is in place and cargo was started without it, or with
+    /// another wrapper, so the flags of this build are dropped. It is
+    /// what every script but one says in the first build of a workspace
+    /// of several members, and what a cargo started elsewhere gets.
     Dropped,
+    /// The host runs no POSIX `sh` wrapper, so the flags are dropped.
+    NoShell,
 }
 
 /// What the script does next.
@@ -192,7 +268,7 @@ const fn ends_with(text: &str, suffix: &str) -> bool {
 pub(crate) const fn names_the_wrapper(wrapper: Maybe<&str>) -> bool {
     // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: env value as the build script read it; tracked: #72
     match wrapper {
-        Maybe::Is(path) => ends_with(path, WRAPPER_NAME) || ends_with(path, CLIPPY_DRIVER),
+        Maybe::Is(path) => has_file_name(path, WRAPPER_NAME) || has_file_name(path, CLIPPY_DRIVER),
         Maybe::Isnt => false,
     }
 }
@@ -202,7 +278,9 @@ pub(crate) const fn names_the_wrapper(wrapper: Maybe<&str>) -> bool {
 /// `wrapper` is the value of `RUSTC_WORKSPACE_WRAPPER`, and `flags` is
 /// whether the crate has rustc flags to hand over. A
 /// [`Fetched`](Tree::Fetched) or [`Foreign`](Tree::Foreign) tree is
-/// written nothing and told nothing.
+/// written nothing and told nothing, and a [`NoShell`](Tree::NoShell)
+/// tree is written nothing and told the flags are dropped where there
+/// are any.
 /// In the consumer's own tree a wrapper file that is not
 /// [`Current`](WrapperFile::Current) is written, and a config file is
 /// written where there is none. The wrapper variable decides only what
@@ -218,11 +296,17 @@ pub const fn plan(
     config_file: ConfigFile,
     flags: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
 ) -> Plan {
-    if let Tree::Fetched | Tree::Foreign = tree {
+    let left_alone = match tree {
+        Tree::Own => Maybe::Isnt,
+        Tree::Fetched | Tree::Foreign => Maybe::Is(Notice::Silent),
+        Tree::NoShell if flags => Maybe::Is(Notice::NoShell),
+        Tree::NoShell => Maybe::Is(Notice::Silent),
+    };
+    if let Maybe::Is(notice) = left_alone {
         return Plan {
             wrapper: false,
-            config:  false,
-            notice:  Notice::Silent,
+            config: false,
+            notice,
         };
     }
     let notice = if names_the_wrapper(wrapper) {
@@ -275,9 +359,9 @@ pub fn write_notice<W: Write, D: core::fmt::Display>(
         Notice::Wired => {
             writeln!(
                 out,
-                "cargo::warning=hilavitkutin-build wrote {WRAPPER_NAME} and the config.toml that names it under \
-                 {dir}: this build ran without the wrapper, and a build of that workspace takes the flags from \
-                 the next one on"
+                "cargo::warning=hilavitkutin-build put {WRAPPER_NAME} and the config.toml that names it in place \
+                 under {dir}: this build ran without the wrapper, and a build of that workspace takes the flags \
+                 from the next one on"
             )
         },
         Notice::AddLine => {
@@ -291,8 +375,16 @@ pub fn write_notice<W: Write, D: core::fmt::Display>(
         Notice::Dropped => {
             writeln!(
                 out,
-                "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo runs it without the \
-                 wrapper {dir}/config.toml names, so they are dropped: run cargo from inside the workspace"
+                "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo was started without \
+                 the wrapper {dir}/config.toml names, so they are dropped in this build: a build started inside \
+                 the workspace, once that file is there, takes them"
+            )
+        },
+        Notice::NoShell => {
+            writeln!(
+                out,
+                "cargo::warning=hilavitkutin-build chose rustc flags for this crate and hands them over through \
+                 a POSIX sh wrapper, which this host does not run, so they are dropped"
             )
         },
     }

@@ -46,4 +46,40 @@ The round was reopened through `cargo mock unlock`, twice, and the numbers below
 9. Kept, and handed to stack-coord. The macro's body is std code by design, and the lint has no way to know a macro body is compiled elsewhere. The two `use` lines name the ticket `forbidden_imports_reads_the_body_of_an_exported_macro_as_the`, as the crate's `no-bare-static-str` allows name theirs. Fixing the lint is in mockspace, outside this job.
 10. Fixed. Thirteen, and the frozen fourteenth named.
 
+On 9, stack-coord answered the same evening: the two allows go, the lint is fixed at its owner as a defect of its own on the mockspace branch `fix/forbidden-imports-exported-macro-body`, which stack-coord lands, and this repository's pin moves to it before the round lands.
+
 Two things the reopening met in the tooling, both in the ticket `a_second_cargo_mock_unlock_in_one_round_overwrites_the_depre`: a second `cargo mock unlock` in one round overwrites the first deprecated changelist, which the `changelist-immutability` lint then refuses, and `unlock` with uncommitted source leaves a tree no commit accepts.
+
+## Pass 2, tip `8055e4ca`
+
+Verdict: merge after fixes. A fresh reviewer, told of pass 1 as a record to test.
+
+On the canon it read the same three rows and came out where pass 1 did: the ratified row on `no_std` is kept to the letter, and the provisional row on the build crate does not decide whether std text shipped in a macro counts as the crate touching the environment and the filesystem. It says its read is not blind, since the brief described pass 1, and hands the point back. It is with op as the question ticket `may_a_no_std_hilavitkutin_build_ship_a_macro_whose_expansion`, and the round goes on under stack-coord's stamp.
+
+It holds the fixes to findings 1, 3, 4, 5, 7, 8 and 10 of pass 1 as in the source.
+
+### Findings
+
+1. The first build of a workspace of several members prints a false warning from every script but one: the others find the config file a sibling wrote, no wrapper named, and are told to run cargo from inside the workspace, where cargo ran.
+2. The two `lint:allow(forbidden-imports)` lines name a ticket the reviewer could not find in this repository's registry, and an allow naming a missing ticket is an exemption.
+3. On a host that is not unix the script writes a POSIX `sh` wrapper and a config file naming it, and every build after the first fails.
+4. Every scratch workspace in `tests/script.rs` has one member, so finding 1 and the two paths where scripts write at the same moment are never entered.
+5. The wrapper is matched by the end of the path in `RUSTC_WORKSPACE_WRAPPER` and in the config file, so `my-hilavitkutin-rustc-wrapper` counts as ours, while the check for a wrapper elsewhere matches the file name.
+6. The `CARGO_HOME` branch has no test. The reviewer tried two routes to one and neither worked.
+7. The `Wired` text says it wrote the wrapper also where the wrapper was current and only the config file was written.
+
+Not blocking: the path dependency case is stated and tested and the reviewer found no signal a script could use either; `lib.rs` still described the script before this round; `DevOpt`, `Profiling` and `Ci` cannot be reached through `PROFILE`, which predates the branch.
+
+## What was done after pass 2
+
+The round was reopened once more for the design to say findings 1, 3 and 5.
+
+1. Fixed. The `Dropped` text holds for both builds it is printed in, and the design says what the other scripts of a first build see. Two scripts that write at the same moment each write under a name of their own; the wrapper is moved into place and the config file linked, which refuses where one is there. Held by `several_members_wire_the_workspace_together_and_all_take_the_flags`, eight members with eight jobs.
+2. The ticket is in the workspace's tracker on kaski `dev`, where `ticket` files it, which is not where the reviewer looked. The allows go with the lint's fix, as stack-coord ruled.
+3. Fixed. `Tree::NoShell`: a host that is not unix is written nothing and told the flags are dropped. Held by the tables in `tests/wiring.rs`; no build on such a host runs here.
+4. Fixed, by the test of finding 1.
+5. Fixed. The file name, in both places, with the longer name as a row of the table, a config text and a case of `configure`'s warning.
+6. The decision moved into the crate as `Tree::of`, a `const fn`, and is held by a table in `tests/wiring.rs`, a root that only shares the cargo home's leading letters among its rows. What stays without a test is the macro reading `CARGO_HOME` and handing it over.
+7. Fixed. The text says the wiring is in place.
+
+The crate doc in `lib.rs` is corrected. The profiles no `PROFILE` reaches are the pragma round's, which reworks how a profile is chosen.

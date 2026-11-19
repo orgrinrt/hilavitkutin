@@ -24,6 +24,8 @@ const EMPTY: Maybe<&str> = Maybe::Is("");
 const OURS: Maybe<&str> = Maybe::Is("/repo/.cargo/hilavitkutin-rustc-wrapper");
 const CLIPPY: Maybe<&str> = Maybe::Is("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
 const OTHER: Maybe<&str> = Maybe::Is("/usr/bin/sccache");
+/// Somebody else's again, whose file name only ends with the wrapper's.
+const LONGER: Maybe<&str> = Maybe::Is("/repo/.cargo/my-hilavitkutin-rustc-wrapper");
 
 /// Whether the wrapper is written in the consumer's own tree, by what the
 /// script found on disk.
@@ -44,7 +46,13 @@ const CONFIG_WRITTEN: [(ConfigFile, bool); 3] = [
 /// What the script says in the consumer's own tree, one row for each
 /// wrapper value, config file and whether there are flags. The wrapper
 /// file is not a column: it never changes what is said.
-const SAID: [(Maybe<&str>, ConfigFile, bool, Notice); 30] = [
+const SAID: [(Maybe<&str>, ConfigFile, bool, Notice); 36] = [
+    (LONGER, ConfigFile::Missing, true, Notice::Wired),
+    (LONGER, ConfigFile::Missing, false, Notice::Wired),
+    (LONGER, ConfigFile::Unnamed, true, Notice::AddLine),
+    (LONGER, ConfigFile::Unnamed, false, Notice::AddLine),
+    (LONGER, ConfigFile::Named, true, Notice::Dropped),
+    (LONGER, ConfigFile::Named, false, Notice::Silent),
     (UNSET, ConfigFile::Missing, true, Notice::Wired),
     (UNSET, ConfigFile::Missing, false, Notice::Wired),
     (UNSET, ConfigFile::Unnamed, true, Notice::AddLine),
@@ -104,8 +112,8 @@ fn every_case() -> Vec<(Maybe<&'static str>, WrapperFile, ConfigFile, bool, Plan
 #[test]
 fn the_tables_cover_every_input_once() {
     let cases = every_case();
-    assert_eq!(cases.len(), 5 * 3 * 3 * 2);
-    for wrapper in [UNSET, EMPTY, OURS, CLIPPY, OTHER] {
+    assert_eq!(cases.len(), 6 * 3 * 3 * 2);
+    for wrapper in [UNSET, EMPTY, OURS, CLIPPY, OTHER, LONGER] {
         for wrapper_file in [WrapperFile::Current, WrapperFile::Stale, WrapperFile::Missing] {
             for config_file in [ConfigFile::Missing, ConfigFile::Unnamed, ConfigFile::Named] {
                 for flags in [true, false] {
@@ -215,6 +223,8 @@ fn a_config_file_names_the_wrapper_in_the_three_places_cargo_reads_it() {
     for text in [
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\n  rustc-workspace-wrapper=\"/abs/.cargo/hilavitkutin-rustc-wrapper\"\n",
+        "[build]\nrustc-workspace-wrapper = \"hilavitkutin-rustc-wrapper\"\n",
+        "[build]\nrustc-workspace-wrapper = \"C:\\\\repo\\\\.cargo\\\\hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-workspace-wrapper = '.cargo/hilavitkutin-rustc-wrapper' # ours\n",
         "[build]\nincremental = true\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"",
         "[env]\nA = \"b\"\n\n[ build ]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
@@ -235,6 +245,7 @@ fn a_config_file_names_none_without_the_key_or_with_it_anywhere_else() {
         "[build]\n# rustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper-old\"\n",
+        "[build]\nrustc-workspace-wrapper = \".cargo/my-hilavitkutin-rustc-wrapper\"\n",
         "[build]\nrustc-workspace-wrapper = \"/usr/bin/sccache\" # was hilavitkutin-rustc-wrapper\n",
         "[build]\nrustc-workspace-wrapper = .cargo/hilavitkutin-rustc-wrapper\n",
         "[env]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
@@ -277,9 +288,9 @@ fn each_notice_is_one_warning_line_and_silence_is_nothing() {
     assert_eq!(notice(Notice::Silent), "");
     assert_eq!(
         notice(Notice::Wired),
-        "cargo::warning=hilavitkutin-build wrote hilavitkutin-rustc-wrapper and the config.toml that names it \
-         under /repo/.cargo: this build ran without the wrapper, and a build of that workspace takes the flags \
-         from the next one on\n"
+        "cargo::warning=hilavitkutin-build put hilavitkutin-rustc-wrapper and the config.toml that names it in \
+         place under /repo/.cargo: this build ran without the wrapper, and a build of that workspace takes the \
+         flags from the next one on\n"
     );
     assert_eq!(
         notice(Notice::AddLine),
@@ -289,9 +300,146 @@ fn each_notice_is_one_warning_line_and_silence_is_nothing() {
     );
     assert_eq!(
         notice(Notice::Dropped),
-        "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo runs it without the wrapper \
-         /repo/.cargo/config.toml names, so they are dropped: run cargo from inside the workspace\n"
+        "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo was started without the \
+         wrapper /repo/.cargo/config.toml names, so they are dropped in this build: a build started inside the \
+         workspace, once that file is there, takes them\n"
     );
+    assert_eq!(
+        notice(Notice::NoShell),
+        "cargo::warning=hilavitkutin-build chose rustc flags for this crate and hands them over through a POSIX \
+         sh wrapper, which this host does not run, so they are dropped\n"
+    );
+}
+
+/// A host that cannot run the wrapper is written nothing whatever is on
+/// disk, and told the flags are dropped only where there are flags.
+#[test]
+fn a_host_with_no_shell_is_written_nothing_and_told_of_dropped_flags() {
+    for (wrapper, wrapper_file, config_file, flags, _) in every_case() {
+        let expected = Plan {
+            wrapper: false,
+            config:  false,
+            notice:  if flags { Notice::NoShell } else { Notice::Silent },
+        };
+        assert_eq!(
+            plan(wrapper, Tree::NoShell, wrapper_file, config_file, flags),
+            expected,
+            "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
+        );
+    }
+}
+
+/// The tree by what the script found: the root, cargo's home, whether the
+/// root holds `Cargo.toml.orig`, whether cargo's wrapper sits elsewhere,
+/// and whether the host is unix.
+#[test]
+fn the_tree_is_decided_from_the_root_the_cargo_home_and_the_host() {
+    const HOME: Maybe<&str> = Maybe::Is("/home/u/.cargo");
+    let cases: [(&str, Maybe<&str>, bool, bool, bool, Tree); 16] = [
+        // The consumer's own workspace, on unix.
+        ("/home/u/work/app", HOME, false, false, true, Tree::Own),
+        (
+            "/home/u/work/app",
+            Maybe::Isnt,
+            false,
+            false,
+            true,
+            Tree::Own,
+        ),
+        // Under the cargo home, a checkout cargo fetched.
+        (
+            "/home/u/.cargo/git/checkouts/dep-1a2b/3c4d",
+            HOME,
+            false,
+            false,
+            true,
+            Tree::Fetched,
+        ),
+        ("/home/u/.cargo", HOME, false, false, true, Tree::Fetched),
+        (
+            "/home/u/.cargo/registry/src/x",
+            Maybe::Is("/home/u/.cargo/"),
+            false,
+            false,
+            true,
+            Tree::Fetched,
+        ),
+        (
+            "C:\\Users\\u\\.cargo\\git\\x",
+            Maybe::Is("C:\\Users\\u\\.cargo"),
+            false,
+            false,
+            false,
+            Tree::Fetched,
+        ),
+        // A root that only starts with the same letters is not under it.
+        (
+            "/home/u/.cargo-work/app",
+            HOME,
+            false,
+            false,
+            true,
+            Tree::Own,
+        ),
+        ("/home/u/.carg", HOME, false, false, true, Tree::Own),
+        // An empty cargo home holds nothing.
+        (
+            "/home/u/work/app",
+            Maybe::Is(""),
+            false,
+            false,
+            true,
+            Tree::Own,
+        ),
+        // An unpacked crate, wherever it sits.
+        (
+            "/home/u/work/target/package/app-0.1.0",
+            HOME,
+            true,
+            false,
+            true,
+            Tree::Fetched,
+        ),
+        // A fetched tree stays one on a host with no shell, and elsewhere.
+        (
+            "/home/u/work/target/package/app-0.1.0",
+            HOME,
+            true,
+            true,
+            false,
+            Tree::Fetched,
+        ),
+        (
+            "/home/u/.cargo/git/x",
+            HOME,
+            false,
+            true,
+            true,
+            Tree::Fetched,
+        ),
+        // A host that is not unix, whatever cargo names.
+        ("C:\\work\\app", HOME, false, false, false, Tree::NoShell),
+        ("C:\\work\\app", HOME, false, true, false, Tree::NoShell),
+        // Cargo's wrapper sits in another root.
+        ("/home/u/work/app", HOME, false, true, true, Tree::Foreign),
+        (
+            "/home/u/work/app",
+            Maybe::Isnt,
+            false,
+            true,
+            true,
+            Tree::Foreign,
+        ),
+    ];
+    for (root, cargo_home, unpacked, elsewhere, unix, expected) in cases {
+        assert_eq!(
+            Tree::of(root, cargo_home, unpacked, elsewhere, unix),
+            expected,
+            "{root} {cargo_home:?} unpacked {unpacked} elsewhere {elsewhere} unix {unix}"
+        );
+    }
+    const DECIDED: Tree = Tree::of("/home/u/work/app", HOME, false, false, true);
+    assert_eq!(DECIDED, Tree::Own);
 }
 
 #[test]
@@ -318,7 +466,7 @@ impl core::fmt::Write for Refusing {
 fn a_refusing_writer_is_reported_by_every_text() {
     assert!(write_cargo_config(&mut Refusing).is_err());
     assert!(write_watch("/repo/.cargo", &mut Refusing).is_err());
-    for said in [Notice::Wired, Notice::AddLine, Notice::Dropped] {
+    for said in [Notice::Wired, Notice::AddLine, Notice::Dropped, Notice::NoShell] {
         assert!(
             write_notice(said, "/repo/.cargo", &mut Refusing).is_err(),
             "{said:?}"

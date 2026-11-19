@@ -32,7 +32,7 @@
 macro_rules! script {
     ($prototype:ident) => {{
         use ::core::fmt;
-        use ::std::{env, fs, io, path::{Path, PathBuf}, process::Command}; // lint:allow(forbidden-imports) reason: the macro's expansion is the build script's code, compiled there and never in this crate; tracked: forbidden_imports_reads_the_body_of_an_exported_macro_as_the
+        use ::std::{env, fs, io, path::{Path, PathBuf}, process::{self, Command}}; // lint:allow(forbidden-imports) reason: the macro's expansion is the build script's code, compiled there and never in this crate; tracked: forbidden_imports_reads_the_body_of_an_exported_macro_as_the
 
         /// Hands the crate's text to a file or to standard output, and
         /// keeps the reason of a write that failed.
@@ -122,15 +122,14 @@ macro_rules! script {
                     named.file_name().is_some_and(|name| name == $crate::WRAPPER_NAME)
                         && placed(named) != placed(&wrapper_path)
                 });
-                let tree = if cargo_home.is_some_and(|home| root.starts_with(home))
-                    || root.join("Cargo.toml.orig").exists()
-                {
-                    $crate::Tree::Fetched
-                } else if elsewhere {
-                    $crate::Tree::Foreign
-                } else {
-                    $crate::Tree::Own
-                };
+                let cargo_home = cargo_home.as_deref().map(Path::to_string_lossy);
+                let tree = $crate::Tree::of(
+                    &root.to_string_lossy(),
+                    cargo_home.as_deref().into(),
+                    root.join("Cargo.toml.orig").exists(),
+                    elsewhere,
+                    cfg!(unix),
+                );
 
                 let wrapper_file = match fs::read(&wrapper_path) {
                     Ok(have) => {
@@ -166,20 +165,35 @@ macro_rules! script {
                     if plan.wrapper || plan.config {
                         fs::create_dir_all(&dir)?;
                     }
+                    // Scripts of one workspace run side by side. Each writes
+                    // under a name of its own and moves the whole file into
+                    // place, so none reads half of what another wrote.
+                    let mine = |name: &'static str| dir.join(format!(".{name}.{}", process::id()));
                     if plan.wrapper {
-                        let mut file = Sink::over(fs::File::create(&wrapper_path)?);
+                        let whole = mine($crate::WRAPPER_NAME);
+                        let mut file = Sink::over(fs::File::create(&whole)?);
                         let wrote = $crate::write_wrapper(&mut file);
                         file.finish(wrote)?;
                         #[cfg(unix)]
                         {
                             use ::std::os::unix::fs::PermissionsExt as _; // lint:allow(forbidden-imports) reason: the macro's expansion is the build script's code, compiled there and never in this crate; tracked: forbidden_imports_reads_the_body_of_an_exported_macro_as_the
-                            fs::set_permissions(&wrapper_path, fs::Permissions::from_mode(0o755))?;
+                            fs::set_permissions(&whole, fs::Permissions::from_mode(0o755))?;
                         }
+                        fs::rename(&whole, &wrapper_path)?;
                     }
                     if plan.config {
-                        let mut file = Sink::over(fs::File::create_new(&config_path)?);
+                        let whole = mine("config.toml");
+                        let mut file = Sink::over(fs::File::create(&whole)?);
                         let wrote = $crate::write_cargo_config(&mut file);
                         file.finish(wrote)?;
+                        // A link refuses where a file is already there, so a
+                        // config file is never one this script wrote over.
+                        let placed = fs::hard_link(&whole, &config_path);
+                        fs::remove_file(&whole)?;
+                        match placed {
+                            Err(why) if why.kind() != io::ErrorKind::AlreadyExists => return Err(why),
+                            _ => {},
+                        }
                     }
                     Ok(())
                 })();
