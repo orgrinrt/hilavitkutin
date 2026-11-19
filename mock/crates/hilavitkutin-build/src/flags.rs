@@ -1,81 +1,66 @@
-//! The rustc flags each pragma owns, as the wrapper appends them.
+//! The rustc flags of a set, as the wrapper appends them.
 //!
-//! Every flag has exactly one owner pragma (DESIGN §Flag ownership by
-//! pragma). Only the flags whose mechanism the pinned toolchain carries
-//! and the build script needs nothing else for are written; a pragma
-//! waiting on a plugin, a profile or a tool writes nothing.
+//! Every flag has exactly one owner pragma, which writes it
+//! ([`Pragma::write_rustflags`]). This module puts a set's flags
+//! together: one space between two pragmas that wrote any.
 
-use core::fmt::{Arguments, Write};
+use core::fmt::Write;
 
-use crate::pragma::{Pragma, PragmaSet};
+use crate::pragma::Pragma;
+use crate::set::{Set, Site, Visit};
+use crate::wiring::Flags;
 
-/// The built-in LLVM options LoopOptimization owns without its plugin.
-const LOOP_OPTIMIZATION: [&str; 5] = [
-    "-Cllvm-args=-enable-loop-distribute",
-    "-Cllvm-args=-enable-loop-versioning-licm",
-    "-Cllvm-args=-enable-interleaved-mem-accesses",
-    "-Cllvm-args=-loop-prefetch-writes",
-    "-Cllvm-args=-enable-histogram-loop-vectorization",
-];
-
-/// A space-separated flag list being written.
-struct FlagList<'a, W: Write> {
+/// A writer that puts one space between what two pragmas wrote.
+struct Spaced<'a, W: Write> {
     out:   &'a mut W,
-    empty: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: writer state, the crate takes no arvo dependency; tracked: #72
+    /// Whether anything has been written.
+    any:   bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: writer state, the crate takes no arvo dependency; tracked: #72
+    /// Whether the next text is the first of a pragma after one that wrote.
+    owing: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: writer state, the crate takes no arvo dependency; tracked: #72
 }
 
-impl<W: Write> FlagList<'_, W> {
-    /// Append one flag, a space before it unless it is the first.
-    fn push(&mut self, flag: Arguments<'_>) -> core::fmt::Result {
-        if !self.empty {
+impl<W: Write> Write for Spaced<'_, W> {
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    fn write_str(&mut self, part: &str) -> core::fmt::Result { // lint:allow(no-bare-string) reason: the signature of `core::fmt::Write`; tracked: #72
+        if part.is_empty() {
+            return Ok(());
+        }
+        if self.owing {
             self.out.write_char(' ')?;
+            self.owing = false;
         }
-        self.empty = false;
-        self.out.write_fmt(flag)
-    }
-
-    /// Append the flags `pragma` owns.
-    fn pragma(&mut self, pragma: Pragma) -> core::fmt::Result {
-        match pragma {
-            Pragma::LoopOptimization => {
-                // FIXME(placeholders_tagged_hilavitkutin_build_build_scripts_find): the `-Zllvm-plugins` flag for polka-passes.so waits on the build script finding the plugin.
-                for flag in LOOP_OPTIMIZATION {
-                    self.push(format_args!("{flag}"))?;
-                }
-                Ok(())
-            },
-            Pragma::ParallelCodegen(units) => self.push(format_args!("-Zthreads={units}")),
-            Pragma::SharedGenerics => self.push(format_args!("-Zshare-generics=y")),
-            // FastMath is a cfg, written as a directive. The rest wait on a
-            // plugin, a profile, a tool or the consumer's Cargo profile.
-            Pragma::FastMath
-            | Pragma::Polly
-            | Pragma::MathPeephole
-            | Pragma::ExpandedLto
-            | Pragma::Pgo
-            | Pragma::Bolt
-            | Pragma::Profiling
-            | Pragma::BuildStd
-            | Pragma::LoopFusion
-            | Pragma::MimallocAllocator => Ok(()),
-        }
+        self.any = true;
+        self.out.write_str(part)
     }
 }
 
-/// Write the rustc flags of every pragma in `pragmas`, separated by single
-/// spaces, with none before the first and none after the last.
+/// The walk that writes every member's flags.
+struct Flagged<'a, 's, W: Write> {
+    site: &'a Site<'s>,
+    out:  Spaced<'a, W>,
+}
+
+impl<W: Write> Visit for Flagged<'_, '_, W> {
+    fn pragma<P: Pragma>(&mut self) -> core::fmt::Result {
+        self.out.owing = self.out.any;
+        P::write_rustflags(&self.site.written::<P>(), &mut self.out)
+    }
+}
+
+/// Write the rustc flags of every pragma of the set `S`, separated by
+/// single spaces, with none before the first and none after the last.
 ///
 /// This is the value of `HILAVITKUTIN_BUILD_RUSTFLAGS`, which the wrapper
 /// splits on spaces; no flag contains one.
-pub fn write_rustflags<W: Write>(pragmas: PragmaSet, out: &mut W) -> core::fmt::Result {
-    let mut list = FlagList {
-        out,
-        empty: true,
-    };
-    for pragma in pragmas.iter() {
-        list.pragma(pragma)?;
-    }
-    Ok(())
+pub fn write_rustflags<S: Set, W: Write>(site: &Site<'_>, out: &mut W) -> core::fmt::Result {
+    S::each(&mut Flagged {
+        site,
+        out: Spaced {
+            out,
+            any: false,
+            owing: false,
+        },
+    })
 }
 
 /// A sink that keeps only whether anything was written to it.
@@ -84,17 +69,22 @@ struct Anything {
 }
 
 impl Write for Anything {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.wrote |= !s.is_empty();
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    fn write_str(&mut self, part: &str) -> core::fmt::Result { // lint:allow(no-bare-string) reason: the signature of `core::fmt::Write`; tracked: #72
+        self.wrote |= !part.is_empty();
         Ok(())
     }
 }
 
-/// Whether any pragma in `pragmas` writes a rustc flag, so the crate has
-/// something for the wrapper to hand over.
-pub fn writes_flags(pragmas: PragmaSet) -> bool {
+/// Whether any pragma of the set `S` writes a rustc flag at `site`, so
+/// the crate has something for the wrapper to hand over.
+pub fn writes_flags<S: Set>(site: &Site<'_>) -> Flags {
     let mut sink = Anything {
         wrote: false,
     };
-    write_rustflags(pragmas, &mut sink).is_ok() && sink.wrote
+    if write_rustflags::<S, _>(site, &mut sink).is_ok() && sink.wrote {
+        Flags::Written
+    } else {
+        Flags::Nothing
+    }
 }

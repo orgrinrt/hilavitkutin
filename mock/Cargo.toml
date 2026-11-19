@@ -88,9 +88,10 @@ hilavitkutin-frozen-authors = { path = "crates/hilavitkutin-frozen-authors", ver
 [patch."ssh://git@github.com/orgrinrt/notko.git"]
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
 
-# The release config of `hilavitkutin-build`. ExpandedLto is these two keys, which a build script
-# cannot set, so they live here; the other release pragmas reach rustc through the wrapper in
-# `.cargo/`.
+# The release config of `hilavitkutin-build`. ExpandedLto is the two keys `lto` and
+# `codegen-units`, which the engine crate's script writes to `.cargo/hilavitkutin-build.toml`
+# for a cargo run inside this workspace; they stay here too for one run from elsewhere, which
+# reads no `.cargo/`. The other release pragmas reach rustc through the wrapper.
 [profile.release]
 opt-level = 3
 lto = "fat"

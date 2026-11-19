@@ -1,13 +1,14 @@
 //! hilavitkutin-build: shared build-dependency crate.
 //!
 //! A consumer's build script is one line, [`script!`] with the name of a
-//! [`Prototype`]. It prints the directives the prototype writes: the cfg
-//! and the crate's rustc flags, which the workspace wrapper
-//! ([`write_wrapper`]) appends to its rustc. The first build writes the
-//! wiring by itself, the wrapper at `.cargo/hilavitkutin-rustc-wrapper`
-//! and the `.cargo/config.toml` that names it, and the builds after it
-//! take the flags; they reach the consumer's own workspace members only.
-//! A script that tunes its pragmas calls [`configure_with`] instead.
+//! [`Prototype`]. It prints the directives of the prototype's set for the
+//! profile being built: the cfg, the crate's rustc flags, which the
+//! workspace wrapper ([`write_wrapper`]) appends to its rustc, and the
+//! arguments of what the crate links. The first build writes the wiring
+//! by itself, the wrapper at `.cargo/hilavitkutin-rustc-wrapper` and the
+//! `.cargo/config.toml` that names it, and the builds after it take the
+//! flags; they reach the consumer's own workspace members only.
+//! A script written by hand calls [`configure`] or [`configure_as`].
 //! The crate optimises HOW code is compiled (pragmas, profiles, rustc
 //! wrapper), not what it does. Standalone, no runtime deps.
 //!
@@ -16,35 +17,33 @@
 //! Like every hilavitkutin crate, this one is `no_std` and does not
 //! allocate. Everything that touches the host stays in the build
 //! script, which owns it: reading the environment, asking cargo for the
-//! workspace root, printing the `cargo::` directives, and reading and
-//! writing the two files of the wiring. The crate takes the values the
-//! script read, decides, and hands back the text through
-//! `core::fmt::Write`. [`script!`] is that script's code, compiled in the
-//! script and never in this crate.
+//! workspace root, printing the `cargo::` directives, finding and
+//! building tools, and reading and writing the files of the wiring. The
+//! crate takes the values the script read, decides, and hands back the
+//! text through `core::fmt::Write`. [`script!`] is that script's code,
+//! compiled in the script and never in this crate.
 //!
 //! # Layout
 //!
-//! [`pragma`] defines the `Pragma` enum and `PragmaSet` bitmask.
-//! [`profile`] defines `Profile` and its default pragma sets.
-//! [`axis`] holds the three-axis classification (Target / Tier /
-//! Passes). [`config`] exposes `BuildConfig::from_cargo()`.
-//! [`requirements`] contains the static pragma-to-external-tool
-//! table. [`flags`] writes each pragma's rustc flags. [`bootstrap`]
-//! reads the environment through the script's closure and writes the
-//! directives, the wrapper and the config file. [`prototype`] names
-//! the scripts the crate offers, [`wiring`] decides what a script
-//! writes into the workspace and says, and [`mod@script`] holds the
-//! macro that runs both in the script.
+//! [`pragma`] defines the `Pragma` trait, what a pragma requires and the
+//! group it is of. [`set`] makes a tuple of pragmas a `Set` and checks
+//! it. [`roster`] holds the pragmas that steer optimisation and
+//! [`choice`] the seven build choices. [`profile`] names the profiles
+//! and [`prototype`] the sets a script builds each with. [`target`] is
+//! the target's facts and [`tools`] the tools a pragma waits on.
+//! [`config`] exposes `BuildConfig`. [`flags`] puts a set's rustc flags
+//! together. [`bootstrap`] reads the environment through the script's
+//! closure and writes the directives and the wrapper. [`wiring`] decides
+//! what a script writes into the workspace and says, [`generated`] holds
+//! the cargo file of the script that claims the workspace, and
+//! [`mod@script`] holds the macro that runs all of it in the script.
 //! [`guards`] exposes `compile_error!` macro helpers.
 //!
 //! # Pragma roster
 //!
-//! The 13 pragmas that `Pragma` exposes (definitions live in
-//! [`pragma`]; external-tool requirements in [`requirements`]). The
-//! second column is what the pragma is for, and the third what it
-//! writes today, as [`flags`] has it. A pragma that waits on a plugin, a
-//! profile or a tool is named, carries its requirement and writes
-//! nothing yet.
+//! The second column is what the pragma is for, and the third what it
+//! writes today. A pragma that waits on a plugin, a profile or a tool is
+//! named, carries its requirement and writes nothing yet.
 //!
 //! | Pragma | For | Writes today |
 //! |--------|-----|--------------|
@@ -52,7 +51,7 @@
 //! | `Polly` | The polyhedral optimiser of a Polly-enabled LLVM. | Nothing. |
 //! | `MathPeephole` | Float peephole rewrites; stands on `FastMath`. | Nothing. |
 //! | `FastMath` | Fast float math in the configured crate's own code. | The `arvo_fast_math` cfg; it never reaches arvo. |
-//! | `ExpandedLto` | Fat LTO with one codegen unit. | Nothing. |
+//! | `ExpandedLto` | Fat LTO with one codegen unit. | Its two profile keys, in the generated cargo file. |
 //! | `Pgo` | Profile-guided optimisation. | Nothing. |
 //! | `Bolt` | Post-link binary rewriting. | Nothing. |
 //! | `Profiling` | Profiling runs; stands on `Pgo` or `Bolt`. | Nothing. |
@@ -61,45 +60,116 @@
 //! | `SharedGenerics` | Generic instances shared across crates. | `-Zshare-generics=y`. |
 //! | `LoopFusion` | Adjacent loops fused. | Nothing. |
 //! | `MimallocAllocator` | A recommendation of mimalloc. | Nothing. |
-//!
-//! The generated config file carries no `Cargo.toml`-shaped overrides
-//! (Profiles etc.).
+//! | `Mold`, `Wild`, `Bfd` | The linker of what the crate links. | A link argument; `Wild` also `-Clinker=clang`. |
+//! | `DylibDomain` | The crate as a dylib its dependents link dynamically. | `-Cprefer-dynamic`. |
+//! | `ThinLto` | Thin LTO for the profile. | Its profile key, in the generated cargo file. |
+//! | `Incremental`, `NoIncremental` | Whether the profile builds incrementally. | Its profile key, in the generated cargo file. |
+//! | `Cranelift` | The profile's code generated by cranelift. | Cargo's unstable flag and the profile key. |
+//! | `GccDriver`, `ClangDriver` | The program rustc links through. | The target's `linker` key. |
+//! | `GccCc`, `ClangCc` | The C compiler build scripts find. | `CC`, `CXX` and `AR` under `env`. |
 
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-pub mod axis;
 pub mod bootstrap;
+pub mod choice;
 pub mod config;
 pub mod flags;
+pub mod generated;
 pub mod guards;
 pub mod pragma;
 pub mod profile;
 pub mod prototype;
-pub mod requirements;
+pub mod roster;
 pub mod script;
+pub mod script_tools;
+pub mod set;
+pub mod target;
+pub mod tools;
 pub mod wiring;
 
-pub use axis::{PassesAxis, TargetAxis, TierAxis};
-pub use bootstrap::{
-    Env,
-    configure,
-    configure_with,
-    write_config_file,
-    write_directives,
-    write_wrapper,
+pub use bootstrap::{Env, configure, configure_as, write_directives, write_wrapper};
+pub use choice::{
+    BackendGroup,
+    Bfd,
+    CcGroup,
+    ClangCc,
+    ClangDriver,
+    Cranelift,
+    DriverGroup,
+    DylibDomain,
+    EdgeGroup,
+    GccCc,
+    GccDriver,
+    Incremental,
+    IncrementalGroup,
+    LinkerGroup,
+    LtoGroup,
+    Mold,
+    NoIncremental,
+    ThinLto,
+    Wild,
 };
 pub use config::BuildConfig;
-pub use flags::write_rustflags;
-pub use pragma::{Pragma, PragmaIter, PragmaSet};
+pub use flags::{write_rustflags, writes_flags};
+pub use generated::{Claim, GENERATED_NAME, claim, includes_generated, write_generated};
+pub use pragma::{
+    All,
+    Any,
+    Free,
+    Group,
+    Mask,
+    Not,
+    Pragma,
+    PragmaSet,
+    Reach,
+    Requirement,
+    Shared,
+    Words,
+    Written,
+};
 pub use profile::Profile;
-pub use prototype::Prototype;
-pub use requirements::{PragmaRequirement, REQUIREMENTS, Requirement, requirements_for};
+pub use prototype::{Default, Deterministic, Prototype, Workspace, claimed};
+pub use roster::{
+    Bolt,
+    BuildStd,
+    ExpandedLto,
+    FastMath,
+    LoopFusion,
+    LoopOptimization,
+    MathPeephole,
+    MimallocAllocator,
+    ParallelCodegen,
+    Pgo,
+    Polly,
+    Profiling,
+    SharedGenerics,
+};
+pub use set::{Set, Site, ToolPath, Visit, checked, crate_reach, each_tool};
+pub use target::{Arch, Isa, ObjectFormat, Os, Target};
+pub use tools::{
+    Home,
+    Line,
+    Proof,
+    Provision,
+    Source,
+    TOOLS,
+    Tool,
+    provision,
+    tools_home,
+    write_refusal,
+    write_tool_dir,
+};
 pub use wiring::{
     ConfigFile,
+    Flags,
+    Host,
+    INCLUDE_LINE,
     Notice,
+    Placed,
     Plan,
     Tree,
+    Unpacked,
     WRAPPER_NAME,
     WrapperFile,
     plan,

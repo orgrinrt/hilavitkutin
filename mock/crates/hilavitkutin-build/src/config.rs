@@ -1,94 +1,80 @@
-//! Fully-resolved build configuration.
+//! The build as a script resolved it.
 //!
-//! `BuildConfig` is a snapshot of the profile, pragma set, target axis,
-//! tier axis and passes axis, resolved from the values cargo hands a
-//! build script in `$PROFILE` and `$CARGO_CFG_TARGET_FEATURE`. The crate
-//! reads neither variable itself: the consumer's `build.rs` reads its own
-//! environment and passes what it found to [`BuildConfig::from_cargo`].
-//!
-//! `fast_math()` is a dedicated accessor because it drives the
-//! single cfg emission (`arvo_fast_math`) and is therefore hot in
-//! the bootstrap path.
+//! `BuildConfig` is the profile, the folded set of the profile's pragmas
+//! and the target, resolved from the values cargo hands a build script.
+//! The crate reads no variable itself: the consumer's script reads its
+//! own environment and hands over what it found, the values to
+//! [`BuildConfig::from_cargo`] or a closure to [`BuildConfig::from_env`].
 
 use notko::Maybe;
 
-use crate::axis::{PassesAxis, TargetAxis, TierAxis};
-use crate::pragma::{Pragma, PragmaSet};
+use crate::bootstrap::{Env, borrowed};
+use crate::pragma::PragmaSet;
 use crate::profile::Profile;
+use crate::prototype::Prototype;
+use crate::roster::FastMath;
+use crate::target::Target;
 
-/// Fully-resolved build configuration. Consumer `build.rs` may
-/// construct via `from_cargo()` or field-by-field for tests.
-#[derive(Debug, Clone, Default)]
+/// The build as a script resolved it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct BuildConfig {
     pub profile: Profile,
     pub pragmas: PragmaSet,
-    pub target:  Maybe<TargetAxis>,
-    pub tier:    TierAxis,
-    pub passes:  PassesAxis,
+    pub target:  Target,
 }
 
 impl BuildConfig {
-    /// Build a `BuildConfig` from the values of cargo's `$PROFILE` and
-    /// `$CARGO_CFG_TARGET_FEATURE`, as the build script read them.
+    /// The build of the prototype `P` from the value of cargo's
+    /// `$PROFILE` and the target.
     ///
-    /// A variable cargo did not set is `Maybe::Isnt`, and degrades
-    /// gracefully:
-    /// - `profile` absent or unknown → `Profile::Dev`
-    /// - `target_features` absent → `target = Maybe::Isnt`
-    ///
-    /// Tier + passes are not derivable from these values; both stay at
-    /// their defaults.
-    pub fn from_cargo(
-        profile: Maybe<&str>, // lint:allow(no-bare-string) reason: cargo env values as the build script read them; tracked: #72
-        target_features: Maybe<&str>, // lint:allow(no-bare-string) reason: cargo env values as the build script read them; tracked: #72
+    /// A profile cargo did not name, or one the crate does not know, is
+    /// `Profile::Dev`.
+    pub fn from_cargo<P: Prototype>(
+        profile: Maybe<&str>, // lint:allow(no-bare-string) reason: cargo env value as the build script read it; tracked: #72
+        target: Target,
     ) -> Self {
         let profile = match profile {
-            Maybe::Is(p) => Profile::from_cargo_profile(p),
+            Maybe::Is(name) => Profile::from_cargo_profile(name),
             Maybe::Isnt => Profile::default(),
         };
-
-        let target = match target_features {
-            Maybe::Is(features) => Maybe::Is(resolve_target_axis(features)),
-            Maybe::Isnt => Maybe::Isnt,
+        let pragmas = match profile {
+            Profile::Dev => PragmaSet::of::<P::Dev>(),
+            Profile::DevOpt => PragmaSet::of::<P::DevOpt>(),
+            Profile::Release => PragmaSet::of::<P::Release>(),
+            Profile::Profiling => PragmaSet::of::<P::Profiling>(),
+            Profile::Ci => PragmaSet::of::<P::Ci>(),
         };
-
         BuildConfig {
             profile,
-            pragmas: profile.default_pragmas(),
+            pragmas,
             target,
-            tier: TierAxis::default(),
-            passes: PassesAxis::default(),
         }
     }
 
-    /// `true` when the `FastMath` pragma is active. Drives the
-    /// `arvo_fast_math` cfg emission in [`crate::write_directives`].
+    /// The build of the prototype `P`, read through the script's closure:
+    /// `PROFILE` and the four `CARGO_CFG_TARGET_*` values the target is
+    /// made of.
+    pub fn from_env<P: Prototype, S: AsRef<str>>(mut env: impl Env<S>) -> Self {
+        let profile = env("PROFILE");
+        let os = env("CARGO_CFG_TARGET_OS");
+        let abi = env("CARGO_CFG_TARGET_ENV");
+        let arch = env("CARGO_CFG_TARGET_ARCH");
+        let features = env("CARGO_CFG_TARGET_FEATURE");
+        let target = Target::from_cargo(
+            borrowed(&os),
+            borrowed(&abi),
+            borrowed(&arch),
+            borrowed(&features),
+        );
+        Self::from_cargo::<P>(borrowed(&profile), target)
+    }
+
+    /// `true` when the `FastMath` pragma is in the set, which is when the
+    /// `arvo_fast_math` cfg is set for the crate.
     #[rustfmt::skip] // keeps the allow on the signature it governs
     pub const fn fast_math(
         &self,
-    ) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; drives the `arvo_fast_math` cfg emission; tracked: #72
-        self.pragmas.contains(Pragma::FastMath)
-    }
-}
-
-/// Rough mapping from `CARGO_CFG_TARGET_FEATURE`'s comma-separated
-/// feature list to the coarsest matching `TargetAxis`.
-///
-/// Precedence (richest first): Avx512 > Avx2 > Sve > Neon > Iss64.
-fn resolve_target_axis(
-    features: &str, // lint:allow(no-bare-string) reason: cargo env `CARGO_CFG_TARGET_FEATURE` value; tracked: #72
-) -> TargetAxis {
-    let has = |needle: &str| features.split(',').any(|f| f.trim() == needle); // lint:allow(no-bare-string) reason: feature-list closure operand; tracked: #72
-
-    if has("avx512f") || has("avx512") {
-        TargetAxis::Avx512
-    } else if has("avx2") {
-        TargetAxis::Avx2
-    } else if has("sve") {
-        TargetAxis::Sve
-    } else if has("neon") {
-        TargetAxis::Neon
-    } else {
-        TargetAxis::Iss64
+    ) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: build-time predicate; tracked: #72
+        self.pragmas.contains::<FastMath>()
     }
 }

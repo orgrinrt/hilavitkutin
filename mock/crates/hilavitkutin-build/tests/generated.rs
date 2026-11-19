@@ -1,0 +1,233 @@
+//! The generated cargo file: its text for a prototype, whose it is by its
+//! first line, and whether a `config.toml` takes it.
+
+use hilavitkutin_build::{
+    Claim,
+    ClangCc,
+    ClangDriver,
+    Cranelift,
+    Default,
+    ExpandedLto,
+    FastMath,
+    GENERATED_NAME,
+    GccDriver,
+    INCLUDE_LINE,
+    Incremental,
+    NoIncremental,
+    Pgo,
+    Prototype,
+    ThinLto,
+    Workspace,
+    claim,
+    includes_generated,
+    write_cargo_config,
+    write_generated,
+};
+use notko::Maybe;
+
+fn generated<P: Prototype>(krate: &str) -> String {
+    let mut out = String::new();
+    write_generated::<P, _>(krate, "x86_64-unknown-linux-gnu", &mut out)
+        .expect("a String takes every write");
+    // One key twice is a file cargo cannot read, whatever the prototype.
+    let mut keys: Vec<_> = out
+        .lines()
+        .skip(1)
+        .map(|line| line.split(" = ").next().unwrap_or(line))
+        .collect();
+    let written = keys.len();
+    keys.sort_unstable();
+    keys.dedup();
+    assert_eq!(keys.len(), written, "a key is written twice:\n{out}");
+    out
+}
+
+/// Every pragma of workspace reach, the shared ones in both profiles.
+struct Everything;
+
+impl Prototype for Everything {
+    type Ci = ();
+    type Dev = (Cranelift, Incremental, ClangDriver, ClangCc, FastMath);
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (ExpandedLto, NoIncremental, ClangDriver, ClangCc, Pgo);
+}
+
+/// One backend in both profiles: its unstable flag belongs to neither.
+struct BothCranelift;
+
+impl Prototype for BothCranelift {
+    type Ci = ();
+    type Dev = (Cranelift,);
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (Cranelift, NoIncremental);
+}
+
+/// A shared key in the second profile alone, which nothing wrote before.
+struct ReleaseDriver;
+
+impl Prototype for ReleaseDriver {
+    type Ci = ();
+    type Dev = (ThinLto,);
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (GccDriver, ThinLto);
+}
+
+#[test]
+fn the_file_is_the_claim_then_the_keys_of_dev_and_of_release() {
+    assert_eq!(
+        generated::<Everything>("kaski-app"),
+        "# written by hilavitkutin-build for kaski-app: edits are lost\n\
+         unstable.codegen-backend = true\n\
+         profile.dev.codegen-backend = \"cranelift\"\n\
+         profile.dev.incremental = true\n\
+         target.\"x86_64-unknown-linux-gnu\".linker = \"clang\"\n\
+         env.CC = \"clang\"\n\
+         env.CXX = \"clang++\"\n\
+         env.AR = \"llvm-ar\"\n\
+         profile.release.lto = \"fat\"\n\
+         profile.release.codegen-units = 1\n\
+         profile.release.incremental = false\n"
+    );
+}
+
+#[test]
+fn a_key_of_no_profile_is_in_the_file_once() {
+    assert_eq!(
+        generated::<BothCranelift>("a"),
+        "# written by hilavitkutin-build for a: edits are lost\n\
+         unstable.codegen-backend = true\n\
+         profile.dev.codegen-backend = \"cranelift\"\n\
+         profile.release.codegen-backend = \"cranelift\"\n\
+         profile.release.incremental = false\n"
+    );
+    assert_eq!(
+        generated::<ReleaseDriver>("a"),
+        "# written by hilavitkutin-build for a: edits are lost\n\
+         profile.dev.lto = \"thin\"\n\
+         target.\"x86_64-unknown-linux-gnu\".linker = \"gcc\"\n\
+         profile.release.lto = \"thin\"\n"
+    );
+}
+
+#[test]
+fn the_crates_own_prototypes_write_what_the_design_says() {
+    assert_eq!(
+        generated::<Workspace>("hilavitkutin"),
+        "# written by hilavitkutin-build for hilavitkutin: edits are lost\n\
+         profile.release.lto = \"fat\"\n\
+         profile.release.codegen-units = 1\n"
+    );
+    // A prototype with no pragma of workspace reach writes its claim alone.
+    assert_eq!(
+        generated::<Default>("hilavitkutin"),
+        "# written by hilavitkutin-build for hilavitkutin: edits are lost\n"
+    );
+}
+
+/// The file this workspace commits is the one its engine crate's script
+/// writes, so a fresh clone builds with the keys from its first build.
+#[test]
+fn the_committed_file_is_the_written_one() {
+    assert_eq!(
+        include_str!("../../../.cargo/hilavitkutin-build.toml"),
+        generated::<Workspace>("hilavitkutin")
+    );
+}
+
+#[test]
+fn a_file_is_claimed_by_the_crate_its_first_line_names() {
+    let mine = generated::<Workspace>("hilavitkutin");
+    assert_eq!(claim(Maybe::Is(&mine), "hilavitkutin"), Claim::Mine);
+    assert_eq!(
+        claim(Maybe::Is(&mine), "kaski-app"),
+        Claim::Theirs("hilavitkutin")
+    );
+    // A name that only starts or ends the same is another crate's.
+    assert_eq!(
+        claim(Maybe::Is(&mine), "hilavitkutin-api"),
+        Claim::Theirs("hilavitkutin")
+    );
+    assert_eq!(
+        claim(Maybe::Is(&mine), "hila"),
+        Claim::Theirs("hilavitkutin")
+    );
+    assert_eq!(claim(Maybe::Isnt, "hilavitkutin"), Claim::Free);
+
+    // A file this crate did not write is somebody else's, never free.
+    for foreign in [
+        "",
+        "\n",
+        "profile.release.lto = \"fat\"\n",
+        "# written by hand\n",
+        "# written by hilavitkutin-build for hilavitkutin\n",
+        "\n# written by hilavitkutin-build for hilavitkutin: edits are lost\n",
+        " # written by hilavitkutin-build for hilavitkutin: edits are lost\n",
+    ] {
+        assert_eq!(
+            claim(Maybe::Is(foreign), "hilavitkutin"),
+            Claim::Theirs(""),
+            "{foreign:?}"
+        );
+    }
+    // The claim is the first line alone, whatever follows it.
+    assert_eq!(
+        claim(
+            Maybe::Is("# written by hilavitkutin-build for a: edits are lost\ngarbage"),
+            "a"
+        ),
+        Claim::Mine
+    );
+}
+
+#[test]
+fn a_config_file_takes_the_generated_file_by_an_include_before_any_table() {
+    assert!(INCLUDE_LINE.contains(GENERATED_NAME));
+    let mut written = String::new();
+    write_cargo_config(&mut written).expect("a String takes every write");
+
+    let taking = [
+        written.as_str(),
+        INCLUDE_LINE,
+        "include = \"hilavitkutin-build.toml\"\n",
+        "include = 'hilavitkutin-build.toml'\n",
+        "include   =   [\"other.toml\", \"hilavitkutin-build.toml\"]\n[build]\njobs = 2\n",
+        "include = [{ path = \"sub/hilavitkutin-build.toml\" }]\n",
+        "# a comment\njobs = 1\ninclude = [\n    { path = \"other.toml\" },\n    { path = \"hilavitkutin-build.toml\", optional = true },\n]\n\n[build]\n",
+    ];
+    for text in taking {
+        assert!(includes_generated(text), "{text:?}");
+    }
+
+    let not_taking = [
+        "",
+        "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
+        "include = \"other.toml\"\n",
+        "include = [\"my-hilavitkutin-build.toml\"]\n",
+        "include = [\"hilavitkutin-build.toml.bak\"]\n",
+        "# include = \"hilavitkutin-build.toml\"\n",
+        "[env]\ninclude = \"hilavitkutin-build.toml\"\n",
+        "include = \"other.toml\"\n[env]\nGENERATED = \"hilavitkutin-build.toml\"\n",
+        "include = \"other.toml\"\nnote = \"hilavitkutin-build.toml\"\n",
+        "included = \"hilavitkutin-build.toml\"\n",
+    ];
+    for text in not_taking {
+        assert!(!includes_generated(text), "{text:?}");
+    }
+}
+
+/// A sink that refuses every write.
+struct Refusing;
+
+impl core::fmt::Write for Refusing {
+    fn write_str(&mut self, _: &str) -> core::fmt::Result {
+        Err(core::fmt::Error)
+    }
+}
+
+#[test]
+fn a_refusing_writer_is_reported() {
+    assert!(write_generated::<Workspace, _>("a", "t", &mut Refusing).is_err());
+}
