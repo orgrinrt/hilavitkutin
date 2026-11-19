@@ -1,0 +1,8 @@
+[package]
+name = "sketch-lto-app"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+sketch-lto-dep = { path = "../dep" }

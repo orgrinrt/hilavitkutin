@@ -1,9 +1,9 @@
 # hilavitkutin-build
 
 Build-time optimisation crate. cfg emission, LLVM pass configuration,
-PGO/BOLT workflows, pragma system. Used as `[build-dependencies]` by
-hilavitkutin crates and consumers, whose build scripts call `configure`.
-A consumer commits two files beside it: `.cargo/hilavitkutin-rustc-wrapper`,
-the text `write_wrapper` writes, and `.cargo/config.toml` naming it as
-`build.rustc-workspace-wrapper`. The flags reach the consumer's own
-workspace members only, never its dependencies.
+PGO/BOLT workflows, pragma system. A crate takes it as a
+build-dependency and writes one line, `hilavitkutin_build::script!(<prototype>)`,
+in a build script it keeps wherever it wants. The first build writes
+the rustc wrapper and its `.cargo/config.toml` line into the workspace
+by itself, and the builds after it take the flags. The flags reach the
+consumer's own workspace members only, never its dependencies.

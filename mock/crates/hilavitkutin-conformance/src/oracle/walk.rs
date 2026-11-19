@@ -257,7 +257,7 @@ pub trait Scatter<'w, L: WriteSet, P> {
     fn scatter<K: Keeping>(
         &mut self,
         at: USize,
-        vals: <L as Project>::Prod<Val>,
+        vals: <L as Project<Val>>::Prod,
     ) -> Outcome<(), Refusal>;
 }
 
@@ -276,7 +276,7 @@ where
     fn scatter<K: Keeping>(
         &mut self,
         at: USize,
-        vals: PCons<Val, H, <T as Project>::Prod<Val>>,
+        vals: PCons<Val, H, <T as Project<Val>>::Prod>,
     ) -> Outcome<(), Refusal> {
         if let Outcome::Err(refusal) =
             H::write::<K>(<W as Find<'w, H::At, Ph>>::cells_mut(self), at, vals.head)

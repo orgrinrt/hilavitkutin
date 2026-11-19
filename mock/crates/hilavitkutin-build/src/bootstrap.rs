@@ -5,24 +5,18 @@
 //! This module turns a [`BuildConfig`] into the text of both, through
 //! `core::fmt::Write`, so the crate itself stays `no_std`.
 //!
-//! A crate's whole `build.rs`:
+//! A crate's whole build script, at whatever path the crate keeps it:
 //!
 //! ```no_run
 //! fn main() {
-//!     let mut out = String::new();
-//!     hilavitkutin_build::configure(
-//!         |key| std::env::var(key).ok().into(),
-//!         &mut out,
-//!     )
-//!     .expect("a String takes every write");
-//!     print!("{out}");
+//!     hilavitkutin_build::script!(Default);
 //! }
 //! ```
 //!
 //! The directives set the crate's rustc flags in
-//! `HILAVITKUTIN_BUILD_RUSTFLAGS`, which the committed workspace wrapper
-//! appends. The config file is a placeholder read by nothing yet; it
-//! carries `profile` and `fast_math` only.
+//! `HILAVITKUTIN_BUILD_RUSTFLAGS`, which the workspace wrapper appends.
+//! The config file is a placeholder read by nothing yet; it carries
+//! `profile` and `fast_math` only.
 
 use core::fmt::Write;
 
@@ -31,6 +25,7 @@ use notko::Maybe;
 use crate::config::BuildConfig;
 use crate::flags::{write_rustflags, writes_flags};
 use crate::pragma::PragmaSet;
+use crate::wiring::{WRAPPER_NAME, names_the_wrapper};
 
 /// The variable a crate's build script sets on its own rustc, and the
 /// wrapper appends to rustc's arguments.
@@ -38,13 +33,15 @@ const RUSTFLAGS_VAR: &str = "HILAVITKUTIN_BUILD_RUSTFLAGS"; // lint:allow(no-bar
 
 /// Write the `cargo::` directives the build script prints, one per line.
 ///
-/// The script reruns only when it changes, since what it writes depends
-/// on nothing else in the crate. The `arvo_fast_math` cfg is declared
+/// The script reruns when cargo names another workspace wrapper, and
+/// names no file: a script is kept at whatever path its project chose,
+/// and a path that is not there has cargo rerun it on every build. The
+/// `arvo_fast_math` cfg is declared
 /// always and set when the `FastMath` pragma is active. The crate's rustc
 /// flags go to `HILAVITKUTIN_BUILD_RUSTFLAGS` on its own rustc, empty when
 /// no pragma writes one.
 pub fn write_directives<W: Write>(cfg: &BuildConfig, out: &mut W) -> core::fmt::Result {
-    out.write_str("cargo::rerun-if-changed=build.rs\n")?;
+    out.write_str("cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n")?;
     out.write_str("cargo::rustc-check-cfg=cfg(arvo_fast_math)\n")?;
     if cfg.fast_math() {
         out.write_str("cargo::rustc-cfg=arvo_fast_math\n")?;
@@ -56,10 +53,11 @@ pub fn write_directives<W: Write>(cfg: &BuildConfig, out: &mut W) -> core::fmt::
 
 /// Write the text of the rustc workspace wrapper.
 ///
-/// A consumer commits it at `.cargo/hilavitkutin-rustc-wrapper`, names it
-/// as `build.rustc-workspace-wrapper` in `.cargo/config.toml`, and checks
-/// its copy against this text. Where `HILAVITKUTIN_BUILD_RUSTFLAGS` is
-/// unset the wrapper is rustc unchanged.
+/// `script!` keeps the file at the workspace's
+/// `.cargo/hilavitkutin-rustc-wrapper` to this text, and the workspace's
+/// `.cargo/config.toml` names it as `build.rustc-workspace-wrapper`.
+/// Where `HILAVITKUTIN_BUILD_RUSTFLAGS` is unset the wrapper is rustc
+/// unchanged.
 pub fn write_wrapper<W: Write>(out: &mut W) -> core::fmt::Result {
     write!(
         out,
@@ -106,26 +104,31 @@ pub fn configure_with<S: AsRef<str>, W: Write>(
     tune: impl FnOnce(PragmaSet) -> PragmaSet,
     out: &mut W,
 ) -> core::fmt::Result {
+    let cfg = resolve(&mut env, tune);
+    write_directives(&cfg, out)?;
+    let wrapper = env("RUSTC_WORKSPACE_WRAPPER");
+    if !names_the_wrapper(borrowed(&wrapper)) && writes_flags(cfg.pragmas) {
+        writeln!(
+            out,
+            "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper \
+             to append them, so they are dropped: run cargo where `.cargo/config.toml` names \
+             `.cargo/{WRAPPER_NAME}`"
+        )?;
+    }
+    Ok(())
+}
+
+/// Resolve the build from the two values cargo hands a script, with the
+/// profile's default pragmas tuned and made coherent.
+pub(crate) fn resolve<S: AsRef<str>>(
+    env: &mut impl Env<S>,
+    tune: impl FnOnce(PragmaSet) -> PragmaSet,
+) -> BuildConfig {
     let profile = env("PROFILE");
     let features = env("CARGO_CFG_TARGET_FEATURE");
     let mut cfg = BuildConfig::from_cargo(borrowed(&profile), borrowed(&features));
     cfg.pragmas = tune(cfg.pragmas).coherent();
-    write_directives(&cfg, out)?;
-    let wrapped = match env("RUSTC_WORKSPACE_WRAPPER") {
-        Maybe::Is(path) => {
-            let path = path.as_ref();
-            path.ends_with("hilavitkutin-rustc-wrapper") || path.ends_with("clippy-driver")
-        },
-        Maybe::Isnt => false,
-    };
-    if !wrapped && writes_flags(cfg.pragmas) {
-        out.write_str(
-            "cargo::warning=hilavitkutin-build chose rustc flags for this crate and cargo names no workspace wrapper \
-             to append them, so they are dropped: run cargo where `.cargo/config.toml` names \
-             `.cargo/hilavitkutin-rustc-wrapper`\n",
-        )?;
-    }
-    Ok(())
+    cfg
 }
 
 /// Borrow the text out of a value the build script read.

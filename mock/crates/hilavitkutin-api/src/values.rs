@@ -14,7 +14,7 @@
 
 use arvo::{Bool, Cap};
 use notko::Maybe;
-use notko_hlist::{Cons, Elem, Empty, Project};
+use notko_hlist::{Cons, Elem, Empty, Project, Val};
 pub use notko_hlist::{Here, PCons, PNil, Place, PlaceOf, There, Vals};
 
 use crate::access::AccessSet;
@@ -205,7 +205,7 @@ impl<H: Readable, T: ReadSet> ReadSet for Cons<H, T> {
     message = "a value function cannot return the list `{Self}`",
     note = "Every member of the write list of a unit that calls `map` is `Writable`: a `Column<T>` or a `Buffered<T, M>` (bare where `T: PartialEq`, else under `Written<_>`), an `Accum<T>` or a `Virtual<V>`."
 )]
-pub trait WriteSet: AccessSet + Project {}
+pub trait WriteSet: AccessSet + Project<Val> {}
 
 #[diagnostic::do_not_recommend]
 impl WriteSet for Empty {}

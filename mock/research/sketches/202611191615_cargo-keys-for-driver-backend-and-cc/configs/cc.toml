@@ -1,0 +1,5 @@
+# The C compiler: environment variables cargo sets for what it runs.
+[env]
+CC = "clang"
+CXX = "clang++"
+AR = "llvm-ar"

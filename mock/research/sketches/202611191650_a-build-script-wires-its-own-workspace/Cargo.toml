@@ -1,0 +1,16 @@
+[workspace]
+
+[package]
+name = "self-wiring-script"
+version = "0.0.0"
+edition = "2024"
+publish = false
+build = "scripts/anywhere.rs"
+
+[[bin]]
+name = "self-wiring-script"
+path = "src/main.rs"
+test = false
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sketch_flag_arrived)"] }
