@@ -26,6 +26,11 @@ fn compile_fail_fixtures() {
     t.pass("tests/ui/assert_out_names_no_refusal_pass.rs");
     t.compile_fail("tests/ui/assert_out_names_no_refusal_fail.rs");
     t.compile_fail("tests/ui/memory_provider_safe_impl_fail.rs");
+    // The engine's seal: each trait it closes has no twin, since the
+    // refusal is of the impl itself.
+    t.compile_fail("tests/ui/executor_outside_the_engine_fail.rs");
+    t.compile_fail("tests/ui/dispatch_codegen_outside_the_engine_fail.rs");
+    t.compile_fail("tests/ui/fiber_shape_outside_the_engine_fail.rs");
 }
 
 #[test]

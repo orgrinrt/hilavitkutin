@@ -11,8 +11,10 @@
 //! per-aggregate dimensions (components-per-trunk / units-per-fiber /
 //! columns-per-fiber / trunks-per-phase) size the nested structures.
 //! Per Topic 3 audit-2 m3, the per-aggregate dimensions are their own
-//! capacity types rather than CeilingDiv-derived: this decouples
-//! per-fiber footprint from pipeline-wide caps.
+//! capacity types rather than derived from the plan-wide ones, which
+//! decouples per-fiber footprint from pipeline-wide caps. `CeilingDiv`
+//! offers the ceiling of one over another as a constant, for a consumer
+//! that wants it as its pick.
 
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
@@ -21,6 +23,7 @@ use arvo_tensor::Capacity;
 
 pub mod access;
 pub mod bundle_masks;
+pub mod ceiling_div;
 pub mod column;
 pub mod core_program;
 pub mod dims;
@@ -41,6 +44,7 @@ pub mod unit;
 mod unit_masks;
 
 pub use access::AccessMask;
+pub use ceiling_div::{Ceil, CeilingDiv};
 pub use column::{ColumnClassMap, ColumnClassification};
 pub use dims::{DefaultPlanDims, PlanDims};
 pub use dirty::{DirtyMask, DirtyMasks};
