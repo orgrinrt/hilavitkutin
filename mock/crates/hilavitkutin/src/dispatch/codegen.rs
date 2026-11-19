@@ -3,19 +3,20 @@
 //! `RecordRange` / `SyncRole` data shapes.
 //!
 //! `DispatchCodegen` is the trait the engine implements (single
-//! shipped impl `StandardCodegen` in `hilavitkutin::dispatch::standard`)
-//! to translate `(ExecutionPlan, CoreProgram, Cfg::Units)` into a
-//! monomorphised per-core dispatch closure. The trait is sealed
-//! so only substrate-controlled codegen variants
-//! can ship. The `CoreDispatch` TAIT keeps the closure type opaque
-//! to consumers.
+//! shipped impl `StandardCodegen`, re-exported from
+//! `hilavitkutin::dispatch::standard`) to translate
+//! `(ExecutionPlan, CoreProgram, Cfg::Units)` into a monomorphised
+//! per-core dispatch closure. The trait takes the engine's seal, so
+//! only the engine ships codegen variants. The `CoreDispatch` TAIT
+//! keeps the closure type opaque to consumers.
 //!
 //! `FiberShape` is the sealed marker family per-shape codegen
 //! emits at build time. Each unique fiber-shape (WU sequence)
 //! across the plan gets one impl; LLVM monomorphises per shape.
 //! Consumers cannot impl FiberShape; impls are codegen artefacts.
-
-use core::marker::PhantomData;
+//!
+//! Nothing outside the engine reads any of this, so it is declared
+//! here and not in the api crate.
 
 use arvo::strategy::{Additive, Identity};
 use arvo::traits::FromConstant;
@@ -348,25 +349,23 @@ pub enum RecordRange {
 /// **Pre-stub:** the actual associated `type CoreDispatch = impl
 /// Fn(...)` lowering lands in the engine impl. This trait
 /// declaration just commits the surface.
-pub trait DispatchCodegen<Cfg>: sealed::Sealed {
+pub trait DispatchCodegen<Cfg>: sealed::EngineOnly {
     /// The monomorphised per-core dispatch closure type. Engine
     /// impls set this via TAIT
     /// `type CoreDispatch = impl Fn(...) -> notko::Outcome<(), AccumRefused>;`.
     type CoreDispatch;
 }
 
-/// The single shipped `DispatchCodegen` implementer. Both the marker type AND its trait
-/// impl `DispatchCodegen<Cfg>` live in the api crate because the seal is api-internal and
-/// because trait impls follow the orphan rule (trait OR impl-target
-/// must be local). Engine-side emit code consumes the marker via
-/// `hilavitkutin::dispatch::standard`.
+/// The single shipped `DispatchCodegen` implementer, beside the trait
+/// it implements and the seal it takes. Engine-side emit code reaches
+/// it through `hilavitkutin::dispatch::standard`.
 ///
 /// Zero-sized. Constructible by anyone; no instances escape the
 /// engine because the public traits all carry sealed bounds.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StandardCodegen;
 
-impl sealed::Sealed for StandardCodegen {}
+impl sealed::EngineOnly for StandardCodegen {}
 
 /// `CoreDispatch` is a `()` placeholder. The TAIT lowering
 /// `type CoreDispatch = impl Fn(&PoolFrame<...>) -> Outcome<(), AccumRefused>;`
@@ -376,7 +375,7 @@ impl sealed::Sealed for StandardCodegen {}
 /// reserves the type-slot until the closure body resolves it.
 impl<Cfg> DispatchCodegen<Cfg> for StandardCodegen
 where
-    Cfg: crate::run_cfg::RunCfg,
+    Cfg: hilavitkutin_api::RunCfg,
 {
     type CoreDispatch = ();
 }
@@ -385,7 +384,7 @@ where
 /// Codegen emits one impl per unique fiber shape encountered in the plan; consumers cannot
 /// impl this. `WuTuple` is the typed tuple of WU types in fiber-
 /// execution order; `SHAPE_ID` is the dedup hash.
-pub trait FiberShape: sealed::Sealed {
+pub trait FiberShape: sealed::EngineOnly {
     /// Type-level tuple of WU types in fiber-execution order.
     type WuTuple;
 
@@ -393,7 +392,3 @@ pub trait FiberShape: sealed::Sealed {
     /// `WuTuple` type-id sequence.
     const SHAPE_ID: USize;
 }
-
-/// Marker handle for a registered store. Distinct from `StoreId`
-/// (a runtime ID); this is the type-level evidence.
-pub struct StoreMarker<T>(PhantomData<T>);

@@ -20,6 +20,7 @@ use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 use arvo::USize;
 use hilavitkutin::thread::{
+    PoolFrame,
     await_exit,
     frame_await,
     frame_await_done,
@@ -28,7 +29,6 @@ use hilavitkutin::thread::{
     frame_publish,
     request_shutdown,
 };
-use hilavitkutin_api::platform::PoolFrame;
 
 const NREC: usize = 256;
 

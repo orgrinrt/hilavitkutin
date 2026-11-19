@@ -9,7 +9,7 @@
 #![no_std]
 
 use arvo::USize;
-use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
+use hilavitkutin::dispatch::codegen::{FiberId, PhaseId, TrunkId, UnitId};
 
 #[test]
 fn unit_id_index_roundtrips() {

@@ -11,10 +11,11 @@
 use arvo::strategy::{Additive, Identity};
 use arvo::{Bool, USize};
 use arvo_tensor::Capacity;
-use hilavitkutin_api::{FiberId, StoreId, UnitId};
+use hilavitkutin_api::StoreId;
 use notko::Maybe;
 
 use crate::dispatch::approach::DispatchApproach;
+use crate::dispatch::codegen::{FiberId, UnitId};
 use crate::plan::dims::PlanDims;
 
 /// Per-unit fiber assignment (intermediate; analysis output of steps

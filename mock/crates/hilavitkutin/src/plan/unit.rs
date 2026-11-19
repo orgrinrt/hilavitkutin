@@ -11,7 +11,8 @@
 use arvo::USize;
 use arvo::strategy::{Additive, Identity};
 use arvo_tensor::Capacity;
-use hilavitkutin_api::UnitId;
+
+use crate::dispatch::codegen::UnitId;
 
 /// Plan-stage metadata for a single work unit.
 ///

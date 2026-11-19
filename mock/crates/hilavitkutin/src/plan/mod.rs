@@ -56,13 +56,14 @@ pub use grouping::{
     plan_phase_count,
     trunk_of,
 };
-pub use hilavitkutin_api::{FiberId, PhaseId, TrunkId, UnitId};
 pub use inputs::{MorselBudget, PlanInputs};
 pub use phase::{Phase, PhaseBoundaries, PhaseConfig};
 pub use project::plan_inputs_from_bundle;
 pub use steps::{FiberLayout, PlanError};
 pub use trunk::{BlockPartition, Branch, Bridge, Trunk, TrunkComponent};
 pub use unit::{CostTable, UnitMeta};
+
+pub use crate::dispatch::codegen::{FiberId, PhaseId, TrunkId, UnitId};
 
 /// Complete plan-stage output.
 ///
