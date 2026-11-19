@@ -10,9 +10,13 @@ The design of `hilavitkutin-build` says a pragma is a type with requirements tha
 
 Rewritten whole. A pragma is a unit type implementing `Pragma`: `NAME`, `BIT`, `REACH`, `UNMET`, `TOOL`, `type Group`, `type Requires`, `admitted`, and four writers into a `core::fmt::Write`, one per route its text can take (`write_rustflags`, `write_link_args`, `write_cfgs`, `write_cargo_config`), each writing nothing by default. A writer is handed a `Written`: the profile's name, the target triple and the path of the pragma's tool. No function returns a collection.
 
+`Written` also carries a `Shared`, whether the keys the pragma's group shares across profiles are owed or already written. The section says the one form of text each route has: flags separated by single spaces, link arguments and cfgs one to a line, and cargo configuration as whole lines in dotted keys with no table header.
+
 `Requirement` is read as three masks. `All<(A, B)>` asks for every one, `Any<(A, B)>` for at least one, `Not<(A, B)>` for none, and `()` for nothing. `Group` is a choice a set holds one value of at most, a type that carries its own sentence for a set holding two; `Free` is the group of a pragma that is one value of no choice.
 
-`Set` is implemented for flat tuples of pragmas, arities zero through sixteen. It folds its members into `MASK`, `REACH` and `VERDICT`, the first thing wrong with the set or the empty string. `checked::<S>()` is the `const fn` that asserts over the verdict, and `crate_reach::<S>()` the one that refuses a pragma of workspace reach. `PragmaSet` stays as the folded value of a set, a mask built by `PragmaSet::of::<S>()`, read by `contains::<P>()`, with nothing that changes it; `PragmaSet::coherent`, `with`, `without`, `PragmaIter` and the `Pragma` enum go.
+A group whose keys belong to no profile says so in `Group::SHARED`.
+
+`Set` is implemented for flat tuples of pragmas, arities zero through sixteen. It folds its members into `MASK`, `GROUPS`, `SHARED`, `REACH` and `VERDICT`, the first thing wrong with the set or the empty string. `Set::each` hands every member to a `Visit`, and a walk is handed a `Site`, the profile, the triple and a `ToolPath` per tool found. `checked::<S>()` is the `const fn` that asserts over the verdict, and `crate_reach::<S>()` the one that refuses a pragma of workspace reach. `PragmaSet` stays as the folded value of a set, a mask built by `PragmaSet::of::<S>()`, read by `contains::<P>()`, with nothing that changes it; `PragmaSet::coherent`, `with`, `without`, `PragmaIter` and the `Pragma` enum go.
 
 The thirteen pragmas the crate has become types under their names. `ParallelCodegen` takes its count as a const parameter. `MathPeephole` requires `All<(FastMath,)>` and `Profiling` requires `Any<(Pgo, Bolt)>`, which is what `coherent` repaired by hand.
 
@@ -36,13 +40,15 @@ A group with no pragma in the set leaves the choice to the toolchain. lld is the
 
 The workspace's script writes `.cargo/hilavitkutin-build.toml` beside the wrapper, with the text of `write_generated`. Its first line names the crate that wrote it, which `claim` reads back as a `Claim`. A script that claims the workspace and finds the file written by another crate writes nothing and fails the build with a `cargo::error` naming both crates. `config.toml` takes the file by `include = [{ path = "hilavitkutin-build.toml", optional = true }]`: `write_cargo_config` writes that line beside the wrapper's, and a `config.toml` that exists without it is left alone and the notice names the line, as the wrapper's line is handled today. The build that writes the file runs before cargo has read it, and the next one takes the keys. The tables are written for `dev` and `release`; the three custom profiles stay design until cargo tells a script which one it builds.
 
+The file is dotted keys with no table header. A key of no profile is written once, the pragma being told through `Shared`, and `claimed::<P>()` refuses at check a claiming prototype whose sets hold different pragmas of a shared group, since one key twice is a file cargo cannot read. `Notice` gains the two things said about the file, and `includes_generated` reads the include line from a config file's text.
+
 What is not checked: a requirement between a pragma of one script and a pragma of another. `DylibDomain` in one crate and an LTO pragma in the workspace's set are each accepted, and the design says so.
 
 ### `DESIGN.md.tmpl`, new section "The target and what it admits"
 
 `Target` is the target's facts, read from `CARGO_CFG_TARGET_OS`, `CARGO_CFG_TARGET_ENV`, `CARGO_CFG_TARGET_ARCH` and `CARGO_CFG_TARGET_FEATURE` through the script's closure: `Os`, `Env`, `Arch`, the `ObjectFormat` that follows from them, and `Isa`, which is the instruction-set enum `TargetAxis` under the name of what it is. `Pragma::admitted` takes the target and answers with the sentence of a refusal or with nothing. `Mold`, `Wild` and `Bfd` admit ELF only; `Cranelift` and `DylibDomain` do not admit wasm. `Bolt`, ELF only as well, is not held to it yet: it sits in every prototype's release set and writes nothing, and refusing it would fail every release build on macOS.
 
-A pragma the target does not admit fails the build: `configure` writes `cargo::error=` with the pragma's name, the fact and the remedy. The script that claims the workspace does the same for a pragma whose tool the machine lacks.
+A pragma the target does not admit fails the build: `configure` writes `cargo::error=` with the pragma's name, the fact and the remedy, and the same for a pragma whose tool is a local build with no path in its `Site`. The environment enum is reached as `target::Env`, the root having the closure's trait under that name. The script that claims the workspace does the same for a pragma whose tool the machine lacks.
 
 `TierAxis` and `PassesAxis` are deleted. The section "Four-part build configuration model" loses its three axes and says the flags of a crate follow from its set.
 
@@ -52,7 +58,11 @@ A pragma the target does not admit fails the build: `configure` writes `cargo::e
 
 `write_tool_dir` writes the directory a tool has under a tools home, `<home>/<host triple>/<name>-<version>`. The home is `HILAVITKUTIN_BUILD_TOOLS_HOME` where the builder sets it, and the per-user cache where not (`$XDG_CACHE_HOME/hilavitkutin-build/tools`, else `$HOME/.cache/hilavitkutin-build/tools`, on macOS `$HOME/Library/Caches/hilavitkutin-build/tools`), decided by `tools_home`.
 
-`provision` answers what the script does about one tool from what the script found, as a `Provision`: `Use` the one on the path where its version line holds the pin, `Use` the one in the home, `Build` it into the home, or `Refuse` with the command that brings a package or a component. Where it builds, the `script!` expansion runs `cargo install --locked --version <pin> --root <dir> <crate>`, says so in a `cargo::warning` first, and removes every other `<name>-*` directory beside the new one. A pragma's writer takes the path of its tool, so a locally built linker is named by its full path and needs nothing on `PATH`.
+`provision` answers what the script does about one tool from what the script found, as a `Provision`: `Use` the one on the path where its version line holds the pin, `Use` the one in the home, `Build` it into the home, or `Refuse` with the command that brings a package or a component. Where it builds, the `script!` expansion runs `cargo install --locked --version <pin> --root <dir> <crate>`, says so in a `cargo::warning` first, and removes every other `<name>-*` directory beside the new one. A pragma's writer takes the path of its tool, so a locally built linker is named by its full path and needs nothing on `PATH`. A `Proof` holds a `Line`. The script that builds takes a lock directory beside the tool's, gives the child cargo a target directory of its own and none of the outer build's wrapper or flags, and a refusal is the text of `write_refusal`.
+
+### `DESIGN.md.tmpl`, section "Entry point"
+
+`BuildConfig::from_env` reads through the closure and `BuildConfig::from_cargo` takes the values already read. `write_directives` is generic over the set and takes its `Site`. `Profile::name` is the profile as cargo spells it.
 
 ### `DESIGN.md.tmpl`, section "Prototypes and the wiring a workspace takes"
 
@@ -80,8 +90,9 @@ Entries added, names unbackticked: zig cc as a driver and a C compiler with a pr
 
 ## What the mechanism rests on
 
-Five sketches, each with the compiler's or cargo's output in its `FINDINGS.md` under `mock/research/sketches/`:
+Sketches, each with the compiler's or cargo's output in its `FINDINGS.md` under `mock/research/sketches/`:
 
+- `202611192215_dotted-keys-and-an-error-directive`: the generated file in dotted keys, one key twice refused by cargo before any script runs, and `cargo::error` failing a build after the script ran to its end.
 - `202611192110_a-flat-tuple-set-refused-under-cargo-check`: the set, the three requirement forms, the group and the reach refusal, each seen refused under `cargo check`.
 - `202611192125_cargo-takes-a-generated-config-by-include`: the include line with no file, then with the file.
 - `202611192150_each-linker-by-its-link-arguments`: mold, GNU ld and wild each linking and leaving its mark, wild refused under gcc.

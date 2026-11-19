@@ -49,9 +49,12 @@ build script owns both: it passes a closure that reads one variable,
 and the crate reads `PROFILE`, the `CARGO_CFG_TARGET_*` values and
 `RUSTC_WORKSPACE_WRAPPER` through it, resolves the `BuildConfig`, and writes the `cargo::` directives
 into the `core::fmt::Write` the script supplies, which the script
-prints. `BuildConfig::from_cargo`, `write_directives` and
-`write_wrapper` are the parts `configure` composes, public for a
-script that needs one alone.
+prints. `BuildConfig::from_env`, which reads through the closure,
+`BuildConfig::from_cargo`, which takes the values already read,
+`write_directives` and `write_wrapper` are the parts `configure`
+composes, public for a script that needs one alone. `write_directives`
+is generic over the set it writes and takes the set's `Site`, and
+`Profile::name` is the profile as cargo spells it.
 Does NOT do live CPUID/sysctl detection, hardware topology
 (L1 sizes, core counts, P/E ratio) is a runtime concern of
 hilavitkutin's thread module, whose `classify_cores` reads it through
@@ -310,8 +313,18 @@ The four writers are the four routes a pragma's text takes: a flag the
 wrapper appends, a link argument the script prints as
 `cargo::rustc-link-arg`, a cfg, and lines of the generated cargo file.
 `Written` is what a writer is handed: the profile's name as cargo has
-it, the target triple, and the path of the pragma's tool where it has
-one. No function returns a collection; the crate does not allocate.
+it, the target triple, the path of the pragma's tool where it has
+one, and a `Shared` that says whether the keys its group shares across
+profiles are still owed or already written. No function returns a
+collection; the crate does not allocate.
+
+Each route has one form of text, so a set's text is its members' texts
+one after another. A pragma's rustc flags are separated by single
+spaces with none before the first or after the last, and the set puts
+one space between two pragmas that wrote any. Link arguments and cfgs
+are one to a line. Cargo configuration is whole lines in dotted keys
+with no table header, `profile.release.lto = "fat"`, since two pragmas
+write keys of one table and TOML takes a header once.
 
 A `Requirement` is read as three masks, `ALL`, `ANY` and `NONE`.
 `All<(A, B)>` asks that every one of the list is in the set,
@@ -319,19 +332,25 @@ A `Requirement` is read as three masks, `ALL`, `ANY` and `NONE`.
 `()` asks nothing. A `Group` is a choice a set holds one value of at
 most, a type with a `BIT` and with `CLASH`, the sentence for a set
 that holds two of it; `Free` is the group of a pragma that is one
-value of no choice.
+value of no choice. A group whose keys belong to no profile, the link
+driver's and the C compiler's, says so in `SHARED`.
 
 `Set` is implemented for the flat tuples of pragmas, arities zero
-through sixteen. It folds its members into three constants: `MASK`,
-every member's bit, `REACH`, the widest reach among them, and
-`VERDICT`, the first thing wrong with the set (a group held twice, a
-requirement unmet) as that pragma's or group's own sentence, or the
+through sixteen. It folds its members into constants: `MASK`, every
+member's bit, `GROUPS`, every member's group, `SHARED`, the bits of the
+members whose group is shared, `REACH`, the widest reach among them,
+and `VERDICT`, the first thing wrong with the set (a group held twice,
+a requirement unmet) as that pragma's or group's own sentence, or the
 empty string. `checked::<S>()` is a `const fn` that panics with the
 verdict where there is one, and `crate_reach::<S>()` one that panics
 where the set holds a pragma of workspace reach. `script!` calls both
 in a `const` item per profile, which a check evaluates, so the refusal
-arrives at the line that names the set. `Set` also walks its members
-for each of the four writers and for `admitted`.
+arrives at the line that names the set. `Set` also walks its members:
+`Set::each` hands every member, as a type, to a `Visit`, and the four
+writers, `admitted` and the tools are each one visit. What a walk is
+handed is a `Site`: the profile, the target triple and the tools the
+script found, each a `ToolPath` of a tool and where it is, from which
+the walk makes every member its `Written`.
 
 `PragmaSet` is the folded value of a set, the mask a `BuildConfig`
 carries, built by `PragmaSet::of::<S>()` and read by `contains::<P>()`.
@@ -427,14 +446,24 @@ The script that claims the workspace writes the generated cargo file,
 care: under a name of its own first, then moved into place, and never
 into one of the roots the wiring leaves alone. `write_generated`
 writes its text: a first line that names the crate it was written for,
-then every table the workspace's pragmas write, for the `dev` and the
-`release` profile. A script that finds the file holding another text
+then every key the workspace's pragmas write, for the `dev` and the
+`release` profile. A key that belongs to no profile is in the file
+once: the pragma that writes it is told through its `Shared` when a
+profile before this one has written it, and one key twice is a file
+cargo cannot read, which stops every build before any script runs. So
+the sets of a prototype that claims the workspace hold the same pragma
+of a shared group in every profile, and `claimed::<P>()`, the `const
+fn` the claiming script's `const` item calls, refuses a prototype
+whose sets differ there. A script that finds the file holding another text
 for its own crate writes it again. A script that claims the workspace
 and finds the file written for another crate writes nothing and fails
 the build with a `cargo::error` that names both crates, since two
 crates claiming one workspace is a mistake only its author can
 resolve; `Claim` is what the script found (no file, its own, another
-crate's) and `claim` reads it from the file's first line.
+crate's by name) and `claim` reads it from the file's first line.
+`Notice` has the two things said about this file: that it was written
+and the next build takes its keys, and that `config.toml` lacks the
+`include` line, which `includes_generated` reads from its text.
 
 Cargo takes the file by the `include` line of `config.toml`.
 `write_cargo_config` writes that line with the wrapper's, so a
@@ -463,6 +492,8 @@ an `Env`, an `Arch`, the `ObjectFormat` that follows from the three,
 and an `Isa`, the widest instruction set among the features. Each is
 an enum with `Other` for a value the crate has no name for, and
 `Target::from_cargo` reads them. `BuildConfig` carries the `Target`.
+The enum of the target's environment is named in full, `target::Env`,
+since the crate's root has the closure's trait under that name.
 
 What a target admits is a requirement like the ones between pragmas,
 known only when the script runs. `Mold`, `Wild` and `Bfd` admit an ELF
@@ -470,6 +501,9 @@ target only. `Cranelift` and `DylibDomain` do not admit wasm. Where
 `admitted` answers with a sentence, `configure` writes
 `cargo::error=` with the pragma's name, that sentence and the remedy,
 and the build fails. Nothing falls back to another value in silence.
+The same line is written for a pragma whose tool is a local build and
+whose `Site` holds no path for it, which is what a script written by
+hand gets where it names such a pragma: only `script!` provisions.
 
 `Bolt`, which is ELF only, is not held to this: it is in the release
 set of every prototype and writes nothing yet, and refusing it would
@@ -479,7 +513,9 @@ fail every release build on macOS. It says so when it gains a hook.
 
 A pragma that needs something the toolchain does not bring names it in
 `TOOL`, a row of `TOOLS`. A `Tool` has a name, a pinned version, a
-`Source` and a `Proof`.
+`Source` and a `Proof`. A `Proof` is a `Line`, what the tool's version
+line has to start with or hold, or that the tool is found in the
+toolchain's sysroot, and for a linker the mark it leaves in `.comment`.
 
 | Tool | Version | Source | Proof |
 |---|---|---|---|
@@ -522,6 +558,12 @@ workspace's alike. Where the answer is to build, it prints a
 then removes every other `<name>-*` directory beside the new one, so a
 pin that moved leaves no old version behind. Nothing of it is done by
 hand. The build that needs a tool waits for it once per machine.
+Scripts of one workspace run side by side, so the one that builds
+makes a lock directory beside the tool's first and the others wait for
+it to go. The child cargo is given a target directory of its own under
+the tool's, and none of the outer build's wrapper or flags. Where the
+answer is to refuse, the script prints the text of `write_refusal` as
+a `cargo::error`.
 
 ## LLVM pass plugin (T4 §Q4c)
 
