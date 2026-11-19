@@ -6,11 +6,15 @@
 //! across frames, so the state lives here between calls. One slot per thread:
 //! a new key drops the old state first (joining its workers) before the new
 //! one is built, so two large states never coexist.
+//!
+//! The key is the bench's own type, so another bench of the tree reuses the
+//! slot with a key naming what its own construction reads.
 
 use std::any::Any;
 use std::cell::RefCell;
 
-/// What identifies an arm's state: everything its construction reads.
+/// What identifies an arm's state in this bench: everything its construction
+/// reads.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Key {
     pub arm:     &'static str,
@@ -21,7 +25,7 @@ pub struct Key {
 }
 
 struct Slot {
-    key:   Option<Key>,
+    key:   Option<Box<dyn Any>>,
     state: Option<Box<dyn Any>>,
 }
 
@@ -30,21 +34,22 @@ thread_local! {
 }
 
 /// Run `body` on the state for `key`, building it with `make` when the slot
-/// holds another key or another type.
-pub fn with<T: 'static, R>(
-    key: Key,
+/// holds another key, a key of another type, or state of another type.
+pub fn with<K: PartialEq + 'static, T: 'static, R>(
+    key: K,
     make: impl FnOnce() -> T,
     body: impl FnOnce(&mut T) -> R,
 ) -> R {
     SLOT.with(|slot| {
         let mut slot = slot.borrow_mut();
-        let fresh = slot.key != Some(key) || !slot.state.as_ref().is_some_and(|s| s.is::<T>());
+        let same_key = slot.key.as_ref().and_then(|k| k.downcast_ref::<K>()) == Some(&key);
+        let fresh = !same_key || !slot.state.as_ref().is_some_and(|s| s.is::<T>());
         if fresh {
             // Drop before building: the old state's workers join here.
             slot.state = None;
             slot.key = None;
             slot.state = Some(Box::new(make()));
-            slot.key = Some(key);
+            slot.key = Some(Box::new(key));
         }
         let state = slot
             .state

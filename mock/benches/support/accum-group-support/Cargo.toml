@@ -1,0 +1,32 @@
+# A root of its own: a support crate the generated bench driver and the arms
+# take by path, and `mock bench test` tests where it stands.
+[workspace]
+
+[package]
+name = "accum-group-support"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Everything the arms of `accumulator_grouped` share: the law, the data, the
+# three schemes of the fold split and the hand model of each, the frame on the
+# bench's crew, and the routine. Each arm under `accumulator_grouped/arms/` is
+# a one-line cdylib over this crate. The crew is `evs-support`'s and the slot
+# that keeps an arm's state between calls, the ceil slice and the frame
+# protocol are `stc-support`'s, so this crate holds only the fold split.
+[dependencies]
+evs-support = { path = "../evs-support" }
+stc-support = { path = "../stc-support" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+
+# The pinned arvo crates name notko by its `ssh` spelling; the patch points
+# that spelling at the `https` source the engine names, so the graph holds one
+# notko (the same patch as mock/Cargo.toml).
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
+
+# The equality tests run the fold on up to 256 real worker threads; an
+# unoptimised build makes the larger record counts needlessly slow.
+[profile.test]
+opt-level = 2

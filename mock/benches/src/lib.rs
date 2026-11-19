@@ -9,7 +9,9 @@
 //! - `routine_for` serves the members whose routine is not a byte routine:
 //!   `engine_vs_std` (`Evs<N, W>` by the section's workload),
 //!   `single-trunk-convergence` (`Conv<N>` with the input builder of the
-//!   section's workload and worker count), `resource_storage`'s `rsb_seqd`
+//!   section's workload and worker count), `accumulator_grouped` (`Acc<N>`
+//!   with the input builder of the section's worker count and group width),
+//!   `resource_storage`'s `rsb_seqd`
 //!   (`SeqAlgo<N>`) and `frame_wide` (`FrameHeavy<N>` or `FrameLight<N>` by the
 //!   sweep).
 //! - `after_cell` runs what used to run after a member's own loop: the
@@ -45,6 +47,7 @@ const EVS: &str = "engine_vs_std";
 const STC: &str = "single-trunk-convergence";
 const RSB: &str = "resource_storage";
 const FRAME: &str = "frame_wide";
+const ACC: &str = "accumulator_grouped";
 
 /// The hooks the generated driver runs.
 pub fn hooks() -> Hooks {
@@ -65,6 +68,7 @@ fn routine_for(config: &BenchConfig) -> Option<RoutineSpec> {
         },
         EVS => evs_bridge(config)?,
         STC => stc_bridge(config)?,
+        ACC => acc_bridge(config)?,
         RSB if config.bench_name.contains("seqd") => rsb_seqd_bridge(config.n)?,
         FRAME => {
             frame_wide_support::bridge_for(
@@ -97,6 +101,21 @@ fn evs_bridge(config: &BenchConfig) -> Option<mockspace_bench_core::RoutineBridg
         };
     }
     Some(pick!(4096, 65536, 1048576, 4194304))
+}
+
+/// `Acc<N>` with the input builder for the section's worker count and group
+/// width. A section is named `w<W>_g<G>`.
+fn acc_bridge(config: &BenchConfig) -> Option<mockspace_bench_core::RoutineBridge> {
+    use accum_group_support::Acc;
+    let section = accum_group_support::section::parse(&config.bench_name)?;
+    let mut bridge = match config.n {
+        4096 => routine_bridge!(Acc<4096>),
+        65536 => routine_bridge!(Acc<65536>),
+        1048576 => routine_bridge!(Acc<1048576>),
+        _ => return None,
+    };
+    bridge.input_builder = accum_group_support::builder(section.workers, section.group)?;
+    Some(bridge)
 }
 
 /// `Conv<N>` with the input builder for the section's workload and worker
