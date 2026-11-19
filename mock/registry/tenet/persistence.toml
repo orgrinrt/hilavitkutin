@@ -30,6 +30,7 @@ quote = '''
 origin = "proposed"
 written_by = "the design template of the workspace, agent-written, undated"
 standing = "held"
+superseded_by = ["op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint"]
 keywords = ["hilavitkutin-persistence", "hot-cold storage", "bridge", "ecosystem", "standalone"]
 
 [[tenet]]

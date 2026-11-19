@@ -361,3 +361,60 @@ stamp = 'provisional, 2026-11-13: nothing read in the written history shows it t
 keywords = ["hilavitkutin-build", "no_std", "core::fmt::Write", "CARGO_CFG", "build script", "extern crate std", "PROFILE"]
 rejects = ["the crate touching the environment or the filesystem"]
 related = ["tenet::the_build_crate_is_a_build_dependency_of_every_crate_and_has_no_runtime_dependencies"]
+
+[[tenet]]
+id = "the_api_crate_carries_the_unit_vocabulary_the_store_types_the_context_and_the_platform_contracts_and_nothing_only_the_engine_reads"
+subject = "identity"
+what = "The api crate is the consumer-facing contract surface: the work unit and the unit vocabulary, the access-set types, the three store types, the context, and the platform contracts for clock, memory provider and thread pool. It carries no contract surface for items received or emitted outside unit execution, and nothing that only the engine reads."
+mechanism = "`hilavitkutin-api`: `WorkUnit` and the unit vocabulary, `AccessSet`, `Column`/`Resource`/`Virtual`, the context traits, `Contains`, `ClockApi`/`MemoryProviderApi`/`ThreadPoolApi`. Op's answer, among four placements two blind seats agreed on: \"all four chosen\"."
+source = "mock/research/202611191345_api-placement/OP-CALL.md:7-16"
+provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+- WorkUnit stays in the api. WorkUnit and the unit vocabulary stay in hilavitkutin-api, as the ratified rows have it. Domain crates are opt-in depends above it.
+- Capability, sink, codec leave. Capability, sink and codec leave hilavitkutin, since Push and BulkPush there duplicate notko's sink. This supersedes one sentence of a provisional row.
+- Engine-only items to the engine. dispatch_codegen, PoolFrame, WakeStrategy, Executor, ExecutorError, HybridExecutor and ceiling_div move into the engine, and adaptation becomes a candidate opt-in crate.
+- Persistence builds on str and api. "Builds on str and api" is read as a dependency: MemoryProviderApi stays in the api, and the held agent-written persistence row is superseded.
+
+His answer: all four chosen.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, 2026-11-16, choosing every one of the four placements put to him: "all four chosen"'
+ratified_from = ["quote: mock/research/202611191345_api-placement/OP-CALL.md:7-16"]
+keywords = ["hilavitkutin-api", "WorkUnit", "unit vocabulary", "platform contracts", "MemoryProviderApi", "placement", "engine-only"]
+rejects = ["the api carrying the capability, sink and codec surface", "the api carrying items only the engine reads"]
+related = ["tenet::op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink", "tenet::op_ruled_that_the_dispatch_codegen_surface_and_the_runtime_data_plane_live_in_the_engine_and_adaptation_is_a_candidate_opt_in_crate", "tenet::op_ruled_that_the_persistence_crate_builds_on_the_str_and_api_crates_and_its_design_holds_over_the_lint"]
+
+[[tenet]]
+id = "op_ruled_that_capability_sink_and_codec_leave_hilavitkutin_and_a_consumer_takes_notko_s_sink"
+subject = "identity"
+what = "Op ruled on 2026-11-16 that the capability, sink and codec surface leaves hilavitkutin, since its push and bulk push duplicate notko's sink. A consumer that receives or emits items outside unit execution takes notko's sink. What reports a count belongs with the crate that owns the count type, by that crate's own round, and is not rebuilt in hilavitkutin."
+mechanism = "`capability`, `sink` and `codec` are deleted from `hilavitkutin-api` with their smoke tests; `notko::sink::{Push, BulkPush}` is the surface. Op's answer: \"all four chosen\", the second being \"Capability, sink, codec leave\"."
+source = "mock/research/202611191345_api-placement/OP-CALL.md:12-16, mock/research/202611191345_api-placement/OP-CALL.md:22-22"
+provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+- Capability, sink, codec leave. Capability, sink and codec leave hilavitkutin, since Push and BulkPush there duplicate notko's sink. This supersedes one sentence of a provisional row.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, 2026-11-16, choosing every one of the four placements put to him: "all four chosen"'
+ratified_from = ["quote: mock/research/202611191345_api-placement/OP-CALL.md:12-16"]
+keywords = ["capability", "sink", "codec", "notko", "Push", "BulkPush", "duplicate"]
+rejects = ["a second sink surface beside notko's"]
+
+[[tenet]]
+id = "op_ruled_that_the_dispatch_codegen_surface_and_the_runtime_data_plane_live_in_the_engine_and_adaptation_is_a_candidate_opt_in_crate"
+subject = "identity"
+what = "Op ruled on 2026-11-16 that the items whose only reader is the engine are declared in the engine: the dispatch codegen surface with its ids and programs, the pool frame, the wake strategy, and the sealed executor with its error and its one implementation. The adaptation axes are a candidate for an opt-in crate the engine and the providers take, named and not yet designed."
+mechanism = "`dispatch_codegen` becomes `hilavitkutin::dispatch::codegen`; `PoolFrame`, `WakeStrategy`, `Executor`, `ExecutorError` and `HybridExecutor` are declared in `hilavitkutin::thread` under the engine's own seal; `CeilingDiv`, read by nothing, is deleted rather than moved. Op's answer: \"all four chosen\", the third being \"Engine-only items to the engine\"."
+source = "mock/research/202611191345_api-placement/OP-CALL.md:13-16, mock/research/202611191345_api-placement/OP-CALL.md:22-22"
+provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+- Engine-only items to the engine. dispatch_codegen, PoolFrame, WakeStrategy, Executor, ExecutorError, HybridExecutor and ceiling_div move into the engine, and adaptation becomes a candidate opt-in crate.
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, 2026-11-16, choosing every one of the four placements put to him: "all four chosen"'
+ratified_from = ["quote: mock/research/202611191345_api-placement/OP-CALL.md:13-16"]
+keywords = ["dispatch codegen", "PoolFrame", "WakeStrategy", "Executor", "HybridExecutor", "engine-only", "adaptation", "opt-in crate"]
+rejects = ["engine-only items in the api crate"]
