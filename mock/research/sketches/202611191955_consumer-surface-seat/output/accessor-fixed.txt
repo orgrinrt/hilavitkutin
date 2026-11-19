@@ -1,0 +1,30 @@
+error[E0210]: type parameter `C` must be used as the type parameter for some local type (e.g., `MyStruct<C>`)
+  --> accessor/src/lib.rs:18:9
+   |
+18 | impl<R, C, A, I> hilavitkutin_providers::HasInterner for C
+   |         ^ type parameter `C` must be used as the type parameter for some local type
+   |
+   = note: implementing a foreign trait is only possible if at least one of the types for which it is implemented is local
+   = note: only traits defined in the current crate can be implemented for a type parameter
+
+error[E0207]: the type parameter `R` is not constrained by the impl trait, self type, or predicates
+  --> accessor/src/lib.rs:18:6
+   |
+18 | impl<R, C, A, I> hilavitkutin_providers::HasInterner for C
+   |      ^ unconstrained type parameter
+
+error[E0207]: the type parameter `A` is not constrained by the impl trait, self type, or predicates
+  --> accessor/src/lib.rs:18:12
+   |
+18 | impl<R, C, A, I> hilavitkutin_providers::HasInterner for C
+   |            ^ unconstrained type parameter
+
+error[E0207]: the type parameter `I` is not constrained by the impl trait, self type, or predicates
+  --> accessor/src/lib.rs:18:15
+   |
+18 | impl<R, C, A, I> hilavitkutin_providers::HasInterner for C
+   |               ^ unconstrained type parameter
+
+Some errors have detailed explanations: E0207, E0210.
+For more information about an error, try `rustc --explain E0207`.
+error: could not compile `consumer-surface-accessor` (lib) due to 4 previous errors

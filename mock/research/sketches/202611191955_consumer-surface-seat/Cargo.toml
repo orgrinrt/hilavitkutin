@@ -1,0 +1,26 @@
+# Probe: the four consumer requests of 2026-11-19 (stack-coord, against
+# hilavitkutin 252c5190), read against the shipped crates. `probe` builds the
+# shipped interner, string and api crates by path and holds the runtime checks
+# as tests. `reach` holds the compile check of a unit reading the interner
+# resource; it is expected not to build, and its error is the result.
+[workspace]
+resolver = "3"
+members = ["probe", "reach", "accessor"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.1.0"
+
+[workspace.dependencies]
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+hilavitkutin-str = { path = "../../../crates/hilavitkutin-str" }
+hilavitkutin-sym = { path = "../../../crates/hilavitkutin-sym" }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", default-features = false, features = ["const", "try_trait_v2"] }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }

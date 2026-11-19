@@ -1,0 +1,2 @@
+   Compiling consumer-surface-accessor v0.1.0 (/home/user/.worktrees/hila-seat/mock/research/sketches/202611191955_consumer-surface-seat/accessor)
+    Finished `dev` profile [unoptimized] target(s) in 0.05s

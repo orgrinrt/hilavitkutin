@@ -1,0 +1,50 @@
+1b9a80cc chore: lock src changelist 202611192051-ers6
+492e9d4c fix: refuse a `MemoryArena` whose last id is the masked sentinel
+f79004be docs: write the source changelist that keeps ids below the sentinel
+65e72f06 chore: lock doc changelist 202611192051-ers6
+83e731cf docs: keep the arena's ids below the masked overflow sentinel
+8646d809 chore: unlock design round, deprecate src and unlock doc
+0a9dc496 chore: regenerate generated files after merge
+810e4a15 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+60512f10 fix: label the crate layers by dependency depth
+d96a2192 fix: make MemoryArena deduplicate and resolve only ids it issued
+b8920f95 research: read the canon on the api revision, placement and pieces
+18b55d72 fix: name notko's product with its carrier as a parameter
+be43d787 docs: write the source changelist for the deduplicating arena
+1689319e chore: lock doc changelist 202611192051-ers6
+bf4a29d2 docs: put the interning law on `ArenaInterner` and in `MemoryArena`
+c42ddab2 docs: open the round that makes the default interner deduplicate
+d11962c9 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+67e63ca4 feat: set a consumer's workspace up from one line with script!
+89fd7779 docs: record the expert seat on the four consumer surface asks
+3177527a docs: land the two stranded sketch records
+739b02e6 docs: land the unit-names-its-lists-only sketch and report
+252c5190 refactor: move the engine-only items out of the api crate
+07a9e9a3 bench: add the build and link bench with its first default cells
+7b1a6136 chore: configure the `commit-subject` gate
+dea557ae bench: port every bench onto the current harness
+2b137e9d docs: land the first stack audit
+0e098dc4 docs: land the second stack audit
+c5567576 bench: land the overwritten july m1 and november xeon runs
+f623ba58 bench: land the linux results of 14 november on the generated driver
+c6a00a64 research: port channel documents into the research dir
+5a64c58a fix: say nothing of dropped flags under `clippy-driver`
+638fb969 bench: land the m1 results of 14 november
+35f55e13 bench: land the m1 results of 14 november
+7cb45cd6 research: land the second stack audit
+266650fb feat: land the skip differential, memory provider and unit abort
+62453a65 fix: make the hilavitkutin suite and surface hold what they claim
+ade63db9 fix: make the hilavitkutin benches measure what they claim
+f0304be0 docs: plan the engine's one path and its correctness work
+8236de3c feat: revise the hilavitkutin api in place
+b4c70cd0 feat: put the hilavitkutin canon on stamped and held standings
+e99af156 docs: record the load-time units panel and its sketches
+4d31368e fix: make the leaf crates green
+271909e5 feat: build every crate through `hilavitkutin-build`
+44f7de28 bench: add the frame_wide member and the wide bench matrix
+81c5c587 docs: land the record from every unmerged branch
+311a2ae6 feat: install a swapped resource value under a provisional spec
+c4902694 docs: audit hilavitkutin as part of the stack
+49ab3440 feat: land the recovered engine source, tests and bench variants
+ab63d610 bench: measure single trunk convergence against hand written loops
+ada51bb4 chore: port the lints to the one view of the tree
