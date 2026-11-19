@@ -74,8 +74,8 @@ pub fn run_once<A: Arm>(input: &AccInput, n: usize) -> AccOutput {
         fn visit<const G: usize>(self) -> AccOutput {
             let w = self.input.workers as usize;
             let mut frame = Frame::<A::At<G>>::new(data::column(self.input.seed, self.n), w);
-            frame.op(Op::Frame, w);
-            frame.op(Op::Read, w)
+            frame.op(Op::Frame);
+            frame.op(Op::Read)
         }
     }
     visit_group(input.group, Once::<A> {
@@ -109,10 +109,10 @@ impl<A: Arm> GroupVisitor for Entry<'_, A> {
             |frame| {
                 let r = timed_calibrated! {
                     run {
-                        core::hint::black_box(frame.op(Op::Frame, w));
+                        core::hint::black_box(frame.op(Op::Frame));
                     }
                 };
-                *out = frame.op(Op::Read, w);
+                *out = frame.op(Op::Read);
                 r
             },
         )

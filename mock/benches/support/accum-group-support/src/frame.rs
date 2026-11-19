@@ -121,18 +121,18 @@ impl<S: Scheme> Frame<S> {
     }
 
     /// What the last frame produced, as the routine compares it.
-    pub fn output(&self, workers: usize) -> AccOutput {
-        AccOutput::of::<S>(self.partials(), workers)
+    pub fn output(&self) -> AccOutput {
+        AccOutput::of::<S>(self.partials(), self.crew.workers())
     }
 
     /// The crew's frame protocol, for the harness's warm regime.
-    pub fn op(&mut self, op: Op, workers: usize) -> AccOutput {
+    pub fn op(&mut self, op: Op) -> AccOutput {
         match op {
             Op::Frame => {
                 core::hint::black_box(self.run());
                 AccOutput::default()
             },
-            Op::Read => self.output(workers),
+            Op::Read => self.output(),
         }
     }
 }

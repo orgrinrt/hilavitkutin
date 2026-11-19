@@ -59,10 +59,10 @@ fn a_dropped_partial_is_refused() {
 }
 
 #[test]
-fn an_output_at_another_worker_count_is_refused() {
+fn an_output_at_another_walker_count_is_refused() {
     let at = input(3, 8);
     let mut out = run_once::<GroupedArm>(&at, N);
-    out.workers = 2;
+    out.walkers = 2;
     assert!(validate(&at, &out).is_err());
 }
 
@@ -75,11 +75,11 @@ fn an_unknown_scheme_id_is_refused() {
 }
 
 /// The partials of one partial per core at two workers, relabelled as run
-/// at three: the worker echo matches, the bytes are the wrong count's.
+/// at three: the walker count matches, the bytes are the wrong count's.
 #[test]
 fn per_core_partials_of_two_workers_are_refused_at_three() {
     let mut out = run_once::<PerCoreArm>(&input(2, 8), N);
-    out.workers = 3;
+    out.walkers = 3;
     assert!(validate(&input(3, 8), &out).is_err());
 }
 
@@ -88,6 +88,17 @@ fn per_core_partials_of_two_workers_are_refused_at_three() {
 #[test]
 fn grouped_partials_of_two_workers_pass_at_three() {
     let mut out = run_once::<GroupedArm>(&input(2, 8), N);
-    out.workers = 3;
+    out.walkers = 3;
     assert_eq!(validate(&input(3, 8), &out), Ok(()));
+}
+
+/// The walker count is read from the crew: one walker over every record
+/// reports one walker at a section of four, and passes there.
+#[test]
+fn the_walker_count_is_the_crews_not_the_sections() {
+    use accum_group_support::arms::SequentialArm;
+    let at = input(4, 8);
+    let out = run_once::<SequentialArm>(&at, N);
+    assert_eq!(out.walkers, 1);
+    assert_eq!(validate(&at, &out), Ok(()));
 }

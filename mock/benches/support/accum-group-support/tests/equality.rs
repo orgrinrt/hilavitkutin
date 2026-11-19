@@ -37,15 +37,14 @@ fn input(workers: u32, group: u32) -> AccInput {
     }
 }
 
-/// The outputs at every worker count, with the worker echo cleared so they
+/// The outputs at every worker count, with the walker count cleared so they
 /// compare on the result alone.
 fn across<A: accum_group_support::arms::Arm>(n: usize, group: u32) -> Vec<(u32, AccOutput)> {
     WORKERS
         .iter()
         .map(|&w| {
             let mut out = run_once::<A>(&input(w, group), n);
-            assert_eq!(out.workers, w);
-            out.workers = 0;
+            out.walkers = 0;
             (w, out)
         })
         .collect()
@@ -75,7 +74,7 @@ fn grouped_by_the_data_gives_the_same_bytes_at_every_worker_count() {
             }
             let data = data::column(SEED, n);
             let mut model = expected(ID_GROUPED, &data, 1, group).unwrap();
-            model.workers = 0;
+            model.walkers = 0;
             assert_eq!(
                 first, model,
                 "n = {n}, G = {group}: differs from the hand model"
@@ -98,7 +97,7 @@ fn one_partial_per_core_gives_different_bytes_across_worker_counts() {
         for (w, out) in &outs {
             let mut model =
                 expected(ID_PER_CORE, &data::column(SEED, n), *w as usize, GROUPS[0]).unwrap();
-            model.workers = 0;
+            model.walkers = 0;
             assert_eq!(
                 *out, model,
                 "n = {n}, {w} workers: differs from the hand model"
@@ -124,7 +123,7 @@ fn grouping_from_each_unrounded_slice_start_fails_where_a_slice_cuts_a_group() {
             8,
         )
         .unwrap();
-        model.workers = 0;
+        model.walkers = 0;
         assert_eq!(*out, model, "{w} workers: differs from the hand model");
     }
     // Where every slice is whole groups, the two agree: 6144 records over 1,

@@ -7,8 +7,10 @@
 //! a new key drops the old state first (joining its workers) before the new
 //! one is built, so two large states never coexist.
 //!
-//! The key is the bench's own type, so another bench of the tree reuses the
-//! slot with a key naming what its own construction reads.
+//! The key is generic, so another bench of the tree reuses this code with a
+//! key of its own naming what its construction reads. Each arm is its own
+//! library with its own thread-local, so the code is shared and the slot is
+//! not.
 
 use std::any::Any;
 use std::cell::RefCell;

@@ -29,6 +29,7 @@ pub mod law;
 pub mod scheme;
 pub mod section;
 
+use evs_support::Crew;
 use mockspace_bench_core::Routine;
 
 use crate::frame::digest_of;
@@ -70,19 +71,19 @@ pub struct AccOutput {
     pub combined: i64,
     /// The scheme's id, so validation checks the right model.
     pub scheme:   u32,
-    /// The worker count the arm ran at.
-    pub workers:  u32,
+    /// The walkers the crew ran, read from the crew.
+    pub walkers:  u32,
 }
 
 impl AccOutput {
-    /// The output for `partials` kept by scheme `S` at `workers` workers.
-    pub fn of<S: Scheme>(partials: &[Sat], workers: usize) -> Self {
+    /// The output for `partials` kept by scheme `S` on `walkers` walkers.
+    pub fn of<S: Scheme>(partials: &[Sat], walkers: usize) -> Self {
         AccOutput {
             digest:   digest_of(partials),
             parts:    partials.len() as u64,
             combined: i64::from(left_fold(partials).to_raw()),
             scheme:   S::ID,
-            workers:  workers as u32,
+            walkers:  walkers as u32,
         }
     }
 }
@@ -126,7 +127,7 @@ pub fn expected(id: u32, data: &[Sat], workers: usize, group: u32) -> Option<Acc
 
         fn visit<const G: usize>(self) -> Option<AccOutput> {
             fn out<S: Scheme>(data: &[Sat], workers: usize) -> AccOutput {
-                AccOutput::of::<S>(&S::model(data, workers), workers)
+                AccOutput::of::<S>(&S::model(data, workers), Crew::clamped(S::walkers(workers)))
             }
             let (d, w) = (self.data, self.workers);
             Some(match self.id {
@@ -166,12 +167,12 @@ impl<const N: usize> Routine for Acc<N> {
     /// seed. The hand model of `grouped` names no worker count, so a pass at
     /// every section's count is the equality across counts.
     fn validate_output(input: &AccInput, output: &AccOutput) -> Result<(), &'static str> {
-        if output.workers != input.workers {
-            return Err("an arm ran at a worker count other than its section's");
-        }
         let data = data::column(input.seed, N);
         match expected(output.scheme, &data, input.workers as usize, input.group) {
             None => Err("an output names no scheme of the bench"),
+            Some(model) if model.walkers != output.walkers => {
+                Err("the crew ran another walker count than the section's scheme asks for")
+            },
             Some(model) if model == *output => Ok(()),
             Some(_) => Err("an arm's partials differ from its scheme's hand model"),
         }
