@@ -1,0 +1,33 @@
+# The stranded hilavitkutin branches of last week, decided
+
+On 19 November the workspace note `.shared/research/202611191130_stack-unmerged-branches/README.md` classed every unmerged remote branch of hilavitkutin. This note takes each SOURCE and MIXED branch it names, except the two of the build-pragmas job (`work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an`, `work/hilavitkutin-and-kaski-take-hilavitkutin-build-with-a-first`), and decides it: land, consolidate, or retire as superseded by `dev`. BENCH branches are left to the coordinator that sweeps them.
+
+The classification counts a path as landed only where its blob on `dev` is identical, so a branch that landed by squash and was then moved past on `dev` reads as still differing. Every branch here was therefore measured three ways against `origin/dev` at `07a9e9a3`: whether a `dev` commit carries one of its subjects, and if so whether the branch tip differs from that commit on any path the branch changed; whether the branch is an ancestor of another branch that did land; and whether any file it adds under `mock/design_rounds`, `mock/research` or `mock/benches` has a blob found nowhere in `dev`'s tree or history. The scripts that did it ran from a scratch directory and are restated in the method section below so the result can be reproduced.
+
+The outcome is that none of the seventeen lands. Sixteen are on `dev` already, byte for byte at their landing, and one waits on a mockspace change that has not landed. Retiring means the remote branch is deleted through `forge-route delete-branch`, which is the coordinator's step; this note only records the decision.
+
+## Per branch
+
+| branch | tip | decision | by which commit, and why |
+|---|---|---|---|
+| `work/hv-leaf` | `3e005f12` | retire | landed as `4d31368e` fix: make the leaf crates green; tip differs from it on none of its 58 paths. Last review `202611132042_review-hv-leaf/REVIEW-3.md`, merge after one text sweep. |
+| `work/mockspace-lint-one-pass` | `8080f61c` | retire | landed as `ada51bb4` chore: port the lints to the one view of the tree; 0 of 2 paths differ. |
+| `work/notko-by-https` | `54dfa0bd` | retire | landed as `26e926b6` fix: spell the notko git source by https; 0 of 9 paths differ. |
+| `work/overflow-is-a-value` | `f392cabe` | retire | landed as `c42d7074` feat: make an append past capacity a refusal the consumer configures; 0 of 66 paths differ. |
+| `work/suite-can-fail` | `eac83654` | retire | landed as `c2b392d1` test: make the hilavitkutin suite able to fail; 0 of 69 paths differ. |
+| `work/dev-gate-green` | `1818a73b` | retire | landed as `4b327c57` fix: make hilavitkutin dev pass its own commit gate; 0 of 26 paths differ. |
+| `work/hv-suite-surface` | `5b1f2e5d` | retire | landed as `62453a65` fix: make the hilavitkutin suite and surface hold what they claim; 0 of 152 paths differ. Last reports `202611140639_hv-suite-surface-reports/`. |
+| `work/hv-suite-reads` | `14f8b713` | retire | an ancestor of `work/hv-suite-surface`, so on `dev` through `62453a65`. |
+| `work/hv-suite-words` | `b9582d71` | retire | an ancestor of `work/hv-suite-surface`, through `62453a65`. Its one record file with no blob on `dev`, `mock/design_rounds/202611140539_changelist.src.md`, is an earlier text of the src changelist the surface branch carried to its end. |
+| `work/hv-suite-examples` | `d08ad8d4` | retire | an ancestor of `work/hv-suite-surface`, through `62453a65`; the same one changelist file as `work/hv-suite-words`. |
+| `work/canon-registry-next` | `f36b94e9` | retire | landed as `b4c70cd0` feat: put the hilavitkutin canon on stamped and held standings; 0 of 158 paths differ. Last review `202611132132_review-canon-registry/REVIEW-3.md`. |
+| `work/canon-registry` | `dbdc2098` | retire | its tree is identical to `work/canon-registry-next`, so it is on `dev` through `b4c70cd0`. |
+| `work/recover-landing-source` | `5e873662` | retire | landed as `49ab3440` feat: land the recovered engine source, tests and bench variants; 0 of 213 paths differ. 24 of its record blobs were on `dev` and removed there later on purpose (the bench port `dea557ae`). |
+| `work/recover-landing-swap` | `4a7e2414` | retire | landed as `311a2ae6` feat: install a swapped resource value under a provisional spec; 0 of 58 paths differ. |
+| `recover/unlanded-rounds-and-benches` | `b24f1588` | retire | an ancestor of both `work/recover-landing-source` and `work/recover-landing-swap`, so on `dev` through `49ab3440` and `311a2ae6`. Its 37 record blobs found nowhere on `dev` are bench variant files the descendant branch rewrote before landing. |
+| `work/loop-core` | `5603f850` | retire | the five crates it adds (`hilavitkutin-contracts`, `-laws`, `-reference`, `-frozen-implementors` beside `-frozen-authors`) are a second contract vocabulary beside the api, which op's "revise the api in place now, no second contract crate" retired as a destination (`202611131930_triage/TRIAGE.md`); the api was revised in place by `8236de3c`, and the one crate kept, `hilavitkutin-frozen-authors`, is on `dev`. All 16 of its record files are on `dev`. Its map is `202611130529_map-loop-core/map-loop-core.md`. |
+| `work/commit-subject-config` | `623a2bf2` | hold | its `mockspace.toml` change is on `dev` as `7b1a6136`, `release` included. What is left, `9b9c444e`, turns the `commit-style` skill template into `{{commit_rules}}`, `{{commit_types}}` and `{{commit_examples}}`, which only mockspace's unlanded `work/commit-type-gates` (`5920744`) renders. Landed today it would render those placeholders literally. It lands after that mockspace branch, or is retired with it. |
+
+## Method
+
+For each branch, with `base` its merge base against `origin/dev`: the `dev` commit whose subject equals one of the branch's own subjects in `base..origin/dev`, then `git diff --name-only <that commit> origin/<branch> -- <paths changed in base..branch>`, counted. Ancestry by `git merge-base --is-ancestor`. Record files by `git diff --name-only --diff-filter=A base origin/<branch> -- mock/design_rounds mock/research mock/benches`, each blob looked up in `git ls-tree -r origin/dev` and in `git log --raw origin/dev`.
