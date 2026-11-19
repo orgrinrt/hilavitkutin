@@ -185,6 +185,14 @@ Minimal contract. The host implements with whatever backing
 storage it wants. Only handles runtime strings; const strings are
 handled by the wrapper.
 
+The arena keeps the interning law for runtime strings: `arena_intern`
+of a string equal to one it already stored returns the id it gave that
+string, so equal strings give equal handles through `StringInterner`.
+`arena_resolve` of an id the arena did not issue returns the empty
+string and reads nothing outside the arena's storage; a handle from
+another interner instance, or an arena's overflow id masked into the
+28-bit handle, lands there.
+
 ## `StringInterner<A>`, wrapper
 
 ```rust
@@ -195,7 +203,8 @@ pub struct StringInterner<A: ArenaInterner> {
 
 Wraps `ArenaInterner` with const table handling. The const table
 (linker section) is always consulted first. The host only
-implements `ArenaInterner`.
+implements `ArenaInterner`. A const string deduplicates by the
+section lookup; a runtime string by the arena, as its contract says.
 
 Methods (string-typed convenience, the everyday surface):
 - `intern(&self, s: &str) -> Str`, check const table, fall back
