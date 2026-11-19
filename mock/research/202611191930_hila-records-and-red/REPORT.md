@@ -4,7 +4,7 @@ This job had three parts: find what deletes the committed bench charts when the 
 
 ## The bench charts
 
-Ticket `land_tool_generate_only_step_deletes_the_bench_charts_under` (commit `ceeeb00ab946`) says that landing the two sketch branches runs a generate-only step which removes the committed charts under `docs/`. It does not reproduce. Both branches were cut before dev's `dea557ae` (bench: port every bench onto the current harness) and `07a9e9a3` (bench: add the build and link bench), and those commits added the charts. So a two-dot diff of dev against either branch lists 14 charts under `docs/` as deleted. A merge does not delete them.
+Ticket `land_tool_generate_only_step_deletes_the_bench_charts_under` (clause-dev commit `ceeeb00ab946`) says that landing the two sketch branches runs a generate-only step which removes the committed charts under `docs/`. It does not reproduce. Both branches were cut at `2b137e9d`, before dev's `07a9e9a3` (bench: add the build and link bench) added the 14 `BENCHES.build-static.*` and `BENCHES.link-static.*` charts. So a two-dot diff of dev against either branch lists those 14 charts as deleted. A merge does not delete them.
 
 Measured on 19 Nov against hilavitkutin dev `739b02e6`:
 
@@ -27,7 +27,7 @@ Ticket `hilavitkutin_dev_two_ui_fixtures_expect_stderr_three_lines_b`: `red-chec
 ## Test runs
 
 - `land-core_test.sh`, new arm: 1 passed; with the mutation, 1 failed as it should.
-- `red-check ... hilavitkutin compile_fail_fixtures`: green on the branch, so no dev run was needed.
+- `red-check ... hilavitkutin compile_fail_fixtures`: green on the job branch while it still stood at dev's `739b02e6`, so no separate dev run was needed. The reviewer ran it again on the branch tip, green.
 
 ## Tickets filed or bumped
 
@@ -35,6 +35,12 @@ Ticket `hilavitkutin_dev_two_ui_fixtures_expect_stderr_three_lines_b`: `red-chec
 - `idea_bench_docgen_with_no_runs_keeps_the_committed_charts_in` (mockspace).
 - `bootstrap_counts_the_cargo_mock_step_passed_though_its_binst` (clause-dev).
 - `a_helper_s_git_push_to_a_local_bare_repository_is_refused_by` (clause-dev).
+- `hilavitkutin_accum_per_gives_worker_count_dependent_results` (hilavitkutin), the shipped-engine failure the accumulator sketch records.
+- `idea_sketches_md_and_cargo_mock_sketches_take_a_split_outcom` (mockspace).
+
+## Review
+
+One `pr-reviewer-senior` pass over the branch at `b2ef4af5`: merge after fixes. Its one blocker was a wrong sha for the charts (`dea557ae` touches nothing under `docs/`), fixed above together with its two minor points. Its follow-up is the two tickets just listed.
 
 ## Canon
 
