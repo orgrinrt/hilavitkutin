@@ -36,15 +36,3 @@ timing = { passes = 6, runs_per_pass = 1, batch_size = 1, cooldowns_ms = [0], va
 [sweep.clean]
 title = "build-static: every crate built into an empty target directory"
 points = [97]
-
-[sweep.leaf]
-title = "build-static: rebuilt after an edit to one leaf implementation crate"
-points = [97]
-
-[sweep.mid]
-title = "build-static: rebuilt after an edit to one mid contract crate"
-points = [97]
-
-[sweep.root]
-title = "build-static: rebuilt after an edit to one root contract crate"
-points = [97]
