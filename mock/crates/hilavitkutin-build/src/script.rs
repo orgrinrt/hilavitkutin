@@ -32,7 +32,7 @@
 macro_rules! script {
     ($prototype:ident) => {{
         use ::core::fmt;
-        use ::std::{env, fs, io, path::{Path, PathBuf}, process::{self, Command}}; // lint:allow(forbidden-imports) reason: the macro's expansion is the build script's code, compiled there and never in this crate; tracked: forbidden_imports_reads_the_body_of_an_exported_macro_as_the
+        use ::std::{env, fs, io, path::{Path, PathBuf}, process::{self, Command}};
 
         /// Hands the crate's text to a file or to standard output, and
         /// keeps the reason of a write that failed.
@@ -176,7 +176,7 @@ macro_rules! script {
                         file.finish(wrote)?;
                         #[cfg(unix)]
                         {
-                            use ::std::os::unix::fs::PermissionsExt as _; // lint:allow(forbidden-imports) reason: the macro's expansion is the build script's code, compiled there and never in this crate; tracked: forbidden_imports_reads_the_body_of_an_exported_macro_as_the
+                            use ::std::os::unix::fs::PermissionsExt as _;
                             fs::set_permissions(&whole, fs::Permissions::from_mode(0o755))?;
                         }
                         fs::rename(&whole, &wrapper_path)?;
