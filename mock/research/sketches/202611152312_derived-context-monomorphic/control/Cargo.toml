@@ -1,0 +1,23 @@
+# The control of the emitted-code search: the bodies of the first sketch
+# (`202611152150_derived-context-block-form`), instantiated over its erased
+# context and built in the same release profile. A workspace of its own,
+# because it links the shipped engine through the first sketch's `bridge`, and
+# one graph cannot hold that engine beside this sketch's copy. It edits no
+# file of the first sketch: it names its crates by path.
+
+[workspace]
+resolver = "3"
+members = ["control-probe"]
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.0.0"
+
+[patch."ssh://git@github.com/orgrinrt/notko.git"]
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

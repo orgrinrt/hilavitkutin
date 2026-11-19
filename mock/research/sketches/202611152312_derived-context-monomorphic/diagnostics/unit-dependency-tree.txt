@@ -1,0 +1,63 @@
+The crates the unit crate takes, for the first condition. Run from the sketch
+root. Paths are shortened: `<sketch>` is this directory and `<mock>` is the
+repository's `mock/`. Repeated subtrees are cut where cargo marks them `(*)`,
+and the arvo source `ssh://git@github.com/orgrinrt/arvo.git` at revision
+1b2796e9 is written `arvo@1b2796e9`; notko and notko-hlist are
+`https://github.com/orgrinrt/notko.git`, branch dev, at f5d8f563.
+
+command:
+cargo +nightly-2026-05-28 tree -p unit -e normal,build,dev
+
+output:
+unit v0.1.0 (<sketch>/unit)
+├── arvo v0.1.0 (arvo@1b2796e9)
+│   ├── arvo-bits v0.1.0 (arvo@1b2796e9)
+│   │   ├── arvo-bits-contracts v0.1.0 (arvo@1b2796e9)
+│   │   │   ├── arvo-storage v0.1.0 (arvo@1b2796e9)
+│   │   │   │   ├── arvo-strategy v0.1.0 (arvo@1b2796e9)
+│   │   │   │   │   ├── arvo-transparent v0.1.0 (arvo@1b2796e9)
+│   │   │   │   │   │   └── notko v0.0.1 (notko dev f5d8f563)
+│   │   │   │   │   └── notko v0.0.1 (notko dev f5d8f563)
+│   │   │   │   ├── arvo-transparent v0.1.0 (arvo@1b2796e9) (*)
+│   │   │   │   └── notko v0.0.1 (notko dev f5d8f563)
+│   │   │   ├── arvo-strategy v0.1.0 (arvo@1b2796e9) (*)
+│   │   │   ├── arvo-transparent v0.1.0 (arvo@1b2796e9) (*)
+│   │   │   └── notko v0.0.1 (notko dev f5d8f563)
+│   │   ├── arvo-storage v0.1.0 (arvo@1b2796e9) (*)
+│   │   └── arvo-strategy v0.1.0 (arvo@1b2796e9) (*)
+│   ├── arvo-bits-contracts v0.1.0 (arvo@1b2796e9) (*)
+│   ├── arvo-numeric-contracts v0.1.0 (arvo@1b2796e9)
+│   │   ├── arvo-bits-contracts v0.1.0 (arvo@1b2796e9) (*)
+│   │   ├── arvo-strategy v0.1.0 (arvo@1b2796e9) (*)
+│   │   ├── arvo-transparent v0.1.0 (arvo@1b2796e9) (*)
+│   │   └── notko v0.0.1 (notko dev f5d8f563)
+│   ├── arvo-storage v0.1.0 (arvo@1b2796e9) (*)
+│   ├── arvo-strategy v0.1.0 (arvo@1b2796e9) (*)
+│   ├── arvo-transparent v0.1.0 (arvo@1b2796e9) (*)
+│   └── notko v0.0.1 (notko dev f5d8f563)
+└── hilavitkutin-api v0.1.0 (<sketch>/api)
+    ├── arvo v0.1.0 (arvo@1b2796e9) (*)
+    ├── arvo-bitmask v0.1.0 (arvo@1b2796e9)
+    │   ├── arvo v0.1.0 (arvo@1b2796e9) (*)
+    │   ├── arvo-bits v0.1.0 (arvo@1b2796e9) (*)
+    │   ├── arvo-bits-contracts v0.1.0 (arvo@1b2796e9) (*)
+    │   ├── arvo-mask-contracts v0.1.0 (arvo@1b2796e9)
+    │   │   ├── arvo-bits-contracts v0.1.0 (arvo@1b2796e9) (*)
+    │   │   ├── arvo-storage v0.1.0 (arvo@1b2796e9) (*)
+    │   │   ├── arvo-strategy v0.1.0 (arvo@1b2796e9) (*)
+    │   │   └── notko v0.0.1 (notko dev f5d8f563)
+    │   └── arvo-tensor v0.1.0 (arvo@1b2796e9)
+    │       └── arvo v0.1.0 (arvo@1b2796e9) (*)
+    ├── arvo-tensor v0.1.0 (arvo@1b2796e9) (*)
+    ├── hilavitkutin-ctx v0.1.0 (<mock>/crates/hilavitkutin-ctx)
+    │   [build-dependencies]
+    │   └── hilavitkutin-build v0.1.0 (<mock>/crates/hilavitkutin-build)
+    │       └── notko v0.0.1 (notko dev f5d8f563)
+    ├── notko v0.0.1 (notko dev f5d8f563)
+    └── notko-hlist v0.0.1 (notko dev f5d8f563)
+    [build-dependencies]
+    └── hilavitkutin-build v0.1.0 (<mock>/crates/hilavitkutin-build) (*)
+
+No line names `hilavitkutin` (the engine), `hilavitkutin-kit` or
+`hilavitkutin-providers`. The unit crate's own manifest lists two
+dependencies: `hilavitkutin-api` and `arvo`.

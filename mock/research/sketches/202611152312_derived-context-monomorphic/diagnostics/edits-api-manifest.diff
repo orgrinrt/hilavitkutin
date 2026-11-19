@@ -1,0 +1,16 @@
+diff --git a/crates/hilavitkutin-api/Cargo.toml b/research/sketches/202611152312_derived-context-monomorphic/api/Cargo.toml
+index cf71865a..2fe74faa 100644
+--- a/crates/hilavitkutin-api/Cargo.toml
++++ b/research/sketches/202611152312_derived-context-monomorphic/api/Cargo.toml
+@@ -19,6 +19,11 @@ trybuild = "1"
+ 
+ [features]
+ default = []
++# Sketch additions: the blanket attempts of `src/attempt_blanket.rs`. No build
++# of the sketch turns either on except the one that records its output. See
++# `EDITS.md` at the sketch root.
++attempt-blanket = []
++attempt-blanket-witness = []
+ 
+ [build-dependencies]
+ hilavitkutin-build.workspace = true

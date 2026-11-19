@@ -1,0 +1,15 @@
+error[E0277]: `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>` has no place for `Column<Glow>`
+  --> ui/fail/read_undeclared.rs:23:35
+   |
+23 |                 let vel = records.read::<Glow, _>(i);
+   |                                   ^^^^ the trait `PlaceOf<Column<Glow>, There<There<_>>>` is not implemented for `Cons<Column<Pos>, Cons<Column<Vel>, hilavitkutin_api::Empty>>`
+   |
+   = note: A member is at `Here` when it is the head of a `Cons`, and at `There<P>` when the tail holds it at `P`. The usual cause is a member the list does not hold. If the compiler reports `type annotations needed` instead, the list holds the member at more than one place. If it reports `overflow evaluating the requirement`, the walk is one step per cell and the list is deeper than the default recursion limit, so the crate root wants `#![recursion_limit = "1024"]`.
+note: required by a bound in `derived::Records::read`
+  --> $WORKSPACE/derived/src/lib.rs
+   |
+   |     unsafe fn read<T: ColumnValue, P: Slot>(&self, i: USize) -> T
+   |               ---- required by a bound in this associated function
+   |     where
+   |         R: PlaceOf<Column<T>, P>;
+   |            ^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Records::read`

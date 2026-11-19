@@ -1,0 +1,381 @@
+diff --git a/research/sketches/202611152312_derived-context-monomorphic/api/src/attempt_blanket.rs b/research/sketches/202611152312_derived-context-monomorphic/api/src/attempt_blanket.rs
+new file mode 100644
+index 00000000..e2df8a5a
+--- /dev/null
++++ b/research/sketches/202611152312_derived-context-monomorphic/api/src/attempt_blanket.rs
+@@ -0,0 +1,86 @@
++//! Attempts at a blanket `WorkUnit` for every block unit, written where
++//! `WorkUnit` is defined. Sketch additions behind features no build turns on
++//! by default; each is built once and its compiler output kept under
++//! `diagnostics/`.
++//!
++//! The wall these probe is not the blanket itself but what it assigns to
++//! `Ctx`: the api cannot name the engine's context, so the context has to come
++//! from a type function the api declares and a runner supplies.
++
++use crate::access::AccessSet;
++use crate::block::{Block, Records};
++use crate::builder_input::BuilderInput;
++use crate::context::{
++    HasBatch,
++    HasColumnReader,
++    HasColumnWriter,
++    HasEach,
++    HasReduce,
++    HasResourceProvider,
++    HasVirtualFirer,
++};
++use crate::work_unit::WorkUnit;
++
++/// Attempt b1: the context of the lists `(Self, W)`, as a type function the
++/// api declares on the read list and a runner is to implement.
++#[cfg(feature = "attempt-blanket")]
++pub trait CtxOf<'frame, W: AccessSet>: AccessSet + Sized {
++    /// The context a runner hands a unit over these lists.
++    type Ctx: Records<Self, W>
++        + HasColumnReader<Self>
++        + HasColumnWriter<W>
++        + HasResourceProvider<Self>
++        + HasVirtualFirer<W>
++        + HasEach<Self, W>
++        + HasBatch<Self, W>
++        + HasReduce<Self, W>;
++}
++
++#[cfg(feature = "attempt-blanket")]
++impl<U> WorkUnit for U
++where
++    U: Block + BuilderInput<Init = U>,
++    U::Read: for<'f> CtxOf<'f, U::Write>,
++{
++    type Ctx<'frame> = <U::Read as CtxOf<'frame, U::Write>>::Ctx;
++    type Hint = U::Hint;
++    type Read = U::Read;
++    type Write = U::Write;
++
++    #[inline(always)]
++    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
++        self.run(ctx);
++    }
++}
++
++/// Attempt b2: the same type function carrying a witness list `I`, as the
++/// first sketch's bridge carried `RI` and `WI`.
++#[cfg(feature = "attempt-blanket-witness")]
++pub trait CtxOfAt<'frame, W: AccessSet, I>: AccessSet + Sized {
++    /// The context a runner hands a unit over these lists.
++    type Ctx: Records<Self, W>
++        + HasColumnReader<Self>
++        + HasColumnWriter<W>
++        + HasResourceProvider<Self>
++        + HasVirtualFirer<W>
++        + HasEach<Self, W>
++        + HasBatch<Self, W>
++        + HasReduce<Self, W>;
++}
++
++#[cfg(feature = "attempt-blanket-witness")]
++impl<U, I> WorkUnit for U
++where
++    U: Block + BuilderInput<Init = U>,
++    U::Read: for<'f> CtxOfAt<'f, U::Write, I>,
++{
++    type Ctx<'frame> = <U::Read as CtxOfAt<'frame, U::Write, I>>::Ctx;
++    type Hint = U::Hint;
++    type Read = U::Read;
++    type Write = U::Write;
++
++    #[inline(always)]
++    fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
++        self.run(ctx);
++    }
++}
+diff --git a/research/sketches/202611152312_derived-context-monomorphic/api/src/block.rs b/research/sketches/202611152312_derived-context-monomorphic/api/src/block.rs
+new file mode 100644
+index 00000000..e2be1707
+--- /dev/null
++++ b/research/sketches/202611152312_derived-context-monomorphic/api/src/block.rs
+@@ -0,0 +1,267 @@
++//! The block form: a unit whose body names no context type.
++//!
++//! Sketch addition, not shipped source. A unit in the block form implements
++//! `Block`: its read list, its write list, its hint, and `run`, a body generic
++//! over `Records`, the one trait it reaches its records through. `Records` is
++//! implemented by a runner on its own context type, so the body monomorphises
++//! over that type and every read and write in it is the runner's own code.
++//! Nothing is erased and no function pointer is stored.
++//!
++//! A read or a write is bounded by the unit's own list and by nothing else:
++//! `R: ReadsColumn<T, K>` and `W: WritesAt<T, K>`, where `K` is the place of
++//! the column in the list and is inferred. A column the list does not hold has
++//! no place, and the call does not compile. The witness sits on the list and
++//! not on the runner's context, which is what lets a body that knows only
++//! `C: Records<R, W>` make the call.
++//!
++//! The runner's side of the witness is `ColSlots<L>`: what a runner holds for
++//! the columns of the list `L`, one slot per member in list order. The walk to
++//! place `K` is written here once, over `ColSlots`, and a runner implements
++//! the two steps (the head slot, the rest) on its own bundle nodes.
++//!
++//! Predicate of this sketch: the lists are made of plain columns alone, bare in
++//! a read list and bare, under `Written` or under `Differs` in a write list.
++//! A list holding a resource, an accumulator, a virtual, a buffered column or
++//! a reach is not a `ColList`, and a unit over one has no block form here.
++
++use arvo::{Bool, USize};
++use notko_hlist::{Here, There};
++
++use crate::access::{AccessSet, Cons, Empty};
++use crate::column_value::ColumnValue;
++use crate::hint::SchedulingHint;
++use crate::member::{Differs, Written};
++use crate::store::Column;
++use crate::work_unit::Always;
++
++// ---------------------------------------------------------------------
++// The lists a block unit declares.
++// ---------------------------------------------------------------------
++
++/// An access set made of plain columns, as a walk of head and rest.
++///
++/// `Value` is the value type of the head member's column and `Rest` the list
++/// after it. The empty list is its own rest and its head value is `()`, which
++/// no accessor reaches.
++#[diagnostic::on_unimplemented(
++    message = "`{Self}` is not a list a block unit may declare",
++    note = "In this sketch a block unit's lists hold plain columns alone: `Column<T>` in `type Read`, and `Column<T>`, `Written<Column<T>>` or `Differs<Column<T>>` in `type Write`."
++)]
++pub trait ColList: AccessSet + Sized {
++    /// The value type of the head member's column.
++    type Value;
++    /// The list after the head member.
++    type Rest: ColList;
++}
++
++impl ColList for Empty {
++    type Rest = Empty;
++    type Value = ();
++}
++
++impl<T: ColumnValue, Tail: ColList> ColList for Cons<Column<T>, Tail> {
++    type Rest = Tail;
++    type Value = T;
++}
++
++impl<T: ColumnValue, Tail: ColList> ColList for Cons<Written<Column<T>>, Tail> {
++    type Rest = Tail;
++    type Value = T;
++}
++
++impl<T: ColumnValue + PartialEq, Tail: ColList> ColList for Cons<Differs<Column<T>>, Tail> {
++    type Rest = Tail;
++    type Value = T;
++}
++
++// ---------------------------------------------------------------------
++// What a runner holds for a list.
++// ---------------------------------------------------------------------
++
++/// What a runner holds for the columns of the list `L`: one slot per member,
++/// in list order.
++///
++/// A runner implements it on its own bundle nodes. `at` is a record index of
++/// the column, not of the window: the runner's context adds its window start
++/// before it asks.
++pub trait ColSlots<L: ColList> {
++    /// What the runner holds for the rest of the list.
++    type Rest: ColSlots<L::Rest>;
++
++    /// The slots of the rest of the list.
++    fn rest(&self) -> &Self::Rest;
++
++    /// The value the head member's column holds at record `at`.
++    ///
++    /// # Safety
++    ///
++    /// `at` is a record of the column, and the plan gave the unit the record.
++    unsafe fn get(&self, at: USize) -> L::Value;
++
++    /// Store `v` at record `at` of the head member's column, and set the
++    /// column's changed mark where `mark` is true.
++    ///
++    /// # Safety
++    ///
++    /// `at` is a record of the column, and the plan gave the unit the
++    /// exclusive writer slot for it.
++    unsafe fn put(&self, at: USize, v: L::Value, mark: Bool);
++}
++
++// ---------------------------------------------------------------------
++// The witnesses, on the list.
++// ---------------------------------------------------------------------
++
++/// The read list holds the bare column of `T` at place `K`.
++#[diagnostic::on_unimplemented(
++    message = "the read list `{Self}` holds no column of `{T}`",
++    note = "A block unit reads a `Column<T>` it lists in `type Read`."
++)]
++pub trait ReadsColumn<T: ColumnValue, K>: ColList {
++    /// Read the column of `T` at record `at` through the runner's slots.
++    ///
++    /// # Safety
++    ///
++    /// As `ColSlots::get`.
++    unsafe fn read_in<B: ColSlots<Self>>(slots: &B, at: USize) -> T;
++}
++
++#[diagnostic::do_not_recommend]
++impl<T: ColumnValue, Tail: ColList> ReadsColumn<T, Here> for Cons<Column<T>, Tail> {
++    #[inline(always)]
++    unsafe fn read_in<B: ColSlots<Self>>(slots: &B, at: USize) -> T {
++        // SAFETY: the caller's obligation, passed on unchanged.
++        unsafe { slots.get(at) }
++    }
++}
++
++#[diagnostic::do_not_recommend]
++impl<H, T: ColumnValue, K, Tail: ReadsColumn<T, K>> ReadsColumn<T, There<K>> for Cons<H, Tail>
++where
++    Cons<H, Tail>: ColList<Rest = Tail>,
++{
++    #[inline(always)]
++    unsafe fn read_in<B: ColSlots<Self>>(slots: &B, at: USize) -> T {
++        // SAFETY: the caller's obligation, passed on unchanged.
++        unsafe { Tail::read_in(slots.rest(), at) }
++    }
++}
++
++/// The write list holds a column of `T` at place `K`, bare, under `Written`
++/// or under `Differs`.
++///
++/// A bare column and `Written` store the value. `Differs` compares it with
++/// the value the record holds and stores only one that differs.
++#[diagnostic::on_unimplemented(
++    message = "the write list `{Self}` holds no column of `{T}`",
++    note = "A block unit writes a column it lists in `type Write`, bare, under `Written<_>` or under `Differs<_>`."
++)]
++pub trait WritesAt<T: ColumnValue, K>: ColList {
++    /// Land `v` at record `at` of the column of `T` through the runner's
++    /// slots, by the member's rule.
++    ///
++    /// # Safety
++    ///
++    /// As `ColSlots::put`.
++    unsafe fn write_in<B: ColSlots<Self>>(slots: &B, at: USize, v: T, mark: Bool);
++}
++
++#[diagnostic::do_not_recommend]
++impl<T: ColumnValue, Tail: ColList> WritesAt<T, Here> for Cons<Column<T>, Tail> {
++    #[inline(always)]
++    unsafe fn write_in<B: ColSlots<Self>>(slots: &B, at: USize, v: T, mark: Bool) {
++        // SAFETY: the caller's obligation, passed on unchanged.
++        unsafe { slots.put(at, v, mark) }
++    }
++}
++
++#[diagnostic::do_not_recommend]
++impl<T: ColumnValue, Tail: ColList> WritesAt<T, Here> for Cons<Written<Column<T>>, Tail> {
++    #[inline(always)]
++    unsafe fn write_in<B: ColSlots<Self>>(slots: &B, at: USize, v: T, mark: Bool) {
++        // SAFETY: the caller's obligation, passed on unchanged.
++        unsafe { slots.put(at, v, mark) }
++    }
++}
++
++#[diagnostic::do_not_recommend]
++impl<T: ColumnValue + PartialEq, Tail: ColList> WritesAt<T, Here>
++    for Cons<Differs<Column<T>>, Tail>
++{
++    #[inline(always)]
++    unsafe fn write_in<B: ColSlots<Self>>(slots: &B, at: USize, v: T, mark: Bool) {
++        // SAFETY: the caller's obligation covers the read of the record it is
++        // about to write as well as the write.
++        unsafe {
++            if slots.get(at) != v {
++                slots.put(at, v, mark);
++            }
++        }
++    }
++}
++
++#[diagnostic::do_not_recommend]
++impl<H, T: ColumnValue, K, Tail: WritesAt<T, K>> WritesAt<T, There<K>> for Cons<H, Tail>
++where
++    Cons<H, Tail>: ColList<Rest = Tail>,
++{
++    #[inline(always)]
++    unsafe fn write_in<B: ColSlots<Self>>(slots: &B, at: USize, v: T, mark: Bool) {
++        // SAFETY: the caller's obligation, passed on unchanged.
++        unsafe { Tail::write_in(slots.rest(), at, v, mark) }
++    }
++}
++
++// ---------------------------------------------------------------------
++// What the body is handed, and the unit.
++// ---------------------------------------------------------------------
++
++/// The records of one window, as the body of a block unit reaches them.
++///
++/// A runner implements it on its own context type for the lists it can serve.
++/// The accessors are bounded by the lists and by nothing of the implementing
++/// type, so a body generic over `Records<R, W>` reads and writes exactly what
++/// `R` and `W` hold.
++pub trait Records<R, W> {
++    /// The number of records in the window.
++    fn len(&self) -> USize;
++
++    /// Call `f` with each record index of the window, from the first.
++    fn each<F: FnMut(USize)>(&self, f: F);
++
++    /// The value of the column of `T` at record `i` of the window.
++    ///
++    /// # Safety
++    ///
++    /// `i` is below `len()`. The plan gave this unit the record.
++    unsafe fn read<T: ColumnValue, K>(&self, i: USize) -> T
++    where
++        R: ReadsColumn<T, K>;
++
++    /// Write `v` to the column of `T` at record `i` of the window, by the rule
++    /// of the member the write list names it under.
++    ///
++    /// # Safety
++    ///
++    /// `i` is below `len()`. The plan gave this unit the exclusive writer slot.
++    unsafe fn write<T: ColumnValue, K>(&self, i: USize, v: T)
++    where
++        W: WritesAt<T, K>;
++}
++
++/// A unit of work in the block form.
++///
++/// The declaration is the read list, the write list and the hint. The body is
++/// `run`, handed the records of one window. No associated type names a
++/// context, so an implementation assigns none.
++pub trait Block<S = Always>: Send + Sync + 'static {
++    /// The stores the body reads.
++    type Read: AccessSet;
++    /// The stores the body writes.
++    type Write: AccessSet;
++    /// The scheduling hint.
++    type Hint: SchedulingHint;
++
++    /// Run the body over the records of one window.
++    fn run(&self, records: &impl Records<Self::Read, Self::Write>);
++}
+diff --git a/crates/hilavitkutin-api/src/lib.rs b/research/sketches/202611152312_derived-context-monomorphic/api/src/lib.rs
+index 989d7403..e7f1b618 100644
+--- a/crates/hilavitkutin-api/src/lib.rs
++++ b/research/sketches/202611152312_derived-context-monomorphic/api/src/lib.rs
+@@ -33,6 +33,11 @@ pub mod access;
+ pub mod accum_overflow;
+ pub mod accum_refused;
+ pub mod adapt;
++// Sketch addition: the blanket attempts, behind features. See `EDITS.md`.
++#[cfg(any(feature = "attempt-blanket", feature = "attempt-blanket-witness"))]
++pub mod attempt_blanket;
++// Sketch addition: the block form. See `EDITS.md` at the sketch root.
++pub mod block;
+ pub mod builder;
+ pub mod builder_input;
+ pub mod capability;

@@ -1,0 +1,16 @@
+[package]
+name = "derived"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+# The api and what the api itself depends on. No engine crate.
+[dependencies]
+hilavitkutin-api.workspace = true
+arvo.workspace = true
+notko-hlist.workspace = true
+
+[features]
+# The case that must fail: the derived context reports one record fewer than
+# the window holds, so the last record of every window is left unwritten.
+mutant-short-window = []
