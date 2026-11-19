@@ -132,6 +132,8 @@ The crate's pragmas become types, a set a tuple of them, and the seven build cho
 
 `script!(Default)`, `script!(Deterministic)` and `configure` keep their form and their text. Gone: `Pragma` the enum, `PragmaIter`, the mutators of `PragmaSet`, `configure_with`, `write_config_file`, `Prototype` the enum, `TargetAxis`, `TierAxis`, `PassesAxis`, `REQUIREMENTS` and its types, and `BuildConfig`'s `tier` and `passes`. `write_directives`, `write_rustflags`, `Tree::of` and `plan` change their signatures.
 
+kaski is the one consumer of a part that goes. Twenty-eight of its build scripts call `configure_with` and take FastMath out of the profile's set: `kaski-engine`, the `kaski-engine-*` crates, `kaski-sim`, and the two configured arms of its `build-config` bench. They become `configure_as::<Deterministic, _, _>` in the same work, on the kaski branch `work/hilavitkutin-build-pragma-migration`, which lands by kaski's own flow straight after this round, with no ratchet. The sets of `Deterministic` are the sets those scripts built, the defaults without FastMath and without MathPeephole, which the old coherence pass dropped with it, so the two bench arms measure what they measured.
+
 ## Comparison to deprecated changelist
 
 ### src/pragma.rs (rewritten)
@@ -212,4 +214,4 @@ The deprecated text left open whether the bench's source would join this changel
 
 ### what a consumer sees
 
-Unchanged.
+The lists are unchanged. The deprecated text named no consumer of `configure_with`. This one names kaski's twenty-eight scripts and where they move.
