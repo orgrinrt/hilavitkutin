@@ -1,0 +1,29 @@
+[package]
+name = "hilavitkutin-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "WorkUnit + provider trait surface for the hilavitkutin pipeline engine"
+repository.workspace = true
+
+[dependencies]
+arvo.workspace = true
+arvo-bitmask.workspace = true
+arvo-tensor.workspace = true
+hilavitkutin-ctx.workspace = true
+notko.workspace = true
+notko-hlist.workspace = true
+
+[dev-dependencies]
+trybuild = "1"
+
+[features]
+default = []
+# Sketch additions: the blanket attempts of `src/attempt_blanket.rs`. No build
+# of the sketch turns either on except the one that records its output. See
+# `EDITS.md` at the sketch root.
+attempt-blanket = []
+attempt-blanket-witness = []
+
+[build-dependencies]
+hilavitkutin-build.workspace = true

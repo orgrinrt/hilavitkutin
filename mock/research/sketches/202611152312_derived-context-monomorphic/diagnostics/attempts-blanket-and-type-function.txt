@@ -1,0 +1,59 @@
+Attempts b1, b2, c1 and c2: a block unit registered bare, with no wrapper.
+Each is a feature of the api copy or the engine copy that no other build turns
+on. Run from the sketch root. `<sketch>` stands for this directory.
+
+b1. The api's own blanket `impl<U: Block + BuilderInput<Init = U>> WorkUnit for U`,
+with the context read off an api-declared type function `CtxOf`.
+
+command:
+cargo +nightly-2026-05-28 check -q -p hilavitkutin-api --features attempt-blanket
+output: none, exit 0.
+
+command:
+cargo +nightly-2026-05-28 check -q -p native -p probe --features hilavitkutin-api/attempt-blanket
+output: none, exit 0. The native units' own `WorkUnit` impls and the engine
+copy's `Blk<U>` cohere with the blanket.
+
+Control that the feature reaches the api in that second command: the same
+command with `hilavitkutin-api/attempt-blanket-witness` in its place fails
+with the E0207 below.
+
+b2. The same blanket carrying a witness list `I` for the type function.
+
+command:
+cargo +nightly-2026-05-28 check -q -p hilavitkutin-api --features attempt-blanket-witness
+output:
+error[E0207]: the type parameter `I` is not constrained by the impl trait, self type, or predicates
+  --> api/src/attempt_blanket.rs:72:9
+   |
+72 | impl<U, I> WorkUnit for U
+   |         ^ unconstrained type parameter
+
+c1. The engine supplying `CtxOf` for every read list, so b1's blanket
+resolves to `CtxFor`.
+
+command:
+cargo +nightly-2026-05-28 check -q -p hilavitkutin --features attempt-ctx-of
+output (an unused-import warning for `Cons` and `Empty` is left out):
+error[E0210]: type parameter `R` must be used as the type parameter for some local type (e.g., `MyStruct<R>`)
+  --> engine/src/dispatch/engine_ctx/attempt_ctx_of.rs:17:14
+   |
+17 | impl<'frame, R, W> CtxOf<'frame, W> for R
+   |              ^ type parameter `R` must be used as the type parameter for some local type
+   |
+   = note: implementing a foreign trait is only possible if at least one of the types for which it is implemented is local
+   = note: only traits defined in the current crate can be implemented for a type parameter
+
+c2. The same, spelled per list shape so no bare parameter is the implementing
+type.
+
+command:
+cargo +nightly-2026-05-28 check -q -p hilavitkutin --features attempt-ctx-of-per-shape
+output:
+error[E0210]: type parameter `W` must be used as the type parameter for some local type (e.g., `MyStruct<W>`)
+  --> engine/src/dispatch/engine_ctx/attempt_ctx_of.rs:30:14
+error[E0210]: type parameter `W` must be used as the type parameter for some local type (e.g., `MyStruct<W>`)
+  --> engine/src/dispatch/engine_ctx/attempt_ctx_of.rs:39:20
+
+The error lines of b2, c1 and c2 are transcribed from the builds; the source
+excerpt and notes under each c2 error are the same as c1's and are left out.
