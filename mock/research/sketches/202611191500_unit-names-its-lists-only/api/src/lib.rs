@@ -33,6 +33,8 @@ pub mod access;
 pub mod accum_overflow;
 pub mod accum_refused;
 pub mod adapt;
+#[cfg(feature = "attempt-read-vals-on-the-read-set")]
+pub mod attempt_read_vals_on_the_read_set;
 #[cfg(feature = "attempt-unit-sched")]
 pub mod attempt_unit_sched;
 pub mod builder;

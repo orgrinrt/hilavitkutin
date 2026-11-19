@@ -25,6 +25,8 @@ default = []
 unit-blanket = []
 # Sketch (202611191500): attempt s1, which does not compile.
 attempt-unit-sched = []
+# Sketch (202611191500): attempt c1, which does not compile.
+attempt-read-vals-on-the-read-set = []
 
 [build-dependencies]
 hilavitkutin-build.workspace = true

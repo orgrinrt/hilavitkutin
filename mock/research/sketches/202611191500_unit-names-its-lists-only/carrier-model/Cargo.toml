@@ -1,10 +1,11 @@
-# A verbatim copy of the model crate of notko's sketch
+# A copy of the model crate of notko's sketch
 # `research/sketches/202611191400_carrier-as-a-typestate-parameter/model/`
 # (orgrinrt/notko, branch `work/notko-hot-and-product` at `69915c8`): the
 # product of a list with its carrier as a parameter of the product trait. The
 # shape is a design there and not yet in `notko-hlist`, so the sketch builds
-# against the model. Only the package name differs from the source, which is
-# `model`; the library keeps that name.
+# against the model. The package is named `carrier-model` where the source is
+# `model`, and the library keeps that name. The repository's commit hook
+# formatted `src/lib.rs`; `EDITS.md` says what that changed.
 [package]
 name = "carrier-model"
 version = "0.0.0"
