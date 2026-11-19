@@ -1,0 +1,23 @@
+diff --git a/crates/hilavitkutin/Cargo.toml b/research/sketches/202611191500_unit-names-its-lists-only/engine/Cargo.toml
+index 36e08c53..ae361c3d 100644
+--- a/crates/hilavitkutin/Cargo.toml
++++ b/research/sketches/202611191500_unit-names-its-lists-only/engine/Cargo.toml
+@@ -12,6 +12,8 @@ hilavitkutin-kit.workspace = true
+ arvo.workspace = true
+ notko.workspace = true
+ notko-hlist.workspace = true
++# Sketch (202611191500): the cells of the read product.
++carrier-model.workspace = true
+ arvo-bitmask.workspace = true
+ arvo-graph.workspace = true
+ arvo-sparse.workspace = true
+@@ -42,6 +44,9 @@ intrinsics-std = []
+ # suite must fail with it on. It builds only with HILAVITKUTIN_MUTANT_CHECK set
+ # (see `src/lib.rs`), so no other build can pick it up.
+ mutant-truncating-append = []
++# Sketch (202611191500): `resolve_map` applies a value function one record
++# short of the window. The sketch's run test must fail with it on.
++mutant-short-window = []
+ 
+ [build-dependencies]
+ hilavitkutin-build.workspace = true

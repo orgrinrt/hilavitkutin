@@ -1,0 +1,58 @@
+error[E0283]: type annotations needed for `arvo_tensor::capacity::Dim<N>`
+  --> ui/attempts/d1_both_bodies.rs:51:9
+   |
+51 |     let mut sched = Scheduler::builder()
+   |         ^^^^^^^^^
+...
+54 |         .build(ArenaColumnStorage::new(memory), USize(8))
+   |                ------------------ type must be known at this point
+   |
+   = note: the type must implement `arvo_tensor::capacity::Capacity`
+help: the trait `arvo_tensor::capacity::Capacity` is implemented for `arvo_tensor::capacity::Dim<N>`
+  --> /root/.cargo/git/checkouts/arvo-da1db1860201e542/1b2796e/mock/crates/arvo-tensor/src/capacity.rs:46:1
+   |
+46 | impl<const N: usize> Capacity for Dim<N> { // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: array-length-grammar r...
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required by a bound in `ArenaColumnStorage`
+  --> $WORKSPACE/providers/src/storage.rs
+   |
+   | pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
+   |                                                        ^^^^^^^^ required by this bound in `ArenaColumnStorage`
+help: consider giving `sched` an explicit type, where the type for type parameter `D` is specified
+   |
+51 |     let mut sched: /* Type */ = Scheduler::builder()
+   |                  ++++++++++++
+
+error[E0283]: type annotations needed
+  --> ui/attempts/d1_both_bodies.rs:56:19
+   |
+56 |     let _ = sched.run();
+   |                   ^^^ cannot infer type of the type parameter `Witnesses` declared on the method `run`
+   |
+   = note: multiple `impl`s satisfying `Both: RunUnit<ColumnBinding<Pos, BindingNil>, _>` found in the `hilavitkutin` crate:
+           - impl<A, W, RIdx, RCIdx, WCIdx, WAIdx, WVIdx> RunUnit<A, ByCtx<(RIdx, RCIdx, WCIdx, WAIdx, WVIdx)>> for W
+             where for<'f> <W as Positional<<W as HasSchedule>::Sched>>::Ctx<'f> == EngineCtx<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Read, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, <A as Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>>::Out, <A as AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>>::Out, <A as VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>>::Out, <<W as HasSchedule>::Sched as MetaPtrFor<'f>>::Ptr>, W: HasSchedule, W: Positional<<W as HasSchedule>::Sched>, for<'f> <W as HasSchedule>::Sched: MetaPtrFor<'f>, A: Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>, A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>, A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>, for<'f> A: AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>, for<'f> A: VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>, W: Positional<<W as HasSchedule>::Sched>, <W as HasSchedule>::Sched: ?Sized;
+           - impl<A, W, RIdx, RCIdx, WCIdx, WAIdx, WVIdx> RunUnit<A, ByValue<(RIdx, RCIdx, WCIdx, WAIdx, WVIdx)>> for W
+             where W: HasSchedule, W: RecordOp<<W as HasSchedule>::Sched>, <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: ReadSet, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: WriteSet, for<'f> <W as HasSchedule>::Sched: MetaPtrFor<'f>, A: Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>, A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>, A: ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>, for<'f> A: AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>, for<'f> A: VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>, for<'f> EngineCtx<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Read, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, <A as Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>>::Out, <A as AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>>::Out, <A as VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>>::Out, <<W as HasSchedule>::Sched as MetaPtrFor<'f>>::Ptr>: ResolveMap<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write>, <W as WorkUnit<<W as HasSchedule>::Sched>>::Read: ?Sized, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write: ?Sized, <W as HasSchedule>::Sched: ?Sized, EngineCtx<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Read, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, <A as Project<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Read, RCIdx>>::Out, <A as ColProject<<W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WCIdx>>::Out, <A as AccumProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WAIdx>>::Out, <A as VirtualProject<'f, <W as WorkUnit<<W as HasSchedule>::Sched>>::Write, WVIdx>>::Out, <<W as HasSchedule>::Sched as MetaPtrFor<'f>>::Ptr>: ?Sized;
+   = note: required for `WuCons<Both, WuNil>` to implement `RunFiber<ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+   = note: required for `WuCons<Both, WuNil>` to implement `RunGatedTrunk<WuCons<Both, WuNil>, ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>, Cons<Column<Pos>, hilavitkutin_api::Empty>, arvo_tensor::capacity::Dim<64>, arvo_tensor::capacity::Dim<64>, Bits<64>, 0, hilavitkutin::dispatch::engine_ctx::Here>`
+   = note: required for `WuCons<Both, WuNil>` to implement `RunTrunkDispatch<WuCons<Both, WuNil>, ColumnBinding<Pos, BindingNil>, Cons<(_, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>, Cons<Column<Pos>, hilavitkutin_api::Empty>, arvo_tensor::capacity::Dim<64>, arvo_tensor::capacity::Dim<64>, Bits<64>, 0>`
+note: required by a bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run`
+  --> $WORKSPACE/engine/src/scheduler/run.rs
+   |
+   |       pub fn run<Witnesses, GW>(&mut self) -> Cfg::Out // lint:allow(no-bare-numeric) reason: const-generic dispatch entry position;...
+   |              --- required by a bound in this associated function
+   |       where
+   |           WuVals: RunTrunkDispatch<
+   |  _________________^
+   | |                 WuVals,
+   | |                 <Vals as BindingsFor>::Bindings,
+   | |                 Witnesses,
+...  |
+   | |                 0, // lint:allow(no-bare-numeric) reason: const-generic entry position; tracked: #121
+   | |             >,
+   | |_____________^ required by this bound in `scheduler::run::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run`
+help: consider specifying the generic arguments
+   |
+56 |     let _ = sched.run::<Cons<(U, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>, Cons<(Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::Here, hilavitkutin_api::Empty>), hilavitkutin_api::Empty>>();
+   |                      +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

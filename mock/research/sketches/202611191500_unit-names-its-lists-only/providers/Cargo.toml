@@ -1,0 +1,22 @@
+# A copy of the source of `hilavitkutin-providers`, built against the api copy
+# of this sketch, with the one edit `EDITS.md` lists (`adapt_wu.rs`). The
+# shipped build script is not run.
+[package]
+name = "hilavitkutin-providers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+build = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+notko.workspace = true
+arvo.workspace = true
+arvo-bits.workspace = true
+arvo-tensor.workspace = true
+hilavitkutin-api.workspace = true
+hilavitkutin-kit.workspace = true
+hilavitkutin-str.workspace = true

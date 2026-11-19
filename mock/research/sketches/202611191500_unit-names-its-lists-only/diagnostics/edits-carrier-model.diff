@@ -1,0 +1,67 @@
+diff --git a/home/user/notko/research/sketches/202611191400_carrier-as-a-typestate-parameter/model/src/lib.rs b/home/user/hilavitkutin/mock/research/sketches/202611191500_unit-names-its-lists-only/carrier-model/src/lib.rs
+index ab80bd2f..ff17f91b 100644
+--- a/home/user/notko/research/sketches/202611191400_carrier-as-a-typestate-parameter/model/src/lib.rs
++++ b/home/user/hilavitkutin/mock/research/sketches/202611191500_unit-names-its-lists-only/carrier-model/src/lib.rs
+@@ -48,12 +48,12 @@ impl<const N: usize> Uniform for Arr<N> {
+ pub const trait ByRow: Uniform {
+     fn at<E: Elem>(c: &Self::Of<E>, i: usize) -> E::Value;
+ }
+-impl<'a> const ByRow for Col<'a> {
++const impl<'a> ByRow for Col<'a> {
+     fn at<E: Elem>(c: &Self::Of<E>, i: usize) -> E::Value {
+         c[i]
+     }
+ }
+-impl<const N: usize> const ByRow for Arr<N> {
++const impl<const N: usize> ByRow for Arr<N> {
+     fn at<E: Elem>(c: &Self::Of<E>, i: usize) -> E::Value {
+         c[i]
+     }
+@@ -77,11 +77,13 @@ pub trait Project<C>: List {
+ 
+ impl<C> Project<C> for Empty {
+     type Prod = PNil;
++
+     fn sealed(_: seal::Token) {}
+ }
+ 
+ impl<C: Carrier<H>, H, T: Project<C>> Project<C> for Cons<H, T> {
+     type Prod = PCons<C, H, T::Prod>;
++
+     fn sealed(_: seal::Token) {}
+ }
+ 
+@@ -90,13 +92,13 @@ pub const trait Has<C: Carrier<M>, M, P: Place>: Project<C> + PlaceOf<M, P> {
+     fn pick(p: &Self::Prod) -> &<C as Carrier<M>>::Of;
+ }
+ 
+-impl<C: Carrier<M>, M, T: Project<C>> const Has<C, M, Here> for Cons<M, T> {
++const impl<C: Carrier<M>, M, T: Project<C>> Has<C, M, Here> for Cons<M, T> {
+     fn pick(p: &Self::Prod) -> &<C as Carrier<M>>::Of {
+         &p.head
+     }
+ }
+ 
+-impl<C, H, M, P, T> const Has<C, M, There<P>> for Cons<H, T>
++const impl<C, H, M, P, T> Has<C, M, There<P>> for Cons<H, T>
+ where
+     C: Carrier<H> + Carrier<M>,
+     P: Place,
+@@ -115,7 +117,7 @@ pub const trait Rows<C: Uniform>: Project<C> + Project<Val> {
+         C: [const] ByRow;
+ }
+ 
+-impl<C: Uniform> const Rows<C> for Empty {
++const impl<C: Uniform> Rows<C> for Empty {
+     fn read_row(_: &PNil, _: usize) -> PNil
+     where
+         C: [const] ByRow,
+@@ -124,7 +126,7 @@ impl<C: Uniform> const Rows<C> for Empty {
+     }
+ }
+ 
+-impl<C: Uniform, H: Elem, T: [const] Rows<C>> const Rows<C> for Cons<H, T> {
++const impl<C: Uniform, H: Elem, T: [const] Rows<C>> Rows<C> for Cons<H, T> {
+     fn read_row(p: &<Self as Project<C>>::Prod, i: usize) -> <Self as Project<Val>>::Prod
+     where
+         C: [const] ByRow,

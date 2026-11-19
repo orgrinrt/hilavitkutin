@@ -1,0 +1,278 @@
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `ExtensionSurface<_>`
+   --> api/src/builder_input.rs:174:1
+    |
+174 | impl<T: ?Sized + 'static> BuilderInput for ExtensionSurface<T> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `ExtensionSurface<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `builder_input::ExtensionSurface<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `DefaultRunCfg<_>`
+   --> api/src/run_cfg.rs:164:1
+    |
+164 | impl<O: AccumOverflow> BuilderInput for DefaultRunCfg<O> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `DefaultRunCfg<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `run_cfg::DefaultRunCfg<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `StagedResource<_>`
+  --> api/src/store.rs:69:1
+   |
+69 | impl<T: 'static> BuilderInput for StagedResource<T> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `StagedResource<_>`
+   |
+  ::: api/src/attempt_unit_sched.rs:23:1
+   |
+23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+   | ---------------------------------------- first implementation here
+   |
+   = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `store::StagedResource<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `Accum<_>`
+   --> api/src/store.rs:198:1
+    |
+198 | impl<T: 'static> BuilderInput for Accum<T> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `Accum<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `store::Accum<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `Started<_>`
+   --> api/src/store.rs:395:1
+    |
+395 | / impl<S: Starts + 'static> BuilderInput for Started<S>
+396 | | where
+397 | |     S::Value: 'static,
+    | |______________________^ conflicting implementation for `Started<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `store::Started<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `Virtual<_>`
+   --> api/src/store.rs:434:1
+    |
+434 | impl<T: 'static> BuilderInput for Virtual<T> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `Virtual<_>`
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+    | ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `store::Virtual<_>`
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `PassDurationAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `PassDurationAxis`
+...
+126 | / axis_config!(
+127 | |     PassDurationAxis,
+128 | |     1,
+129 | |     "End-to-end pass timing axis. Every pass records its total\nduration."
+130 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::PassDurationAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `PhaseEmaAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `PhaseEmaAxis`
+...
+131 | / axis_config!(
+132 | |     PhaseEmaAxis,
+133 | |     1,
+134 | |     "Per-phase exponential moving average of latency. EMA decay is\n7/8 per the arvo::Norm-based formula in hilavitkutin-providers."
+135 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::PhaseEmaAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `FiberEmaAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `FiberEmaAxis`
+...
+136 | / axis_config!(
+137 | |     FiberEmaAxis,
+138 | |     1,
+139 | |     "Per-fiber EMA of morsel-completion latency. Same decay shape as\n[`PhaseEmaAxis`]."
+140 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::FiberEmaAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `ChangeClassAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `ChangeClassAxis`
+...
+141 | / axis_config!(
+142 | |     ChangeClassAxis,
+143 | |     16,
+144 | |     "Classify each phase's input drift bucket. Drives the\nmorsel-size adapt feedback loop."
+145 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::ChangeClassAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `CacheResidencyAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `CacheResidencyAxis`
+...
+146 | / axis_config!(
+147 | |     CacheResidencyAxis,
+148 | |     32,
+149 | |     "Per-column hit / miss ratio. High miss ratio triggers a\nmorsel-size shrink or a re-plan suggestion."
+150 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::CacheResidencyAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `ThroughputAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `ThroughputAxis`
+...
+151 | / axis_config!(
+152 | |     ThroughputAxis,
+153 | |     8,
+154 | |     "Per-phase records-per-nanosecond. Pairs with [`PhaseEmaAxis`]\nfor latency-vs-throughput tradeoff observability."
+155 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::ThroughputAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `PredictiveParkingAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `PredictiveParkingAxis`
+...
+156 | / axis_config!(
+157 | |     PredictiveParkingAxis,
+158 | |     1,
+159 | |     "Per-phase predicted wait window written to\n`PoolFrame.predicted_wait_ns` at `ScheduleEnd`. The parking\nmodule's tier selec...
+160 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::PredictiveParkingAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `MemoryWatermarkAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `MemoryWatermarkAxis`
+...
+161 | / axis_config!(
+162 | |     MemoryWatermarkAxis,
+163 | |     32,
+164 | |     "High-water arena allocation per pass. Surfaces growth trends\nso the scheduler can request memory provider expansion ahead o...
+165 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::MemoryWatermarkAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `BuilderInput` for type `CoreIdleTimeAxis`
+   --> api/src/adapt.rs:109:9
+    |
+109 |           impl BuilderInput for $name {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `CoreIdleTimeAxis`
+...
+166 | / axis_config!(
+167 | |     CoreIdleTimeAxis,
+168 | |     8,
+169 | |     "Per-core park-time accumulator. Reads `PoolFrame.idle_accumulator`\nand `PoolFrame.park_count` at `ScheduleEnd`."
+170 | | );
+    | |_- in this macro invocation
+    |
+   ::: api/src/attempt_unit_sched.rs:23:1
+    |
+ 23 |   impl<U: UnitOn<S>, S> BuilderInput for U {
+    |   ---------------------------------------- first implementation here
+    |
+    = note: downstream crates may implement trait `attempt_unit_sched::UnitOn<_>` for type `adapt::CoreIdleTimeAxis`
+    = note: this error originates in the macro `axis_config` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0207]: the type parameter `S` is not constrained by the impl trait, self type, or predicates
+  --> api/src/attempt_unit_sched.rs:23:20
+   |
+23 | impl<U: UnitOn<S>, S> BuilderInput for U {
+   |                    ^ unconstrained type parameter
+
+Some errors have detailed explanations: E0119, E0207.
+For more information about an error, try `rustc --explain E0119`.
+error: could not compile `hilavitkutin-api` (lib) due to 16 previous errors
