@@ -104,7 +104,8 @@ impl<W: Write> Visit for Refusals<'_, '_, W> {
                     writeln!(
                         self.out,
                         "cargo::error=hilavitkutin-build: {name} was given no path for {tool}, which only \
-                         `script!` finds or builds: name {name} in a script that is `script!`"
+                         `script!` finds or builds: a `script!` that has none says why in its own error, and \
+                         any other script cannot name {name}"
                     )?;
                 },
                 // The wrapper splits its flags on spaces, so a path with

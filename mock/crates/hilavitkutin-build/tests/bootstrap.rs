@@ -116,7 +116,8 @@ fn a_locally_built_tool_with_no_path_fails_the_build() {
         format!(
             "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n\
              cargo::error=hilavitkutin-build: Wild was given no path for wild, which only `script!` finds or \
-             builds: name Wild in a script that is `script!`\n"
+             builds: a `script!` that has none says why in its own error, and any other script cannot name \
+             Wild\n"
         )
     );
     let spaced = directives::<(Wild,)>(elf(), &[ToolPath::new(&WILD, "/home/a user/tools/wild")]);

@@ -208,15 +208,16 @@ pub fn includes_generated(text: &str) -> bool { // lint:allow(no-bare-string) li
     false
 }
 
-/// Whether a line holds [`GENERATED_NAME`] in quotes, alone or as the
-/// last component of a path.
+/// Whether a line holds [`GENERATED_NAME`] in quotes and alone. A path
+/// that ends in the name is another file: cargo reads an include beside
+/// the `config.toml` that names it.
 #[rustfmt::skip] // keeps the allow on the signature it governs
 fn names_the_file(line: &str) -> bool { // lint:allow(no-bare-string) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a config file's text as the build script read it; tracked: #72
     let mut rest = line;
     while let Some(at) = rest.find(GENERATED_NAME) {
         let before = rest[..at].chars().next_back();
         let after = rest[at + GENERATED_NAME.len()..].chars().next();
-        let opens = matches!(before, Some('"' | '\'' | '/'));
+        let opens = matches!(before, Some('"' | '\''));
         let closes = matches!(after, Some('"' | '\''));
         if opens && closes {
             return true;

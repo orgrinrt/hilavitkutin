@@ -172,7 +172,9 @@ macro_rules! __script_tools {
                 let installed = ran.is_ok_and(|ran| ran.status.success()) && is_tool(tool, program);
                 if installed {
                     // A pin that moved up leaves no older version behind. A
-                    // newer one is another clone's pin and stays.
+                    // newer one is another clone's pin and stays, and so
+                    // does an older one whose lock is held: a clone that
+                    // pins it is building it now.
                     let prefix = format!("{name}-");
                     for other in fs::read_dir(beside).into_iter().flatten().flatten() {
                         let other = other.path();
@@ -180,8 +182,12 @@ macro_rules! __script_tools {
                             .file_name()
                             .and_then(|file| file.to_str())
                             .and_then(|file| file.strip_prefix(&prefix))
-                            .is_some_and(|version| $crate::older(version, pin));
-                        if below {
+                            .filter(|version| $crate::older(version, pin));
+                        let Some(version) = below else {
+                            continue;
+                        };
+                        let theirs = fs::File::create(beside.join(format!("{name}-{version}.lock")));
+                        if let Ok(theirs) = theirs && theirs.try_lock().is_ok() {
                             let _ = fs::remove_dir_all(&other);
                         }
                     }

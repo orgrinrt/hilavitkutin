@@ -307,7 +307,6 @@ fn a_config_file_takes_the_generated_file_by_an_include_before_any_table() {
         "include = \"hilavitkutin-build.toml\"\n",
         "include = 'hilavitkutin-build.toml'\n",
         "include   =   [\"other.toml\", \"hilavitkutin-build.toml\"]\n[build]\njobs = 2\n",
-        "include = [{ path = \"sub/hilavitkutin-build.toml\" }]\n",
         "# a comment\njobs = 1\ninclude = [\n    { path = \"other.toml\" },\n    { path = \"hilavitkutin-build.toml\", optional = true },\n]\n\n[build]\n",
     ];
     for text in taking {
@@ -319,6 +318,7 @@ fn a_config_file_takes_the_generated_file_by_an_include_before_any_table() {
         "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n",
         "include = \"other.toml\"\n",
         "include = [\"my-hilavitkutin-build.toml\"]\n",
+        "include = [{ path = \"sub/hilavitkutin-build.toml\" }]\n",
         "include = [\"hilavitkutin-build.toml.bak\"]\n",
         "# include = \"hilavitkutin-build.toml\"\n",
         "[env]\ninclude = \"hilavitkutin-build.toml\"\n",
