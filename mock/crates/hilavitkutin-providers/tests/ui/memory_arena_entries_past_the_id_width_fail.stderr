@@ -1,4 +1,4 @@
-error[E0080]: evaluation panicked: MemoryArena: ENTRIES of 2^28 or more reach the masked overflow sentinel's 28-bit Str id; use at most 268435455 entries
+error[E0080]: evaluation panicked: MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field
  --> $RUST/core/src/panic.rs
   |
   |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
@@ -9,7 +9,7 @@ error[E0080]: evaluation panicked: MemoryArena: ENTRIES of 2^28 or more reach th
   |       const ENTRIES_FIT_THE_ID: () = assert!(
   |  ____________________________________-
   | |         ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against...
-  | |         "MemoryArena: ENTRIES of 2^28 or more reach the masked overflow sentinel's 28-bit Str id; use at most 268435455 entries",
+  | |         "MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field",
   | |     );
   | |_____- in this macro invocation
 

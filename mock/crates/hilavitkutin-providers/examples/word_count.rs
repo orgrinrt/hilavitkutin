@@ -183,10 +183,10 @@ fn main() {
     // Each distinct word is interned once, and the corpus repeats the handles.
     let interner = default_interner::<256, 16>();
     let handles = [
-        interner.intern(VOCABULARY[0]),
-        interner.intern(VOCABULARY[1]),
-        interner.intern(VOCABULARY[2]),
-        interner.intern(VOCABULARY[3]),
+        interner.intern(VOCABULARY[0]).expect("the vocabulary fits"),
+        interner.intern(VOCABULARY[1]).expect("the vocabulary fits"),
+        interner.intern(VOCABULARY[2]).expect("the vocabulary fits"),
+        interner.intern(VOCABULARY[3]).expect("the vocabulary fits"),
     ];
     assert!(
         matches!(interner.resolve(handles[2]), Maybe::Is("gamma")),

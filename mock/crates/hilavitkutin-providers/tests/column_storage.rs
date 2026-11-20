@@ -5,18 +5,28 @@
 //! column of a different scalar width proves slot isolation.
 //!
 //! The test provider is the crate's `StaticBumpMemory` over a leaked buffer,
-//! whose `deallocate` does nothing, so `ArenaColumnStorage::Drop` (which calls
-//! `deallocate`) has nothing to release. The two tests on what a free is given wrap it in a provider that
-//! records every block handed out and handed back.
+//! whose `deallocate` does nothing, or `StaticFreeListMemory` where a test
+//! needs the block back. The tests on what a free is given wrap the bump
+//! provider in one that records every block handed out and handed back.
 
 use arvo::{Bool, USize};
 use hilavitkutin_api::{ColumnStorage, MemoryProviderApi, StoreId};
-use hilavitkutin_providers::{ArenaColumnStorage, StaticBumpMemory, StorageError};
+use hilavitkutin_providers::{
+    ArenaColumnStorage,
+    StaticBumpMemory,
+    StaticFreeListMemory,
+    StorageError,
+};
 use notko::Outcome;
 
 /// The crate's static bump provider over a fresh leaked buffer of `bytes`.
 fn bump(bytes: usize) -> StaticBumpMemory {
     StaticBumpMemory::new(std::vec![core::mem::MaybeUninit::uninit(); bytes].leak())
+}
+
+/// The crate's freeing provider over a fresh leaked buffer of `bytes`.
+fn free_list(bytes: usize) -> StaticFreeListMemory {
+    StaticFreeListMemory::new(std::vec![core::mem::MaybeUninit::uninit(); bytes].leak())
 }
 
 #[test]
@@ -238,4 +248,168 @@ fn drop_frees_every_live_block_as_it_was_reserved() {
         reserved,
         "the drop hands back every block as it was given out, in slot order"
     );
+}
+
+/// A release hands the block back as it was reserved, once: the slot is empty
+/// after it, so a second release and the drop free nothing more.
+#[test]
+fn a_release_frees_the_block_as_it_was_reserved_and_only_once() {
+    let ledger: &'static Ledger = Box::leak(Box::default());
+    {
+        let provider = RecordingProvider {
+            inner: bump(1 << 16),
+            ledger,
+        };
+        let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
+        let id = StoreId(USize(3));
+        assert!(matches!(
+            store.reserve::<u64>(id, USize(8)),
+            Outcome::Ok(())
+        ));
+        store.release(id);
+        assert_eq!(
+            ledger.freed(),
+            ledger.reserved(),
+            "the release hands the block back as it was given out"
+        );
+        store.release(id);
+        assert_eq!(ledger.freed().len(), 1, "a second release frees nothing");
+    }
+    assert_eq!(
+        ledger.freed().len(),
+        1,
+        "the drop does not free a released block again"
+    );
+}
+
+/// A released column reads as unreserved: a count of zero and null bases, and
+/// the other columns keep their records.
+#[test]
+fn a_released_column_reads_unreserved_and_the_others_hold() {
+    let mut store = ArenaColumnStorage::<_>::new(free_list(1 << 16));
+    let gone = StoreId(USize(0));
+    let kept = StoreId(USize(1));
+    assert!(matches!(
+        store.reserve::<u32>(gone, USize(16)),
+        Outcome::Ok(())
+    ));
+    assert!(matches!(
+        store.reserve::<u32>(kept, USize(4)),
+        Outcome::Ok(())
+    ));
+    // SAFETY: `kept` is reserved for 4 records of u32.
+    let base = unsafe { store.column_ptr_mut::<u32>(kept) };
+    for i in 0 .. 4 {
+        // SAFETY: i < 4.
+        unsafe { base.add(i).write(i as u32 + 7) };
+    }
+    store.release(gone);
+    assert_eq!(store.count(gone), USize(0));
+    // SAFETY: the pointers are read as values and never dereferenced.
+    assert!(unsafe { store.column_ptr::<u32>(gone) }.is_null());
+    assert!(unsafe { store.column_ptr_mut::<u32>(gone) }.is_null());
+    assert_eq!(store.count(kept), USize(4));
+    for i in 0 .. 4 {
+        // SAFETY: `kept` is still reserved for 4 records of u32.
+        assert_eq!(
+            unsafe { store.column_ptr::<u32>(kept).add(i).read() },
+            i as u32 + 7
+        );
+    }
+}
+
+/// A release of an id with no block, or of one past the cap, changes nothing.
+#[test]
+fn releasing_an_unreserved_or_out_of_range_id_changes_nothing() {
+    let ledger: &'static Ledger = Box::leak(Box::default());
+    let provider = RecordingProvider {
+        inner: bump(1 << 16),
+        ledger,
+    };
+    let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
+    let id = StoreId(USize(0));
+    assert!(matches!(
+        store.reserve::<u32>(id, USize(4)),
+        Outcome::Ok(())
+    ));
+    store.release(StoreId(USize(5)));
+    store.release(StoreId(USize(1 << 20)));
+    assert!(ledger.freed().is_empty());
+    assert_eq!(store.count(id), USize(4));
+}
+
+/// Reserve, then release or reserve again, many cycles over a buffer that
+/// holds two columns' worth: the case of ticket
+/// `arenacolumnstorage_release_is_a_no_op_so_a_store_under_a_bum`. It holds
+/// under a provider that takes blocks back, and a provider that does not runs
+/// out, which shows the cycle count reaches past the buffer.
+fn cycles_without_running_out<M: MemoryProviderApi>(provider: M, by_release: bool) -> bool {
+    let mut store = ArenaColumnStorage::<M>::new(provider);
+    let id = StoreId(USize(0));
+    for _ in 0 .. 64 {
+        if !matches!(store.reserve::<u32>(id, USize(256)), Outcome::Ok(())) {
+            return false;
+        }
+        if by_release {
+            store.release(id);
+        }
+    }
+    true
+}
+
+#[test]
+fn a_store_reserved_again_every_cycle_does_not_run_out() {
+    // 1 KiB a reservation, a buffer of a little over two.
+    let bytes = 2 * 1024 + 128;
+    assert!(
+        cycles_without_running_out(free_list(bytes), true),
+        "release then reserve"
+    );
+    assert!(
+        cycles_without_running_out(free_list(bytes), false),
+        "reserve again over a live block"
+    );
+    assert!(
+        !cycles_without_running_out(bump(bytes), true),
+        "a provider that takes nothing back runs out"
+    );
+}
+
+/// A release gives the bytes back: what the provider has handed out returns to
+/// what it was before the reserve.
+#[test]
+fn a_release_gives_the_bytes_back_to_the_provider() {
+    let provider: &'static StaticFreeListMemory = Box::leak(Box::new(free_list(1 << 16)));
+    let mut store = ArenaColumnStorage::<Shared>::new(Shared(provider));
+    let before = provider.used();
+    assert!(matches!(
+        store.reserve::<u64>(StoreId(USize(2)), USize(100)),
+        Outcome::Ok(())
+    ));
+    assert!(provider.used().0 >= before.0 + 800);
+    store.release(StoreId(USize(2)));
+    assert_eq!(provider.used(), before);
+}
+
+/// A freeing provider the test keeps a reference to while the store owns the
+/// forwarding value.
+struct Shared(&'static StaticFreeListMemory);
+
+// SAFETY: every call is forwarded unchanged to a provider that keeps the
+// promises, and the provider is leaked, so it outlives every block.
+unsafe impl MemoryProviderApi for Shared {
+    unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 {
+        // SAFETY: forwarded as received.
+        unsafe { self.0.allocate(len, align) }
+    }
+
+    unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize) {
+        // SAFETY: forwarded as received.
+        unsafe { self.0.deallocate(ptr, len, align) }
+    }
+
+    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool) {
+        // SAFETY: forwarded as received.
+        unsafe { self.0.protect(ptr, len, read, write) }
+    }
 }

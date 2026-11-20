@@ -1,6 +1,6 @@
-//! An arena of 2^28 entries is refused at build: its last id would be
-//! 2^28 - 1, the id the overflow sentinel takes once masked to 28 bits,
-//! so an overflow handle would resolve to that slot's string. The arena is
+//! An arena of 2^28 entries is refused at build: every issued id stays
+//! below 2^28 - 1, one short of the 28-bit `Str` id field, which is
+//! ticket `the_memory_arena_s_entry_bound_is_one_short_of_the_28_bit_id_field`. The arena is
 //! made in a const item so the refusal is reached by `cargo check` as well
 //! as by codegen.
 

@@ -92,3 +92,21 @@ fn os_clock_is_monotonic() {
         b_raw
     );
 }
+
+/// The os provider's `allocate_zeroed` is its mapping, which the kernel hands
+/// over zero; every byte of it reads as zero, the page past the first too.
+#[test]
+fn os_memory_allocate_zeroed_reads_as_zero() {
+    let provider = OsMemoryProvider::new();
+    let len = USize(3 * 4096);
+    let align = USize(16);
+    // SAFETY: alignment is a power of two, len is positive.
+    let ptr = unsafe { provider.allocate_zeroed(len, align) };
+    assert!(!ptr.is_null(), "mmap returned null for a 12KiB request");
+    for i in 0 .. *len {
+        // SAFETY: ptr covers `len` bytes per the trait contract.
+        assert_eq!(unsafe { ptr.add(i).read() }, 0, "byte {i} is not zero");
+    }
+    // SAFETY: ptr came from allocate_zeroed with the same len and align.
+    unsafe { provider.deallocate(ptr, len, align) };
+}
