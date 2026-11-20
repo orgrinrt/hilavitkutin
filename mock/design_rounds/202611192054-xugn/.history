@@ -1,0 +1,50 @@
+3b74f644 chore: lock src changelist 202611192054-xugn
+38cc0d6e docs: regenerate the build document from its template
+04dca9fc fix: read two version lines and keep every tool lock file
+15070726 docs: write the source changelist after the third review
+1d5b8a1a chore: lock doc changelist 202611192054-xugn
+8ada2a2b docs: keep a held older tool and read two version lines
+3f257823 chore: unlock design round, deprecate src and unlock doc
+4d093273 fix: a pragma names every tool its text needs
+5e79882c docs: write the source changelist after the second review
+517b97c3 chore: lock doc changelist 202611192054-xugn
+7226b8fa docs: a pragma names every tool it needs
+cd79c04e chore: unlock design round, deprecate src and unlock doc
+102d9f28 fix: keep an older tool whose lock is held and take a bare include
+b4800774 fix: route every linker through the wrapper and lock the tool build
+ff154907 docs: write the source changelist after review pass one
+bd584cb2 chore: lock doc changelist 202611192054-xugn
+db8011de docs: route every linker through the wrapper, guard the generated file
+62a450de chore: unlock the pragma round after review pass one
+4e9435de docs: name the kaski build scripts the source changelist moves
+af3cd109 docs: replace the source changelist of round 202611192054-xugn
+868d328b chore: lock doc changelist 202611192054-xugn
+6545e0a7 docs: say what writing the pragma source changed in its design
+a8d12916 chore: unlock design round, deprecate src and unlock doc
+66388cfc feat!: make every build choice of hilavitkutin-build a pragma type
+cdc3829a docs: add the source changelist of round 202611192054-xugn
+ec0a699c chore: lock doc changelist 202611192054-xugn
+51190c5f docs: say how the generated cargo file is put together
+18f6242b chore: unlock doc changelist 202611192054-xugn
+7c55f8bf docs: sketch the generated file in dotted keys and cargo error
+90643d12 chore: lock doc changelist 202611192054-xugn
+98ae0ec5 docs: regenerate the build doc from the pragma round's design
+04eae155 docs: write the build crate's design as typed pragmas with reach
+446cd4b2 docs: add the doc changelist of the pragma round and the linker sketch
+cfef1c05 docs: open the pragma round with its topic and two sketches
+3e261796 Merge remote-tracking branch 'origin/work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an' into work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an
+b1277314 Merge remote-tracking branch 'origin/dev' into work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an
+67e63ca4 feat: set a consumer's workspace up from one line with script!
+a1b65e5b feat: set a consumer's workspace up from one line with script!
+2d61039b chore: close design round 202611151157
+46296832 chore: lock src changelist 202611151157
+193a2689 fix: drop the two lint allows the exported macro no longer needs
+100c558d test: hold a settled wrapper by its date, not by what cargo compiles
+1d854df3 Merge remote-tracking branch 'origin/dev' into work/hilavitkutin-build-sets-a-consumer-up-by-itself-and-an
+a4d535f4 fix: hold the wrapper to its whole text and say what pragmas write
+6f3c485d docs: write the src changelist of 202611151157 after the third review
+0b7780c5 chore: lock doc changelist 202611151157
+49166213 docs: name the wiring's public items and settle what clippy is told
+e0c100f0 chore: unlock design round and reopen the doc changelist
+3177527a docs: land the two stranded sketch records
+c6ab1c6d fix: keep scripts of one workspace apart and leave a host with no sh
