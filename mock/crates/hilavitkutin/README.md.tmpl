@@ -2,4 +2,6 @@
 
 Morsel-driven pipeline execution engine. Phase decomposition, fiber
 formation, compiled dispatch, adaptive threading. `#![no_std]`, no
-alloc.
+alloc. A build on default features carries the contracts alone; the
+`os` feature turns on `OsMemoryProvider`, `OsClock` and the
+operating-system arms of thread parking, for Linux and macOS.

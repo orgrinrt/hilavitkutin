@@ -1615,7 +1615,8 @@ column with a mismatched layout.
 All consumed via monomorphisation. The Scheduler is generic over the
 platform types. Storing `dyn MemoryProviderApi` would violate the dyn
 ban. The os tier ships an implementation of `MemoryProviderApi` and of
-`ClockApi`; the no_os tier ships neither. No tier implements `ThreadPoolApi`: the executor is the
+`ClockApi`, behind the engine's `os` feature; the no_os tier ships neither, and a
+build on default features is the no_os tier. No tier implements `ThreadPoolApi`: the executor is the
 consumer's, or comes from a crate outside the hilavitkutin family.
 Consumer overrides via scheduler builder.
 
