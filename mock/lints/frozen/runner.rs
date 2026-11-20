@@ -29,8 +29,30 @@ pub(crate) fn reported(lint: Box<dyn CrateLint>, fixture: LintFixture) -> Vec<Li
 /// The lines the runner reports for `lint` over one source file of the frozen
 /// authors crate.
 pub(crate) fn lines_reported(lint: Box<dyn CrateLint>, text: &str) -> Vec<usize> {
-    reported(lint, authors(text))
+    lines_reported_in(lint, authors(text))
+}
+
+/// The lines the runner reports for `lint` over `fixture`.
+pub(crate) fn lines_reported_in(lint: Box<dyn CrateLint>, fixture: LintFixture) -> Vec<usize> {
+    reported(lint, fixture)
         .into_iter()
         .map(|e| e.line)
         .collect()
+}
+
+/// For one offending `text`, the lines the runner reports for the lint `make`
+/// builds in three crates: the frozen authors crate, a frozen crate no
+/// configuration names, and a crate outside the frozen family.
+pub(crate) fn reach(make: fn() -> Box<dyn CrateLint>, text: &str) -> [Vec<usize>; 3] {
+    [
+        lines_reported_in(make(), authors(text)),
+        lines_reported_in(
+            make(),
+            LintFixture::new(text).with_crate_name("hilavitkutin-frozen-later", "frozen-later"),
+        ),
+        lines_reported_in(
+            make(),
+            LintFixture::new(text).with_crate_name("hilavitkutin-api", "api"),
+        ),
+    ]
 }

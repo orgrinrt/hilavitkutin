@@ -269,3 +269,20 @@ fn a_crate_that_is_not_frozen_needs_no_ledger() {
         .with_crate_name("hilavitkutin-api", "api");
     assert_eq!(reported(plain), vec![]);
 }
+
+#[test]
+fn the_lint_holds_its_own_scope_through_the_runner() {
+    let [authors, later, outside] = scan::runner::reach(lint, "#![no_std]\n");
+    assert!(
+        !authors.is_empty(),
+        "the frozen authors crate owes a ledger"
+    );
+    assert!(
+        !later.is_empty(),
+        "a frozen crate no list names owes a ledger"
+    );
+    assert!(
+        outside.is_empty(),
+        "a crate outside the frozen family owes none"
+    );
+}
