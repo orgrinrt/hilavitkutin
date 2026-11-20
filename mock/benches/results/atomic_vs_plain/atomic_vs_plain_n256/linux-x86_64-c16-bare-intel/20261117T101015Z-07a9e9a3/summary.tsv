@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794910371	07a9e9a3	atomic_vs_plain_n256	acc_atomic_relaxed	256	warm	250.1	250.1	313.1
+1794910371	07a9e9a3	atomic_vs_plain_n256	acc_atomic_seqcst	256	warm	407.8	407.8	481.3
+1794910371	07a9e9a3	atomic_vs_plain_n256	acc_plain	256	warm	249.5	249.5	343.8

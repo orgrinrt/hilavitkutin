@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794928704	07a9e9a3	memcpy_patterns_n64	memcpy_intrinsic	64	warm	77.9	77.9	78.0
+1794928704	07a9e9a3	memcpy_patterns_n64	memcpy_naive	64	warm	63.7	63.7	77.8
+1794928704	07a9e9a3	memcpy_patterns_n64	memcpy_unrolled	64	warm	77.9	77.9	77.9

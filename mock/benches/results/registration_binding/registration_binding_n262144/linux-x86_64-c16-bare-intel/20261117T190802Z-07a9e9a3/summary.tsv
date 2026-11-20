@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794943892	07a9e9a3	registration_binding_n262144	reg_bound_columns	262144	warm	48328.8	48328.8	50450.3
+1794943892	07a9e9a3	registration_binding_n262144	reg_bound_record	262144	warm	293263.0	293263.0	293721.4
+1794943892	07a9e9a3	registration_binding_n262144	reg_bound_strided	262144	warm	72197.0	72197.0	72412.5
+1794943892	07a9e9a3	registration_binding_n262144	reg_bound_units	262144	warm	39715.8	39715.8	40324.3
+1794943893	07a9e9a3	registration_binding_n262144	reg_typed	262144	warm	39485.1	39485.1	41298.9
+1794943893	07a9e9a3	registration_binding_n262144	reg_typed_twin	262144	warm	47673.7	47673.7	47715.8
