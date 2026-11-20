@@ -1,0 +1,50 @@
+fb25f994 docs: regenerate the documents for 202611200302-n8e0
+2d2f7468 chore: lock src changelist 202611200302-n8e0
+4e0e4e8d docs: name the freeing provider in the readme
+d2deab88 chore: regenerate the asm gate report
+bcf8b912 chore: keep the allow on the `allocate_zeroed` signature
+da0f6742 fix: let `MemoryArena` take as many entries as the id field holds
+6ba31cc2 fix: check a re-reserve's length before its block goes back
+e148b1ba test: pin the refused re-reserve, free-list layout and id boundary
+c4104049 docs: add src changelist 202611200302-n8e0
+97a75f83 chore: lock doc changelist 202611200302-n8e0
+083ea658 docs: say what a refused re-reserve leaves and widen the arena bound
+eef5be4c chore: open design round 202611200302-n8e0
+cd1611df chore: close design round 202611200201-yszg
+c901ba6f docs: regenerate for the freeing provider and the intern refusal
+ca139930 chore: lock src changelist 202611200201-yszg
+7c6249fa feat: add the freeing provider, release, zeroed block, intern refusal
+0e9a8d33 test: pin the freeing provider, release, zeroed block, intern refusal
+45b20311 docs: add src changelist 202611200201-yszg
+cd6270b4 chore: lock doc changelist 202611200201-yszg
+036a5fcb chore: unlock design round, deprecate src and unlock doc
+a73ee68f docs: add src changelist 202611200201-yszg
+35961418 chore: lock doc changelist 202611200201-yszg
+b70b50bc docs: describe the zeroed block, freeing provider and intern refusal
+efbf3ca6 chore: open design round 202611200201-yszg
+57dbfa26 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+9918113f feat: add the host path import and dump for columns
+39845188 feat: add the host path import and dump for columns
+e793a6ae chore: close design round 202611200124-arjq
+7bf421f5 docs: regenerate the engine document for round arjq
+1978a357 chore: lock src changelist 202611200124-arjq
+7e481f2b chore: move the placeholder ticket's host lines to where they stand
+1c899d37 docs: say the import's aliasing under run_parallel is not established
+5c4bc372 test: pin the buffered import mark and the stale partial pass
+bc1ea3bd docs: add src changelist 202611200124-arjq
+63fd329c chore: lock doc changelist 202611200124-arjq
+b8e20ccd docs: say fold where the fused paragraph said chain
+5045442d docs: state the fused entry's refusal of a buffered column as a gap
+f9c904c8 chore: open design round 202611200124-arjq
+983d5e49 chore: close design round 202611200058-dx86
+4b892df3 docs: regenerate the engine document for round dx86
+29e315d5 chore: lock src changelist 202611200058-dx86
+8c1cbee7 chore: point the aliasing ticket at the formatted marker line
+c00814df test: hold the host import across a partial pass and every entry
+80c8df72 docs: add src changelist 202611200058-dx86
+f024b725 chore: lock doc changelist 202611200058-dx86
+5771698d docs: say the live copy keeps an import across a partial pass
+f0f35dab chore: open design round 202611200058-dx86
+a6a3f660 chore: close design round 202611200033-ut6z
+9c508a22 chore: lock src changelist 202611200033-ut6z
+a95c7491 test: give each host path refusal its own fixture
