@@ -990,57 +990,61 @@ Latest: `20261119T171604Z-fe400621`
 
 ## build-static/leaf_n25
 
-### linux-x86_64-c4-container-intel, 2 run(s)
+### linux-x86_64-c4-container-intel, 3 run(s)
 
-Latest: `20261119T150158Z-ffb57e5a`
+Latest: `20261120T080735Z-3bf2136b`
 
 | variant | median | vs best |
 |---|---|---|
-| llvm_incremental | 3920.36 ms | 1.00x |
-| llvm_non_incremental | 5874.19 ms | 1.50x |
+| llvm_incremental | 3809.88 ms | 1.00x |
+| llvm_non_incremental | 5697.29 ms | 1.50x |
 
 - [20261116T063249Z-f04daa0a-dirty](build-static/leaf_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/leaf_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
+- [20261120T080735Z-3bf2136b](build-static/leaf_n25/linux-x86_64-c4-container-intel/20261120T080735Z-3bf2136b/report.md)
 
 ## build-static/leaf_n97
 
-### linux-x86_64-c4-container-intel, 1 run(s)
+### linux-x86_64-c4-container-intel, 2 run(s)
 
-Latest: `20261119T203124Z-4228372a`
+Latest: `20261120T080735Z-3bf2136b`
 
 | variant | median | vs best |
 |---|---|---|
-| llvm_incremental | 4011.75 ms | 1.00x |
-| llvm_non_incremental | 5821.77 ms | 1.45x |
+| llvm_incremental | 4186.59 ms | 1.00x |
+| llvm_non_incremental | 6408.94 ms | 1.53x |
 
 - [20261119T203124Z-4228372a](build-static/leaf_n97/linux-x86_64-c4-container-intel/20261119T203124Z-4228372a/report.md)
+- [20261120T080735Z-3bf2136b](build-static/leaf_n97/linux-x86_64-c4-container-intel/20261120T080735Z-3bf2136b/report.md)
 
 ## build-static/mid_n25
 
-### linux-x86_64-c4-container-intel, 2 run(s)
+### linux-x86_64-c4-container-intel, 3 run(s)
 
-Latest: `20261119T150158Z-ffb57e5a`
+Latest: `20261120T080735Z-3bf2136b`
 
 | variant | median | vs best |
 |---|---|---|
-| llvm_incremental | 586.04 ms | 1.00x |
-| llvm_non_incremental | 6084.57 ms | 10.38x |
+| llvm_incremental | 578.84 ms | 1.00x |
+| llvm_non_incremental | 5756.40 ms | 9.94x |
 
 - [20261116T063249Z-f04daa0a-dirty](build-static/mid_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/mid_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
+- [20261120T080735Z-3bf2136b](build-static/mid_n25/linux-x86_64-c4-container-intel/20261120T080735Z-3bf2136b/report.md)
 
 ## build-static/mid_n97
 
-### linux-x86_64-c4-container-intel, 1 run(s)
+### linux-x86_64-c4-container-intel, 2 run(s)
 
-Latest: `20261119T203124Z-4228372a`
+Latest: `20261120T080735Z-3bf2136b`
 
 | variant | median | vs best |
 |---|---|---|
-| llvm_incremental | 2549.14 ms | 1.00x |
-| llvm_non_incremental | 33358.81 ms | 13.09x |
+| llvm_incremental | 2547.55 ms | 1.00x |
+| llvm_non_incremental | 32611.66 ms | 12.80x |
 
 - [20261119T203124Z-4228372a](build-static/mid_n97/linux-x86_64-c4-container-intel/20261119T203124Z-4228372a/report.md)
+- [20261120T080735Z-3bf2136b](build-static/mid_n97/linux-x86_64-c4-container-intel/20261120T080735Z-3bf2136b/report.md)
 
 ## build-static/root_n25
 
