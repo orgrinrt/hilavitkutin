@@ -1,0 +1,34 @@
+  building arm build-static/arms/llvm_incremental...
+  building arm build-static/arms/llvm_non_incremental...
+  building generated bench driver...
+run plan: 1 bench(es), 1 config(s), run 20261119T171604Z-fe400621 on linux-x86_64-c4-container-intel
+[1/1] build-static/clean n=97 (elapsed 0s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/build-static/llvm_incremental/release/libllvm_incremental.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (1758s elapsed, ~8790s left)
+  pass 2/6 cd=0ms... done (3223s elapsed, ~6446s left)
+  pass 3/6 cd=0ms... done (4710s elapsed, ~4710s left)
+  pass 4/6 cd=0ms... done (6187s elapsed, ~3094s left)
+  pass 5/6 cd=0ms... done (7631s elapsed, ~1526s left)
+  pass 6/6 cd=0ms... done (9080s elapsed, ~0s left)
+  Total: 9079.7s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795108564-9903/build-static/clean_n97/linux-x86_64-c4-container-intel/20261119T171604Z-fe400621/samples.csv (24 rows)
+  build-static: every crate built into an empty target directory (baseline: llvm_non_incremental)
+    llvm_incremental         126373.24 ms   1.08x  cv  4.0%  Δbase 10670.12 ms *
+    llvm_non_incremental     117220.40 ms   1.00x  cv  2.3%  (baseline)
+    * llvm_incremental shows alternating (throttle bounce) (autocorr -0.82)
+    * No variant beats the baseline (llvm_non_incremental)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795108564-9903/build-static/clean_n97/linux-x86_64-c4-container-intel/20261119T171604Z-fe400621/report.md
+  after_cell: 90 calls, each held to scenario `clean` at n=97
+
+bench                             n variant                    median  vs best
+build-static/clean               97 llvm_incremental     126373.24 ms    1.08x
+build-static/clean               97 llvm_non_incremental 117220.40 ms    1.00x
+
+total: 11111.7s

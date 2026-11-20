@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795099729	6c89a959	dev_n25	default_relink	25	warm	186695608.2	186695608.2	203904189.1
+1795099729	6c89a959	dev_n25	default_replay	25	warm	78471821.6	78471821.6	86080944.5

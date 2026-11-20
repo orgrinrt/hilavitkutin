@@ -3,7 +3,9 @@
 //!
 //! A frozen crate is written as a consumer would write it, against the api.
 //! Each lint names one way a file could hide what the api makes its author
-//! do, and refuses it in the `src/` of `hilavitkutin-frozen-authors`.
+//! do, and refuses it in the `src/` of every frozen crate, a crate named
+//! `hilavitkutin-frozen-*`. The lints hold that scope here, in `applies_to`,
+//! and the configuration names no crates for them.
 //!
 //! Comments, doc comments and string literals are not read. There is no
 //! escape: a frozen file that needs one is not written as a consumer could

@@ -142,8 +142,9 @@ push = "error"
 # of the crate outside `tests/`, its manifest and build script included, has
 # a line with its current hash, and no frozen file compiles in a file from
 # elsewhere by a `path` attribute or an `include!` macro.
-# Repo lints, `mock/lints/`. Each binds the crates named `hilavitkutin-frozen-*`
-# by its own test of the crate name, so its table carries no `crates` list.
+# Repo lints, `mock/lints/`. Each reads only the frozen crates, every crate
+# named `hilavitkutin-frozen-*`, and holds that scope in its own code by its
+# test of the crate name, so its table carries no `crates` list.
 [lints.frozen-no-outside-source]
 commit = "error"
 build = "error"
