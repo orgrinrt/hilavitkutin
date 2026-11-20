@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["old-side", "new-side"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# The same git repository at two revisions. Cargo keys a git source by its url and
+# revision, so these are two sources, and each is named by a dependency key that
+# the other does not use.
+[workspace.dependencies]
+arvo-old = { package = "arvo", git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+arvo-new-numeral = { package = "arvo-numeral", git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "6def883183ebe9b96c90da16cee148010eb89226", version = "0.0.0", default-features = false }
+arvo-new-format = { package = "arvo-format", git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "6def883183ebe9b96c90da16cee148010eb89226", version = "0.0.0", default-features = false }
+
+# No `[patch]` section. The old revision names notko by its `ssh` spelling and the
+# new one by `https`, so the lock holds two notko entries at one commit. Nothing in
+# this sketch passes a notko type across the two sides. The patch that
+# hilavitkutin's `mock/Cargo.toml` carries for that spelling was also run with this
+# manifest, and the findings record both runs.

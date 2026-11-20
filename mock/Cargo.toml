@@ -49,10 +49,15 @@ arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e9
 arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
-arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 arvo-refit = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
+
+# Current arvo, at one revision of its `dev`, beside the old pins above. Cargo takes the
+# two as two sources, so the crates that have moved name these and the rest keep the old
+# ones until the pin job removes the last old line.
+arvo-numeral = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "6def883183ebe9b96c90da16cee148010eb89226", version = "0.0.0", default-features = false }
+arvo-format = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "6def883183ebe9b96c90da16cee148010eb89226", version = "0.0.0", default-features = false }
 
 # Persistence dep for hilavitkutin-persistence (zero-copy serde, no_std + no alloc).
 # Version aligned with saalis's mockspace for consistency.
