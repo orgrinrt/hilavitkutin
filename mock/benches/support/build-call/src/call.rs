@@ -10,10 +10,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Output, Stdio};
 
 use build_fixture::{Fixture, Site};
+use hilavitkutin_build::Set;
 
 use crate::linkline::{self, LinkLine};
 use crate::record::{self, Line};
-use crate::{Arm, Control, Dirs, Profile, Scenario, cargo, linker, root, space};
+use crate::{Arm, Control, Dirs, Kind, Profile, Quantity, Scenario, cargo, linker, root, space};
 
 /// One call, between its setup and its record.
 pub struct Call {
@@ -61,6 +62,9 @@ impl Call {
             .get(1)
             .and_then(|c| Profile::from_code(*c))
             .expect("a profile code");
+        if let Some(why) = arm.refusal() {
+            panic!("build-call: arm `{arm_name}` of `{bench}`: {why}");
+        }
         let fixture = Fixture::at(n).unwrap_or_else(|| panic!("no fixture of {n} crates"));
         let dirs = Dirs::of(bench, arm_name, n);
         prune(&root().join(bench).join(arm_name), &dirs.dir());
@@ -86,28 +90,18 @@ impl Call {
             exe: None,
             command: None,
         };
-        match (scenario.site(), arm) {
-            (_, Arm::Replay) => call.ready_replay(&fixture, control),
-            (_, Arm::Relink) => call.ready_relink(&fixture, control),
-            (
-                Some(site),
-                Arm::Build {
-                    ..
-                },
-            ) => call.ready_edit(&fixture, site, control),
-            (
-                None,
-                Arm::Build {
-                    ..
-                },
-            ) => call.ready_clean(&fixture, control),
+        match (scenario.site(), call.arm.kind()) {
+            (_, Kind::Replay) => call.ready_replay(&fixture, control),
+            (_, Kind::Relink) => call.ready_relink(&fixture, control),
+            (Some(site), Kind::Build) => call.ready_edit(&fixture, site, control),
+            (None, Kind::Build) => call.ready_clean(&fixture, control),
         }
         call
     }
 
     /// A cargo command for this cell, its profile flag added.
     fn cargo(&self, args: &[&str]) -> Command {
-        let mut c = cargo::command(&self.dirs, self.arm.incremental(), args);
+        let mut c = cargo::command(&self.dirs, &self.arm, self.profile, args);
         if self.profile == Profile::Release {
             c.arg("--release");
         }
@@ -253,9 +247,10 @@ impl Call {
     /// carries no crate count.
     pub fn record(self, out: &Output) -> u64 {
         let stdout = String::from_utf8_lossy(&out.stdout);
-        let compiled = match self.arm {
-            Arm::Replay => None,
-            _ => Some(cargo::compiled(&stdout).len()),
+        let kind = self.arm.kind();
+        let compiled = match kind {
+            Kind::Replay => None,
+            Kind::Build | Kind::Relink => Some(cargo::compiled(&stdout).len()),
         };
         let exe = self
             .exe
@@ -281,9 +276,9 @@ impl Call {
             call: next_call(),
             setup_compiled: self.setup_compiled,
             compiled,
-            expected: match self.arm {
-                Arm::Replay => None,
-                _ => record::expected(self.scenario, self.n),
+            expected: match kind {
+                Kind::Replay => None,
+                Kind::Build | Kind::Relink => record::expected(self.scenario, self.n),
             },
             absent_before: self.absent_before,
             present_after,
@@ -299,6 +294,8 @@ impl Call {
                 .code()
                 .map_or_else(|| "signal".to_string(), |c| c.to_string()),
             waited: cargo::waited(&String::from_utf8_lossy(&out.stderr)),
+            linker: self.arm.linker().name().to_string(),
+            quantity: kind.label().to_string(),
         };
         if !out.status.success() {
             eprintln!(
@@ -307,21 +304,22 @@ impl Call {
             );
         }
         record::append(&root(), &line).unwrap_or_else(|e| panic!("{e}"));
-        match self.arm {
-            Arm::Build {
-                ..
-            } => compiled.map_or(0, |c| c as u64),
-            Arm::Relink | Arm::Replay => exe_bytes,
+        match kind {
+            Kind::Build => compiled.map_or(0, |c| c as u64),
+            Kind::Relink | Kind::Replay => exe_bytes,
         }
     }
 }
 
 /// One call of an arm, the whole body of every arm cdylib: [`Call::ready`]
 /// untimed, [`Call::run`] timed, [`Call::record`] untimed into `output`.
-pub fn bench_call(
+///
+/// The arm is its two type parameters: `S`, the set of hilavitkutin-build's
+/// pragmas it builds with, and `Q`, the quantity it measures. `arm_name` is
+/// the arm's directory and its label in the record.
+pub fn bench_call<S: Set, Q: Quantity>(
     bench: &'static str,
     arm_name: &'static str,
-    arm: Arm,
     input: &[u8; 8],
     n: usize,
     output: &mut u64,
@@ -329,7 +327,7 @@ pub fn bench_call(
     use mockspace_bench_core::timed;
     timed! {
         setup {
-            let mut call = Call::ready(bench, arm_name, arm, input, n);
+            let mut call = Call::ready(bench, arm_name, Arm::of::<S, Q>(), input, n);
         }
         run {
             let said = call.run();

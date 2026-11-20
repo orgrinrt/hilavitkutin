@@ -10,7 +10,7 @@ mod common;
 
 use build_call::record::{self, Line};
 use build_call::{Arm, Call, Control, Profile, Scenario, root, toolchain};
-use common::Removed;
+use common::{Removed, off, relink, replay};
 
 const N: usize = 25;
 
@@ -43,16 +43,12 @@ fn checked(bench: &str, s: Scenario, lines: &[Line]) -> Result<String, String> {
     record::check(lines, bench, s, Profile::Dev, N)
 }
 
-const OFF: Arm = Arm::Build {
-    incremental: false,
-};
-
 #[test]
 fn every_scenario_compiles_what_the_generator_predicts_offline_and_locked() {
     let bench = "test-scenarios";
     let _gone = Removed::bench(bench);
     for s in [Scenario::Clean, Scenario::Leaf, Scenario::Mid, Scenario::Root] {
-        let line = call(bench, "honest", OFF, s, None);
+        let line = call(bench, "honest", off(), s, None);
         let verdict = checked(bench, s, std::slice::from_ref(&line));
         assert!(verdict.is_ok(), "{s:?}: {verdict:?} for {line:?}");
     }
@@ -69,11 +65,11 @@ fn every_scenario_compiles_what_the_generator_predicts_offline_and_locked() {
 fn a_clean_that_removes_nothing_is_refused() {
     let bench = "test-skip-clean";
     let _gone = Removed::bench(bench);
-    call(bench, "control", OFF, Scenario::Clean, None);
+    call(bench, "control", off(), Scenario::Clean, None);
     let line = call(
         bench,
         "control",
-        OFF,
+        off(),
         Scenario::Clean,
         Some(Control::SkipClean),
     );
@@ -90,7 +86,7 @@ fn an_edit_by_file_time_only_is_refused() {
     let line = call(
         bench,
         "control",
-        OFF,
+        off(),
         Scenario::Leaf,
         Some(Control::TimeOnly),
     );
@@ -104,8 +100,8 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
  {
     let bench = "test-relink";
     let _gone = Removed::bench(bench);
-    let first = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
-    let second = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
+    let first = call(bench, "default_relink", relink(), Scenario::Link, None);
+    let second = call(bench, "default_relink", relink(), Scenario::Link, None);
     assert_eq!(
         second.setup_compiled, 0,
         "switching nothing recompiles nothing: {second:?}"
@@ -113,8 +109,13 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
     let ok = checked(bench, Scenario::Link, &[first.clone(), second]);
     assert!(ok.is_ok(), "{ok:?}");
     let want = toolchain::get()
-        .default_mark()
-        .expect("this host's default linker has a mark");
+        .own_mark()
+        .expect("this host's own linker has a mark");
+    assert_eq!(
+        (first.linker.as_str(), first.quantity.as_str()),
+        ("toolchain", "relink"),
+        "the line names the linker and the quantity the arm's types give"
+    );
     assert_eq!(
         first.mark, want,
         "the mark worked out from the toolchain's own rust-lld is the one the default linker wrote"
@@ -122,7 +123,7 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
     let kept = call(
         bench,
         "default_relink",
-        Arm::Relink,
+        relink(),
         Scenario::Link,
         Some(Control::KeepOutput),
     );
@@ -139,9 +140,9 @@ fn a_relink_relinks_only_the_facade_by_the_default_linker_and_one_that_keeps_the
 fn the_recorded_link_line_replays_to_the_same_program() {
     let bench = "test-replay";
     let _gone = Removed::bench(bench);
-    let relinked = call(bench, "default_relink", Arm::Relink, Scenario::Link, None);
-    let replayed = call(bench, "default_replay", Arm::Replay, Scenario::Link, None);
-    let again = call(bench, "default_replay", Arm::Replay, Scenario::Link, None);
+    let relinked = call(bench, "default_relink", relink(), Scenario::Link, None);
+    let replayed = call(bench, "default_replay", replay(), Scenario::Link, None);
+    let again = call(bench, "default_replay", replay(), Scenario::Link, None);
     assert_eq!(
         again.setup_compiled, 0,
         "the second replay rebuilt something: {again:?}"
@@ -150,6 +151,10 @@ fn the_recorded_link_line_replays_to_the_same_program() {
         (replayed.compiled, replayed.expected),
         (None, None),
         "a replay runs no cargo, so its line carries no count"
+    );
+    assert_eq!(
+        (replayed.linker.as_str(), replayed.quantity.as_str()),
+        ("toolchain", "replay")
     );
     let ok = checked(bench, Scenario::Link, &[
         relinked.clone(),
@@ -165,7 +170,7 @@ fn the_recorded_link_line_replays_to_the_same_program() {
     let kept = call(
         bench,
         "default_replay",
-        Arm::Replay,
+        replay(),
         Scenario::Link,
         Some(Control::KeepOutput),
     );

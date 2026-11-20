@@ -1,6 +1,31 @@
-//! What the tests that build share: their state removed when they end.
+//! What the tests that build share: their state removed when they end, and
+//! the arms the benches run, named as the benches name them.
+
+#![allow(dead_code)]
 
 use std::path::PathBuf;
+
+use build_call::{Arm, Build, Relink, Replay};
+use hilavitkutin_build::{ChecksumFreshness, NoIncremental};
+
+/// The set of every arm in the tree that builds without incremental
+/// compilation: the toolchain's own backend and linker.
+pub type Plain = (ChecksumFreshness, NoIncremental);
+
+/// `build-static`'s `llvm_non_incremental`.
+pub fn off() -> Arm {
+    Arm::of::<Plain, Build>()
+}
+
+/// `link-static`'s `default_relink`.
+pub fn relink() -> Arm {
+    Arm::of::<Plain, Relink>()
+}
+
+/// `link-static`'s `default_replay`.
+pub fn replay() -> Arm {
+    Arm::of::<Plain, Replay>()
+}
 
 /// A test bench's state under the build root, removed when this is dropped,
 /// which a panic does too, so a failed test leaves nothing on the disk either.

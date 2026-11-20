@@ -5,7 +5,7 @@
 mod common;
 
 use build_call::space::{MARGIN, budget, free_bytes, free_of_df, refusal};
-use build_call::{Arm, Call, Control, Profile, Scenario};
+use build_call::{Call, Control, Profile, Scenario};
 use common::Removed;
 
 #[test]
@@ -48,9 +48,7 @@ fn a_call_on_a_disk_with_no_room_is_refused_in_its_setup() {
     let _ = Call::ready_with(
         "test-space",
         "control",
-        Arm::Build {
-            incremental: false,
-        },
+        common::off(),
         &input,
         25,
         Some(Control::NoSpace),

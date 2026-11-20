@@ -13,8 +13,8 @@ use std::path::Path;
 use std::process::Command;
 
 use build_call::record::{self, Line};
-use build_call::{Arm, Call, Dirs, Profile, Scenario, cargo, root, toolchain};
-use common::Removed;
+use build_call::{Call, Dirs, Profile, Scenario, cargo, root, toolchain};
+use common::{Removed, relink};
 
 const BENCH: &str = "test-environment";
 const ARM: &str = "default_relink";
@@ -29,8 +29,8 @@ fn put(path: &Path, text: &str) {
 /// the build has to link.
 fn relink_command() -> Command {
     let input = [Scenario::Link.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
-    drop(Call::ready(BENCH, ARM, Arm::Relink, &input, N));
-    cargo::command(&Dirs::of(BENCH, ARM, N), false, &[
+    drop(Call::ready(BENCH, ARM, relink(), &input, N));
+    cargo::command(&Dirs::of(BENCH, ARM, N), &relink(), Profile::Dev, &[
         "build",
         "-p",
         "fx_facade",
@@ -83,7 +83,7 @@ fn an_inherited_environment_and_configuration_do_not_reach_the_fixture_build() {
     }
 
     let input = [Scenario::Link.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
-    let mut call = Call::ready(BENCH, ARM, Arm::Relink, &input, N);
+    let mut call = Call::ready(BENCH, ARM, relink(), &input, N);
     let out = call.run();
     call.record(&out);
     let (lines, _): (Vec<Line>, _) = record::read(&root(), BENCH);

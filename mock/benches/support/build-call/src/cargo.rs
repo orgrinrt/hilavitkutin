@@ -8,14 +8,14 @@
 //! working directory, so the cargo home is the cell's own empty `home/` and
 //! the working directory is the filesystem root, with the fixture named by
 //! `--manifest-path`; a configuration file at the root itself refuses the
-//! call. What is built is then the toolchain's default for the target and the
-//! fixture's own profile, with checksum freshness asked for on the command
-//! line and the cell's own target and build directories.
+//! call. What is built is then the fixture's own profile under the keys and
+//! flags hilavitkutin-build writes for the arm's set of pragmas, handed to
+//! cargo on the command line, in the cell's own target and build directories.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::{Dirs, toolchain};
+use crate::{Arm, Dirs, Profile, toolchain};
 
 /// The inherited variables a call keeps: the path, which the link driver is
 /// found on.
@@ -56,14 +56,17 @@ pub fn config_free_dir(ws: &Path) -> Result<PathBuf, String> {
     Ok(top)
 }
 
-/// A cargo command for the cell `dirs`, with incremental compilation as given.
-/// `args` follow the unstable flag. Panics where no directory free of cargo
-/// configuration can be found, which fails the call's setup.
+/// A cargo command for the cell `dirs`, building as `arm`'s set says for
+/// `profile`. Panics where no directory free of cargo configuration can be
+/// found, which fails the call's setup.
 ///
-/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
-/// flags and configuration every call builds with are build configuration
-/// hilavitkutin-build owns once its pragma round lands; this copy goes then.
-pub fn command(dirs: &Dirs, incremental: bool, args: &[&str]) -> Command {
+/// Every key and flag of the build is what hilavitkutin-build writes for the
+/// arm's set ([`Arm::written`]): each line of cargo configuration goes on as
+/// one `--config`, and the rustc flags as `build.rustflags`, which reaches
+/// every crate of the fixture as a set named by each crate's own script
+/// would. What this function adds of its own is where the cell lives and that
+/// the build reaches nothing outside it.
+pub fn command(dirs: &Dirs, arm: &Arm, profile: Profile, args: &[&str]) -> Command {
     let tc = toolchain::get();
     let ws = dirs.ws();
     let mut c = Command::new(&tc.cargo);
@@ -71,9 +74,8 @@ pub fn command(dirs: &Dirs, incremental: bool, args: &[&str]) -> Command {
     c.current_dir(config_free_dir(&ws).unwrap_or_else(|e| panic!("build-call: {e}")))
         .env("CARGO_HOME", dirs.home())
         .env("RUSTC", &tc.rustc)
-        .env("CARGO_INCREMENTAL", if incremental { "1" } else { "0" })
         .env("TMPDIR", dirs.tmp());
-    c.arg("-Zchecksum-freshness").args(args);
+    c.args(args);
     c.arg("--manifest-path").arg(ws.join("Cargo.toml"));
     c.args(["--offline", "--locked", "--target-dir"])
         .arg(dirs.target());
@@ -81,6 +83,14 @@ pub fn command(dirs: &Dirs, incremental: bool, args: &[&str]) -> Command {
         "build.build-dir={:?}",
         dirs.target().display().to_string()
     ));
+    let written = arm.written(profile, &tc.host);
+    for line in &written.config {
+        c.arg("--config").arg(line);
+    }
+    if !written.rustflags.is_empty() {
+        c.arg("--config")
+            .arg(format!("build.rustflags={:?}", written.rustflags));
+    }
     c
 }
 

@@ -1,7 +1,7 @@
 //! The pinned toolchain, resolved once to the binaries a call runs, and what
 //! it says of itself: its host, the version its own `rust-lld` reports and the
-//! target's own description, from which the default linker's mark is worked
-//! out.
+//! target's own description, from which hilavitkutin-build reads which linker
+//! is the toolchain's own and the mark it leaves.
 //!
 //! The channel is read from `mock/rust-toolchain.toml`. It is resolved through
 //! rustup once, with every inherited variable but the ones rustup needs to find
@@ -11,6 +11,8 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
+
+use hilavitkutin_build::{RustLldMark, ToolchainLinker, rust_lld_mark};
 
 /// The variables rustup's proxy needs to find its toolchains, and nothing else.
 const RUSTUP_NEEDS: [&str; 3] = ["PATH", "HOME", "RUSTUP_HOME"];
@@ -32,10 +34,10 @@ pub struct Toolchain {
 }
 
 impl Toolchain {
-    /// The mark the toolchain's default linker leaves in an executable it
-    /// links for the host. See [`default_mark`].
-    pub fn default_mark(&self) -> Result<String, String> {
-        default_mark(&self.spec, self.lld.as_deref(), &self.host)
+    /// The mark the toolchain's own linker leaves in an executable it links
+    /// for the host. See [`own_mark`].
+    pub fn own_mark(&self) -> Result<String, String> {
+        own_mark(&self.spec, self.lld.as_deref(), &self.host)
     }
 }
 
@@ -46,9 +48,9 @@ pub fn get() -> &'static Toolchain {
     TOOLCHAIN.get_or_init(|| resolve().unwrap_or_else(|e| panic!("build-call: {e}")))
 }
 
-// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
-// toolchain is resolved here by hand through rustup, and `channel` reads the
-// pin by hand. Both come from hilavitkutin-build once its round gives it them.
+// The resolving stays here: hilavitkutin-build touches neither the
+// environment nor the filesystem, so whoever calls it does the looking and
+// hands it what the toolchain printed.
 fn resolve() -> Result<Toolchain, String> {
     let channel = channel();
     let mut proxy = Command::new("rustc");
@@ -161,72 +163,35 @@ pub fn channel() -> String {
         .unwrap_or_else(|| panic!("{}: no channel line", file.display()))
 }
 
-/// What GNU-flavor lld prints after its version for `--version`. Into
-/// `.comment` it writes `Linker: ` and the version alone.
-const GNU_COMPATIBLE: &str = " (compatible with GNU linkers)";
-
-/// The mark the default linker of the target `spec` describes leaves in what
-/// it links, worked out from the description and what the toolchain's own
-/// `rust-lld` said of itself (`lld`, its `--version` line).
+/// The mark the toolchain's own linker for the target `spec` describes leaves
+/// in what it links, where `lld` is what the toolchain's `rust-lld` said for
+/// `--version`.
 ///
-/// Where the target's linker flavor is an lld one and the toolchain links with
-/// its own copy (`link-self-contained` names the linker), the linker is that
-/// `rust-lld`, and its mark is `Linker: ` followed by its version line, the
-/// LLVM commit it was built from included. A system lld of the same LLVM
-/// version leaves another mark. Any other default is refused: the bench has
-/// no way yet to know what that linker writes.
-///
-/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): which
-/// linker a target defaults to and the mark it leaves is build configuration
-/// hilavitkutin-build owns once its pragma round lands; this copy goes then.
-pub fn default_mark(spec: &str, lld: Option<&str>, host: &str) -> Result<String, String> {
-    let flavor = string_field(spec, "linker-flavor").unwrap_or_default();
-    let own_linker =
-        object_field(spec, "link-self-contained").is_some_and(|o| o.contains("\"linker\""));
-    if flavor.contains("lld") && own_linker {
-        let said = lld.ok_or_else(|| {
-            format!("the toolchain links {host} with its own lld, and no rust-lld of it said its version")
-        })?;
-        let version = said
-            .strip_suffix(GNU_COMPATIBLE)
-            .filter(|v| v.starts_with("LLD "))
-            .ok_or_else(|| {
-                format!("rust-lld --version said `{said}`, not `LLD <version> (<source>){GNU_COMPATIBLE}`")
+/// Which linker that is and what it writes are hilavitkutin-build's to say
+/// (`ToolchainLinker::of`, `rust_lld_mark`); this function words the refusal
+/// where the crate has no mark. A toolchain linker other than its own
+/// `rust-lld` has none.
+pub fn own_mark(spec: &str, lld: Option<&str>, host: &str) -> Result<String, String> {
+    match ToolchainLinker::of(spec) {
+        ToolchainLinker::RustLld => {
+            let said = lld.ok_or_else(|| {
+                format!("the toolchain links {host} with its own lld, and no rust-lld of it said its version")
             })?;
-        return Ok(format!("Linker: {version}"));
+            Option::from(rust_lld_mark(said))
+                .map(|mark: RustLldMark<'_>| mark.to_string())
+                .ok_or_else(|| {
+                    format!("rust-lld --version said `{said}`, which is not the version line of a GNU-flavor lld")
+                })
+        },
+        // FIXME(the_build_and_link_bench_assumes_an_elf_unix_host_and_fails): a
+        // target whose own linker is another one (GNU ld through cc, ld64,
+        // link.exe) has no mark, so its link cells fail instead of being left
+        // out.
+        ToolchainLinker::Other(flavor) => {
+            Err(format!(
+                "the toolchain's own linker for {host} is of flavor `{flavor}` or is not its own copy, and \
+                 hilavitkutin-build has a mark for the toolchain's rust-lld only"
+            ))
+        },
     }
-    // FIXME(the_build_and_link_bench_assumes_an_elf_unix_host_and_fails): a
-    // target whose default is another linker (GNU ld through cc, ld64, link.exe)
-    // has no mark here, so its link cells fail instead of being left out.
-    Err(format!(
-        "the toolchain's default linker for {host} is of flavor `{flavor}`{}, and this bench knows the mark of the \
-         toolchain's own lld only",
-        if own_linker { "" } else { ", not the toolchain's own" }
-    ))
-}
-
-// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
-// target description is read by hand here, enough for the two fields above;
-// reading it is hilavitkutin-build's once its pragma round lands.
-
-/// The string value of `"key": "value"` in a JSON text.
-fn string_field(json: &str, key: &str) -> Option<String> {
-    let after = &json[json.find(&format!("\"{key}\""))? + key.len() + 2 ..];
-    let after = after
-        .trim_start()
-        .strip_prefix(':')?
-        .trim_start()
-        .strip_prefix('"')?;
-    Some(after[.. after.find('"')?].to_string())
-}
-
-/// The text of the object or value after `"key":` in a JSON text, up to its
-/// closing brace where it is an object.
-fn object_field<'a>(json: &'a str, key: &str) -> Option<&'a str> {
-    let after = &json[json.find(&format!("\"{key}\""))? + key.len() + 2 ..];
-    let after = after.trim_start().strip_prefix(':')?.trim_start();
-    Some(match after.strip_prefix('{') {
-        Some(body) => &body[.. body.find('}')?],
-        None => &after[.. after.find([',', '\n']).unwrap_or(after.len())],
-    })
 }

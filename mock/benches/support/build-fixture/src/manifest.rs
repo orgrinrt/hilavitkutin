@@ -10,9 +10,11 @@ use crate::graph::{Graph, Role, dir, name};
 
 /// The workspace manifest.
 ///
-/// FIXME(build_call_s_target_spec_reading_linker_mark_and_cargo_flags): the
-/// two profiles are written here by hand, and `dev` is not hilavitkutin's
-/// `dev`. They come from hilavitkutin-build once its round gives it them.
+/// The two profiles hold `opt-level`, debug information and codegen units,
+/// which hilavitkutin-build's design leaves to a consumer's manifest, and
+/// the fixture is the consumer here. What the crate does own of a profile,
+/// the keys of an arm's pragmas, is not in this file: the call hands those
+/// to cargo on its command line (`build-call`'s `cargo::command`).
 pub fn workspace() -> String {
     "[workspace]\nmembers = [\"crates/*\", \"facade\"]\nresolver = \"3\"\n\n\
      [workspace.package]\nversion = \"0.0.0\"\nedition = \"2024\"\npublish = false\n\n\

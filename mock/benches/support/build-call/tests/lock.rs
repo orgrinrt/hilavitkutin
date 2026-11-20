@@ -10,7 +10,7 @@ use std::process::Output;
 use std::sync::mpsc;
 use std::time::Duration;
 
-use build_call::{Arm, Call, Dirs, Profile, Scenario, record, root};
+use build_call::{Call, Dirs, Profile, Scenario, record, root};
 use common::Removed;
 
 const BENCH: &str = "test-lock";
@@ -21,10 +21,7 @@ const N: usize = 25;
 fn a_call_that_waited_on_a_lock_is_recorded_as_waiting_and_refused() {
     let _gone = Removed::bench(BENCH);
     let input = [Scenario::Leaf.code(), Profile::Dev.code(), 0, 0, 0, 0, 0, 0];
-    let arm = Arm::Build {
-        incremental: false,
-    };
-    let mut call = Call::ready(BENCH, ARM, arm, &input, N);
+    let mut call = Call::ready(BENCH, ARM, common::off(), &input, N);
 
     let profile_dir = Dirs::of(BENCH, ARM, N).target().join(Profile::Dev.dir());
     let held: Vec<File> = [".cargo-lock", ".cargo-build-lock", ".cargo-artifact-lock"]

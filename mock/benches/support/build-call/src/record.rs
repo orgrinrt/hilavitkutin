@@ -6,9 +6,12 @@
 //! a crate count other than the one the generator predicts, an output present
 //! before the timed block, an output missing after it, a wait on a lock, a
 //! failed cargo or linker, and for a link a mark other than the one the arm's
-//! linker leaves, or a check line differing between calls. The expected count
-//! and the expected mark are worked out again here, from the fixture, the
-//! scenario, the arm's name and the toolchain, never read from the line.
+//! linker leaves, or a check line differing between calls. A line says which
+//! linker its arm's set of pragmas names and which quantity the arm measures,
+//! both written from the arm's types. The expected count and the expected
+//! mark are worked out again here, from the fixture, the scenario, what
+//! hilavitkutin-build says that linker leaves and the toolchain, and no line
+//! carries either.
 //!
 //! A replayed link line runs no cargo, so it compiles nothing cargo could
 //! count: its line carries `-` for the count and the prediction, and a replay
@@ -20,11 +23,12 @@ use std::path::{Path, PathBuf};
 
 use build_fixture::{Fixture, Site};
 
-use crate::{Profile, Scenario, linker};
+use crate::{Kind, Profile, Scenario, linker};
 
 /// The columns of the record, as written into a run directory.
 pub const HEADER: &str = "bench\tarm\tscenario\tprofile\tn\tpid\tcall\tsetup_compiled\tcompiled\texpected\t\
-                          absent_before\tpresent_after\texe_bytes\ttarget_bytes\tincremental_bytes\tmark\tcheck\texit\twaited\n";
+                          absent_before\tpresent_after\texe_bytes\ttarget_bytes\tincremental_bytes\tmark\tcheck\texit\twaited\t\
+                          linker\tquantity\n";
 
 /// What a count column holds where the count does not apply.
 const NOT_APPLICABLE: &str = "-";
@@ -53,12 +57,16 @@ pub struct Line {
     pub check:             String,
     pub exit:              String,
     pub waited:            bool,
+    /// The linker of the arm's set, by the name hilavitkutin-build gives it.
+    pub linker:            String,
+    /// The arm's quantity, a [`Kind`]'s label.
+    pub quantity:          String,
 }
 
 impl Line {
     pub fn to_tsv(&self) -> String {
         format!(
-            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
             self.bench,
             self.arm,
             self.scenario,
@@ -77,13 +85,15 @@ impl Line {
             clean(&self.mark),
             clean(&self.check),
             self.exit,
-            self.waited
+            self.waited,
+            clean(&self.linker),
+            clean(&self.quantity)
         )
     }
 
     pub fn from_tsv(line: &str) -> Option<Line> {
         let f: Vec<&str> = line.split('\t').collect();
-        if f.len() != 19 {
+        if f.len() != 21 {
             return None;
         }
         Some(Line {
@@ -106,6 +116,8 @@ impl Line {
             check:             f[16].into(),
             exit:              f[17].into(),
             waited:            f[18] == "true",
+            linker:            f[19].into(),
+            quantity:          f[20].into(),
         })
     }
 }
@@ -170,14 +182,6 @@ pub fn expected(scenario: Scenario, n: usize) -> Option<usize> {
     })
 }
 
-/// Whether a line was written by an arm that replays a link line.
-///
-/// FIXME(a_link_static_arm_carries_its_linker_and_quantity_in_a_type): the
-/// quantity is parsed back from the arm's name; the arm's type should carry it.
-pub fn is_replay(arm: &str) -> bool {
-    arm.ends_with("_replay")
-}
-
 /// Hold every line of a cell to its scenario. `Ok` carries a one-line note,
 /// `Err` every line that fails and why.
 pub fn check(
@@ -208,21 +212,30 @@ pub fn check(
                 profile.label()
             ));
         }
-        if is_replay(&l.arm) {
-            if let Some(c) = l.compiled {
+        match Kind::from_label(&l.quantity) {
+            None => {
                 why.push(format!(
-                    "a replayed link line runs no cargo, and the line says it compiled {c} crates"
+                    "the line names the quantity `{}`, which this bench does not measure",
+                    l.quantity
                 ));
-            }
-        } else {
-            let want = expected(scenario, n);
-            if want.is_none() || l.compiled != want {
-                why.push(format!(
-                    "compiled {} crates, the generator predicts {}",
-                    count(l.compiled),
-                    count(want)
-                ));
-            }
+            },
+            Some(Kind::Replay) => {
+                if let Some(c) = l.compiled {
+                    why.push(format!(
+                        "a replayed link line runs no cargo, and the line says it compiled {c} crates"
+                    ));
+                }
+            },
+            Some(Kind::Build | Kind::Relink) => {
+                let want = expected(scenario, n);
+                if want.is_none() || l.compiled != want {
+                    why.push(format!(
+                        "compiled {} crates, the generator predicts {}",
+                        count(l.compiled),
+                        count(want)
+                    ));
+                }
+            },
         }
         if !l.absent_before {
             why.push(format!(
@@ -240,7 +253,7 @@ pub fn check(
             why.push("cargo waited on a lock".into());
         }
         if scenario == Scenario::Link
-            && let Some(refused) = linker::refusal(&l.arm, &l.mark)
+            && let Some(refused) = linker::refusal(&l.linker, &l.mark)
         {
             why.push(refused);
         }

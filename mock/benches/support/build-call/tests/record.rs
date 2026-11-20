@@ -22,11 +22,13 @@ fn replay_line(compiled: Option<usize>) -> Line {
         target_bytes: 1,
         incremental_bytes: 0,
         mark: toolchain::get()
-            .default_mark()
-            .expect("this host's default linker has a mark"),
+            .own_mark()
+            .expect("this host's own linker has a mark"),
         check: "fixture check 0".into(),
         exit: "0".into(),
         waited: false,
+        linker: "toolchain".into(),
+        quantity: "replay".into(),
     }
 }
 
@@ -36,7 +38,41 @@ fn a_replay_line_writes_dashes_for_its_counts_and_reads_back() {
     let tsv = line.to_tsv();
     let fields: Vec<&str> = tsv.trim_end().split('\t').collect();
     assert_eq!((fields[8], fields[9]), ("-", "-"), "{tsv}");
+    assert_eq!(
+        (fields[19], fields[20]),
+        ("toolchain", "replay"),
+        "the linker and the quantity are the last two columns: {tsv}"
+    );
+    assert_eq!(
+        record::HEADER.trim_end().split('\t').count(),
+        fields.len(),
+        "the header names every column"
+    );
     assert_eq!(Line::from_tsv(tsv.trim_end()), Some(line));
+}
+
+/// The quantity is read from its column and from nowhere else: an arm named
+/// like a replay that says it relinked is held to a count, and a quantity the
+/// bench does not measure is refused.
+#[test]
+fn the_quantity_is_the_lines_own_and_an_unknown_one_is_refused() {
+    let mut named_like_a_relink = replay_line(None);
+    named_like_a_relink.arm = "default_relink".into();
+    let ok = record::check(
+        &[named_like_a_relink],
+        "test-record",
+        Scenario::Link,
+        Profile::Dev,
+        25,
+    );
+    assert!(ok.is_ok(), "the arm's name decides nothing: {ok:?}");
+    for unknown in ["", "replays", "Replay", "link"] {
+        let mut line = replay_line(None);
+        line.quantity = unknown.into();
+        let why = record::check(&[line], "test-record", Scenario::Link, Profile::Dev, 25)
+            .expect_err("a quantity the bench does not measure must be refused");
+        assert!(why.contains("which this bench does not measure"), "{why}");
+    }
 }
 
 #[test]
@@ -63,7 +99,7 @@ fn a_replay_line_that_carries_a_count_is_refused() {
 #[test]
 fn a_cargo_line_with_no_count_is_refused() {
     let mut line = replay_line(None);
-    line.arm = "default_relink".into();
+    line.quantity = "relink".into();
     let why = record::check(&[line], "test-record", Scenario::Link, Profile::Dev, 25)
         .expect_err("a relink must carry the count of what it compiled");
     assert!(
