@@ -1,8 +1,7 @@
 # The program `mock cross-target` builds for the host and for the target it is
-# asked about. A root of its own: built for wasm it takes the engine's tier
-# without an operating system, which a member of the workspace beside the
-# frozen crate could not, since that crate takes the default tier and cargo
-# would turn both on.
+# asked about. A root of its own: built for wasm it takes the engine without
+# the os tier, which a member of the workspace could not, since crates there
+# name the engine with `os` on and cargo would unify the two.
 
 [workspace]
 resolver = "2"
@@ -28,10 +27,10 @@ hilavitkutin-conformance = { path = "../../../crates/hilavitkutin-conformance" }
 # The frozen units name the engine's context type, so the engine comes with
 # them, in the tier the target can carry.
 [target.'cfg(target_family = "wasm")'.dependencies]
-hilavitkutin = { path = "../../../crates/hilavitkutin", default-features = false, features = ["platform-no-os"] }
+hilavitkutin = { path = "../../../crates/hilavitkutin" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-hilavitkutin = { path = "../../../crates/hilavitkutin", default-features = false, features = ["platform-os"] }
+hilavitkutin = { path = "../../../crates/hilavitkutin", features = ["os"] }
 
 # The path crates above take notko from the workspace beside this one, which
 # names it by `https`, and arvo names it by `ssh`. This crate is its own root,

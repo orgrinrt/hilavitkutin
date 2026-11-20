@@ -255,7 +255,7 @@ fn parallel_scripted_ema_seed() {
     );
 }
 
-#[cfg(feature = "platform-os")]
+#[cfg(feature = "os")]
 #[test]
 fn os_clock_default_nonzero() {
     let provider = stable_provider(16384, 0);

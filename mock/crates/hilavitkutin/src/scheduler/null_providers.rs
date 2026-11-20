@@ -55,10 +55,9 @@ unsafe impl MemoryProviderApi for NullMemoryProvider {
 ///
 /// The unconditional fallback `Clk` for builds without the os tier: the
 /// pass-duration EMA stays zero until a real clock is supplied via the
-/// builder's `clock(...)` slot (the no_os DI path). With the default
-/// `platform-os` feature the builder starts on `OsClock` instead, so this
-/// type is only ever the live clock when a no_os consumer leaves the slot
-/// untouched.
+/// builder's `clock(...)` slot (the no_os DI path). With the `os`
+/// feature on, the builder starts on `OsClock` instead; without it this
+/// type is the live clock until the consumer fills the slot.
 pub struct NullClock;
 
 impl NullClock {
@@ -84,12 +83,12 @@ impl ClockApi for NullClock {
 }
 
 /// The builder's starting clock: the os-tier monotonic clock when the
-/// default `platform-os` feature is on, the null clock otherwise (no_os
+/// `os` feature is on, the null clock otherwise (no_os
 /// consumers supply their own via the builder's `clock(...)` slot).
-#[cfg(feature = "platform-os")]
+#[cfg(feature = "os")]
 pub type DefaultClock = crate::platform::OsClock;
-/// The builder's starting clock (no_os fallback; see the platform-os arm).
-#[cfg(not(feature = "platform-os"))]
+/// The builder's starting clock (no_os fallback; see the `os` arm).
+#[cfg(not(feature = "os"))]
 pub type DefaultClock = NullClock;
 
 /// Null column storage: the default `CS` for a bare `Scheduler` type.

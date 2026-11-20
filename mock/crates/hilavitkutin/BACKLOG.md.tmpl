@@ -16,10 +16,11 @@ surfaces or the distribution story demands it.
 
 ## no_os tier documentation
 
-The no_os tier is trait-only, consumers ship their own
-MemoryProviderApi / ThreadPoolApi / ClockApi impls. A concrete
-example (for an embedded target) would help third-party
-adoption. Defer until a consumer surfaces.
+The no_os tier is the default build. A consumer without an operating
+system ships its own ThreadPoolApi and ClockApi impls, and can turn on
+`static` on hilavitkutin-providers for a memory provider over its own
+buffer. The deferred item is a worked example for an embedded target,
+which would help third-party adoption. Defer until a consumer surfaces.
 
 ## Memory protection (mprotect)
 

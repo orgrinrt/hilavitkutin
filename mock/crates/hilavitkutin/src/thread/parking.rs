@@ -24,7 +24,7 @@
 //!   by AdaptWu at ScheduleEnd.
 //!
 //! The atomic-wait wrappers (`atomic_wait` / `atomic_wake_all`) are
-//! cfg-gated per OS. On `platform-no-os` or unsupported targets
+//! cfg-gated per OS. Without the `os` feature, or on unsupported targets,
 //! the wait wrapper degrades to `core::hint::spin_loop` and the
 //! wake is a no-op.
 
@@ -143,7 +143,7 @@ pub fn atomic_wake_all(addr: &AtomicU32) {
     platform::wake_all_u32(addr);
 }
 
-#[cfg(all(target_os = "linux", feature = "platform-os"))]
+#[cfg(all(target_os = "linux", feature = "os"))]
 mod platform {
     use core::sync::atomic::AtomicU32;
 
@@ -178,7 +178,7 @@ mod platform {
     }
 }
 
-#[cfg(all(target_os = "macos", feature = "platform-os"))]
+#[cfg(all(target_os = "macos", feature = "os"))]
 mod platform {
     use core::sync::atomic::AtomicU32;
 
@@ -239,7 +239,7 @@ mod platform {
     }
 }
 
-#[cfg(all(target_os = "windows", feature = "platform-os"))]
+#[cfg(all(target_os = "windows", feature = "os"))]
 mod platform {
     use core::sync::atomic::AtomicU32;
 
@@ -283,9 +283,9 @@ mod platform {
 }
 
 #[cfg(not(any(
-    all(target_os = "linux", feature = "platform-os"),
-    all(target_os = "macos", feature = "platform-os"),
-    all(target_os = "windows", feature = "platform-os"),
+    all(target_os = "linux", feature = "os"),
+    all(target_os = "macos", feature = "os"),
+    all(target_os = "windows", feature = "os"),
 )))]
 mod platform {
     use core::sync::atomic::AtomicU32;

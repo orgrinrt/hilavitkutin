@@ -1,0 +1,13 @@
+error[E0432]: unresolved import `hilavitkutin_providers::StaticBumpMemory`
+ --> tests/ui/default/static_bump_memory_unnamed_without_static_fail.rs:3:5
+  |
+3 | use hilavitkutin_providers::StaticBumpMemory;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `StaticBumpMemory` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "static")]
+  |       ------------------ the item is gated behind the `r#static` feature
+  | pub use crate::memory::{StaticBumpMemory, StaticFreeListMemory};
+  |                         ^^^^^^^^^^^^^^^^

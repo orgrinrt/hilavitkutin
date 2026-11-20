@@ -1,11 +1,6 @@
-//! Interner provider surface and default arena impl.
-//!
-//! Provides the [`InternerApi`] provider trait, the
-//! [`HasInterner`] accessor, the [`MemoryArena`] inline-storage
-//! arena, and the [`default_interner`] constructor. WorkUnits that
-//! handle [`Str`] declare `HasInterner` in their `Ctx` tuple bound
-//! and call `ctx.interner().intern(s)` /
-//! `ctx.interner().resolve(handle)` from `execute()`.
+//! The default interner: the inline `MemoryArena`, the
+//! `default_interner` constructor and the `InternerKit` preset. Under
+//! the `portable` feature.
 
 use core::cell::{Cell, UnsafeCell};
 
@@ -14,69 +9,8 @@ use arvo::strategy::{Additive, Identity};
 use hilavitkutin_api::builder_input::BuilderInput;
 use hilavitkutin_api::{Cons, Empty, Resource};
 use hilavitkutin_kit::{Kit, KitDispatch};
-use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
+use hilavitkutin_str::{ArenaInterner, StringInterner};
 use notko::Maybe;
-
-/// Provider-shape trait for the interner.
-///
-/// Parallels the platform contracts [`MemoryProviderApi`] /
-/// [`ClockApi`] / [`ThreadPoolApi`] in `hilavitkutin-api`. The
-/// `'static` bound lets the value live in a `Resource<T>`. v0 does
-/// not require `Send + Sync`; the engine's resource access during
-/// single-thread morsel dispatch is sequential. The Sync arena
-/// variant (BACKLOG) generalises this for multi-thread schedules.
-///
-/// [`MemoryProviderApi`]: hilavitkutin_api::MemoryProviderApi
-/// [`ClockApi`]: hilavitkutin_api::ClockApi
-/// [`ThreadPoolApi`]: hilavitkutin_api::ThreadPoolApi
-pub trait InternerApi: 'static {
-    /// Intern a string. Const-table short-circuit applies before
-    /// the arena lookup.
-    fn intern(&self, s: &str) -> Str; // lint:allow(no-bare-string) reason: interner boundary; the input is the &str the consumer passes; tracked: #72
-
-    /// Resolve a handle back to a string. Returns `Maybe::Isnt` for a
-    /// const handle with no string behind it; a runtime id the arena
-    /// did not issue does not come back as `Maybe::Isnt` yet.
-    fn resolve(&self, s: Str) -> Maybe<&str>; // lint:allow(no-bare-string) reason: interner boundary; resolved &str; tracked: #72
-}
-
-/// Accessor for the interner provider in a Context tuple.
-///
-/// Mirrors `HasMemoryProvider` / `HasClock` / `HasThreadPool` from
-/// `hilavitkutin-api`. WorkUnits that need to intern or resolve
-/// strings declare `HasInterner` in their `Ctx` tuple bound.
-pub trait HasInterner {
-    /// Concrete interner implementation type.
-    type Provider: InternerApi;
-
-    /// Borrow the interner provider.
-    fn interner(&self) -> &Self::Provider;
-}
-
-/// Blanket: any `StringInterner<A>` satisfies the InternerApi
-/// surface. Consumers wire `Resource<StringInterner<A>>` and the
-/// HasInterner accessor returns it; this impl bridges the trait.
-impl<A> InternerApi for StringInterner<A>
-where
-    A: ArenaInterner + 'static,
-{
-    #[inline(always)]
-    fn intern(
-        &self,
-        s: &str, // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
-    ) -> Str {
-        StringInterner::intern(self, s)
-    }
-
-    #[inline(always)]
-    #[rustfmt::skip] // keeps the allow on the signature it governs
-    fn resolve(
-        &self,
-        s: Str,
-    ) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
-        StringInterner::resolve(self, s)
-    }
-}
 
 /// Inline-storage arena for runtime-interned strings.
 ///
@@ -96,13 +30,14 @@ where
 /// repeat spends neither bytes nor an entry slot.
 ///
 /// On capacity overflow (out of bytes or out of entry slots),
-/// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
-/// reads nothing for any id at or past the live entry count, the
-/// sentinel among them once `StringInterner` masks it to the 28-bit
-/// id field, and answers it with `""`, which aliases `""` once the arena
-/// holds it. A handle another arena issued is not told apart from one of
-/// its own. `ENTRIES` of 2^28 or more, whose last id would equal the
-/// masked sentinel, fails the build at [`MemoryArena::new`].
+/// `arena_intern` returns sentinel id `u32::MAX`, the arena's refusal,
+/// which `StringInterner` answers with `Maybe::Isnt` and builds no handle
+/// from. `arena_resolve` reads nothing for any id at or past the live
+/// entry count, and answers it with `""`, which aliases `""` once the
+/// arena holds it. A handle another arena issued is not told apart from
+/// one of its own. Ids run below `ENTRIES`, so an `ENTRIES` of up to
+/// 2^28 keeps every one inside the 28-bit `Str` id field and below the
+/// refusal; one past 2^28 fails the build at [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
@@ -124,18 +59,17 @@ impl<
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
 > MemoryArena<BYTES, ENTRIES>
 {
-    /// Every issued id stays below 2^28 - 1, the id the `u32::MAX`
-    /// sentinel becomes once masked into a `Str`; at 2^28 entries the
-    /// last slot would carry the sentinel's own id, and past it ids
-    /// alias each other.
+    /// Every issued id is below `ENTRIES`, so up to 2^28 entries keep
+    /// every id inside the 28-bit `Str` id field; the refusal is
+    /// `u32::MAX`, outside it.
     const ENTRIES_FIT_THE_ID: () = assert!(
-        ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
-        "MemoryArena: ENTRIES of 2^28 or more reach the masked overflow sentinel's 28-bit Str id; use at most 268435455 entries",
+        ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
+        "MemoryArena: use at most 268435456 entries, as many as the 28-bit Str id field holds",
     );
 
     /// Construct an empty arena. Buffer initialised to zero, entry
     /// table initialised with zero offsets and zero lengths. An
-    /// `ENTRIES` of 2^28 or more fails the build here.
+    /// `ENTRIES` past 2^28 fails the build here.
     pub const fn new() -> Self {
         let () = Self::ENTRIES_FIT_THE_ID;
         Self {
@@ -262,9 +196,9 @@ impl<
         id: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
     ) -> &str { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
         let idx = id as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widens to usize for array index; tracked: #121
-        // Only ids below the live count are read. The sentinel arrives
-        // masked to 28 bits through `Str`, so it is caught by the count
-        // rather than by a value compare.
+        // Only ids below the live count are read. The sentinel never
+        // reaches a `Str`; an id another arena issued is caught by the
+        // count.
         if id == SENTINEL || idx >= self.count.get().0 {
             // FIXME(evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of): the empty string stands in for nothing held; a `&str` return cannot say the id was not issued.
             return "";

@@ -1,0 +1,13 @@
+error[E0432]: unresolved import `hilavitkutin_providers::MemoryArena`
+ --> tests/ui/default/memory_arena_unnamed_without_portable_fail.rs:3:5
+  |
+3 | use hilavitkutin_providers::MemoryArena;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `MemoryArena` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "portable")]
+  |       -------------------- the item is gated behind the `portable` feature
+  | pub use crate::interner::{InternerKit, MemoryArena, default_interner};
+  |                                        ^^^^^^^^^^^

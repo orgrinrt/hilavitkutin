@@ -14,7 +14,7 @@ publish = false
 # crate, so the arms differ only in what they measure.
 [dependencies]
 evs-support = { path = "../evs-support" }
-hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin = { path = "../../../crates/hilavitkutin", features = ["os"] }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", version = "0.1.0", default-features = false }
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

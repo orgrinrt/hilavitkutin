@@ -898,8 +898,9 @@ Predictive parking at sync points: <100ns spin, 100ns-10µs
 spin_loop, >10µs park.
 
 The pass-duration spine of the above: the scheduler owns a `ClockApi`
-provider (a builder slot, defaulted to the os-tier clock; `no_os`
-consumers supply their own via the same slot) and reads `now_ns` at
+provider (a builder slot, starting at `OsClock` when the consumer turns
+the `os` feature on and at the null clock otherwise; a consumer supplies
+its own via the same slot) and reads `now_ns` at
 frame start and end on every run entry, single-core, parallel, and
 fused alike. The duration folds into `SchedulerMetrics` in the meta
 block with the canonical 1/8 decay; the seed frame takes the raw
@@ -1775,18 +1776,39 @@ changed to agree.
 
 ## Platform implementations (domain 02)
 
-os tier (default): raw mmap/munmap for MemoryProvider and
-clock_gettime for Clock. Direct syscalls, no libc where possible.
+A build on default features is the no_os tier and carries the contracts
+alone. The os tier is the `os` feature, which a consumer turns on: raw
+mmap/munmap for MemoryProvider (`OsMemoryProvider`) and clock_gettime for
+Clock (`OsClock`), with the operating-system arms of thread parking and
+thread classes. Direct syscalls, no libc where possible. Without `os`
+the engine reaches no operating system: parking spins and the builder
+starts at the null clock. The feature is named for what its
+implementations rest on, and the name means the same in every crate of
+the family; `hilavitkutin-providers` carries `static` and `portable`.
+The engine has two other features, `intrinsics-std` and the test-only
+`mutant-truncating-append`, and neither is an implementation of a
+contract.
 
-The os tier's memory provider keeps the api's four promises this way.
+The engine does not name itself as a dev-dependency, so its suite runs
+on the build a consumer gets. Its tests that need the os tier carry
+`cfg(feature = "os")`; `cargo mock test -p hilavitkutin` runs the suite
+with the tier off and `--features os` with it on. A compile-fail twin
+holds that a default build cannot name `OsClock`, and its pass twin
+names `NullClock`.
+
+The os tier's memory provider keeps the api's five promises this way.
 Every block is a fresh anonymous mapping, so it is the provider's alone,
 lives until `munmap` in `deallocate`, and does not move with the provider.
 A mapping is page-aligned; an `align` wider than a page, or one that is not
 a power of two, is refused with null rather than handed a block that only
-looks aligned. The engine's null provider, the default memory type a bare `Scheduler`
-names, refuses every request, and so keeps the promises trivially.
+looks aligned. A fresh anonymous mapping reads as zero, so the provider's
+`allocate_zeroed` is its `allocate` and writes nothing. The engine's null
+provider, the default memory type a bare `Scheduler` names, refuses every
+request, and so keeps the promises trivially; it keeps the default
+`allocate_zeroed`, which writes nothing into a null block.
 
-no_os tier: trait contracts only. Consumer provides all impls.
+no_os tier: trait contracts only. Consumer provides all impls, its own
+or the ones a crate of the family carries behind a feature.
 
 Neither tier spawns threads. hilavitkutin ships the executor contract,
 `ThreadPoolApi`, and nothing that implements it over OS threads: the

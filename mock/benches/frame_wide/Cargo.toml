@@ -44,7 +44,7 @@ mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", 
 # `engine_grouping` reaches the engine's grouping directly. The arms reach it
 # only through `frame-wide-support`, so these are test-only.
 [dev-dependencies]
-hilavitkutin = { path = "../../crates/hilavitkutin" }
+hilavitkutin = { path = "../../crates/hilavitkutin", features = ["os"] }
 hilavitkutin-api = { path = "../../crates/hilavitkutin-api" }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }

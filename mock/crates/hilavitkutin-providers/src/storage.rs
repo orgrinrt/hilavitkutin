@@ -4,7 +4,8 @@
 //! store. The engine stays generic over `CS: ColumnStorage`; consumers
 //! (and the engine's own tests) wire this in. It is a placeholder: a
 //! flat slot table over a consumer-supplied `MemoryProvider`, with each
-//! column a separate provider allocation. The columnar engine replaces
+//! column a separate provider allocation, given back to the provider on a
+//! release, a re-reserve and drop. The columnar engine replaces
 //! it later without touching any `CS: ColumnStorage` consumer.
 
 use core::mem::size_of;
@@ -65,26 +66,18 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
         if *id.0 >= self.slots.as_ref().len() {
             return Outcome::Err(StorageError::IdOutOfRange);
         }
-        // Free a prior allocation if this id is being re-reserved. Read
-        // the slot by value (ColumnSlot is Copy) so no borrow is held
-        // across the provider call.
-        if let Maybe::Is(old) = self.slots.as_ref()[*id.0]
-            && !old.ptr.is_null()
-        {
-            // SAFETY: old.ptr came from a prior allocate on this
-            // provider with old.len_bytes at CACHE_LINE_ALIGN.
-            unsafe {
-                self.provider
-                    .deallocate(old.ptr, old.len_bytes, CACHE_LINE_ALIGN);
-            }
-        }
         // Byte length = record count times element size, checked so a
         // large count cannot wrap to a small length and hand back an
         // undersized block (a write of `count` records would overrun).
+        // Checked before the give-back, so a refused argument leaves a
+        // live column as it was.
         let bytes = match (*count).checked_mul(size_of::<T>()) {
             Some(n) => USize(n), // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
             None => return Outcome::Err(StorageError::LengthOverflow),
         };
+        // A re-reserved id gives its block back before the new one is
+        // taken, and no record is carried over to the new one.
+        self.give_back(id);
         let slot = if bytes == <USize as Identity<Additive>>::IDENTITY {
             ColumnSlot {
                 ptr: core::ptr::null_mut(),
@@ -139,26 +132,40 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
         }
     }
 
-    fn release(&mut self, _id: StoreId) {
-        // Naive: no-op. Reader-count reclamation is a columnar-engine
-        // concern; this placeholder frees only on Drop.
+    fn release(&mut self, id: StoreId) {
+        self.give_back(id);
+    }
+}
+
+impl<M: MemoryProviderApi, D: Capacity> ArenaColumnStorage<M, D> {
+    /// Give the block of column `id` back to the provider and empty its
+    /// slot. An id past the cap, or one with no block, changes nothing.
+    fn give_back(&mut self, id: StoreId) {
+        let Some(slot) = self.slots.as_mut().get_mut(*id.0) else {
+            return;
+        };
+        // Taken by value (ColumnSlot is Copy) and the slot emptied first, so
+        // no borrow is held across the provider call and no slot names a
+        // block after it is gone.
+        let taken = core::mem::replace(slot, Maybe::Isnt);
+        if let Maybe::Is(old) = taken
+            && !old.ptr.is_null()
+        {
+            // SAFETY: old.ptr came from a prior allocate on this provider
+            // with old.len_bytes at CACHE_LINE_ALIGN, and its slot is empty
+            // now, so it is freed once.
+            unsafe {
+                self.provider
+                    .deallocate(old.ptr, old.len_bytes, CACHE_LINE_ALIGN);
+            }
+        }
     }
 }
 
 impl<M: MemoryProviderApi, D: Capacity> Drop for ArenaColumnStorage<M, D> {
     fn drop(&mut self) {
-        for slot in self.slots.as_ref() {
-            if let Maybe::Is(s) = slot
-                && !s.ptr.is_null()
-            {
-                // SAFETY: s.ptr came from a prior allocate on this
-                // provider with s.len_bytes at CACHE_LINE_ALIGN; the
-                // arena is dropped once, so no double free.
-                unsafe {
-                    self.provider
-                        .deallocate(s.ptr, s.len_bytes, CACHE_LINE_ALIGN);
-                }
-            }
+        for index in 0 .. self.slots.as_ref().len() {
+            self.give_back(StoreId(USize(index)));
         }
     }
 }

@@ -81,12 +81,12 @@ pub fn classify_cores(total_cores: USize) -> [CoreClass; MAX_CORES] {
     classes
 }
 
-#[cfg(all(target_os = "linux", feature = "platform-os"))]
+#[cfg(all(target_os = "linux", feature = "os"))]
 fn detect_into(classes: &mut [CoreClass]) {
     // Linux sysfs path: each core's `topology/cluster_id` partitions
     // by cluster; `cpufreq/cpuinfo_max_freq` ranks clusters. The
     // highest-frequency cluster is P. Reading sysfs requires libc
-    // open/read/close (no_std-friendly under `feature = "platform-os"`).
+    // open/read/close (no_std-friendly under `feature = "os"`).
     //
     // Implementation deferred to a follow-up commit: the sysfs probe
     // needs a small stack buffer + atoi parser; landing the path
@@ -94,7 +94,7 @@ fn detect_into(classes: &mut [CoreClass]) {
     let _ = classes;
 }
 
-#[cfg(all(target_os = "macos", feature = "platform-os"))]
+#[cfg(all(target_os = "macos", feature = "os"))]
 fn detect_into(classes: &mut [CoreClass]) {
     // macOS path: `sysctlbyname("hw.perflevel0.physicalcpu")`
     // reports the number of P-cores. Logical processors before this
@@ -107,7 +107,7 @@ fn detect_into(classes: &mut [CoreClass]) {
     let _ = classes;
 }
 
-#[cfg(all(target_os = "windows", feature = "platform-os"))]
+#[cfg(all(target_os = "windows", feature = "os"))]
 fn detect_into(classes: &mut [CoreClass]) {
     // Windows path: `GetSystemCpuSetInformation` exposes
     // `EfficiencyClass` per logical processor. EfficiencyClass 0
@@ -119,9 +119,9 @@ fn detect_into(classes: &mut [CoreClass]) {
 }
 
 #[cfg(not(any(
-    all(target_os = "linux", feature = "platform-os"),
-    all(target_os = "macos", feature = "platform-os"),
-    all(target_os = "windows", feature = "platform-os"),
+    all(target_os = "linux", feature = "os"),
+    all(target_os = "macos", feature = "os"),
+    all(target_os = "windows", feature = "os"),
 )))]
 fn detect_into(classes: &mut [CoreClass]) {
     // Stub fallback: every core stays `CoreClass::P`. The pool

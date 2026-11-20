@@ -1,0 +1,14 @@
+[[ticket]]
+id = "the_memory_arena_s_entry_bound_is_one_short_of_the_28_bit_id_field"
+title = "the memory arena's entry bound is one short of the 28-bit id field"
+kind = "task"
+what = "MemoryArena::new refuses ENTRIES of 2^28 or more (ENTRIES_FIT_THE_ID, crates/hilavitkutin-providers/src/interner.rs). The bound was set so no issued id equals 2^28 - 1, the id the u32::MAX sentinel took when StringInterner masked it into the 28-bit Str id. Since round 202611200201-yszg StringInterner refuses an id of 2^28 or more and builds no handle from it, so ids 0 to 2^28 - 1 all fit and an arena of exactly 2^28 entries would be sound. Widening it changes the providers design, which says 2^28 or more fails the build, and the ui fixture memory_arena_entries_past_the_id_width_fail."
+related = ["subject::memory"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120022534_hila_consumer_surface_2baf"
+ticket = "the_memory_arena_s_entry_bound_is_one_short_of_the_28_bit_id_field"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-20T02:25:34Z"

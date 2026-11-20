@@ -151,7 +151,7 @@ the code does not flag the section as a violation:
    startup walk.
 
 4. **No consumer-side instability risk.** The interner's contract
-   (`intern(&str) -> Str`, `resolve(Str) -> &str`) is
+   (`intern(&str) -> Maybe<Str>`, `resolve(Str) -> &str`) is
    content-stable: same string in, same `Str` out. Adding more
    strings to the table does not change the contract for any
    pre-existing consumer.
@@ -188,9 +188,12 @@ handled by the wrapper.
 The arena keeps the interning law for runtime strings: `arena_intern`
 of a string equal to one it already stored returns the id it gave that
 string, so equal strings give equal handles through `StringInterner`.
+An id of 2^28 or more is the arena's refusal: it has no room for a
+string it does not hold. `MemoryArena`'s sentinel `u32::MAX` is one, and
+`StringInterner` answers it with `Maybe::Isnt` and builds no handle from
+it, so an issued id is below 2^28 and fits the handle's 28-bit field.
 `arena_resolve` of an id at or past the arena's live count reads nothing
-outside the arena's storage; an arena's overflow id masked into the
-28-bit handle lands there. What it returns for such an id is not part
+outside the arena's storage. What it returns for such an id is not part
 of the contract and may equal a string the arena holds: `MemoryArena`
 answers `""`, which aliases `""` once the arena holds it. Saying that it
 holds nothing needs a resolve that does not return a string (ticket
@@ -213,10 +216,11 @@ implements `ArenaInterner`. A const string deduplicates by the
 section lookup; a runtime string by the arena, as its contract says.
 
 Methods (string-typed convenience, the everyday surface):
-- `intern(&self, s: &str) -> Str`, check const table, fall back
- to arena, set runtime flag
-- `intern_static(&self, s: &'static str) -> Str`, same but arena
- can avoid copying
+- `intern(&self, s: &str) -> Maybe<Str>`, check const table, fall
+ back to arena, set runtime flag; `Maybe::Isnt` when the arena
+ refuses, which a const string never meets
+- `intern_static(&self, s: &'static str) -> Maybe<Str>`, same but
+ arena can avoid copying
 - `resolve(&self, s: Str) -> &str`, if const: linker section;
  if runtime: delegate to arena
 
@@ -224,7 +228,7 @@ Methods (string-typed convenience, the everyday surface):
 `Interner` producer trait from `hilavitkutin-sym`. `StrDomain` is the
 marker type for the string domain: it implements `InterningDomain` with
 `Value = str` and `KIND = STR_DOMAIN`. `StringInterner` implements
-`Interner<StrDomain>`, so `intern(&str) -> Sym` and `resolve(Sym) ->
+`Interner<StrDomain>`, so `intern(&str) -> Maybe<Sym>` and `resolve(Sym) ->
 Maybe<&str>` are the trait-level view of the same const-table-then-arena
 machinery, with the flag bit selecting which side resolves a handle. The
 string-typed methods above are the convenient surface; the trait impl is
@@ -244,22 +248,23 @@ For any type that wraps or carries a `Str`.
 
 ```rust
 pub trait IntoStr {
- fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Str;
+ fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Maybe<Str>;
 }
 
 impl IntoStr for Str {
- fn into_str(self, _: &StringInterner<impl ArenaInterner>) -> Str { self }
+ fn into_str(self, _: &StringInterner<impl ArenaInterner>) -> Maybe<Str> { Maybe::Is(self) }
 }
 
 impl IntoStr for &'static str {
- fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Str {
+ fn into_str(self, interner: &StringInterner<impl ArenaInterner>) -> Maybe<Str> {
  interner.intern_static(self)
  }
 }
 ```
 
 Accepts `Str` (passthrough) or `&'static str` (interns via
-interner). Used at API boundaries for ergonomic string acceptance.
+interner). Used at API boundaries for ergonomic string acceptance. A
+string the interner has no room for comes back as `Maybe::Isnt`.
 
 ## Content hashing
 
