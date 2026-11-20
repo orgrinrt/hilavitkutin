@@ -71,7 +71,7 @@ fn is_null_terminated(bytes: &[u8]) -> bool {
     !bytes.is_empty() && bytes[bytes.len() - 1] == 0
 }
 
-fn read_last_error() -> USize {
+fn read_last_error() -> OsCode {
     // SAFETY: GetLastError is always safe to call.
     let code = unsafe { GetLastError() };
     OsCode::from_host(code as usize) // lint:allow(no-bare-numeric) reason: GetLastError is a u32 and from_host takes the host usize; tracked: #206
