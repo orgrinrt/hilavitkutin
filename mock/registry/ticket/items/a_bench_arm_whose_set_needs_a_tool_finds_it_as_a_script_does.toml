@@ -1,0 +1,13 @@
+[[ticket]]
+id = "a_bench_arm_whose_set_needs_a_tool_finds_it_as_a_script_does"
+title = "a bench arm whose set needs a tool finds it as a script does"
+kind = "task"
+what = "build-call builds an arm from a pragma set. Finding a tool a set needs (mold, wild, clang, cranelift) is inside the expansion of the build crate's script macro, which only a build script can use, so an arm whose set needs a tool is refused. The finding has to be reachable by a caller that is no build script before the linker, driver and backend arms of the build and link bench plan can exist."
+repos = ["hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120060249_build_pragmas_62c0"
+ticket = "a_bench_arm_whose_set_needs_a_tool_finds_it_as_a_script_does"
+to = "backlog"
+by = "build-pragmas"
+at = "2026-11-20T06:02:49Z"
