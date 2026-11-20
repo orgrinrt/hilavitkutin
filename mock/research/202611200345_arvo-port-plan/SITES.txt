@@ -1,0 +1,664 @@
+mock/crates/hilavitkutin-providers/tests/column_storage.rs:12:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-providers/tests/static_bump_memory.rs:18:use arvo::USize;
+mock/crates/hilavitkutin-providers/examples/particle_collision.rs:19:use arvo::{Hot, Signed, USize};
+mock/crates/hilavitkutin-providers/examples/audio_mix.rs:18:use arvo::{Hot, Signed, USize};
+mock/crates/hilavitkutin-providers/examples/word_count.rs:18:use arvo::USize;
+mock/crates/hilavitkutin-providers/src/adapt_ema.rs:16://! `arvo::UFixed<{IBits(0)}, {FBits(16)}, Hot>`. Per the arvo
+mock/crates/hilavitkutin-providers/src/adapt_ema.rs:30:use arvo::{Hot, UFixed, fbits, ibits};
+mock/crates/hilavitkutin-providers/src/adapt_wu.rs:19:use arvo::USize;
+mock/crates/hilavitkutin-providers/src/memory.rs:11:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-providers/src/interner.rs:12:use arvo::USize;
+mock/crates/hilavitkutin-providers/src/interner.rs:13:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-providers/src/storage.rs:12:use arvo::USize;
+mock/crates/hilavitkutin-providers/src/storage.rs:13:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-providers/src/storage.rs:14:use arvo_tensor::{Capacity, Dim};
+mock/crates/hilavitkutin-providers/src/metrics/mod.rs:56:            pub last_sample: arvo::USize,
+mock/crates/hilavitkutin-providers/src/metrics/mod.rs:60:            pub anomaly:     arvo::Bool,
+mock/crates/hilavitkutin-providers/src/metrics/mod.rs:67:                    last_sample: <arvo::USize as arvo::strategy::Identity<
+mock/crates/hilavitkutin-providers/src/metrics/mod.rs:68:                        arvo::strategy::Additive,
+mock/crates/hilavitkutin-providers/src/metrics/mod.rs:70:                    anomaly:     arvo::Bool::FALSE,
+mock/crates/hilavitkutin-api/tests/trybuild/read_buffered_by_position.rs:4:use arvo::USize;
+mock/crates/hilavitkutin-api/tests/trybuild/write_buffered_by_position.rs:4:use arvo::USize;
+mock/crates/hilavitkutin-api/tests/trybuild/holds_all_missing.rs:4:use arvo::Cap;
+mock/crates/hilavitkutin-api/tests/trybuild/holds_all_missing.rs:12:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin-api/tests/positional_write.rs:13:use arvo::USize;
+mock/crates/hilavitkutin-api/tests/column_storage.rs:12:use arvo::USize;
+mock/benches/resource_storage/axis_ce/src/lib.rs:16:use arvo::USize;
+mock/benches/resource_storage/axis_ce/src/lib.rs:17:use arvo_tensor::Dim;
+mock/benches/resource_storage/axis_ce/src/lib.rs:40:                arvo::USize(bytes),
+mock/benches/resource_storage/axis_ce/src/lib.rs:80:    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+mock/crates/hilavitkutin-api/tests/access_set.rs:5:use arvo::Cap;
+mock/crates/hilavitkutin-api/tests/access_set.rs:33:const TWO: Cap = arvo_tensor::cap(2);
+mock/crates/hilavitkutin-api/tests/column_value.rs:12:use arvo::strategy::Hot;
+mock/crates/hilavitkutin-api/tests/column_value.rs:13:use arvo::ufixed::UFixed;
+mock/crates/hilavitkutin-api/tests/column_value.rs:14:use arvo::{USize, fbits, ibits};
+mock/crates/hilavitkutin-api/tests/value_function.rs:12:use arvo::{Bool, Cap, USize};
+mock/crates/hilavitkutin-api/tests/value_function.rs:34:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin-api/tests/a3_resource_footprint.rs:9:use arvo::{Cap, USize};
+mock/crates/hilavitkutin-api/tests/a3_resource_footprint.rs:13:const SEQ_N: Cap = arvo_tensor::cap(11);
+mock/crates/hilavitkutin-api/tests/a3_resource_footprint.rs:14:const MAP_N: Cap = arvo_tensor::cap(7);
+mock/crates/hilavitkutin-api/tests/work_unit.rs:9:use arvo::USize;
+mock/crates/hilavitkutin-api/tests/store_types.rs:7:use arvo::{Cap, USize};
+mock/crates/hilavitkutin-api/tests/providers.rs:10:use arvo::USize;
+mock/crates/hilavitkutin-api/tests/contains.rs:9:use arvo::Cap;
+mock/crates/hilavitkutin-api/tests/contains.rs:35:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin-api/src/member.rs:11:use arvo::{Cap, USize};
+mock/crates/hilavitkutin-api/src/member.rs:12:use arvo_tensor::cap_size;
+mock/crates/hilavitkutin-api/src/member.rs:155:/// use arvo::USize;
+mock/crates/hilavitkutin-api/src/member.rs:156:/// use arvo_tensor::cap;
+mock/crates/hilavitkutin-api/src/member.rs:168:/// use arvo::USize;
+mock/crates/hilavitkutin-api/src/member.rs:169:/// use arvo_tensor::cap;
+mock/crates/hilavitkutin-api/src/member.rs:181:/// use arvo::USize;
+mock/crates/hilavitkutin-api/src/member.rs:182:/// use arvo_tensor::cap;
+mock/crates/hilavitkutin-api/src/platform.rs:9:use arvo::strategy::Hot;
+mock/crates/hilavitkutin-api/src/platform.rs:10:use arvo::ufixed::UFixed;
+mock/crates/hilavitkutin-api/src/platform.rs:11:use arvo::{Bool, USize, fbits, ibits};
+mock/crates/hilavitkutin-api/src/platform.rs:16:/// `arvo::UFixed<64, 0, Hot>`; the `Hot` strategy dispatches to the
+mock/crates/hilavitkutin-api/src/adapt.rs:31:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-api/src/adapt.rs:134:    "Per-phase exponential moving average of latency. EMA decay is\n7/8 per the arvo::Norm-based formula in hilavitkutin-providers."
+mock/crates/hilavitkutin-api/src/meta.rs:19:use arvo::USize;
+mock/crates/hilavitkutin-api/src/run_cfg.rs:21:use arvo::{Additive, Identity, USize};
+mock/crates/hilavitkutin-api/src/write_at.rs:9:use arvo::USize;
+mock/crates/hilavitkutin-api/src/accum_refused.rs:9:use arvo::USize;
+mock/crates/hilavitkutin-api/src/hint.rs:12:use arvo::strategy::Hot;
+mock/crates/hilavitkutin-api/src/hint.rs:13:use arvo::{UFixed, fbits, ibits};
+mock/crates/hilavitkutin-api/src/access.rs:10:use arvo::USize;
+mock/crates/hilavitkutin-api/src/access.rs:11:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-api/src/store.rs:11:use arvo::Cap;
+mock/crates/hilavitkutin-api/src/column_value.rs:14:use arvo::USize;
+mock/crates/hilavitkutin-api/src/context.rs:14:use arvo::USize;
+mock/crates/hilavitkutin-api/src/builder.rs:7:use arvo::USize;
+mock/crates/hilavitkutin-api/src/builder.rs:8:use arvo::strategy::{Additive, Identity, Multiplicative};
+mock/crates/hilavitkutin-api/src/work_unit.rs:9:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-api/src/storage.rs:13:use arvo::USize;
+mock/crates/hilavitkutin-api/src/footprint.rs:21:use arvo::{Additive, Cap, Identity, USize};
+mock/crates/hilavitkutin-api/src/footprint.rs:22:use arvo_tensor::cap_size;
+mock/crates/hilavitkutin-api/src/footprint.rs:105:impl_scalar_footprint!(USize, arvo::Bool);
+mock/crates/hilavitkutin-api/src/id.rs:6:use arvo::USize;
+mock/crates/hilavitkutin-api/src/id.rs:7:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-api/src/id.rs:11:/// Wraps `arvo::USize` so boundary types stay inside the arvo
+mock/crates/hilavitkutin-api/src/values.rs:15:use arvo::{Bool, Cap};
+mock/crates/hilavitkutin-linking/src/error.rs:3:use arvo::USize;
+mock/crates/hilavitkutin-linking/src/error.rs:8:/// are carried as `arvo::ISize` for variants where the underlying OS
+mock/crates/hilavitkutin-linking/src/backend/windows.rs:4:use arvo::USize;
+mock/crates/hilavitkutin-linking/src/backend/unix.rs:5:use arvo::USize;
+mock/benches/frame_wide/tests/engine_grouping.rs:33:use arvo::USize;
+mock/benches/frame_wide/tests/engine_grouping.rs:34:use arvo_bitmask::BitAccess;
+mock/benches/frame_wide/tests/engine_grouping.rs:137:/// The design puts waist detection in `arvo_graph::waist_detect`
+mock/benches/asm_gate_fixtures/src/lib.rs:20:use arvo::USize;
+mock/crates/hilavitkutin-frozen-authors/tests/authors.rs:14:use arvo::USize;
+mock/crates/hilavitkutin-frozen-authors/tests/common/mod.rs:17:use arvo::Bool;
+mock/crates/hilavitkutin-frozen-authors/tests/common/mod.rs:287:                west: arvo::Bool(false),
+mock/crates/hilavitkutin-frozen-authors/tests/common/mod.rs:288:                east: arvo::Bool(false),
+mock/crates/hilavitkutin-frozen-authors/tests/common/mod.rs:364:            fired:   Box::new(move |frame| overheat.__is_set(arvo::USize(frame)).0),
+mock/benches/support/evs-support/src/executor.rs:11:use arvo::USize;
+mock/crates/hilavitkutin-frozen-authors/src/units.rs:8:use arvo::Bool;
+mock/crates/hilavitkutin-frozen-authors/src/record.rs:7:use arvo::{Bits, Bool, Hot};
+mock/benches/support/evs-support/src/accumulator.rs:19:use arvo::USize;
+mock/crates/hilavitkutin-frozen-authors/src/model.rs:7:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-frozen-authors/src/model.rs:8:use arvo_tensor::cap_size;
+mock/crates/hilavitkutin-frozen-authors/src/values.rs:4:use arvo::{Bool, Cap, Hot, USize, Uint};
+mock/crates/hilavitkutin-frozen-authors/src/values.rs:5:use arvo_tensor::cap_size;
+mock/crates/hilavitkutin-frozen-authors/src/values.rs:12:pub const WIDE: Cap = arvo_tensor::cap(8);
+mock/crates/hilavitkutin-frozen-authors/src/values.rs:14:pub const ONE: Cap = arvo_tensor::cap(1);
+mock/benches/support/evs-support/src/branching.rs:19:use arvo::USize;
+mock/benches/support/evs-support/src/wide_parallel.rs:26:use arvo::USize;
+mock/benches/support/evs-support/src/arena.rs:3:use arvo::USize;
+mock/benches/support/evs-support/src/arena.rs:26:                arvo::USize(bytes),
+mock/benches/support/evs-support/src/arena.rs:66:    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+mock/benches/support/evs-support/src/crew.rs:25:use arvo::USize;
+mock/benches/support/evs-support/src/element_wise.rs:13:use arvo::USize;
+mock/benches/support/accum-group-support/src/law.rs:9:use arvo::ifixed::IFixed;
+mock/benches/support/accum-group-support/src/law.rs:10:use arvo::strategy::Precise;
+mock/benches/support/accum-group-support/src/law.rs:11:use arvo::{FBits, ibits};
+mock/benches/support/grid_common/src/lib.rs:43:use arvo::USize;
+mock/benches/support/grid_common/src/lib.rs:239:                ArenaColumnStorage::<_, arvo_tensor::Dim<256>>::new(provider),
+mock/benches/support/rcm_common/src/lib.rs:23:use arvo::USize;
+mock/benches/support/rcm_common/src/lib.rs:141:                arvo::USize(bytes),
+mock/benches/support/rcm_common/src/lib.rs:181:    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+mock/benches/support/rcm_common/src/lib.rs:281:                ArenaColumnStorage::<_, arvo_tensor::Dim<256>>::new(provider),
+mock/crates/hilavitkutin-str/tests/handle.rs:3:use arvo_bits::Bits;
+mock/crates/hilavitkutin-str/tests/interner.rs:107:    use arvo_bits::{Bits, Hot};
+mock/crates/hilavitkutin-str/tests/section.rs:8:use arvo_bits::{Bits, BitsRefitCtor};
+mock/crates/hilavitkutin-str/src/handle.rs:9:use arvo::Bool;
+mock/crates/hilavitkutin-str/src/handle.rs:10:use arvo_bits::{Bit, Bits, Hot};
+mock/crates/hilavitkutin-str/src/interner.rs:4:use arvo_bits::{Bits, Hot};
+mock/crates/hilavitkutin-str/src/interner.rs:5:use arvo_refit::Narrow;
+mock/crates/hilavitkutin-str/src/entry.rs:3:use arvo_bits::{Bits, BitsRefitCtor as _};
+mock/crates/hilavitkutin-api-macros/tests/derive_resource_footprint.rs:9:use arvo::Cap;
+mock/crates/hilavitkutin-api-macros/tests/derive_resource_footprint.rs:15:const SEQ_N: Cap = arvo_tensor::cap(11);
+mock/crates/hilavitkutin-api-macros/tests/derive_resource_footprint.rs:16:const MAP_N: Cap = arvo_tensor::cap(7);
+mock/crates/hilavitkutin-api-macros/src/lib.rs:20://! The emitted output references `::hilavitkutin_api::*` and `::arvo::*` paths
+mock/crates/hilavitkutin-api-macros/src/lib.rs:110:            const L1_BYTES: ::arvo::USize = ::arvo::USize(0 #(#terms)*);
+mock/crates/hilavitkutin-conformance/tests/laws.rs:3:use arvo::USize;
+mock/crates/hilavitkutin-conformance/tests/laws.rs:4:use arvo_hash::{Fnv1a, Hasher};
+mock/crates/hilavitkutin-conformance/tests/oracle.rs:100:            stream: arvo::USize(1),
+mock/crates/hilavitkutin-conformance/tests/oracle.rs:101:            at:     arvo::USize(first_value),
+mock/crates/hilavitkutin-conformance/tests/common/mod.rs:10:use arvo::{Bool, Cap, Hot, Uint};
+mock/crates/hilavitkutin-conformance/tests/common/mod.rs:27:pub const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin-conformance/tests/common/mod.rs:346:        use arvo::USize;
+mock/crates/hilavitkutin-conformance/tests/mutants.rs:11:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/laws.rs:7:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/laws.rs:111:/// use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/walk.rs:8:use arvo::{Bool, Cap, USize};
+mock/crates/hilavitkutin/tests/r5_core_idle.rs:36:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/visiting.rs:3:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_run_parallel.rs:31:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/lent.rs:9:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/fiber_structured_dispatch.rs:40:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/mod.rs:16:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/mod.rs:58:/// use arvo::{Hot, USize, Uint};
+mock/crates/hilavitkutin/tests/r3c_throughput_record_count.rs:14:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/keeping.rs:6:use arvo::Bool;
+mock/crates/hilavitkutin/tests/a4_parallel_fiber_windows.rs:29:use arvo::USize;
+mock/crates/hilavitkutin-conformance/src/oracle/mutant.rs:8:use arvo::Bool;
+mock/crates/hilavitkutin-conformance/src/digest.rs:7:use arvo::{Bits, Hot};
+mock/crates/hilavitkutin-conformance/src/digest.rs:8:use arvo_hash::{Fnv1a, Hasher};
+mock/crates/hilavitkutin/tests/fixed_workers/mod.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/tests/skip_chain/mod.rs:88:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/skip_chain/mod.rs:91:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/skip_chain/mod.rs:326:                arvo::USize($crate::skip_chain::RECORDS),
+mock/crates/hilavitkutin/tests/resource_accumulator.rs:3:use arvo::USize;
+mock/crates/hilavitkutin-sym/tests/generator.rs:5:use arvo_bits::{Bits, Hot};
+mock/crates/hilavitkutin-sym/tests/generator.rs:93:    const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b01010));
+mock/crates/hilavitkutin-sym/tests/generator.rs:130:    const COUNTER_BITS: arvo::USize = <Standard as SymShape>::COUNTER_BITS;
+mock/crates/hilavitkutin-sym/tests/generator.rs:131:    const ID_BITS: arvo::USize = <Standard as SymShape>::ID_BITS;
+mock/crates/hilavitkutin-sym/tests/generator.rs:132:    const KIND_BITS: arvo::USize = <Standard as SymShape>::KIND_BITS;
+mock/crates/hilavitkutin-sym/tests/generator.rs:133:    const ORIGIN_BITS: arvo::USize = <Standard as SymShape>::ORIGIN_BITS;
+mock/crates/hilavitkutin-sym/tests/generator.rs:136:    fn origin_index(_: Self::Origin) -> arvo::USize {
+mock/crates/hilavitkutin-sym/tests/generator.rs:137:        arvo::USize(1) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the deliberate defect, an index past the zero bits reserved; tracked: #34
+mock/crates/hilavitkutin-sym/tests/generator.rs:145:    const KIND: SymKind<NoRoomForItsOrigin> = SymKind::new(arvo_bits::Bits::from_raw(0b010));
+mock/crates/hilavitkutin/tests/scheduler_run_walk.rs:27:use arvo::USize;
+mock/crates/hilavitkutin/tests/scheduler_run_walk.rs:397:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/scheduler_run_walk.rs:400:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin-sym/tests/layout.rs:13:use arvo_bits::{Bit, Bits, Hot};
+mock/crates/hilavitkutin-sym/tests/layout.rs:225:        const COUNTER_BITS: arvo::USize = <Standard as SymShape>::COUNTER_BITS;
+mock/crates/hilavitkutin-sym/tests/layout.rs:226:        const ID_BITS: arvo::USize = <Standard as SymShape>::ID_BITS;
+mock/crates/hilavitkutin-sym/tests/layout.rs:227:        const KIND_BITS: arvo::USize = <Standard as SymShape>::KIND_BITS;
+mock/crates/hilavitkutin-sym/tests/layout.rs:228:        const ORIGIN_BITS: arvo::USize = <Standard as SymShape>::ORIGIN_BITS;
+mock/crates/hilavitkutin-sym/tests/layout.rs:230:        fn origin_index(o: Self::Origin) -> arvo::USize {
+mock/crates/hilavitkutin/tests/engine_id_index.rs:14:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_parallel_meta.rs:24:use arvo::USize;
+mock/crates/hilavitkutin-sym/tests/origins.rs:48:    const KIND: SymKind<SixteenMinters> = SymKind::new(arvo_bits::Bits::from_raw(0b001));
+mock/crates/hilavitkutin-sym/tests/origins.rs:54:    MinterId(arvo::Uint::<4, arvo::strategy::Hot>::from_raw(i))
+mock/crates/hilavitkutin-sym/tests/origins.rs:189:        const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b10000));
+mock/crates/hilavitkutin-sym/tests/origins.rs:335:    const KIND: SymKind<WideKind> = SymKind::new(arvo_bits::Bits::from_raw(0b00010));
+mock/crates/hilavitkutin/tests/fused_linear_chain.rs:22:use arvo::USize;
+mock/crates/hilavitkutin/tests/column_dispatch.rs:26:use arvo::USize;
+mock/crates/hilavitkutin/tests/r3b_change_class_count.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_gated_walk.rs:24:use arvo::USize;
+mock/crates/hilavitkutin-sym/src/handle.rs:6://! Bit layout (declared on `SymLayout` via `arvo::bitfield!`):
+mock/crates/hilavitkutin-sym/src/handle.rs:13:use arvo::bitfield;
+mock/crates/hilavitkutin-sym/src/handle.rs:14:use arvo_bits::{Bit, Bits, Hot};
+mock/crates/hilavitkutin/tests/resource_bindings.rs:20:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/resource_bindings.rs:189:        const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/resource_bindings.rs:260:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/resource_bindings.rs:263:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/resource_bindings.rs:266:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin-sym/src/kind.rs:15:use arvo_bits::{Bits, Hot};
+mock/crates/hilavitkutin/tests/accum_per_frame_reset.rs:23:use arvo::USize;
+mock/crates/hilavitkutin-sym/src/shape.rs:17:use arvo::strategy::{Additive, BitsContainerFor, Identity, Unsigned};
+mock/crates/hilavitkutin-sym/src/shape.rs:18:use arvo::{USize, Uint};
+mock/crates/hilavitkutin-sym/src/shape.rs:19:use arvo_bits::{Bit, Bits, Hot};
+mock/crates/hilavitkutin-sym/src/shape.rs:30:    /// Each shape declares its own via `arvo::bitfield!`, so the field
+mock/crates/hilavitkutin-sym/src/shape.rs:71:/// `arvo::bitfield!` generates these as inherent methods rather than a trait
+mock/crates/hilavitkutin/tests/trunk_run_dispatch.rs:33:use arvo::USize;
+mock/crates/hilavitkutin/tests/trunk_run_dispatch.rs:159:    trunk.run(bindings, &meta, morsel, arvo::USize(1)); // lint:allow(no-bare-numeric) reason: test epoch literal; tracked: #121
+mock/crates/hilavitkutin-sym/src/generator.rs:5:use arvo::traits::FromConstant;
+mock/crates/hilavitkutin-sym/src/generator.rs:6:use arvo::{Bool, USize, Uint};
+mock/crates/hilavitkutin-sym/src/generator.rs:7:use arvo_bits::Hot;
+mock/crates/hilavitkutin-sym/src/generator.rs:141:    /// use arvo::USize;
+mock/crates/hilavitkutin-sym/src/generator.rs:158:    ///     const KIND: SymKind<NoRoom> = SymKind::new(arvo_bits::Bits::from_raw(0b010));
+mock/crates/hilavitkutin-sym/src/generator.rs:170:    /// use arvo::USize;
+mock/crates/hilavitkutin-sym/src/generator.rs:200:    ///         SymKind::new(arvo_bits::Bits::from_raw(0b010));
+mock/crates/hilavitkutin/tests/waist_detect.rs:6://! concurrent-path-minimum detection (`arvo_graph::waist_detect`) and not the
+mock/crates/hilavitkutin/tests/waist_detect.rs:27:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/waist_detect.rs:28:use arvo_tensor::Dim;
+mock/crates/hilavitkutin-sym/src/lib.rs:89:/// let _ = SymKind::<WideKind>::new(arvo_bits::Bits::from_raw(0b10000));
+mock/crates/hilavitkutin-sym/src/lib.rs:112:/// use arvo::USize;
+mock/crates/hilavitkutin-sym/src/lib.rs:133:/// use arvo::USize;
+mock/crates/hilavitkutin/tests/engine_ctx.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/engine_ctx.rs:19:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/tests/a2b_loop_inversion.rs:29:use arvo::USize;
+mock/crates/hilavitkutin/tests/plan_flat_size.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/tests/a2b_windowed_trunk.rs:22:use arvo::USize;
+mock/crates/hilavitkutin/tests/ctxfor_identity.rs:10:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/gate2_parallel_plan_skip.rs:22:use arvo::USize;
+mock/crates/hilavitkutin/tests/synthesise_core_programs.rs:15:use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
+mock/crates/hilavitkutin/tests/synthesise_core_programs.rs:16:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/buffered_column.rs:23:use arvo::{Cap, USize};
+mock/crates/hilavitkutin/tests/buffered_column.rs:45:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/tests/r5_core_idle_accum.rs:25:use arvo::USize;
+mock/crates/hilavitkutin/tests/overflow_is_a_value.rs:31:use arvo::USize;
+mock/crates/hilavitkutin/tests/plan_ranks_and_edges.rs:13:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/column_start.rs:21:use arvo::USize;
+mock/crates/hilavitkutin/tests/r5_core_idle_parallel.rs:30:use arvo::USize;
+mock/crates/hilavitkutin/tests/plan_inputs_projection.rs:18:use arvo::{Bool, Cap, USize};
+mock/crates/hilavitkutin/tests/plan_inputs_projection.rs:19:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/plan_inputs_projection.rs:28:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/tests/dispatch_types.rs:6:use arvo::{Additive, Bool, Identity, USize};
+mock/crates/hilavitkutin/tests/morsel_loop.rs:28:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_run_parallel_three_trunks.rs:19:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_const_grouping.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_convergence.rs:19:use arvo::USize;
+mock/crates/hilavitkutin/tests/plan_inputs_from_bundle.rs:15:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/plan_inputs_from_bundle.rs:16:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/plan_inputs_from_bundle.rs:404:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/fiber_projection.rs:8:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/fiber_projection.rs:9:use arvo_tensor::{cap_size, Capacity, Dim};
+mock/crates/hilavitkutin/tests/gate2_full_dispatch.rs:17:use arvo::USize;
+mock/crates/hilavitkutin/tests/csr_adapter.rs:7:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/csr_adapter.rs:8:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/tests/csr_adapter.rs:9:use arvo_sparse::{BidirectionalSparseAdjacency, SparseAdjacency};
+mock/crates/hilavitkutin/tests/csr_adapter.rs:10:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/reach_across_cores.rs:26:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/tests/reach_across_cores.rs:27:use arvo::{Cap, USize};
+mock/crates/hilavitkutin/tests/reach_across_cores.rs:28:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/tests/reach_across_cores.rs:45:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/tests/plan_runner.rs:11:use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
+mock/crates/hilavitkutin/tests/plan_runner.rs:12:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/progress_counter.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/tests/resource_snapshot.rs:12:use arvo::USize;
+mock/crates/hilavitkutin/tests/resource_snapshot.rs:13:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/tests/skip_wide/mod.rs:95:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/skip_wide/mod.rs:292:                arvo::USize($records),
+mock/crates/hilavitkutin/tests/skip_wide/mod.rs:307:            arvo::USize($records),
+mock/crates/hilavitkutin/tests/gate2_run_parallel_two_waists.rs:14:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_meta_metrics.rs:31:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_core_phase_masks.rs:16:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_core_phase_masks.rs:17:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/tests/platform_os.rs:9:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/spectral_partition.rs:7:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/spectral_partition.rs:8:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/gate2_meta_pipeline.rs:30:use arvo::USize;
+mock/crates/hilavitkutin/tests/replace_swap.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/tests/common/mod.rs:16:use arvo::USize;
+mock/crates/hilavitkutin/tests/scheduler_builder/shim.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/tests/scheduler_builder/kits.rs:4:use arvo::USize;
+mock/crates/hilavitkutin/tests/block_diagonalise.rs:9:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/block_diagonalise.rs:10:use arvo_tensor::{Capacity, Dim};
+mock/crates/hilavitkutin/tests/block_diagonalise.rs:37:const UNIT_CAP: usize = arvo_tensor::cap_size(<UnitDim as Capacity>::CAP); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-position cap projection for test loop bounds; tracked: #72
+mock/crates/hilavitkutin/tests/scheduler_builder_units.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/tests/strategy.rs:3:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_virtual_firing.rs:24:use arvo::USize;
+mock/crates/hilavitkutin/tests/phase_sequential_dispatch.rs:32:use arvo::USize;
+mock/crates/hilavitkutin/tests/incremental_skip.rs:43:use arvo::USize;
+mock/crates/hilavitkutin/tests/unit_panic_aborts.rs:33:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_accumulator.rs:17:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_adapt_ema.rs:26:use arvo::USize;
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:16:use arvo::USize;
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:198:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:201:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:204:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:207:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:210:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:213:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:216:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:219:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/r2a_keystone_ctxfor.rs:222:    const L1_BYTES: arvo::USize = arvo::USize(0);
+mock/crates/hilavitkutin/tests/rcm_reorder.rs:9:use arvo::{Bits, Hot, USize, Unsigned};
+mock/crates/hilavitkutin/tests/rcm_reorder.rs:10:use arvo_tensor::{Capacity, Dim};
+mock/crates/hilavitkutin/tests/plan_types.rs:7:use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
+mock/crates/hilavitkutin/tests/plan_types.rs:8:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/host_import.rs:19:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_worker_count.rs:30:use arvo::USize;
+mock/crates/hilavitkutin/tests/replace_swap_plan_band.rs:30:use arvo::USize;
+mock/crates/hilavitkutin/tests/gate2_run_parallel_participation.rs:19:use arvo::USize;
+mock/crates/hilavitkutin/tests/morsel_outer.rs:32:use arvo::USize;
+mock/crates/hilavitkutin/tests/test_executor.rs:101:        arvo::USize(expected)
+mock/crates/hilavitkutin/tests/maintenance_units.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/a3a_store_sizes.rs:13:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/a3a_store_sizes.rs:18:type Pos = arvo::Uint<14, arvo::strategy::Warm>;
+mock/crates/hilavitkutin/tests/a3a_store_sizes.rs:19:type Vel = arvo::Uint<11, arvo::strategy::Warm>;
+mock/crates/hilavitkutin/tests/a3a_store_sizes.rs:20:type Mass = arvo::Uint<27, arvo::strategy::Cold>;
+mock/crates/hilavitkutin/tests/a3a_store_sizes.rs:22:type Stores = Cons<Column<Pos>, Cons<Column<Vel>, Cons<Column<Mass>, Cons<Resource<arvo::Bool>, Empty>>>>;
+mock/crates/hilavitkutin/tests/ui/executor_outside_the_engine_pass.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/memory_provider_safe_impl_fail.rs:8:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/tests/ui/replace_value_installs_pass.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/assert_out_names_no_refusal_pass.rs:7:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/unregistered_wrapped_store_fail.rs:10:use arvo::{Cap, USize};
+mock/crates/hilavitkutin/tests/ui/unregistered_wrapped_store_fail.rs:21:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/tests/ui/unregistered_store_fail.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/appending_unit_fused_fail.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/fiber_shape_outside_the_engine_fail.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/unregistered_store_pass.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/buffered_unit_fused_fail.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/assert_out_names_no_refusal_fail.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/appending_unit_fused_pass.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/unmapped_unit_fused_pass.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/buffered_unit_fused_pass.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/undeclared_read_pass.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/undeclared_read_fail.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/tests/ui/unregistered_wrapped_store_pass.rs:11:use arvo::{Cap, USize};
+mock/crates/hilavitkutin/tests/ui/unregistered_wrapped_store_pass.rs:22:const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/tests/ui/unmapped_unit_fused_fail.rs:12:use arvo::USize;
+mock/crates/hilavitkutin/tests/r6_morsel_window_formula.rs:21:use arvo::{Cap, USize};
+mock/crates/hilavitkutin/tests/r6_morsel_window_formula.rs:49:const SEQ_N: Cap = arvo_tensor::cap(2);
+mock/crates/hilavitkutin/tests/scheduler_builder.rs:24:use arvo::USize;
+mock/crates/hilavitkutin/tests/a1_fiber_morsel_size.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/scheduler_builder_depth.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/plan_id_width_guard.rs:11:use arvo::{Additive, Bits, Hot, Identity, USize, Unsigned};
+mock/crates/hilavitkutin/tests/plan_id_width_guard.rs:12:use arvo_tensor::Dim;
+mock/crates/hilavitkutin/tests/run_parallel_wide_differential.rs:126:                acc.__len_cell().set(arvo::USize(live - 1));
+mock/crates/hilavitkutin/tests/unit_bodies.rs:14:use arvo::USize;
+mock/crates/hilavitkutin/tests/r7_phase_ema.rs:22:use arvo::USize;
+mock/crates/hilavitkutin/tests/accum_dispatch.rs:25:use arvo::USize;
+mock/crates/hilavitkutin/tests/r5_select_adapt_config.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/tests/frame_protocol.rs:21:use arvo::USize;
+mock/crates/hilavitkutin/tests/leading_band_appends.rs:26:use arvo::USize;
+mock/crates/hilavitkutin/src/meta.rs:20:use arvo::Bool;
+mock/crates/hilavitkutin/src/strategy/mod.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/core_dispatch.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/core_dispatch.rs:10:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/core_dispatch.rs:11:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/dispatch/mod.rs:31:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/mod.rs:32:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_construct.rs:43:        epoch: arvo::USize,
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_construct.rs:106:    /// use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_construct.rs:107:    /// use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_construct.rs:123:        epoch: arvo::USize,
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/map.rs:18:use arvo::{Bool, Cap, USize};
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_meta_resource.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/mod.rs:152:    epoch:          arvo::USize,
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_loops_has.rs:10:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_loops_has.rs:11:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/col_select.rs:12:use arvo::Cap;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/selectors.rs:10:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/ctx_writers.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/engine_ctx/lists.rs:16:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/dispatch/core_mask.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/core_mask.rs:21:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/core_mask.rs:22:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/dispatch/core_mask.rs:23:use arvo_tensor::{Capacity, ConstCapacity};
+mock/crates/hilavitkutin/src/dispatch/fiber_dispatch.rs:7:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/fiber_dispatch.rs:8:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/fiber_dispatch.rs:9:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/dispatch/trunk_run.rs:25:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/sync.rs:14:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/progress.rs:27:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/trunk_gate.rs:38:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/trunk_gate.rs:39:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/trunk_gate.rs:40:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/dispatch/trunk_gate.rs:41:use arvo_tensor::{Capacity, ConstCapacity};
+mock/crates/hilavitkutin/src/dispatch/trunk_dispatch.rs:32:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/trunk_dispatch.rs:33:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/trunk_dispatch.rs:34:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/dispatch/trunk_dispatch.rs:35:use arvo_tensor::{Capacity, ConstCapacity};
+mock/crates/hilavitkutin/src/dispatch/fiber_run.rs:20:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/fiber_run.rs:21:use arvo_bitmask::BitAccess; // re-exported through arvo-bitmask L2 per #76
+mock/crates/hilavitkutin/src/dispatch/order.rs:18:use arvo::USize;
+mock/crates/hilavitkutin/src/dispatch/order.rs:19:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/order.rs:20:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/dispatch/order.rs:304:    use arvo_tensor::Dim;
+mock/crates/hilavitkutin/src/dispatch/morsel.rs:26:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/morsel.rs:27:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/dispatch/codegen.rs:21:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/dispatch/codegen.rs:22:use arvo::traits::FromConstant;
+mock/crates/hilavitkutin/src/dispatch/codegen.rs:23:use arvo::{USize, Uint};
+mock/crates/hilavitkutin/src/scheduler/defaults.rs:12:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/defaults.rs:13:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/defaults.rs:14:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:11:use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:134:    pub(super) fn consume_plan_dirty(&self) -> arvo::Bool {
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:143:        arvo::Bool(dirty)
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:186:    pub(super) fn dirty_units(&self, plan_band: arvo::Bool) -> D::AdjRow {
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:208:                dirty = dirty.with_bit_set(arvo::USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
+mock/crates/hilavitkutin/src/scheduler/dirty.rs:215:                dirty = dirty.with_bit_set(arvo::USize(p)); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: USize-construct carrier position; tracked: #72
+mock/crates/hilavitkutin/src/scheduler/run.rs:13:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/run.rs:14:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/run.rs:15:use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
+mock/crates/hilavitkutin/src/scheduler/run.rs:16:use arvo_tensor::ConstCapacity;
+mock/crates/hilavitkutin/src/scheduler/plan.rs:11:use arvo::Bool;
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:13:use arvo::Bool;
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:109:            .set(arvo::USize(self.meta_block.metrics.pass_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: per-pass meta pass_count; tracked: #121
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:110:        let epoch = arvo::USize(self.virtual_epoch.load(Ordering::Relaxed));
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:118:                    <arvo::USize as arvo::strategy::Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:119:                    <arvo::USize as arvo::strategy::Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:122:                <arvo::USize as arvo::strategy::Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:132:                    MorselRange::new(arvo::USize(start), arvo::USize(len)),
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:134:                    <arvo::USize as arvo::strategy::Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:157:                .set(arvo::USize(m.change_seen_count.get().0 + 1)); // lint:allow(no-bare-numeric) reason: increment by one frame; tracked: #121
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:175:    pub fn __plan_band(&self) -> arvo::Bool {
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:176:        arvo::Bool(self.plan_band.load(Ordering::Relaxed))
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:186:            .set(AccessMask::empty().set(arvo::USize(0))); // lint:allow(no-bare-numeric) reason: store index zero; tracked: #121
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:205:    pub fn __fiber_morsel_size(&self, i: arvo::USize) -> arvo::USize {
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:214:    pub fn __phase_ema(&self, p: arvo::USize) -> Nanos {
+mock/crates/hilavitkutin/src/scheduler/run_fused.rs:261:    pub fn __set_phase_ema(&self, p: arvo::USize, ns: Nanos) {
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:12:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:13:use arvo_bitmask::{BitAccess, BitLogic};
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:14:use arvo_tensor::ConstCapacity;
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:178:            arvo::Bool::TRUE,
+mock/crates/hilavitkutin/src/scheduler/run_trunks.rs:191:        plan_dirty: arvo::Bool,
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:5:use arvo_tensor::ConstCapacity;
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:24:/// use arvo::{Cap, USize};
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:34:/// const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:76:/// use arvo::{Cap, USize};
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:92:/// const ONE: Cap = arvo_tensor::cap(1);
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:187:/// use arvo::{Bits, Hot, Unsigned};
+mock/crates/hilavitkutin/src/scheduler/reach_rule.rs:188:/// use arvo_tensor::Dim;
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:32:    unsafe fn allocate(&self, _len: arvo::USize, _align: arvo::USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:39:        _len: arvo::USize,
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:40:        _align: arvo::USize,
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:47:        _len: arvo::USize,
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:48:        _read: arvo::Bool,
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:49:        _write: arvo::Bool,
+mock/crates/hilavitkutin/src/scheduler/null_providers.rs:127:        <USize as arvo::strategy::Identity<arvo::strategy::Additive>>::IDENTITY
+mock/crates/hilavitkutin/src/scheduler/mod.rs:60:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/mod.rs:61:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/mod.rs:62:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/scheduler/run_parallel.rs:16:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/run_parallel.rs:17:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/run_parallel.rs:18:use arvo_bitmask::{BitAccess, BitLogic};
+mock/crates/hilavitkutin/src/scheduler/run_parallel.rs:19:use arvo_tensor::ConstCapacity;
+mock/crates/hilavitkutin/src/scheduler/worker.rs:15:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/worker.rs:16:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/worker.rs:17:use arvo_bitmask::{BitAccess, BitLogic};
+mock/crates/hilavitkutin/src/scheduler/worker.rs:18:use arvo_tensor::ConstCapacity;
+mock/crates/hilavitkutin/src/scheduler/builder.rs:15:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/builder.rs:16:use arvo::strategy::Identity;
+mock/crates/hilavitkutin/src/scheduler/builder.rs:204:        let mut next_id = <USize as Identity<arvo::strategy::Additive>>::IDENTITY;
+mock/crates/hilavitkutin/src/scheduler/builder.rs:232:                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as arvo_tensor::Capacity>::from_fn(
+mock/crates/hilavitkutin/src/scheduler/builder.rs:255:                    spawned: arvo::Bool::FALSE,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:256:                    gate2_phase: [<USize as Identity<arvo::strategy::Additive>>::IDENTITY; GATE2_MAX_UNITS],
+mock/crates/hilavitkutin/src/scheduler/builder.rs:257:                    gate2_trunk: [<USize as Identity<arvo::strategy::Additive>>::IDENTITY; GATE2_MAX_UNITS],
+mock/crates/hilavitkutin/src/scheduler/builder.rs:258:                    gate2_n: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:259:                    gate2_nphases: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:260:                    gate2_ncores: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:267:                    adapt_reconfigure: Cell::new(arvo::Bool::FALSE),
+mock/crates/hilavitkutin/src/scheduler/builder.rs:309:        let mut next_id = <USize as Identity<arvo::strategy::Additive>>::IDENTITY;
+mock/crates/hilavitkutin/src/scheduler/builder.rs:337:                    plan_dirty: <<DefaultPlanDims as PlanDims>::PlanAffecting as arvo_tensor::Capacity>::from_fn(
+mock/crates/hilavitkutin/src/scheduler/builder.rs:360:                    spawned: arvo::Bool::FALSE,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:361:                    gate2_phase: [<USize as Identity<arvo::strategy::Additive>>::IDENTITY; GATE2_MAX_UNITS],
+mock/crates/hilavitkutin/src/scheduler/builder.rs:362:                    gate2_trunk: [<USize as Identity<arvo::strategy::Additive>>::IDENTITY; GATE2_MAX_UNITS],
+mock/crates/hilavitkutin/src/scheduler/builder.rs:363:                    gate2_n: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:364:                    gate2_nphases: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:365:                    gate2_ncores: <USize as Identity<arvo::strategy::Additive>>::IDENTITY,
+mock/crates/hilavitkutin/src/scheduler/builder.rs:372:                    adapt_reconfigure: Cell::new(arvo::Bool::FALSE),
+mock/crates/hilavitkutin/src/scheduler/fiber_dispatch.rs:5:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/fiber_dispatch.rs:6:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/buildable.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/verdict.rs:3:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/verdict.rs:4:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/build_error.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/build_error.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/build_error.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/scheduler/host.rs:9:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:14:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:15:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:231:    <<DefaultPlanDims as PlanDims>::Units as arvo_tensor::Capacity>::Array<USize>,
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:233:    <<DefaultPlanDims as PlanDims>::Fibers as arvo_tensor::Capacity>::Array<FiberDispatch>,
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:236:    let mut order = <<DefaultPlanDims as PlanDims>::Units as arvo_tensor::Capacity>::filled(
+mock/crates/hilavitkutin/src/scheduler/plan_handle.rs:240:    let mut descriptors = <<DefaultPlanDims as PlanDims>::Fibers as arvo_tensor::Capacity>::filled(
+mock/crates/hilavitkutin/src/scheduler/tests.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/src/scheduler/tests.rs:7:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/resource/shape.rs:13:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/resource.rs:7:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/mod.rs:37:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/close.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/resource/bindings/refusal.rs:3:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/virt.rs:7:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/resource/bindings/accum.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/per_core.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/src/resource/bindings/column.rs:14:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/resource/accumulator.rs:7:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/member.rs:8:use arvo::{Bool, Cap};
+mock/crates/hilavitkutin/src/plan/core_program.rs:26:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/core_program.rs:27:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/core_program.rs:28:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/dirty.rs:15:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/dirty.rs:16:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/dirty.rs:17:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step9_morsel.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step9_morsel.rs:6:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step9_morsel.rs:7:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step4_5_rcm_block.rs:6:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step4_5_rcm_block.rs:7:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/steps/step4_5_rcm_block.rs:8:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/steps/step4_5_rcm_block.rs:9:use arvo_sparse::{block_diagonal_via, rcm_reorder_via};
+mock/crates/hilavitkutin/src/plan/steps/step4_5_rcm_block.rs:10:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/mod.rs:46:use arvo::{FastFloat, USize};
+mock/crates/hilavitkutin/src/plan/steps/mod.rs:47:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:5:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:6:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:7:use arvo_bitmask::{BitMatrix, Mask, NodeId};
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:8:use arvo_graph::waist_detect;
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:9:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step3_waists.rs:18:/// barrier belongs. Detection runs through `arvo_graph::waist_detect`
+mock/crates/hilavitkutin/src/plan/steps/step1_dag.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step1_dag.rs:7:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step7_fibers.rs:11:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step7_fibers.rs:12:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/steps/step7_fibers.rs:13:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/steps/step7_fibers.rs:14:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step8_rank.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step8_rank.rs:7:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step8_rank.rs:8:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/plan/steps/step8_rank.rs:9:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step10_11_configs_columns.rs:6:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step10_11_configs_columns.rs:7:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step2_topo.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step2_topo.rs:6:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/steps/step2_topo.rs:7:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/steps/step6_spectral.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/step6_spectral.rs:6:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/steps/step6_spectral.rs:7:use arvo_spectral::k_way_partition;
+mock/crates/hilavitkutin/src/plan/steps/step6_spectral.rs:8:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/steps/tests.rs:7:    use arvo::USize;
+mock/crates/hilavitkutin/src/plan/steps/tests.rs:8:    use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/plan/access.rs:6://!   - stores <= 64  → `arvo_bitmask::Mask64`
+mock/crates/hilavitkutin/src/plan/access.rs:7://!   - stores <= 256 → `arvo_bitmask::Mask256`
+mock/crates/hilavitkutin/src/plan/access.rs:15:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/access.rs:16:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/access.rs:17:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/graph.rs:25:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/graph.rs:26:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/graph.rs:27:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/graph.rs:28:use arvo_sparse::{Csr, CsrBidirectional};
+mock/crates/hilavitkutin/src/plan/graph.rs:29:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/mod.rs:19:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/mod.rs:20:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/mod.rs:21:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/mod.rs:22:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/mod.rs:252:    // `compute_waists` runs `arvo_graph::waist_detect`, which needs the
+mock/crates/hilavitkutin/src/plan/mod.rs:254:    <D::Units as Capacity>::Array<arvo::Bool>: Copy,
+mock/crates/hilavitkutin/src/plan/mod.rs:348:        let mut local = arvo::Bool::TRUE;
+mock/crates/hilavitkutin/src/plan/mod.rs:358:                    local = arvo::Bool::FALSE;
+mock/crates/hilavitkutin/src/plan/mod.rs:480:use arvo_tensor::cap_size;
+mock/crates/hilavitkutin/src/plan/mod.rs:485:type SpectralFloatVec = arvo::FastFloat<f32>; // lint:allow(no-bare-numeric) reason: f32 is the IEEE width tag of arvo FastFloat; tracked: #72
+mock/crates/hilavitkutin/src/plan/reach_cut.rs:12:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/reach_cut.rs:13:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/reach_cut.rs:14:use arvo_bitmask::BitAccess;
+mock/crates/hilavitkutin/src/plan/reach_cut.rs:15:use arvo_tensor::{Capacity, ConstCapacity};
+mock/crates/hilavitkutin/src/plan/phase.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/phase.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/phase.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/bundle_masks.rs:9:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/bundle_masks.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/edge.rs:8:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/edge.rs:9:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/trunk.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/trunk.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/trunk.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/laplacian.rs:23:use arvo::traits::{FromConstant, TotalOrd};
+mock/crates/hilavitkutin/src/plan/laplacian.rs:24:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/laplacian.rs:25:use arvo_bitmask::NodeId;
+mock/crates/hilavitkutin/src/plan/laplacian.rs:26:use arvo_sparse::{BidirectionalSparseAdjacency, CsrBidirectional, SparseAdjacency};
+mock/crates/hilavitkutin/src/plan/laplacian.rs:27:use arvo_spectral::LinearOperator;
+mock/crates/hilavitkutin/src/plan/laplacian.rs:28:use arvo_tensor::{cap_size, Capacity};
+mock/crates/hilavitkutin/src/plan/project.rs:21:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/project.rs:22:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/project.rs:23:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/plan/fiber.rs:11:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/fiber.rs:12:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/fiber.rs:13:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/unit_masks.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/unit_masks.rs:6:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/unit_masks.rs:7:use arvo_tensor::{Capacity, ConstCapacity};
+mock/crates/hilavitkutin/src/plan/unit.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/unit.rs:12:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/unit.rs:13:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/unit.rs:31:    pub commutative: arvo::Bool,
+mock/crates/hilavitkutin/src/plan/unit.rs:42:            commutative: arvo::Bool::FALSE,
+mock/crates/hilavitkutin/src/plan/grouping.rs:25:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/grouping.rs:26:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/grouping.rs:27:use arvo_bitmask::{BitAccess, NodeId};
+mock/crates/hilavitkutin/src/plan/grouping.rs:28:use arvo_graph::waist_detect_const;
+mock/crates/hilavitkutin/src/plan/grouping.rs:29:use arvo_tensor::{Capacity, ConstCapacity, cap_size};
+mock/crates/hilavitkutin/src/plan/inputs.rs:10:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/inputs.rs:11:use arvo::{Bool, USize};
+mock/crates/hilavitkutin/src/plan/inputs.rs:12:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/plan/dims.rs:14:use arvo::{Additive, Bits, Hot, Identity, Unsigned};
+mock/crates/hilavitkutin/src/plan/dims.rs:15:use arvo_bitmask::{BitAccess, BitLogic, BitSequence};
+mock/crates/hilavitkutin/src/plan/dims.rs:16:use arvo_tensor::{Capacity, ConstCapacity, Dim};
+mock/crates/hilavitkutin/src/plan/column.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/plan/column.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/plan/column.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/thread/handle.rs:5:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/pool_frame.rs:11:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/frame.rs:22:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/assignment.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/assignment.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/thread/assignment.rs:10:use arvo_tensor::Capacity;
+mock/crates/hilavitkutin/src/thread/barrier.rs:16:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/mod.rs:21:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/mod.rs:22:use arvo_tensor::{Capacity, cap_size};
+mock/crates/hilavitkutin/src/thread/mod.rs:107:    use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/thread/mod.rs:108:    use arvo::{Bits, Hot, Unsigned};
+mock/crates/hilavitkutin/src/thread/mod.rs:109:    use arvo_tensor::{Capacity, Dim, cap_size};
+mock/crates/hilavitkutin/src/thread/hybrid.rs:12:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/class.rs:35:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/class.rs:36:use arvo::strategy::{Additive, Identity, Multiplicative};
+mock/crates/hilavitkutin/src/thread/parking.rs:33:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/parking.rs:34:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/thread/convergence.rs:8:use arvo::USize;
+mock/crates/hilavitkutin/src/thread/convergence.rs:9:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin/src/platform/os.rs:13:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-persistence/tests/archive_str.rs:6:use arvo::{Additive, Identity, USize};
+mock/crates/hilavitkutin-persistence/tests/archive_str.rs:7:use arvo_bits::Bits;
+mock/crates/hilavitkutin-persistence/tests/archive_str.rs:8:use arvo_hash::ContentHash;
+mock/crates/hilavitkutin-persistence/tests/context.rs:3:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-persistence/tests/sieve.rs:7:use arvo::{Bool, USize};
+mock/crates/hilavitkutin-persistence/tests/cold_store.rs:17:use arvo::USize;
+mock/crates/hilavitkutin-persistence/tests/cold_store.rs:79:        let hash = arvo_hash::ContentHash::from_raw(raw);
+mock/crates/hilavitkutin-persistence/src/manifest.rs:9:use arvo::USize;
+mock/crates/hilavitkutin-persistence/src/manifest.rs:10:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-persistence/src/manifest.rs:11:use arvo_hash::ContentHash;
+mock/crates/hilavitkutin-persistence/src/archive_str.rs:15:use arvo_hash::ContentHash;
+mock/crates/hilavitkutin-persistence/src/archive_str.rs:16:use arvo_refit::Narrow;
+mock/crates/hilavitkutin-persistence/src/primitives.rs:14:use arvo::USize;
+mock/crates/hilavitkutin-persistence/src/sieve.rs:11:use arvo::strategy::{Additive, Identity};
+mock/crates/hilavitkutin-persistence/src/sieve.rs:12:use arvo::{Bool, Cap, USize};
+mock/crates/hilavitkutin-persistence/src/string_table.rs:7:use arvo_hash::ContentHash;
+mock/benches/support/frame-wide-support/src/engine.rs:17:use arvo::USize;
+mock/benches/support/frame-wide-support/src/engine.rs:202:                arvo::USize(bytes),
+mock/benches/support/frame-wide-support/src/engine.rs:242:    unsafe fn protect(&self, ptr: *mut u8, len: USize, read: arvo::Bool, write: arvo::Bool) {
+mock/benches/support/swap_common/src/lib.rs:31:use arvo::{Bool, USize};
+mock/benches/support/swap_common/src/column.rs:24:use arvo::USize;
+mock/benches/support/fiber_common/src/lib.rs:55:            g.add_edge(arvo::USize(u), arvo::USize(t));
+mock/benches/support/fiber_common/src/lib.rs:65:        g.unit_count = arvo::USize(uc + 1);
+mock/benches/support/wake_common/src/lib.rs:22:use arvo::USize;
+mock/benches/support/stc-support/src/walk.rs:14:use arvo::USize;
+mock/benches/support/stc-support/src/split.rs:26:use arvo::USize;
+mock/benches/support/stc-support/src/engine.rs:19:use arvo::{Bool, USize};
