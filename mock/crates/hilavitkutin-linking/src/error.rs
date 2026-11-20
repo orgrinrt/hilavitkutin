@@ -1,11 +1,24 @@
 //! Structured no-heap error types.
 
-use arvo::USize;
+use arvo_format::Adapt;
+use arvo_format::overflow::Saturate;
+use arvo_format::rounding::TowardZero;
+use arvo_numeral::USize;
+
+/// The type of an OS error code.
+///
+/// An unsigned integer of the platform's size, since both the unix `errno`
+/// and the Windows `GetLastError` ranges are non-negative. The adaptation is
+/// declared here because no strategy preset names one yet. The crate never
+/// rounds, a host integer being on the grid, and a code outside the range
+/// must not wrap into a different valid code. A code enters through
+/// `from_host` and is read through `host`.
+pub type OsCode = USize<Adapt<TowardZero, Saturate>>;
 
 /// Errors produced by `Library::load` / `Library::resolve`.
 ///
 /// All variants are fixed-size; no heap payloads. Platform error codes
-/// are carried as `arvo::ISize` for variants where the underlying OS
+/// are carried as `OsCode` for variants where the underlying OS
 /// produced a numeric error that the caller might want to surface.
 #[non_exhaustive]
 pub enum LinkError {
@@ -27,7 +40,9 @@ pub enum LinkError {
     ///
     /// Unsigned because both forms are non-negative on the platforms
     /// we target.
-    LoadFailed { platform_code: USize },
+    LoadFailed {
+        platform_code: OsCode,
+    },
 
     /// Symbol lookup returned null; the library did not export the
     /// requested name.

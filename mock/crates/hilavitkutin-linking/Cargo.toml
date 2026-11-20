@@ -8,7 +8,8 @@ repository.workspace = true
 
 [dependencies]
 notko.workspace = true
-arvo.workspace = true
+arvo-numeral.workspace = true
+arvo-format.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

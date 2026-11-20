@@ -50,6 +50,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "arvo-contracts"
+version = "0.0.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=6def883183ebe9b96c90da16cee148010eb89226#6def883183ebe9b96c90da16cee148010eb89226"
+dependencies = [
+ "arvo-format",
+]
+
+[[package]]
+name = "arvo-format"
+version = "0.0.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=6def883183ebe9b96c90da16cee148010eb89226#6def883183ebe9b96c90da16cee148010eb89226"
+dependencies = [
+ "notko",
+]
+
+[[package]]
 name = "arvo-graph"
 version = "0.1.0"
 source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e92ad2b8176c2177d72a9cffa161b7b92e"
@@ -82,6 +98,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "arvo-numeral"
+version = "0.0.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=6def883183ebe9b96c90da16cee148010eb89226#6def883183ebe9b96c90da16cee148010eb89226"
+dependencies = [
+ "arvo-contracts",
+ "arvo-format",
+ "arvo-placement",
+ "notko",
+]
+
+[[package]]
 name = "arvo-numeric-contracts"
 version = "0.1.0"
 source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e92ad2b8176c2177d72a9cffa161b7b92e"
@@ -91,6 +118,14 @@ dependencies = [
  "arvo-strategy",
  "arvo-transparent",
  "notko",
+]
+
+[[package]]
+name = "arvo-placement"
+version = "0.0.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=6def883183ebe9b96c90da16cee148010eb89226#6def883183ebe9b96c90da16cee148010eb89226"
+dependencies = [
+ "arvo-format",
 ]
 
 [[package]]
@@ -310,7 +345,8 @@ dependencies = [
 name = "hilavitkutin-linking"
 version = "0.1.0"
 dependencies = [
- "arvo",
+ "arvo-format",
+ "arvo-numeral",
  "hilavitkutin-build",
  "libc",
  "notko",

@@ -22,7 +22,7 @@ mod symbol;
 
 use core::mem::ManuallyDrop;
 
-pub use error::{IncompatibilityError, LinkError};
+pub use error::{IncompatibilityError, LinkError, OsCode};
 use notko::Outcome;
 pub use symbol::{LibrarySymbol, StaticRef, Symbol};
 

@@ -2,10 +2,9 @@
 
 use core::ffi::{c_char, c_int, c_void};
 
-use arvo::USize;
 use notko::Outcome;
 
-use crate::error::LinkError;
+use crate::error::{LinkError, OsCode};
 
 /// Resolve every symbol at load time. The value is the target libc's, from
 /// the `libc` crate: it is 0 on 32-bit Android where it is 2 elsewhere.
@@ -72,7 +71,7 @@ fn is_null_terminated(bytes: &[u8]) -> bool {
     !bytes.is_empty() && bytes[bytes.len() - 1] == 0
 }
 
-fn read_errno() -> USize {
+fn read_errno() -> OsCode {
     // Per-libc symbol that returns the address of the thread-local
     // `errno` integer. Linux/Android use `__errno_location`; Darwin
     // and the BSDs use `__error`. Solaris/Haiku/etc. fall through to
@@ -128,5 +127,5 @@ fn read_errno() -> USize {
 
     // errno values are non-negative when set; the cast is lossless on
     // every supported platform.
-    USize(val as usize)
+    OsCode::from_host(val as usize) // lint:allow(no-bare-numeric) reason: errno is a c_int and from_host takes the host usize; tracked: #206
 }
