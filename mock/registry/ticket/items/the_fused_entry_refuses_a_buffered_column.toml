@@ -1,0 +1,14 @@
+[[ticket]]
+id = "the_fused_entry_refuses_a_buffered_column"
+title = "the fused entry refuses a buffered column"
+kind = "task"
+what = "run_fused takes a carrier of units over plain columns: FuseCarrier wants each unit's Read and Write to be a cons of Column, so a unit over Buffered<T, M> is refused at compile time (tests/ui/buffered_unit_fused_fail.rs). The design gives run, run_parallel and run_fused one meaning over every store kind, so the refusal is a gap of the fused entry and not an intent: the chain it folds threads values in registers over one reservation a column, where a buffered column is two the boundary trades. Until it closes a unit over a buffered column goes through run or run_parallel. The design's fused-entry section names this ticket."
+related = ["tenet::a_pure_per_record_map_may_be_declared_as_an_opt_in_fusion_contract_beside_execute", "subject::execution"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120012521_hila_consumer_surface_4449"
+ticket = "the_fused_entry_refuses_a_buffered_column"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-20T01:25:21Z"
