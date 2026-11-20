@@ -16,9 +16,21 @@ hilavitkutin-kit.workspace = true
 hilavitkutin-str.workspace = true
 
 [dev-dependencies]
-hilavitkutin.workspace = true
+# The crate's own tests and examples build with every implementation on.
+hilavitkutin-providers = { workspace = true, features = ["static", "portable"] }
+hilavitkutin = { workspace = true, features = ["os"] }
 hilavitkutin-sym.workspace = true
 trybuild = "1"
+
+[features]
+default = []
+# Memory providers over a buffer the consumer hands in, with no operating
+# system: StaticBumpMemory, StaticFreeListMemory.
+static = []
+# Implementations over the contracts alone, on any target: ArenaColumnStorage,
+# MemoryArena with the interner and InternerKit, AdaptWu and the adapt kits,
+# the metrics resources with MetricsKit.
+portable = []
 
 [build-dependencies]
 hilavitkutin-build.workspace = true

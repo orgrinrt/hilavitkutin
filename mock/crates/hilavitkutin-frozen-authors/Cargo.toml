@@ -9,14 +9,14 @@ publish = false
 
 [dependencies]
 hilavitkutin-api.workspace = true
-hilavitkutin.workspace = true
+hilavitkutin = { workspace = true, features = ["os"] }
 arvo.workspace = true
 arvo-tensor.workspace = true
 notko.workspace = true
 
 [dev-dependencies]
 hilavitkutin-conformance.workspace = true
-hilavitkutin-providers.workspace = true
+hilavitkutin-providers = { workspace = true, features = ["portable"] }
 
 [build-dependencies]
 hilavitkutin-build.workspace = true

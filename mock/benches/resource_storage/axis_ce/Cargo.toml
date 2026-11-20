@@ -22,7 +22,7 @@ arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b817
 arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 arvo-tensor = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
-hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers", features = ["static", "portable"] }
 
 [profile.release]
 opt-level = 3

@@ -5,8 +5,8 @@
 [[file]]
 path = "Cargo.toml"
 form = "manifest"
-hash = "fnv1a64:0d78a223192770ab"
-breaks = 0
+hash = "fnv1a64:9bc9985988663310"
+breaks = 1
 locked = false
 
 [[file]]

@@ -4,7 +4,7 @@
 //! through `OsMemoryProvider` / `OsClock`. Thread-pool tests defer
 //! to sub-round 5a4 (see BACKLOG).
 
-#![cfg(feature = "platform-os")]
+#![cfg(feature = "os")]
 
 use arvo::{Bool, USize};
 use hilavitkutin::{OsClock, OsMemoryProvider};

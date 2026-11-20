@@ -17,7 +17,7 @@ notko-hlist.workspace = true
 [dev-dependencies]
 # The test units name the engine's context type, as every unit does. Dev-dep
 # only: the library is written against the api and never against the engine.
-hilavitkutin.workspace = true
+hilavitkutin = { workspace = true, features = ["os"] }
 arvo-tensor.workspace = true
 
 [build-dependencies]

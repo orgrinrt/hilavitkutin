@@ -4,17 +4,17 @@ error[E0080]: evaluation panicked: MemoryArena: use at most 268435456 entries, a
   |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `hilavitkutin_providers::MemoryArena::<0, 268435457>::ENTRIES_FIT_THE_ID` failed here
   |
- ::: src/interner.rs
+ ::: src/interner/arena.rs
   |
   |       const ENTRIES_FIT_THE_ID: () = assert!(
   |  ____________________________________-
-  | |         ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap agains...
+  | |         ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against...
   | |         "MemoryArena: use at most 268435456 entries, as many as the 28-bit Str id field holds",
   | |     );
   | |_____- in this macro invocation
 
 note: erroneous constant encountered
- --> src/interner.rs
+ --> src/interner/arena.rs
   |
   |         let () = Self::ENTRIES_FIT_THE_ID;
   |                  ^^^^^^^^^^^^^^^^^^^^^^^^

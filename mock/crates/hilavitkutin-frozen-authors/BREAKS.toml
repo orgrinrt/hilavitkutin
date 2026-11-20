@@ -1,3 +1,8 @@
 # One entry for each time a frozen file had to change: the file, its new
 # hash, and the reason in a sentence that names what in the contract forced
-# it. Nothing has broken yet.
+# it.
+
+[[break]]
+file = "Cargo.toml"
+hash = "fnv1a64:9bc9985988663310"
+reason = "The engine and hilavitkutin-providers carry their implementations behind features a consumer turns on, by op's ruling of 2026-11-20 (round 202611200518-zrf9), so the manifest names os on the engine and portable on the providers its tests use."

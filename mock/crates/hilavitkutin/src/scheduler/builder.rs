@@ -114,8 +114,8 @@ impl<Wus, Stores, Platform, Vals: StoreValues, WuVals, Clk>
     /// Replace the clock provider the built scheduler samples for the
     /// pass-duration EMA (E8 adapt).
     ///
-    /// The slot starts on `DefaultClock` (`OsClock` under the default
-    /// `platform-os` feature, the null clock otherwise); a no_os consumer
+    /// The slot starts on `DefaultClock` (`OsClock` under the `os`
+    /// feature, the null clock otherwise); a consumer without `os`
     /// supplies its own here (the DI path), and a test supplies a scripted
     /// clock for deterministic assertions. A dedicated method rather than a
     /// `with(...)` routing case because the clock VALUE must be retained

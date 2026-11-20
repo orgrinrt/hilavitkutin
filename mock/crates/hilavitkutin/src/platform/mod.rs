@@ -1,18 +1,16 @@
 //! Platform tier dispatch.
 //!
-//! Selects the active platform backend based on feature flags.
-//! Exactly one tier is active per build; the `compile_error!`
-//! guards at the crate root enforce mutual exclusion.
-//!
-//! - `platform-os`: raw syscalls via `libc` (mmap, clock_gettime).
-//! - `platform-no-os`: no backend; consumer ships its own
-//!   implementations of the `hilavitkutin-api` platform traits.
+//! The `os` feature, off by default, carries the os tier: raw
+//! syscalls via `libc` (mmap, clock_gettime) behind `OsMemoryProvider`
+//! and `OsClock`. Without it there is no backend, the no_os tier, and
+//! the consumer ships its own implementations of the
+//! `hilavitkutin-api` platform traits.
 //!
 //! Neither tier spawns threads. The executor behind `ThreadPoolApi`
 //! is always the consumer's.
 
-#[cfg(feature = "platform-os")]
+#[cfg(feature = "os")]
 mod os;
 
-#[cfg(feature = "platform-os")]
+#[cfg(feature = "os")]
 pub use os::{OsClock, OsMemoryProvider};

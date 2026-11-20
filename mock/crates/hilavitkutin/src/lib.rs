@@ -6,8 +6,9 @@
 //! executor the consumer supplies through `ThreadPoolApi`.
 //!
 //! `#![no_std]`, no alloc, no `dyn`, no `TypeId`. Platform
-//! integration is feature-gated via two mutually exclusive tiers
-//! (`platform-os`, `platform-no-os`). Neither spawns threads.
+//! integration is the `os` feature, off by default: a build without it
+//! carries the contracts alone and reaches no operating system. Neither
+//! tier spawns threads.
 
 #![no_std]
 #![allow(incomplete_features)]
@@ -31,17 +32,6 @@
 #![feature(const_trait_impl)]
 #![recursion_limit = "512"]
 #![deny(unsafe_op_in_unsafe_fn)]
-
-// Platform tier exclusivity. Exactly one of the two platform
-// features must be active at a time. Consumers opting out of the
-// default `platform-os` feature must explicitly enable
-// `platform-no-os`.
-
-#[cfg(all(feature = "platform-os", feature = "platform-no-os"))]
-compile_error!("hilavitkutin: features `platform-os` and `platform-no-os` are mutually exclusive");
-
-#[cfg(not(any(feature = "platform-os", feature = "platform-no-os")))]
-compile_error!("hilavitkutin: one of `platform-os` or `platform-no-os` must be enabled");
 
 // The truncating mutant drops a refused accumulator append without counting it,
 // for the overflow suite's mutant check alone. Features unify across a build, so
@@ -75,5 +65,5 @@ pub mod strategy;
 pub mod thread;
 
 pub use plan::{DefaultPlanDims, PlanDims};
-#[cfg(feature = "platform-os")]
+#[cfg(feature = "os")]
 pub use platform::{OsClock, OsMemoryProvider};
