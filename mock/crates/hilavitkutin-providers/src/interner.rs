@@ -101,8 +101,9 @@ where
 /// from. `arena_resolve` reads nothing for any id at or past the live
 /// entry count, and answers it with `""`, which aliases `""` once the
 /// arena holds it. A handle another arena issued is not told apart from
-/// one of its own. `ENTRIES` of 2^28 or more fails the build at
-/// [`MemoryArena::new`].
+/// one of its own. Ids run below `ENTRIES`, so an `ENTRIES` of up to
+/// 2^28 keeps every one inside the 28-bit `Str` id field and below the
+/// refusal; one past 2^28 fails the build at [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
@@ -124,18 +125,17 @@ impl<
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
 > MemoryArena<BYTES, ENTRIES>
 {
-    /// Every issued id stays below 2^28 - 1, one short of what the 28-bit
-    /// `Str` id field holds: the bound was set when the sentinel was
-    /// masked into that field, and widening it is ticket
-    /// `the_memory_arena_s_entry_bound_is_one_short_of_the_28_bit_id_field`.
+    /// Every issued id is below `ENTRIES`, so up to 2^28 entries keep
+    /// every id inside the 28-bit `Str` id field; the refusal is
+    /// `u32::MAX`, outside it.
     const ENTRIES_FIT_THE_ID: () = assert!(
-        ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
-        "MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field",
+        ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
+        "MemoryArena: use at most 268435456 entries, as many as the 28-bit Str id field holds",
     );
 
     /// Construct an empty arena. Buffer initialised to zero, entry
     /// table initialised with zero offsets and zero lengths. An
-    /// `ENTRIES` of 2^28 or more fails the build here.
+    /// `ENTRIES` past 2^28 fails the build here.
     pub const fn new() -> Self {
         let () = Self::ENTRIES_FIT_THE_ID;
         Self {

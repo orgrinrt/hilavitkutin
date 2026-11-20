@@ -1,15 +1,15 @@
-error[E0080]: evaluation panicked: MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field
+error[E0080]: evaluation panicked: MemoryArena: use at most 268435456 entries, as many as the 28-bit Str id field holds
  --> $RUST/core/src/panic.rs
   |
   |           $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
-  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `hilavitkutin_providers::MemoryArena::<0, 268435456>::ENTRIES_FIT_THE_ID` failed here
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `hilavitkutin_providers::MemoryArena::<0, 268435457>::ENTRIES_FIT_THE_ID` failed here
   |
  ::: src/interner.rs
   |
   |       const ENTRIES_FIT_THE_ID: () = assert!(
   |  ____________________________________-
-  | |         ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against...
-  | |         "MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field",
+  | |         ENTRIES <= 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap agains...
+  | |         "MemoryArena: use at most 268435456 entries, as many as the 28-bit Str id field holds",
   | |     );
   | |_____- in this macro invocation
 
