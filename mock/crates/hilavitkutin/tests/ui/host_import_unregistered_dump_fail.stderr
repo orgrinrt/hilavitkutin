@@ -1,0 +1,31 @@
+error[E0277]: the trait bound `BindingNil: ColSelector<Other, _>` is not satisfied
+ --> tests/ui/host_import_body.in
+  |
+  |                 scheduler.dump::<$dump, _, _>(USize(0), USize(4), &mut sink),
+  |                           ^^^^ the trait `ColSelector<Other, _>` is not implemented for `BindingNil`
+  |
+ ::: tests/ui/host_import_unregistered_dump_fail.rs:5:1
+  |
+5 | host_main!(import Column<A> = [A(1), A(2)]; dump Column<Other>);
+  | --------------------------------------------------------------- in this macro invocation
+  |
+  = help: the following other types implement trait `ColSelector<T, Index, K>`:
+            `AccumBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+            `ColPtrCons<T, Tail, K>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::Here, K>`
+            `ColPtrCons<U, Tail, J>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+            `ColumnBinding<T, Tail, K>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::Here, K>`
+            `ColumnBinding<U, Tail, J>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+            `ResourceBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+            `VirtualBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+  = note: required for `ColumnBinding<A, BindingNil>` to implement `ColSelector<Other, hilavitkutin::dispatch::engine_ctx::There<_>>`
+  = note: 4 redundant requirements hidden
+  = note: required for `ResourceBinding<Res, VirtualBinding<Ev, AccumBinding<Acc, ColumnBinding<B, ColumnBinding<A, BindingNil>>>>>` to implement `ColSelector<Other, hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<_>>>>>>`
+note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::dump`
+ --> src/scheduler/host.rs
+  |
+  |     pub fn dump<C, I, P>(&self, at: USize, len: USize, sink: &mut P) -> Outcome<(), HostRefused>
+  |            ---- required by a bound in this associated function
+...
+  |         <Vals as BindingsFor>::Bindings: ColSelector<C::T, I, C::K>,
+  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::dump`
+  = note: this error originates in the macro `host_main` (in Nightly builds, run with -Z macro-backtrace for more info)

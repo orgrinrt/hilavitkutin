@@ -1,64 +1,46 @@
-error[E0277]: the trait bound `Virtual<A>: ColMember` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:84:19
-   |
-84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
-   |                   ^^^^^^ the trait `ColMember` is not implemented for `Virtual<A>`
-   |
-   = help: the following other types implement trait `ColMember`:
-             Buffered<T, M>
-             Column<T>
-             Differs<C>
-             Reach<C, N>
-             Written<C>
-
-error[E0277]: the trait bound `Virtual<A>: Kept` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:84:28
-   |
-84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
-   |                   ------   ^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<A>`
-   |                   |
-   |                   required by a bound introduced by this call
-   |
+error[E0277]: the trait bound `Virtual<Ev>: Kept` is not satisfied
+ --> tests/ui/host_import_virtual_fail.rs:5:19
+  |
+5 | host_main!(import Virtual<Ev> = [Ev(1), Ev(2)]; dump Column<B>);
+  |                   ^^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<Ev>`
+  |
+ ::: tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ------ required by a bound introduced by this call
+  |
 help: the following other types implement trait `Kept`
-  --> src/resource/bindings/column.rs
-   |
-   | impl<T> Kept for Column<T> {
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `Column<T>`
+ --> src/resource/bindings/column.rs
+  |
+  | impl<T> Kept for Column<T> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `Column<T>`
 ...
-   | impl<T, M: BufferMode + ColKind> Kept for Buffered<T, M> {
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Buffered<T, M>`
+  | impl<T, M: BufferMode + ColKind> Kept for Buffered<T, M> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Buffered<T, M>`
 note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
-  --> src/scheduler/host.rs
-   |
-   |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
-   |            ------ required by a bound in this associated function
-   |     where
-   |         C: ColMember + Kept,
-   |                        ^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+ --> src/scheduler/host.rs
+  |
+  |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
+  |            ------ required by a bound in this associated function
+  |     where
+  |         C: ColMember + Kept,
+  |                        ^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
 
-error[E0277]: the trait bound `hilavitkutin_api::Empty: Locate<Virtual<A>, _>` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:84:19
-   |
-84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
-   |                   ^^^^^^ the trait `Locate<Virtual<A>, _>` is not implemented for `hilavitkutin_api::Empty`
-   |
-help: the following other types implement trait `Locate<Target, Index>`
-  --> src/plan/project.rs
-   |
-   |   impl<Target, Tail> Locate<Target, Here> for Cons<Target, Tail> {}
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<Target, Tail>` implements `Locate<Target, hilavitkutin::dispatch::engine_ctx::Here>`
-   |
-   | / impl<Target, Head, Tail, I> Locate<Target, There<I>> for Cons<Head, Tail> where
-   | |     Tail: Locate<Target, I>
-   | |___________________________^ `Cons<Head, Tail>` implements `Locate<Target, hilavitkutin::dispatch::engine_ctx::There<I>>`
-   = note: required for `Cons<Column<A>, hilavitkutin_api::Empty>` to implement `Locate<Virtual<A>, hilavitkutin::dispatch::engine_ctx::There<_>>`
-   = note: 1 redundant requirement hidden
-   = note: required for `Cons<Column<B>, Cons<Column<A>, hilavitkutin_api::Empty>>` to implement `Locate<Virtual<A>, hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<_>>>`
-note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
-  --> src/scheduler/host.rs
-   |
-   |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
-   |            ------ required by a bound in this associated function
-...
-   |         Stores: Locate<C, J>,
-   |                 ^^^^^^^^^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+error[E0277]: the trait bound `Virtual<Ev>: ColMember` is not satisfied
+ --> tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ^^^^^^ the trait `ColMember` is not implemented for `Virtual<Ev>`
+  |
+ ::: tests/ui/host_import_virtual_fail.rs:5:1
+  |
+5 | host_main!(import Virtual<Ev> = [Ev(1), Ev(2)]; dump Column<B>);
+  | --------------------------------------------------------------- in this macro invocation
+  |
+  = help: the following other types implement trait `ColMember`:
+            Buffered<T, M>
+            Column<T>
+            Differs<C>
+            Reach<C, N>
+            Written<C>
+  = note: this error originates in the macro `host_main` (in Nightly builds, run with -Z macro-backtrace for more info)

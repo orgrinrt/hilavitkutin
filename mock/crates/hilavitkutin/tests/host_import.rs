@@ -369,8 +369,11 @@ fn an_empty_import_marks_nothing() {
 
 // A buffered column, in both modes: each frame imports, runs a unit raising
 // every record by one, and dumps. Exchange trades the two reservations at
-// every boundary, so the even and the odd frame read different sides, and an
-// import that wrote one side only would be lost on one of them.
+// every boundary, so the even and the odd frame read different sides. An
+// import that missed the frozen side fails here on either mode. One that
+// missed the live side reads the same, since `Raise` writes every record and
+// the live copy has no reader until a write covers part of a buffered store,
+// which no unit can make yet (the design's `Host import and dump`).
 macro_rules! buffered {
     ($name:ident, $mode:ty) => {
         mod $name {
