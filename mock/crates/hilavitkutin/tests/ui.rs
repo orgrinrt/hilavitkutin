@@ -23,6 +23,8 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/unmapped_unit_fused_fail.rs");
     t.pass("tests/ui/appending_unit_fused_pass.rs");
     t.compile_fail("tests/ui/appending_unit_fused_fail.rs");
+    t.pass("tests/ui/buffered_unit_fused_pass.rs");
+    t.compile_fail("tests/ui/buffered_unit_fused_fail.rs");
     t.pass("tests/ui/assert_out_names_no_refusal_pass.rs");
     t.compile_fail("tests/ui/assert_out_names_no_refusal_fail.rs");
     t.compile_fail("tests/ui/memory_provider_safe_impl_fail.rs");
@@ -42,4 +44,27 @@ fn compile_fail_fixtures() {
 fn a_replaced_value_is_read_by_the_next_run() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/replace_value_installs_pass.rs");
+}
+
+// The host path takes a column store only: an `Accum`, a `Virtual`, a
+// `Resource`, a wrapper such as `Written` or a column the builder never
+// registered is refused in `import` and `dump`.
+#[test]
+fn the_host_path_takes_only_a_registered_column() {
+    let t = trybuild::TestCases::new();
+    t.pass("tests/ui/host_import_pass.rs");
+    for fixture in [
+        "accum",
+        "accum_dump",
+        "virtual",
+        "virtual_dump",
+        "resource",
+        "resource_dump",
+        "unregistered",
+        "unregistered_dump",
+        "written",
+        "written_dump",
+    ] {
+        t.compile_fail(format!("tests/ui/host_import_{fixture}_fail.rs"));
+    }
 }

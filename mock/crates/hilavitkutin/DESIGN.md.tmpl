@@ -444,6 +444,15 @@ into it. At frame start `run_fused` clears the accumulator records and counts a
 previous `run` left, as `run` does. The gap is tracked as ticket `0fb716c5a463`; until it closes, an
 accumulator-writing unit goes through `run`.
 
+Nor does the fused entry take a buffered column. `FuseCarrier` wants each
+unit's read and write sets to be plain columns, so a unit over `Buffered` is
+refused at compile time. The fold it builds threads values over one
+reservation a column, and a buffered column is two reservations the boundary
+trades, which the fold does not carry. The three entries keep one meaning, so
+this is a gap of the fused entry, tracked as ticket
+`the_fused_entry_refuses_a_buffered_column`; until it closes, a unit over a
+buffered column goes through `run` or `run_parallel`.
+
 Appending past an accumulator's reserved capacity is refused, never written and
 never a silent drop. By default the refusal is a value the caller of the run
 entry is handed; the consumer can pick a run that panics on it instead, at
@@ -1674,6 +1683,70 @@ poisons nothing, since nothing runs after it.
 
 R2 APIs: evict/dump + inject/import for column persistence.
 hilavitkutin owns generation counters; consumer owns storage.
+
+### Host import and dump
+
+```rust
+impl<Cfg, WuVals, Vals, CS, D, Stores, Clk> Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk> {
+ pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
+ where
+ C: ColMember + Kept,
+ <Vals as BindingsFor>::Bindings: ColSelector<C::T, I, C::K>,
+ Stores: Locate<C, J>,
+ J: WitnessIndex;
+ pub fn dump<C, I, P>(&self, at: USize, len: USize, sink: &mut P) -> Outcome<(), HostRefused>
+ where
+ C: ColMember + Kept,
+ <Vals as BindingsFor>::Bindings: ColSelector<C::T, I, C::K>,
+ P: BulkPush<C::T>;
+}
+
+pub enum HostRefused {
+ PastCount { count: USize },
+}
+```
+
+The copy half of the R2 host path: records move into a built scheduler's
+column and out of it between frames, without the host reaching into the
+bindings. The other half, `evict` and `inject`, which hand a column's
+reservation out of the engine and take one in, is not built; ticket
+`the_zero_copy_half_of_the_host_path_evict_and_inject_is_not` holds it. A
+store is named by its marker type, `Column<T>` or
+`Buffered<T, M>`, and found through `ColSelector`, the lookup a context
+projection walks, so the host and a unit resolve one store the same way. The
+bound is `ColMember` with `Kept`, which only those two markers carry, so an
+`Accum`, a `Virtual` or a `Resource` does not compile in either position.
+
+`import` copies `records` into the store from record `at`. A buffered column
+takes the copy on both of its reservations, so the two agree over the imported
+range. The frozen copy is the one the next pass reads. The live copy keeps the
+import across a pass that writes part of the store: a unit's `execute` runs
+once per window and may call `map` in some windows and not in others, and the
+boundary after that pass carries the whole live side over, by the copy under
+`Snapshot` and by the flip under `Exchange`. Without the import on the live
+side, the records of every window the pass left would lose it there. It then marks
+the store changed for the next frame through the bit `mark_dirty` sets, so the
+units reading the store and their cone run. That mark is of the whole store:
+the per-morsel generation counters the canon asks for are not built, and a
+range mark waits on them, so no `mark_dirty` over a range is offered.
+
+`dump` pushes records `at` to `at + len` into a `BulkPush` sink, read from the
+side the next pass reads, which on a buffered column is the one the last
+boundary published. The slice it hands the sink is a view of column memory for
+the length of the call and no longer.
+
+A range that reaches past the store's record count is refused with
+`HostRefused::PastCount`, carrying the count, before any record moves; it is
+not clipped. Both are app-only and run between `.build()` and `run()` or
+between two frames, on the thread that holds the scheduler, like
+`replace_value`. After a host write made some other way, `mark_dirty` stays
+the call that says the store changed.
+
+`import` takes `&mut self`, as `replace_value` does. Under `run_parallel` the
+scheduler is pinned and not `Unpin`, so a consumer reaches `import` only
+through `Pin::get_unchecked_mut`, and the parked workers hold a shared borrow
+of the scheduler across that call. That aliasing is the hole
+`placeholders_tagged_74e2b9918149` tracks, and `import` is one of its sites.
 
 ## What the entries are held to
 

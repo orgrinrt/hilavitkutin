@@ -1,0 +1,46 @@
+error[E0277]: the trait bound `Virtual<Ev>: Kept` is not satisfied
+ --> tests/ui/host_import_virtual_fail.rs:5:19
+  |
+5 | host_main!(import Virtual<Ev> = [Ev(1), Ev(2)]; dump Column<B>);
+  |                   ^^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<Ev>`
+  |
+ ::: tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ------ required by a bound introduced by this call
+  |
+help: the following other types implement trait `Kept`
+ --> src/resource/bindings/column.rs
+  |
+  | impl<T> Kept for Column<T> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `Column<T>`
+...
+  | impl<T, M: BufferMode + ColKind> Kept for Buffered<T, M> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Buffered<T, M>`
+note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+ --> src/scheduler/host.rs
+  |
+  |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
+  |            ------ required by a bound in this associated function
+  |     where
+  |         C: ColMember + Kept,
+  |                        ^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+
+error[E0277]: the trait bound `Virtual<Ev>: ColMember` is not satisfied
+ --> tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ^^^^^^ the trait `ColMember` is not implemented for `Virtual<Ev>`
+  |
+ ::: tests/ui/host_import_virtual_fail.rs:5:1
+  |
+5 | host_main!(import Virtual<Ev> = [Ev(1), Ev(2)]; dump Column<B>);
+  | --------------------------------------------------------------- in this macro invocation
+  |
+  = help: the following other types implement trait `ColMember`:
+            Buffered<T, M>
+            Column<T>
+            Differs<C>
+            Reach<C, N>
+            Written<C>
+  = note: this error originates in the macro `host_main` (in Nightly builds, run with -Z macro-backtrace for more info)
