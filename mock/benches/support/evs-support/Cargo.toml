@@ -16,9 +16,9 @@ path = "src/lib.rs"
 
 [dependencies]
 bench-arm = { path = "../bench-arm" }
-hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin = { path = "../../../crates/hilavitkutin", features = ["os"] }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
-hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers" }
+hilavitkutin-providers = { path = "../../../crates/hilavitkutin-providers", features = ["static", "portable"] }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
 mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }

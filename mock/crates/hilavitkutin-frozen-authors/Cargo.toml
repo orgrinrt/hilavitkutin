@@ -16,7 +16,7 @@ notko.workspace = true
 
 [dev-dependencies]
 hilavitkutin-conformance.workspace = true
-hilavitkutin-providers.workspace = true
+hilavitkutin-providers = { workspace = true, features = ["portable", "static"] }
 
 [build-dependencies]
 hilavitkutin-build.workspace = true

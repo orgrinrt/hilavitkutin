@@ -37,11 +37,15 @@ pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 ///    Moving the provider moves and frees no block, so a provider that
 ///    keeps its memory inline in itself cannot implement this trait.
 /// 3. Two live blocks do not overlap.
-/// 4. All three methods may be called from several threads at once.
+/// 4. Every method may be called from several threads at once.
+/// 5. A non-null block from `allocate_zeroed(len, align)` keeps the
+///    first promise and reads as `len` zero bytes. The provided method
+///    keeps it by writing them; a provider whose fresh blocks are zero
+///    overrides it and skips the write.
 ///
-/// Null is always a valid answer from `allocate` and means the block
-/// was refused. The `# Safety` sections on the methods are the
-/// caller's half of the contract.
+/// Null is always a valid answer from `allocate` and
+/// `allocate_zeroed` and means the block was refused. The `# Safety`
+/// sections on the methods are the caller's half of the contract.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` does not implement Memory provider contract",
     note = "Provide a platform-specific impl. The engine builds against `MemoryProviderApi` via const generics; supply your own `MemoryProvider` to the scheduler at construction time."
@@ -55,6 +59,28 @@ pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
     /// Alignment must be a power of two. OOM returns null; caller
     /// checks.
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+
+    /// Allocate `len` bytes at `align` alignment, every byte zero.
+    ///
+    /// The default calls `allocate` and writes the zeros into a
+    /// non-null block. A provider whose fresh blocks are already zero
+    /// overrides it with `allocate`.
+    ///
+    /// # Safety
+    ///
+    /// As `allocate`: alignment must be a power of two, and OOM
+    /// returns null, which the caller checks.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+        // SAFETY: the caller keeps `allocate`'s half of the contract.
+        let ptr = unsafe { self.allocate(len, align) };
+        if !ptr.is_null() {
+            // SAFETY: a non-null block from `allocate` is valid for writes
+            // of `len` bytes (promise 1).
+            unsafe { core::ptr::write_bytes(ptr, 0, len.0) };
+        }
+        ptr
+    }
 
     /// Release a previously-allocated block.
     ///

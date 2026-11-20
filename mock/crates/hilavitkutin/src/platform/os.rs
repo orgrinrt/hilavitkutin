@@ -39,13 +39,15 @@ impl Default for OsMemoryProvider {
     }
 }
 
-// SAFETY: the four promises of `MemoryProviderApi`. Each block is a fresh
+// SAFETY: the five promises of `MemoryProviderApi`. Each block is a fresh
 // anonymous private mapping, page-aligned, of `len` bytes readable and
 // writable (1), freed only by the `munmap` in `deallocate` and placed by the
 // kernel, not inside the provider, so moving or dropping the provider leaves
 // it where it is (2). The kernel never maps two live mappings over one page
 // (3), and the provider holds no state, so concurrent calls are mmap and munmap
-// on separate ranges (4). An `align` the mapping cannot meet is refused.
+// on separate ranges (4). A fresh anonymous mapping reads as zero, so the
+// block `allocate_zeroed` hands over is zero without a write (5). An `align`
+// the mapping cannot meet is refused.
 unsafe impl MemoryProviderApi for OsMemoryProvider {
     #[rustfmt::skip] // keeps the allow on the signature it governs
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
@@ -73,6 +75,14 @@ unsafe impl MemoryProviderApi for OsMemoryProvider {
         } else {
             addr as *mut u8 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: libc mmap returns *mut c_void; cast to allocator ABI ptr; tracked: #72
         }
+    }
+
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI raw pointer; tracked: #72
+        // SAFETY: the caller keeps `allocate`'s half of the contract, and
+        // every block it hands over is a fresh anonymous mapping, which reads
+        // as zero.
+        unsafe { self.allocate(len, align) }
     }
 
     unsafe fn deallocate(

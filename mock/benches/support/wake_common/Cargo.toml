@@ -13,7 +13,7 @@ name = "wake_common"
 path = "src/lib.rs"
 
 [dependencies]
-hilavitkutin = { path = "../../../crates/hilavitkutin" }
+hilavitkutin = { path = "../../../crates/hilavitkutin", features = ["os"] }
 hilavitkutin-api = { path = "../../../crates/hilavitkutin-api" }
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", rev = "1b2796e92ad2b8176c2177d72a9cffa161b7b92e", default-features = false }
 rcm_common = { path = "../rcm_common" }

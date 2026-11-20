@@ -91,7 +91,7 @@ fn evict_a_const_handle_nothing_registered_is_missing() {
 #[test]
 fn evict_runtime_hashes_bytes() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = interner.intern("runtime-evict-sample");
+    let h = interner.intern("runtime-evict-sample").expect("interned");
     assert!(h.is_runtime().0);
     assert_eq!(
         evicted(evict_str(h, &interner)),
@@ -176,7 +176,7 @@ fn evict_then_inject_runtime_roundtrips() {
     let interner = StringInterner::new(VecInterner::new());
 
     let original_bytes: &'static [u8] = b"roundtrip-string";
-    let h = interner.intern("roundtrip-string");
+    let h = interner.intern("roundtrip-string").expect("interned");
     let evicted = evicted(evict_str(h, &interner));
 
     // Build a string-table entry that re-supplies the bytes.
@@ -258,7 +258,10 @@ fn evicted_keys(interner: &StringInterner<VecInterner>, count: usize) -> Vec<u64
     (0 .. count)
         .map(|i| {
             let text = format!("string-{i}");
-            let key = evicted(evict_str(interner.intern(&text), interner));
+            let key = evicted(evict_str(
+                interner.intern(&text).expect("interned"),
+                interner,
+            ));
             assert_eq!(key, content_hash(&text), "evict keys a string by its hash");
             key.to_raw()
         })
@@ -306,8 +309,8 @@ fn strings_sharing_28_bits_evict_to_different_keys() {
     let (a, b) = pair.expect("two probes sharing their low 28 bits exist well inside the search");
 
     let interner = StringInterner::new(VecInterner::new());
-    let ka = evicted(evict_str(interner.intern(&a), &interner)).to_raw();
-    let kb = evicted(evict_str(interner.intern(&b), &interner)).to_raw();
+    let ka = evicted(evict_str(interner.intern(&a).expect("interned"), &interner)).to_raw();
+    let kb = evicted(evict_str(interner.intern(&b).expect("interned"), &interner)).to_raw();
 
     assert_ne!(a, b);
     assert_eq!(
@@ -341,18 +344,46 @@ fn strings_sharing_28_bits_evict_to_different_keys() {
 }
 
 /// A runtime handle the interner did not issue has no string behind it,
-/// so it has no key to evict it to: the masked overflow id of a full
-/// `MemoryArena`.
+/// so it has no key to evict it to: a handle another interner issued past
+/// this one's live count.
 #[test]
 #[ignore = "catalogue: evict_str stores the hash of the empty string; needs a resolve that can say it holds nothing; tracked #evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of"]
-fn evicting_an_overflow_handle_is_missing() {
-    let interner = StringInterner::new(hilavitkutin_providers::MemoryArena::<8, 2>::new());
-    let _ = interner.intern("abcd");
-    let _ = interner.intern("efgh");
-    let over = interner.intern("ijkl");
+fn evicting_a_handle_the_interner_did_not_issue_is_missing() {
+    let other = StringInterner::new(hilavitkutin_providers::MemoryArena::<16, 4>::new());
+    let _ = other.intern("abcd").expect("interned");
+    let over = other.intern("efgh").expect("interned");
+    let interner = StringInterner::new(hilavitkutin_providers::MemoryArena::<16, 4>::new());
+    let _ = interner.intern("ijkl").expect("interned");
     assert!(over.is_runtime().0);
     match evict_str(over, &interner) {
         Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
         Outcome::Ok(_) => panic!("a handle with no string behind it has no key"),
     }
+}
+
+/// A string the interner has no room for is not injected: inject answers
+/// `PersistenceError::Full`, and the strings held before still resolve.
+#[test]
+fn injecting_into_a_full_interner_is_full() {
+    let interner = StringInterner::new(hilavitkutin_providers::MemoryArena::<8, 2>::new());
+    let held = interner.intern("abcd").expect("interned");
+    let _ = interner.intern("efgh").expect("interned");
+
+    let bytes: &'static [u8] = b"ijkl";
+    let key = ContentHash::from_raw(const_fnv1a("ijkl"));
+    let entries: &'static [StringTableEntry] = Box::leak(Box::new([StringTableEntry {
+        content_hash: key,
+        bytes_offset: BufferOffset(<USize as Identity<Additive>>::IDENTITY),
+        bytes_len:    BufferLen(USize(bytes.len())),
+    }]));
+    let table = StringTable {
+        entries,
+        buffer: bytes,
+    };
+
+    match inject_str(key, &interner, &table) {
+        Outcome::Ok(_) => panic!("a full interner has no room for the string"),
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Full),
+    }
+    assert_eq!(interner.resolve(held), Maybe::Is("abcd"));
 }

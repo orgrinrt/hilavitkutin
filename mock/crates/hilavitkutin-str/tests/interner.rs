@@ -46,7 +46,7 @@ impl ArenaInterner for VecInterner {
 #[test]
 fn runtime_intern_roundtrip() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = interner.intern("ephemeral-runtime-a");
+    let h = interner.intern("ephemeral-runtime-a").expect("interned");
     assert!(h.is_runtime().0);
     assert_eq!(interner.resolve(h), Maybe::Is("ephemeral-runtime-a"));
 }
@@ -54,8 +54,8 @@ fn runtime_intern_roundtrip() {
 #[test]
 fn runtime_different_strings_different_handles() {
     let interner = StringInterner::new(VecInterner::new());
-    let a = interner.intern("one");
-    let b = interner.intern("two");
+    let a = interner.intern("one").expect("interned");
+    let b = interner.intern("two").expect("interned");
     assert_ne!(a, b);
 }
 
@@ -64,7 +64,7 @@ fn const_short_circuits_on_intern() {
     // Ensure the const literal is registered by referencing it.
     let c = str_const!("interner-const-hit");
     let interner = StringInterner::new(VecInterner::new());
-    let i = interner.intern("interner-const-hit");
+    let i = interner.intern("interner-const-hit").expect("interned");
     assert_eq!(c, i);
     assert!(i.is_const().0);
     // Resolve should come back via the linker-section table.
@@ -75,7 +75,9 @@ fn const_short_circuits_on_intern() {
 fn intern_static_short_circuits_on_const() {
     let c = str_const!("interner-const-static");
     let interner = StringInterner::new(VecInterner::new());
-    let i = interner.intern_static("interner-const-static");
+    let i = interner
+        .intern_static("interner-const-static")
+        .expect("interned");
     assert_eq!(c, i);
     assert!(i.is_const().0);
 }
@@ -89,7 +91,7 @@ fn intern_static_short_circuits_on_const() {
 ))]
 fn the_empty_string_is_a_const_string() {
     let interner = StringInterner::new(VecInterner::new());
-    let h = interner.intern("");
+    let h = interner.intern("").expect("interned");
     assert!(h.is_const().0);
     assert_eq!(interner.resolve(h), Maybe::Is(""));
 }
@@ -97,7 +99,7 @@ fn the_empty_string_is_a_const_string() {
 #[test]
 fn resolve_runtime_delegates_to_arena() {
     let interner = StringInterner::new(VecInterner::new());
-    let h: Str = interner.intern("arena-delegate");
+    let h: Str = interner.intern("arena-delegate").expect("interned");
     assert!(h.is_runtime().0);
     assert_eq!(interner.resolve(h), Maybe::Is("arena-delegate"));
 }
@@ -112,7 +114,7 @@ fn interner_trait_roundtrips_and_rejects_foreign_kind() {
 
     // The generic Interner trait view roundtrips the same as the string-typed
     // methods: intern to a Sym, resolve back to the str.
-    let s: Sym = Interner::<StrDomain>::intern(&interner, "trait-view");
+    let s: Sym = Interner::<StrDomain>::intern(&interner, "trait-view").expect("interned");
     match Interner::<StrDomain>::resolve(&interner, s) {
         Maybe::Is(v) => assert_eq!(v, "trait-view"),
         Maybe::Isnt => panic!("expected the string interner to resolve its own handle"),
@@ -125,4 +127,104 @@ fn interner_trait_roundtrips_and_rejects_foreign_kind() {
         Interner::<StrDomain>::resolve(&interner, foreign),
         Maybe::Isnt
     ));
+}
+
+/// An arena that holds at most `cap` strings and refuses past it with the
+/// id `u32::MAX`, as the `ArenaInterner` contract lets an arena refuse.
+struct CappedInterner {
+    inner: VecInterner,
+    cap:   usize,
+}
+
+impl ArenaInterner for CappedInterner {
+    fn arena_intern(&self, s: &str) -> u32 {
+        let held = self.inner.strings.borrow().iter().any(|e| e == s);
+        if !held && self.inner.strings.borrow().len() >= self.cap {
+            return u32::MAX;
+        }
+        self.inner.arena_intern(s)
+    }
+
+    fn arena_resolve(&self, id: u32) -> &str {
+        self.inner.arena_resolve(id)
+    }
+}
+
+fn capped(cap: usize) -> StringInterner<CappedInterner> {
+    StringInterner::new(CappedInterner {
+        inner: VecInterner::new(),
+        cap,
+    })
+}
+
+/// A full arena refuses a string it does not hold through every door: the
+/// string-typed `intern` and `intern_static`, the sym trait and `into_str`.
+/// A string it holds and a const string are still interned.
+#[test]
+fn a_full_arena_refuses_a_new_string_through_every_door() {
+    use hilavitkutin_str::{IntoStr, StrDomain};
+    use hilavitkutin_sym::Interner;
+
+    let interner = capped(1);
+    let held = interner.intern("held").expect("interned");
+    assert!(interner.intern("new").isnt());
+    assert!(interner.intern_static("new").isnt());
+    assert!(Interner::<StrDomain>::intern(&interner, "new").isnt());
+    assert!("new".into_str(&interner).isnt());
+    assert_eq!(interner.intern("held"), Maybe::Is(held));
+    let c = str_const!("interner-const-past-a-full-arena");
+    assert_eq!(
+        interner.intern("interner-const-past-a-full-arena"),
+        Maybe::Is(c)
+    );
+    assert_eq!(interner.resolve(held), Maybe::Is("held"));
+}
+
+/// An id of 2^28, the smallest the arena can refuse with, is a refusal and
+/// not a handle that wraps to id 0.
+#[test]
+fn the_smallest_refusing_id_is_refused_and_does_not_wrap_to_zero() {
+    struct Refuses;
+    impl ArenaInterner for Refuses {
+        fn arena_intern(&self, _s: &str) -> u32 {
+            1 << 28
+        }
+
+        fn arena_resolve(&self, _id: u32) -> &str {
+            "id zero"
+        }
+    }
+    let interner = StringInterner::new(Refuses);
+    assert!(interner.intern("anything").isnt());
+}
+
+/// An id of 2^28 - 1, the largest the 28-bit field holds, is a handle with
+/// that id, so the refusal starts at 2^28 and not below it.
+#[test]
+fn the_largest_id_the_field_holds_is_a_handle() {
+    const LAST: u32 = (1 << 28) - 1;
+    struct Last;
+    impl ArenaInterner for Last {
+        fn arena_intern(&self, _s: &str) -> u32 {
+            LAST
+        }
+
+        fn arena_resolve(&self, _id: u32) -> &str {
+            "last"
+        }
+    }
+    let interner = StringInterner::new(Last);
+    let handle = interner.intern("anything").expect("2^28 - 1 is an id");
+    assert_eq!(handle.id().to_raw(), LAST);
+    assert!(!handle.is_const().0);
+}
+
+/// `into_str` passes a carried `Str` through untouched, even on a full arena.
+#[test]
+fn into_str_passes_a_handle_through_on_a_full_arena() {
+    use hilavitkutin_str::IntoStr;
+
+    let interner = capped(0);
+    let c = str_const!("into-str-passthrough");
+    assert_eq!(c.into_str(&interner), Maybe::Is(c));
 }

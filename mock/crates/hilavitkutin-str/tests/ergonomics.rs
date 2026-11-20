@@ -46,14 +46,16 @@ fn as_str_on_str_returns_self() {
 fn into_str_passes_through_existing_str() {
     let interner = StringInterner::new(NullArena::new());
     let s = str_const!("into-str-pass");
-    let out: Str = s.into_str(&interner);
+    let out: Str = s.into_str(&interner).expect("interned");
     assert_eq!(out, s);
 }
 
 #[test]
 fn into_str_interns_static_str() {
     let interner = StringInterner::new(NullArena::new());
-    let out: Str = "into-str-new-runtime".into_str(&interner);
+    let out: Str = "into-str-new-runtime"
+        .into_str(&interner)
+        .expect("interned");
     // Not previously declared in any str_const!, so runtime.
     assert!(out.is_runtime().0);
 }
@@ -62,7 +64,7 @@ fn into_str_interns_static_str() {
 fn into_str_short_circuits_on_known_const() {
     let c = str_const!("ergo-const-hit");
     let interner = StringInterner::new(NullArena::new());
-    let out: Str = "ergo-const-hit".into_str(&interner);
+    let out: Str = "ergo-const-hit".into_str(&interner).expect("interned");
     assert_eq!(out, c);
     assert!(out.is_const().0);
 }

@@ -21,7 +21,7 @@ notko.workspace = true          # Maybe, Outcome
 
 [dev-dependencies]
 # The static bump memory provider the tests map into.
-hilavitkutin-providers.workspace = true
+hilavitkutin-providers = { workspace = true, features = ["static", "portable"] }
 # (arvo already declared above under [dependencies])
 
 [features]

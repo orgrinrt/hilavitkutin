@@ -4,9 +4,7 @@
 
 use hilavitkutin::scheduler::Scheduler;
 use hilavitkutin_kit::Kit;
-use hilavitkutin_providers::{
-    InternerApi, InternerKit, MemoryArena, default_interner,
-};
+use hilavitkutin_providers::{InternerApi, InternerKit, MemoryArena, default_interner};
 use hilavitkutin_str::ArenaInterner;
 use notko::Maybe;
 
@@ -41,8 +39,8 @@ fn memory_arena_entry_overflow_returns_sentinel() {
 #[test]
 fn default_interner_intern_and_resolve_round_trip() {
     let interner = default_interner::<2048, 64>();
-    let h_a = InternerApi::intern(&interner, "alpha-string");
-    let h_b = InternerApi::intern(&interner, "beta-string");
+    let h_a = InternerApi::intern(&interner, "alpha-string").expect("interned");
+    let h_b = InternerApi::intern(&interner, "beta-string").expect("interned");
     match InternerApi::resolve(&interner, h_a) {
         Maybe::Is(s) => assert_eq!(s, "alpha-string"),
         Maybe::Isnt => panic!("alpha resolution failed"),
@@ -86,6 +84,5 @@ fn internerkit_declarative_shape_compiles() {
 /// parameter. The InternerKit unit struct is constructed bare.
 #[test]
 fn internerkit_installs_via_with() {
-    let _builder =
-        Scheduler::builder().with(InternerKit::<128, 8>);
+    let _builder = Scheduler::builder().with(InternerKit::<128, 8>);
 }

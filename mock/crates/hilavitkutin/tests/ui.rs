@@ -38,6 +38,11 @@ fn compile_fail_fixtures() {
     t.pass("tests/ui/executor_outside_the_engine_pass.rs");
     // A zero divisor in the ceiling division fails the build.
     t.compile_fail("tests/ui/ceiling_div_by_zero_fail.rs");
+    // A default build carries the contracts alone: the os clock is not
+    // there to name, and the null clock is.
+    t.pass("tests/ui/os_clock_unnamed_without_os_pass.rs");
+    #[cfg(not(feature = "os"))]
+    t.compile_fail("tests/ui/os_clock_unnamed_without_os_fail.rs");
 }
 
 #[test]

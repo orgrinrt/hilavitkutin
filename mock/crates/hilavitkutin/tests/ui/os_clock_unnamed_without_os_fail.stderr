@@ -1,0 +1,13 @@
+error[E0432]: unresolved import `hilavitkutin::OsClock`
+ --> tests/ui/os_clock_unnamed_without_os_fail.rs:3:5
+  |
+3 | use hilavitkutin::OsClock as Clock;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `OsClock` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "os")]
+  |       -------------- the item is gated behind the `os` feature
+  | pub use platform::{OsClock, OsMemoryProvider};
+  |                    ^^^^^^^

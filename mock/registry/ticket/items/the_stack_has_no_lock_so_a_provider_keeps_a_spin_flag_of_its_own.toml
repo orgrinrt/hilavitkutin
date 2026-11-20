@@ -1,0 +1,14 @@
+[[ticket]]
+id = "the_stack_has_no_lock_so_a_provider_keeps_a_spin_flag_of_its_own"
+title = "the stack has no lock primitive, so a provider keeps a spin flag of its own"
+kind = "task"
+what = "StaticFreeListMemory keeps an address-ordered free list that several threads change through MemoryProviderApi, which is Send + Sync, and neither notko nor arvo nor the api crate offers a lock to guard it, so the provider carries a private one-flag spin lock (round 202611200201-yszg). A spin is fine where allocation happens at build and between frames, and wrong for a provider called under contention or on a preemptive kernel with more threads than cores. The lock belongs to the stack: a notko or arvo primitive the provider and any later one share, or a lock-free list."
+related = ["subject::memory"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120020440_hila_consumer_surface_891b"
+ticket = "the_stack_has_no_lock_so_a_provider_keeps_a_spin_flag_of_its_own"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-20T02:04:40Z"

@@ -24,14 +24,16 @@ libc = { workspace = true, optional = true }
 # Tests wire the arena-backed `ColumnStorage` default. Dev-dep only: the
 # engine lib depends on the storage trait (hilavitkutin-api), never on
 # the default impl. providers forbids depending on the engine, so no cycle.
-hilavitkutin-providers.workspace = true
+hilavitkutin-providers = { workspace = true, features = ["static", "portable"] }
 # Compile-fail fixtures under tests/ui, run by tests/ui.rs.
 trybuild = "1"
 
 [features]
-default = ["platform-os"]
-platform-os = ["dep:libc"]
-platform-no-os = []
+default = []
+# The os tier: OsMemoryProvider, OsClock and the operating-system arms of
+# thread parking and thread classes. Off by default, a build without it
+# carries the contracts alone.
+os = ["dep:libc"]
 # Opt-in intrinsics upgrade. Still core-only; enables
 # `core::hint::black_box` for `noinline_barrier`. Nightly
 # `core::intrinsics::prefetch_*` is a follow-up (BACKLOG).
