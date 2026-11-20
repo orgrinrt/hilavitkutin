@@ -446,9 +446,9 @@ accumulator-writing unit goes through `run`.
 
 Nor does the fused entry take a buffered column. `FuseCarrier` wants each
 unit's read and write sets to be plain columns, so a unit over `Buffered` is
-refused at compile time. The chain it folds threads values over one
+refused at compile time. The fold it builds threads values over one
 reservation a column, and a buffered column is two reservations the boundary
-trades, which the chain does not carry. The three entries keep one meaning, so
+trades, which the fold does not carry. The three entries keep one meaning, so
 this is a gap of the fused entry, tracked as ticket
 `the_fused_entry_refuses_a_buffered_column`; until it closes, a unit over a
 buffered column goes through `run` or `run_parallel`.
