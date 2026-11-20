@@ -1,0 +1,36 @@
+rustc 1.98.0-nightly (57d06900f 2026-05-27)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+     Running unittests src/lib.rs (/home/user/target/release/deps/per_record_marks_probe-e0e7053e76f3119a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/home/user/target/release/deps/counts-84c34d6e4d7c2b97)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/differential.rs (/home/user/target/release/deps/differential-a29c4b5e02b19a33)
+
+running 6 tests
+test a_cutoff_that_drops_every_change_is_caught_at_every_grain ... ok
+test a_demand_frame_that_forgets_what_it_did_not_run_is_caught ... demand_clears_all: push Some((Config { grain: Record, carry: Push, cutoff: Structural, mutant: Mutant { stale_inverse: false, demand_clears_all: true, fold_edge: false, cutoff_drops: false } }, 3, Parted { seed: 0, step: 26, what: "a node hash" })), pull Some((Config { grain: Record, carry: Pull, cutoff: Structural, mutant: Mutant { stale_inverse: false, demand_clears_all: true, fold_edge: false, cutoff_drops: false } }, 3, Parted { seed: 0, step: 26, what: "a node hash" }))
+ok
+test a_fold_reverse_that_misses_the_last_page_is_caught_under_push ... fold_edge: Some((Config { grain: Record, carry: Push, cutoff: Structural, mutant: Mutant { stale_inverse: false, demand_clears_all: false, fold_edge: true, cutoff_drops: false } }, 1, Parted { seed: 0, step: 11, what: "a page hash" }))
+ok
+test a_stale_inverse_after_a_rekey_is_caught_under_push ... stale_inverse: Some((Config { grain: Record, carry: Push, cutoff: Structural, mutant: Mutant { stale_inverse: true, demand_clears_all: false, fold_edge: false, cutoff_drops: false } }, 1, Parted { seed: 0, step: 75, what: "a demanded page" }))
+ok
+test a_stale_inverse_is_harmless_at_store_grain_and_under_pull ... ok
+test every_configuration_equals_recomputation_after_every_frame ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+
+   Doc-tests per_record_marks_probe
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
