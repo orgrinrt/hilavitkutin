@@ -143,7 +143,8 @@ push = "error"
 # a line with its current hash, and no frozen file compiles in a file from
 # elsewhere by a `path` attribute or an `include!` macro.
 # Repo lints, `mock/lints/`. Each reads only the frozen crates, every crate
-# named `hilavitkutin-frozen-*`, and holds that scope in its own code.
+# named `hilavitkutin-frozen-*`, and holds that scope in its own code by its
+# test of the crate name, so its table carries no `crates` list.
 [lints.frozen-no-outside-source]
 commit = "error"
 build = "error"

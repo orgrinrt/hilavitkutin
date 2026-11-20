@@ -1,0 +1,14 @@
+[[ticket]]
+id = "the_zero_copy_half_of_the_host_path_evict_and_inject_is_not"
+title = "the zero-copy half of the host path, evict and inject, is not built"
+kind = "task"
+what = "The ratified tenet column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import names four verbs. Scheduler::import and Scheduler::dump, the copy half, landed in round 202611192343-hx2c; evict, which hands a column's reservation out of the engine, and inject, which takes one in, are not built. The design's Host import and dump section names this ticket."
+related = ["tenet::column_data_moves_out_of_and_into_the_engine_through_evict_dump_and_inject_import"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120005818_hila_consumer_surface_0e0c"
+ticket = "the_zero_copy_half_of_the_host_path_evict_and_inject_is_not"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-20T00:58:18Z"

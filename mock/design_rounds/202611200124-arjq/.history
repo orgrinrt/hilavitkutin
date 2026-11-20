@@ -1,0 +1,50 @@
+7bf421f5 docs: regenerate the engine document for round arjq
+1978a357 chore: lock src changelist 202611200124-arjq
+7e481f2b chore: move the placeholder ticket's host lines to where they stand
+1c899d37 docs: say the import's aliasing under run_parallel is not established
+5c4bc372 test: pin the buffered import mark and the stale partial pass
+bc1ea3bd docs: add src changelist 202611200124-arjq
+63fd329c chore: lock doc changelist 202611200124-arjq
+b8e20ccd docs: say fold where the fused paragraph said chain
+5045442d docs: state the fused entry's refusal of a buffered column as a gap
+f9c904c8 chore: open design round 202611200124-arjq
+983d5e49 chore: close design round 202611200058-dx86
+4b892df3 docs: regenerate the engine document for round dx86
+29e315d5 chore: lock src changelist 202611200058-dx86
+8c1cbee7 chore: point the aliasing ticket at the formatted marker line
+c00814df test: hold the host import across a partial pass and every entry
+80c8df72 docs: add src changelist 202611200058-dx86
+f024b725 chore: lock doc changelist 202611200058-dx86
+5771698d docs: say the live copy keeps an import across a partial pass
+f0f35dab chore: open design round 202611200058-dx86
+a6a3f660 chore: close design round 202611200033-ut6z
+9c508a22 chore: lock src changelist 202611200033-ut6z
+a95c7491 test: give each host path refusal its own fixture
+5fde47bb docs: add src changelist 202611200033-ut6z
+b6ead99b chore: lock doc changelist 202611200033-ut6z
+f1683947 chore: name the crates the frozen lints bind by their prefix
+40112439 docs: say the host import's second copy and its aliasing as they are
+95551523 chore: open design round 202611200033-ut6z
+66d44515 chore: close design round 202611192343-hx2c
+b1862e36 chore: lock src changelist 202611192343-hx2c
+9c51fc6d test: refresh the host import compile-fail diagnostics
+82e956eb feat: add host import and dump of column records
+3e468b61 chore: drop the crate lists the frozen lints scope themselves
+a660fab6 docs: add src changelist 202611192343-hx2c
+b5ec8da5 Merge remote-tracking branch 'origin/work/hila-consumer-surface' into work/hila-consumer-surface
+adfb4eb3 chore: lock doc changelist 202611192343-hx2c
+3b7766e9 docs: design host import and dump of column records
+fad0d4a3 chore: open design round 202611192343-hx2c
+420b4997 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+56a4ba4f fix: make the default string interner deduplicate
+ae5a037b fix: make the default string interner deduplicate
+1409781a docs: record the interner deduplication landing
+cc45fb0a chore: close design round 202611192319-q4em
+d603f252 chore: lock src changelist 202611192319-q4em
+da91724d fix: stop claiming an unissued arena id aliases no held string
+6ba0dd64 docs: add src changelist 202611192319-q4em
+6d64b869 chore: lock doc changelist 202611192319-q4em
+4e1d94cc chore: unlock design round 202611192319-q4em to reopen its src window
+04ff3aaf chore: lock src changelist 202611192319-q4em
+9f46171b docs: add src changelist 202611192319-q4em
+f3552a21 chore: lock doc changelist 202611192319-q4em

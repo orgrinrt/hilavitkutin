@@ -1,0 +1,60 @@
+error[E0277]: the trait bound `Written<Column<A>>: Kept` is not satisfied
+ --> tests/ui/host_import_written_fail.rs:5:19
+  |
+5 | host_main!(import Written<Column<A>> = [A(1), A(2)]; dump Column<B>);
+  |                   ^^^^^^^^^^^^^^^^^^ the trait `Kept` is not implemented for `Written<Column<A>>`
+  |
+ ::: tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ------ required by a bound introduced by this call
+  |
+help: the following other types implement trait `Kept`
+ --> src/resource/bindings/column.rs
+  |
+  | impl<T> Kept for Column<T> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `Column<T>`
+...
+  | impl<T, M: BufferMode + ColKind> Kept for Buffered<T, M> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Buffered<T, M>`
+note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+ --> src/scheduler/host.rs
+  |
+  |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
+  |            ------ required by a bound in this associated function
+  |     where
+  |         C: ColMember + Kept,
+  |                        ^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+
+error[E0277]: the trait bound `hilavitkutin_api::Empty: Locate<Written<Column<A>>, _>` is not satisfied
+ --> tests/ui/host_import_body.in
+  |
+  |                 scheduler.import::<$import, _, _>(USize(0), &$records),
+  |                           ^^^^^^ the trait `Locate<Written<Column<A>>, _>` is not implemented for `hilavitkutin_api::Empty`
+  |
+ ::: tests/ui/host_import_written_fail.rs:5:1
+  |
+5 | host_main!(import Written<Column<A>> = [A(1), A(2)]; dump Column<B>);
+  | -------------------------------------------------------------------- in this macro invocation
+  |
+help: the following other types implement trait `Locate<Target, Index>`
+ --> src/plan/project.rs
+  |
+  |   impl<Target, Tail> Locate<Target, Here> for Cons<Target, Tail> {}
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Cons<Target, Tail>` implements `Locate<Target, hilavitkutin::dispatch::engine_ctx::Here>`
+  |
+  | / impl<Target, Head, Tail, I> Locate<Target, There<I>> for Cons<Head, Tail> where
+  | |     Tail: Locate<Target, I>
+  | |___________________________^ `Cons<Head, Tail>` implements `Locate<Target, hilavitkutin::dispatch::engine_ctx::There<I>>`
+  = note: required for `Cons<Column<A>, hilavitkutin_api::Empty>` to implement `Locate<Written<Column<A>>, hilavitkutin::dispatch::engine_ctx::There<_>>`
+  = note: 4 redundant requirements hidden
+  = note: required for `Cons<Resource<Res>, Cons<Virtual<Ev>, Cons<Accum<Acc>, Cons<Column<B>, Cons<Column<A>, hilavitkutin_api::Empty>>>>>` to implement `Locate<Written<Column<A>>, hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<hilavitkutin::dispatch::engine_ctx::There<_>>>>>>`
+note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+ --> src/scheduler/host.rs
+  |
+  |     pub fn import<C, I, J>(&mut self, at: USize, records: &[C::T]) -> Outcome<(), HostRefused>
+  |            ------ required by a bound in this associated function
+...
+  |         Stores: Locate<C, J>,
+  |                 ^^^^^^^^^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
+  = note: this error originates in the macro `host_main` (in Nightly builds, run with -Z macro-backtrace for more info)
