@@ -1,0 +1,50 @@
+738223e0 chore: lock src changelist 202611200613-mt47
+1d7f9906 fix: return `OsCode` from the windows backend `read_last_error`
+c7ef8aa2 chore: lock doc changelist 202611200613-mt47
+ef80e8c2 chore: close design round 202611200606-ja7o
+07e04d3d chore: lock src changelist 202611200606-ja7o
+7fac5b9f chore: lock doc changelist 202611200606-ja7o
+ded80e0f chore: unlock design round, deprecate src and unlock doc
+9ed0e0f3 chore: lock src changelist 202611200606-ja7o
+e3f997ca chore: lock doc changelist 202611200606-ja7o
+b6b7a95c docs: report the seam and loader job
+b56f6978 Merge remote-tracking branch 'origin/dev' into work/port-seam-and-loader
+76290288 chore: close design round 202611200454-x98w
+bb8fce45 chore: lock src changelist 202611200454-x98w
+fb8d7013 feat: carry the linking crate's OS code as `OsCode` over `arvo_numeral`
+a2098e15 docs: add the src changelist of the linking port round
+72bd1c0f chore: lock doc changelist 202611200454-x98w
+2059896d docs: describe the linking crate's `OsCode` over `arvo_numeral::USize`
+ca29e3c4 feat: add the `old-arvo-names` tool
+5e1a98c8 chore: drop the five dead arvo manifest lines
+4029dc06 docs: open the round for the linking port onto arvo-numeral
+22e817c2 docs: add the sketch of two arvo revisions side by side
+ad6da29e bench: record the 97 crate point of build static
+e2c77abe docs: move the accumulator grouped findings to the job's path
+ad5525f1 fix: let the frozen lints scope themselves
+2bb9ae2f docs: plan the port of hilavitkutin onto current arvo
+9918113f feat: add the host path import and dump for columns
+d23843fd feat: make build pragmas types and carry linker, backend and edge form
+56a4ba4f fix: make the default string interner deduplicate
+a6e8cb46 bench: price the accumulator grouped by the data
+60512f10 fix: label the crate layers by dependency depth
+b8920f95 research: read the canon on the api revision, placement and pieces
+18b55d72 fix: name notko's product with its carrier as a parameter
+67e63ca4 feat: set a consumer's workspace up from one line with script!
+3177527a docs: land the two stranded sketch records
+739b02e6 docs: land the unit-names-its-lists-only sketch and report
+252c5190 refactor: move the engine-only items out of the api crate
+07a9e9a3 bench: add the build and link bench with its first default cells
+7b1a6136 chore: configure the `commit-subject` gate
+dea557ae bench: port every bench onto the current harness
+2b137e9d docs: land the first stack audit
+0e098dc4 docs: land the second stack audit
+c5567576 bench: land the overwritten july m1 and november xeon runs
+f623ba58 bench: land the linux results of 14 november on the generated driver
+c6a00a64 research: port channel documents into the research dir
+5a64c58a fix: say nothing of dropped flags under `clippy-driver`
+638fb969 bench: land the m1 results of 14 november
+35f55e13 bench: land the m1 results of 14 november
+7cb45cd6 research: land the second stack audit
+266650fb feat: land the skip differential, memory provider and unit abort
+62453a65 fix: make the hilavitkutin suite and surface hold what they claim
