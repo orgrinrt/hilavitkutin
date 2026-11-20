@@ -1,8 +1,8 @@
 error[E0277]: the trait bound `BindingNil: ColSelector<Other, _>` is not satisfied
-  --> tests/ui/host_import_unregistered_fail.rs:82:32
+  --> tests/ui/host_import_unregistered_fail.rs:84:19
    |
-82 |     assert!(matches!(scheduler.import::<Column<Other>, _, _>(USize(0), &[Other(1), Other(2)]), Outcome::Ok(())));
-   |                                ^^^^^^ the trait `ColSelector<Other, _>` is not implemented for `BindingNil`
+84 |         scheduler.import::<Column<Other>, _, _>(USize(0), &[Other(1), Other(2)]),
+   |                   ^^^^^^ the trait `ColSelector<Other, _>` is not implemented for `BindingNil`
    |
    = help: the following other types implement trait `ColSelector<T, Index, K>`:
              `AccumBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
@@ -25,10 +25,10 @@ note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals
    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
 
 error[E0277]: the trait bound `hilavitkutin_api::Empty: Locate<Column<Other>, _>` is not satisfied
-  --> tests/ui/host_import_unregistered_fail.rs:82:32
+  --> tests/ui/host_import_unregistered_fail.rs:84:19
    |
-82 |     assert!(matches!(scheduler.import::<Column<Other>, _, _>(USize(0), &[Other(1), Other(2)]), Outcome::Ok(())));
-   |                                ^^^^^^ the trait `Locate<Column<Other>, _>` is not implemented for `hilavitkutin_api::Empty`
+84 |         scheduler.import::<Column<Other>, _, _>(USize(0), &[Other(1), Other(2)]),
+   |                   ^^^^^^ the trait `Locate<Column<Other>, _>` is not implemented for `hilavitkutin_api::Empty`
    |
 help: the following other types implement trait `Locate<Target, Index>`
   --> src/plan/project.rs

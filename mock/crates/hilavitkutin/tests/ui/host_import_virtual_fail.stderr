@@ -1,8 +1,8 @@
 error[E0277]: the trait bound `Virtual<A>: ColMember` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:82:32
+  --> tests/ui/host_import_virtual_fail.rs:84:19
    |
-82 |     assert!(matches!(scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]), Outcome::Ok(())));
-   |                                ^^^^^^ the trait `ColMember` is not implemented for `Virtual<A>`
+84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
+   |                   ^^^^^^ the trait `ColMember` is not implemented for `Virtual<A>`
    |
    = help: the following other types implement trait `ColMember`:
              Buffered<T, M>
@@ -12,12 +12,12 @@ error[E0277]: the trait bound `Virtual<A>: ColMember` is not satisfied
              Written<C>
 
 error[E0277]: the trait bound `Virtual<A>: Kept` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:82:41
+  --> tests/ui/host_import_virtual_fail.rs:84:28
    |
-82 |     assert!(matches!(scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]), Outcome::Ok(())));
-   |                                ------   ^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<A>`
-   |                                |
-   |                                required by a bound introduced by this call
+84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
+   |                   ------   ^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<A>`
+   |                   |
+   |                   required by a bound introduced by this call
    |
 help: the following other types implement trait `Kept`
   --> src/resource/bindings/column.rs
@@ -37,10 +37,10 @@ note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals
    |                        ^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::import`
 
 error[E0277]: the trait bound `hilavitkutin_api::Empty: Locate<Virtual<A>, _>` is not satisfied
-  --> tests/ui/host_import_virtual_fail.rs:82:32
+  --> tests/ui/host_import_virtual_fail.rs:84:19
    |
-82 |     assert!(matches!(scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]), Outcome::Ok(())));
-   |                                ^^^^^^ the trait `Locate<Virtual<A>, _>` is not implemented for `hilavitkutin_api::Empty`
+84 |         scheduler.import::<Virtual<A>, _, _>(USize(0), &[A(1), A(2)]),
+   |                   ^^^^^^ the trait `Locate<Virtual<A>, _>` is not implemented for `hilavitkutin_api::Empty`
    |
 help: the following other types implement trait `Locate<Target, Index>`
   --> src/plan/project.rs

@@ -1,10 +1,10 @@
 error[E0277]: the trait bound `Virtual<A>: ColMember` is not satisfied
-  --> tests/ui/host_import_virtual_dump_fail.rs:85:39
+  --> tests/ui/host_import_virtual_dump_fail.rs:90:26
    |
-85 |     assert!(matches!(scheduler.dump::<Virtual<A>, _, _>(USize(0), USize(4), &mut sink), Outcome::Ok(())));
-   |                                ----   ^^^^^^^^^^ the trait `ColMember` is not implemented for `Virtual<A>`
-   |                                |
-   |                                required by a bound introduced by this call
+90 |         scheduler.dump::<Virtual<A>, _, _>(USize(0), USize(4), &mut sink),
+   |                   ----   ^^^^^^^^^^ the trait `ColMember` is not implemented for `Virtual<A>`
+   |                   |
+   |                   required by a bound introduced by this call
    |
    = help: the following other types implement trait `ColMember`:
              Buffered<T, M>
@@ -22,12 +22,12 @@ note: required by a bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals
    |            ^^^^^^^^^ required by this bound in `scheduler::host::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::dump`
 
 error[E0277]: the trait bound `Virtual<A>: Kept` is not satisfied
-  --> tests/ui/host_import_virtual_dump_fail.rs:85:39
+  --> tests/ui/host_import_virtual_dump_fail.rs:90:26
    |
-85 |     assert!(matches!(scheduler.dump::<Virtual<A>, _, _>(USize(0), USize(4), &mut sink), Outcome::Ok(())));
-   |                                ----   ^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<A>`
-   |                                |
-   |                                required by a bound introduced by this call
+90 |         scheduler.dump::<Virtual<A>, _, _>(USize(0), USize(4), &mut sink),
+   |                   ----   ^^^^^^^^^^ the trait `Kept` is not implemented for `Virtual<A>`
+   |                   |
+   |                   required by a bound introduced by this call
    |
 help: the following other types implement trait `Kept`
   --> src/resource/bindings/column.rs
