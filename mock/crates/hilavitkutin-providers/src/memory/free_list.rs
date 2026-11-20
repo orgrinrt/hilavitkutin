@@ -134,8 +134,7 @@ impl StaticFreeListMemory {
     /// # Safety
     ///
     /// The caller holds the lock, so no other call reaches the list.
-    #[allow(clippy::mut_from_ref)]
-    unsafe fn list(&self) -> &mut List {
+    unsafe fn list(&self) -> *mut List {
         // SAFETY: the caller holds the lock.
         let list = unsafe { &mut *self.list.get() };
         if !list.ready.0 {
@@ -164,7 +163,7 @@ impl StaticFreeListMemory {
                 }
             }
         }
-        list
+        core::ptr::from_mut(list)
     }
 }
 
@@ -202,7 +201,8 @@ unsafe impl MemoryProviderApi for StaticFreeListMemory {
         let _held = self.hold();
         // SAFETY: the lock is held.
         let list = unsafe { self.list() };
-        let mut link: *mut *mut Node = &mut list.head;
+        // SAFETY: `list` points at the provider's own list, and the lock is held.
+        let mut link: *mut *mut Node = unsafe { &raw mut (*list).head };
         // SAFETY: every node on the list was written by this provider inside
         // the buffer and is read only with the lock held.
         unsafe {
@@ -255,7 +255,8 @@ unsafe impl MemoryProviderApi for StaticFreeListMemory {
         let list = unsafe { self.list() };
         let at = ptr.addr();
         let mut before: *mut Node = core::ptr::null_mut();
-        let mut link: *mut *mut Node = &mut list.head;
+        // SAFETY: `list` points at the provider's own list, and the lock is held.
+        let mut link: *mut *mut Node = unsafe { &raw mut (*list).head };
         // SAFETY: every node on the list was written by this provider inside
         // the buffer and is read only with the lock held, and `ptr` names
         // `back` bytes the caller was handed and gives back now, at a multiple
