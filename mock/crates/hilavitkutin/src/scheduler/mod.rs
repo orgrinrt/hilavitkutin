@@ -98,6 +98,8 @@ pub use null_providers::{DefaultClock, NullClock, NullColumnStorage, NullMemoryP
 mod buildable;
 mod defaults;
 mod dirty;
+mod host;
+pub use host::HostRefused;
 mod reach_rule;
 pub use reach_rule::ReachRule;
 mod run;

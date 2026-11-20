@@ -43,3 +43,15 @@ fn a_replaced_value_is_read_by_the_next_run() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/replace_value_installs_pass.rs");
 }
+
+// The host path takes a column store only: an `Accum`, a `Virtual` or a
+// column the builder never registered is refused in `import` and `dump`.
+#[test]
+fn the_host_path_takes_only_a_registered_column() {
+    let t = trybuild::TestCases::new();
+    t.pass("tests/ui/host_import_pass.rs");
+    t.compile_fail("tests/ui/host_import_accum_fail.rs");
+    t.compile_fail("tests/ui/host_import_virtual_fail.rs");
+    t.compile_fail("tests/ui/host_import_unregistered_fail.rs");
+    t.compile_fail("tests/ui/host_import_virtual_dump_fail.rs");
+}
