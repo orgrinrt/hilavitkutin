@@ -1,0 +1,3 @@
+# written by hilavitkutin-build for hilavitkutin: edits are lost
+profile.release.lto = "fat"
+profile.release.codegen-units = 1

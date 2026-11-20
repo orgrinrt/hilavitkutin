@@ -153,9 +153,21 @@ fn main() {
 }
 ```
 
-`Default` takes the pragmas of the profile cargo is building. `Deterministic` is the same without `FastMath`, for a crate whose floats have to come out the same on every machine. A script that wants its own set calls `configure_with` and takes pragmas out by hand.
+`Default` is a prototype: a set of pragmas for each profile, and the script takes the set of the profile cargo is building. `Deterministic` is the same without `FastMath`, for a crate whose floats have to come out the same on every machine. A crate that wants its own sets writes a prototype of its own, a unit type with one tuple of pragmas per profile, and names it by its path, `script!(my_build::Sim)`. A pragma is a type and a set is a tuple of them, so a set that breaks a pragma's requirement does not compile.
 
-A pragma names one thing about how the crate is compiled. Today three of them write rustc flags: `LoopOptimization` turns on five LLVM loop options, `ParallelCodegen` sets the frontend thread count and `SharedGenerics` shares generic instances across crates. `FastMath` sets the `arvo_fast_math` cfg for the crate's own code. The rest (`Polly`, `MathPeephole`, `ExpandedLto`, `Pgo`, `Bolt`, `BuildStd` and the others) are named and carry their requirements, and write nothing yet.
+A pragma names one thing about how the crate is compiled. `LoopOptimization` turns on five LLVM loop options, `ParallelCodegen` sets the frontend thread count, `SharedGenerics` shares generic instances across crates, and `FastMath` sets the `arvo_fast_math` cfg for the crate's own code. The linker is a pragma too, `Mold`, `Wild` or `Bfd`, and so is a crate being a dylib, `DylibDomain`. Those reach the one crate whose script names them. `Wild` is built on the machine the first time a build needs it, into a per-user cache. It links through clang, which the machine's packages bring, and a machine without clang is told so by the build.
+
+Some choices are cargo's own configuration and reach every crate cargo builds: LTO (`ThinLto`, `ExpandedLto`), incremental builds, the cranelift backend, the link driver and the C compiler. One script of a workspace names those, the one written with `, workspace` after its prototype:
+
+```rust
+fn main() {
+    hilavitkutin_build::script!(Workspace, workspace);
+}
+```
+
+That script keeps `.cargo/hilavitkutin-build.toml`, a third file to commit, and the `config.toml` the first build writes takes it by an `include` line. Naming such a pragma in any other script does not compile. The rest of the named pragmas (`Polly`, `MathPeephole`, `Pgo`, `Bolt`, `BuildStd` and a few more) carry their requirements and write nothing yet.
+
+A script written by hand, without the macro, calls `hilavitkutin_build::configure_as::<Deterministic, _, _>` with a closure over the environment and prints what it writes.
 
 ## Ecosystem extensions
 

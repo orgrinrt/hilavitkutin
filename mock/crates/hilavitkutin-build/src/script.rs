@@ -14,8 +14,20 @@
 /// }
 /// ```
 ///
-/// The expansion prints the prototype's directives, asks cargo for the
-/// workspace root (`cargo locate-project --workspace`, from
+/// A bare name is one of the crate's own prototypes, and a path is a
+/// consumer's: `script!(my_build::Sim)`. The one script of a workspace
+/// that names the pragmas reaching all of it is written with
+/// `, workspace` after the prototype.
+///
+/// The expansion holds `const` items that assert over the prototype's
+/// sets, so a set that breaks a requirement, or names a pragma of
+/// workspace reach in a script that does not claim the workspace, is
+/// refused by a check at the script's line.
+///
+/// When it runs, the script resolves the build, finds the tools the
+/// profile's set waits on (building one that is a local build and is on
+/// the machine nowhere), and prints the set's directives. It asks cargo
+/// for the workspace root (`cargo locate-project --workspace`, from
 /// `CARGO_MANIFEST_DIR`), reads the wrapper and the `config.toml` under
 /// its `.cargo/`, and does what [`plan`](crate::plan) answers: it writes
 /// the wrapper where the file is missing or holds another text, writes
@@ -23,16 +35,167 @@
 /// run again when either file changes. A root under `CARGO_HOME`, one
 /// that holds `Cargo.toml.orig`, and one other than the root the wrapper
 /// cargo names sits in are written nothing. Where cargo gives no root the
-/// script prints one warning and writes nothing.
+/// script prints one warning and writes nothing. The script that claims
+/// the workspace then keeps the generated cargo file to the text of
+/// [`write_generated`](crate::write_generated), and leaves it as it was
+/// where [`write_uncarried`](crate::write_uncarried) names a pragma the
+/// build cannot carry.
 ///
 /// The crate's texts go straight to where they belong, standard output
-/// or a file, through a sink the expansion defines, and the wrapper on
-/// disk is held to its text by a sink that compares.
+/// or a file, through a sink the expansion defines, and a file on disk is
+/// held to its text by a sink that compares.
 #[macro_export]
 macro_rules! script {
-    ($prototype:ident) => {{
+    ($prototype:ident) => {
+        $crate::__script!(crate, $crate::prototype::$prototype)
+    };
+    ($prototype:ident,workspace) => {
+        $crate::__script!(workspace, $crate::prototype::$prototype)
+    };
+    ($prototype:ty) => {
+        $crate::__script!(crate, $prototype)
+    };
+    ($prototype:ty,workspace) => {
+        $crate::__script!(workspace, $prototype)
+    };
+}
+
+/// The body of [`script!`], and its parts that differ by whether the
+/// script claims the workspace.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __script {
+    (@checks crate, $p:ty) => {
+        const _: () = {
+            $crate::checked::<<$p as $crate::Prototype>::Dev>();
+            $crate::crate_reach::<<$p as $crate::Prototype>::Dev>();
+        };
+        const _: () = {
+            $crate::checked::<<$p as $crate::Prototype>::DevOpt>();
+            $crate::crate_reach::<<$p as $crate::Prototype>::DevOpt>();
+        };
+        const _: () = {
+            $crate::checked::<<$p as $crate::Prototype>::Release>();
+            $crate::crate_reach::<<$p as $crate::Prototype>::Release>();
+        };
+        const _: () = {
+            $crate::checked::<<$p as $crate::Prototype>::Profiling>();
+            $crate::crate_reach::<<$p as $crate::Prototype>::Profiling>();
+        };
+        const _: () = {
+            $crate::checked::<<$p as $crate::Prototype>::Ci>();
+            $crate::crate_reach::<<$p as $crate::Prototype>::Ci>();
+        };
+    };
+    (@checks workspace, $p:ty) => {
+        const _: () = $crate::claimed::<$p>();
+    };
+    (@generated crate, $p:ty, $cfg:ident, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {};
+    (@generated workspace, $p:ty, $cfg:ident, $dir:ident, $tree:ident, $config:ident, $plan:ident, $stdout:ident) => {
+        if $tree == $crate::Tree::Own {
+            /// Say that two crates claim the workspace, by a `cargo::error`.
+            fn two_claim<D: fmt::Display>(krate: D, path: &Path, other: D) {
+                println!(
+                    "cargo::error=hilavitkutin-build: {krate} claims the workspace with `script!(.., workspace)` and \
+                     {} was written for {other}: one crate of a workspace claims it, so take `, workspace` out of \
+                     one of the two scripts, or remove the file where nobody claims it",
+                    path.display()
+                );
+            }
+
+            let path = $dir.join($crate::GENERATED_NAME);
+            let krate = env::var("CARGO_PKG_NAME").unwrap_or_default();
+            let triple = env::var("TARGET").unwrap_or_default();
+            let have = fs::read(&path).ok();
+            let text = have.as_deref().map(|bytes| str::from_utf8(bytes).unwrap_or_default());
+            // Cargo reads the file before any script runs, so it holds no
+            // key this build cannot follow.
+            let mut uncarried = "".to_owned();
+            $crate::write_uncarried::<$p, _>(&$cfg.target, |tool| provide(tool).is_none(), &mut uncarried)
+                .expect("a string takes the errors");
+            print!("{uncarried}");
+            match $crate::claim(text.into(), &krate) {
+                $crate::Claim::Theirs(other) => {
+                    two_claim(krate.as_str(), &path, if other.is_empty() { "somebody else" } else { other });
+                },
+                _ if !uncarried.is_empty() => {},
+                claim => {
+                    let current = claim == $crate::Claim::Mine && {
+                        let mut held = Same {
+                            rest: have.as_deref().unwrap_or_default(),
+                            same: true,
+                        };
+                        let written = $crate::write_generated::<$p, _>(&krate, &triple, &mut held).is_ok();
+                        written && held.same && held.rest.is_empty()
+                    };
+                    // Whether the file in place is this script's own.
+                    let wrote = (|| -> io::Result<_> {
+                        if current {
+                            return Ok(true);
+                        }
+                        fs::create_dir_all(&$dir)?;
+                        let whole = $dir.join(format!(".{}.{}", $crate::GENERATED_NAME, process::id()));
+                        let mut file = Sink::over(fs::File::create(&whole)?);
+                        let wrote = $crate::write_generated::<$p, _>(&krate, &triple, &mut file);
+                        file.finish(wrote)?;
+                        if claim == $crate::Claim::Mine {
+                            return fs::rename(&whole, &path).map(|()| true);
+                        }
+                        // Two scripts that both found no file run side by
+                        // side. A link refuses where a file is already
+                        // there, so one of them places its own.
+                        let placed = fs::hard_link(&whole, &path);
+                        fs::remove_file(&whole)?;
+                        match placed {
+                            Ok(()) => Ok(true),
+                            Err(why) if why.kind() == io::ErrorKind::AlreadyExists => Ok(false),
+                            Err(why) => Err(why),
+                        }
+                    })();
+                    match wrote {
+                        Ok(true) if current => {},
+                        Ok(true) => {
+                            $crate::write_notice($crate::Notice::Generated, $dir.display(), &mut $stdout)
+                                .expect("standard output takes the notice");
+                        },
+                        Ok(false) => {
+                            let theirs = fs::read_to_string(&path).unwrap_or_default();
+                            if let $crate::Claim::Theirs(other) = $crate::claim(Some(theirs.as_str()).into(), &krate) {
+                                two_claim(krate.as_str(), &path, if other.is_empty() { "somebody else" } else { other });
+                            }
+                        },
+                        Err(why) => {
+                            println!(
+                                "cargo::warning=hilavitkutin-build could not write {}: {why}",
+                                path.display()
+                            );
+                        },
+                    }
+                    // A config file this script just wrote has the line.
+                    let included = match &$config {
+                        Some(text) => $crate::includes_generated(text),
+                        None => $plan.config,
+                    };
+                    if !included {
+                        $crate::write_notice($crate::Notice::AddInclude, $dir.display(), &mut $stdout)
+                            .expect("standard output takes the notice");
+                    }
+                },
+            }
+            println!("cargo::rerun-if-changed={}", path.display());
+        }
+    };
+    ($claim:ident, $p:ty) => {{
         use ::core::fmt;
-        use ::std::{env, fs, io, path::{Path, PathBuf}, process::{self, Command}};
+        use ::std::{
+            env,
+            fs,
+            io,
+            path::{Path, PathBuf},
+            process::{self, Command},
+        };
+
+        $crate::__script!(@checks $claim, $p);
 
         /// Hands the crate's text to a file or to standard output, and
         /// keeps the reason of a write that failed.
@@ -82,10 +245,44 @@ macro_rules! script {
             }
         }
 
+        $crate::__script_tools!();
+
+        /// Print the directives of the profile's set, with the tools it
+        /// waits on found first, and say whether it has flags.
+        fn directives<S: $crate::Set>(cfg: &$crate::BuildConfig, stdout: &mut Sink<io::Stdout>) -> $crate::Flags {
+            // A set holds sixteen pragmas at most and a pragma needs three
+            // tools at most, so forty-eight places hold them all.
+            let mut found: [_; 48] = ::core::array::from_fn(|_| None);
+            let mut count = 0;
+            $crate::each_tool::<S>(|tool| {
+                let seen = found[..count].iter().flatten().any(|(have, _): &(&$crate::Tool, PathBuf)| have.name == tool.name);
+                if !seen && let Some(path) = provide(tool) {
+                    found[count] = Some((tool, path));
+                    count += 1;
+                }
+            });
+            let texts: [_; 48] = ::core::array::from_fn(|at| found[at].as_ref().map(|(_, path)| path.to_string_lossy()));
+            let mut paths = [$crate::ToolPath::new(&$crate::tools::MOLD, ""); 48];
+            for at in 0..count {
+                if let (Some((tool, _)), Some(text)) = (&found[at], &texts[at]) {
+                    paths[at] = $crate::ToolPath::new(tool, text);
+                }
+            }
+            let triple = env::var("TARGET").unwrap_or_default();
+            let site = $crate::Site::new(cfg.profile, &triple, &paths[..count]);
+            $crate::write_directives::<S, _>(cfg, &site, stdout).expect("standard output takes the directives");
+            $crate::writes_flags::<S>(&site)
+        }
+
         let mut stdout = Sink::over(io::stdout());
-        let cfg = $crate::Prototype::$prototype
-            .configure(|key| env::var(key).ok().into(), &mut stdout)
-            .expect("standard output takes the directives");
+        let cfg = $crate::BuildConfig::from_env::<$p, _>(|key| env::var(key).ok().into());
+        let flags = match cfg.profile {
+            $crate::Profile::Dev => directives::<<$p as $crate::Prototype>::Dev>(&cfg, &mut stdout),
+            $crate::Profile::DevOpt => directives::<<$p as $crate::Prototype>::DevOpt>(&cfg, &mut stdout),
+            $crate::Profile::Release => directives::<<$p as $crate::Prototype>::Release>(&cfg, &mut stdout),
+            $crate::Profile::Profiling => directives::<<$p as $crate::Prototype>::Profiling>(&cfg, &mut stdout),
+            $crate::Profile::Ci => directives::<<$p as $crate::Prototype>::Ci>(&cfg, &mut stdout),
+        };
 
         let root = env::var_os("CARGO").and_then(|cargo| {
             let found = Command::new(cargo)
@@ -126,9 +323,9 @@ macro_rules! script {
                 let tree = $crate::Tree::of(
                     &root.to_string_lossy(),
                     cargo_home.as_deref().into(),
-                    root.join("Cargo.toml.orig").exists(),
-                    elsewhere,
-                    cfg!(unix),
+                    if root.join("Cargo.toml.orig").exists() { $crate::Unpacked::Is } else { $crate::Unpacked::Isnt },
+                    if elsewhere { $crate::Placed::Elsewhere } else { $crate::Placed::Here },
+                    if cfg!(unix) { $crate::Host::Unix } else { $crate::Host::Other },
                 );
 
                 let wrapper_file = match fs::read(&wrapper_path) {
@@ -147,19 +344,14 @@ macro_rules! script {
                     Err(_) if wrapper_path.exists() => $crate::WrapperFile::Stale,
                     Err(_) => $crate::WrapperFile::Missing,
                 };
-                let config_file = match fs::read_to_string(&config_path) {
-                    Ok(have) => $crate::ConfigFile::read(&have),
-                    Err(_) if config_path.exists() => $crate::ConfigFile::Unnamed,
-                    Err(_) => $crate::ConfigFile::Missing,
+                let config_text = fs::read_to_string(&config_path).ok();
+                let config_file = match &config_text {
+                    Some(have) => $crate::ConfigFile::read(have),
+                    None if config_path.exists() => $crate::ConfigFile::Unnamed,
+                    None => $crate::ConfigFile::Missing,
                 };
 
-                let plan = $crate::plan(
-                    named.as_deref().into(),
-                    tree,
-                    wrapper_file,
-                    config_file,
-                    $crate::flags::writes_flags(cfg.pragmas),
-                );
+                let plan = $crate::plan(named.as_deref().into(), tree, wrapper_file, config_file, flags);
 
                 let wrote = (|| -> io::Result<()> {
                     if plan.wrapper || plan.config {
@@ -213,6 +405,7 @@ macro_rules! script {
                     $crate::write_watch(dir.display(), &mut stdout)
                         .expect("standard output takes the watch lines");
                 }
+                $crate::__script!(@generated $claim, $p, cfg, dir, tree, config_text, plan, stdout);
             },
         }
     }};

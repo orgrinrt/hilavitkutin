@@ -1,104 +1,58 @@
 //! The build script's half is reading cargo's environment and doing the
-//! I/O; the crate's half is resolving what it read and producing the text.
-//! These pin the crate's half: `BuildConfig::from_cargo` over every shape of
-//! value cargo can hand over, and the exact text of the directives and the
-//! config file.
+//! I/O; the crate's half is producing the text. These pin the crate's
+//! half: the exact text of the directives for a set, the errors that fail
+//! a build, the warning for dropped flags, and the wrapper.
 
+use hilavitkutin_build::tools::WILD;
 use hilavitkutin_build::{
+    Bolt,
     BuildConfig,
-    Pragma,
+    Default as Defaults,
+    DylibDomain,
+    FastMath,
+    Mold,
+    Pgo,
     PragmaSet,
     Profile,
-    TargetAxis,
+    Prototype,
+    Set,
+    SharedGenerics,
+    Site,
+    Target,
+    ThinLto,
+    ToolPath,
+    Wild,
     configure,
-    configure_with,
-    write_config_file,
+    configure_as,
     write_directives,
     write_rustflags,
     write_wrapper,
 };
 use notko::Maybe;
 
-fn directives(cfg: &BuildConfig) -> String {
+const HEAD: &str = "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
+                    cargo::rustc-check-cfg=cfg(arvo_fast_math)\n";
+
+fn target(os: &str, arch: &str) -> Target {
+    Target::from_cargo(Maybe::Is(os), Maybe::Isnt, Maybe::Is(arch), Maybe::Isnt)
+}
+
+fn elf() -> Target {
+    target("linux", "x86_64")
+}
+
+/// The directives of the set `S` for a release build on `target`, with
+/// the tools at `tools`.
+fn directives<S: Set>(target: Target, tools: &[ToolPath<'_>]) -> String {
+    let cfg = BuildConfig {
+        profile: Profile::Release,
+        pragmas: PragmaSet::of::<S>(),
+        target,
+    };
+    let site = Site::new(Profile::Release, "x86_64-unknown-linux-gnu", tools);
     let mut out = String::new();
-    write_directives(cfg, &mut out).expect("writing to a String cannot fail");
+    write_directives::<S, _>(&cfg, &site, &mut out).expect("writing to a String cannot fail");
     out
-}
-
-fn config_file(cfg: &BuildConfig) -> String {
-    let mut out = String::new();
-    write_config_file(cfg, &mut out).expect("writing to a String cannot fail");
-    out
-}
-
-#[test]
-fn every_cargo_profile_name_resolves_to_its_profile() {
-    for (name, expected) in [("debug", Profile::Dev), ("release", Profile::Release)] {
-        let cfg = BuildConfig::from_cargo(Maybe::Is(name), Maybe::Isnt);
-        assert_eq!(cfg.profile, expected, "profile name {name:?}");
-        assert_eq!(
-            cfg.pragmas,
-            expected.default_pragmas(),
-            "pragmas follow {name:?}"
-        );
-    }
-}
-
-#[test]
-fn an_absent_or_unknown_profile_falls_back_to_dev() {
-    assert_eq!(
-        BuildConfig::from_cargo(Maybe::Isnt, Maybe::Isnt).profile,
-        Profile::Dev
-    );
-    assert_eq!(
-        BuildConfig::from_cargo(Maybe::Is("bench"), Maybe::Isnt).profile,
-        Profile::Dev
-    );
-    assert_eq!(
-        BuildConfig::from_cargo(Maybe::Is(""), Maybe::Isnt).profile,
-        Profile::Dev
-    );
-    assert_eq!(
-        BuildConfig::from_cargo(Maybe::Is("Release"), Maybe::Isnt).profile,
-        Profile::Dev
-    );
-}
-
-#[test]
-fn an_absent_feature_list_leaves_the_target_unset() {
-    assert_eq!(
-        BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt).target,
-        Maybe::Isnt
-    );
-}
-
-#[test]
-fn the_richest_listed_feature_picks_the_target() {
-    for (features, expected) in [
-        ("avx512f,avx2,sse2", TargetAxis::Avx512),
-        ("avx512", TargetAxis::Avx512),
-        ("sse2,avx2", TargetAxis::Avx2),
-        ("neon,sve", TargetAxis::Sve),
-        ("neon", TargetAxis::Neon),
-        ("sse2, avx2 ", TargetAxis::Avx2),
-        ("sse2,sse4.1", TargetAxis::Iss64),
-        ("", TargetAxis::Iss64),
-    ] {
-        let cfg = BuildConfig::from_cargo(Maybe::Isnt, Maybe::Is(features));
-        assert_eq!(cfg.target, Maybe::Is(expected), "feature list {features:?}");
-    }
-}
-
-#[test]
-fn a_feature_is_matched_whole_never_as_a_prefix() {
-    for features in ["avx2x", "avx512vl", "neonx,sve2"] {
-        let cfg = BuildConfig::from_cargo(Maybe::Isnt, Maybe::Is(features));
-        assert_eq!(
-            cfg.target,
-            Maybe::Is(TargetAxis::Iss64),
-            "feature list {features:?}"
-        );
-    }
 }
 
 /// The five LLVM options LoopOptimization owns, as the release flags carry them.
@@ -108,42 +62,120 @@ const LOOP_FLAGS: &str = "-Cllvm-args=-enable-loop-distribute \
     -Cllvm-args=-loop-prefetch-writes \
     -Cllvm-args=-enable-histogram-loop-vectorization";
 
+/// A linker's argument is among the flags the wrapper appends, and the
+/// script prints no link-argument directive of its own.
 #[test]
-fn a_release_build_writes_the_cfg_and_the_loop_and_thread_flags() {
-    let release = BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt);
-    assert!(release.fast_math());
+fn a_set_writes_its_cfg_and_its_flags_the_linkers_among_them() {
     assert_eq!(
-        directives(&release),
+        directives::<(Mold, FastMath, SharedGenerics)>(elf(), &[]),
         format!(
-            "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
-             cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
-             cargo::rustc-cfg=arvo_fast_math\n\
-             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
-        ),
+            "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Zshare-generics=y\n"
+        )
     );
-}
-
-#[test]
-fn a_dev_build_writes_no_cfg_and_its_two_flags() {
-    let dev = BuildConfig::from_cargo(Maybe::Is("debug"), Maybe::Isnt);
-    assert!(!dev.fast_math());
     assert_eq!(
-        directives(&dev),
-        "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
-         cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
-         cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Zthreads=0 -Zshare-generics=y\n",
+        directives::<<Defaults as Prototype>::Release>(elf(), &[]),
+        format!(
+            "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
+        )
     );
 }
 
-/// No pragma that writes a flag: the variable is set, and empty.
+/// No pragma that writes anything a crate's rustc takes: the variable is
+/// set, and empty. A pragma of workspace reach writes nothing here.
 #[test]
-fn a_set_with_no_flag_writing_pragma_leaves_the_flags_empty() {
-    let mut cfg = BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt);
-    cfg.pragmas = PragmaSet::new().with(Pragma::Pgo).with(Pragma::ExpandedLto);
-    let mut flags = String::new();
-    write_rustflags(cfg.pragmas, &mut flags).expect("writing to a String cannot fail");
-    assert_eq!(flags, "");
-    assert!(directives(&cfg).ends_with("cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n"));
+fn a_set_with_nothing_to_write_leaves_the_flags_empty() {
+    let empty = format!("{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n");
+    assert_eq!(directives::<()>(elf(), &[]), empty);
+    assert_eq!(directives::<(Pgo, Bolt, ThinLto)>(elf(), &[]), empty);
+}
+
+#[test]
+fn a_tool_found_is_named_to_the_link_by_its_path() {
+    let tools = [ToolPath::new(
+        &WILD,
+        "/home/u/.cache/hilavitkutin-build/tools/host/wild-0.10.0/bin/wild",
+    )];
+    assert_eq!(
+        directives::<(Wild,)>(elf(), &tools),
+        format!(
+            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clinker=clang \
+             -Clink-arg=--ld-path=/home/u/.cache/hilavitkutin-build/tools/host/wild-0.10.0/bin/wild\n"
+        )
+    );
+}
+
+/// A pragma whose tool is built on the machine, with no path for it,
+/// fails the build, and so does a path the wrapper cannot carry. With a
+/// path it can carry the same set writes no error.
+#[test]
+fn a_locally_built_tool_with_no_path_fails_the_build() {
+    assert_eq!(
+        directives::<(Wild,)>(elf(), &[]),
+        format!(
+            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n\
+             cargo::error=hilavitkutin-build: Wild was given no path for wild, which only `script!` finds or \
+             builds: a `script!` that has none says why in its own error, and any other script cannot name \
+             Wild\n"
+        )
+    );
+    let spaced = directives::<(Wild,)>(elf(), &[ToolPath::new(&WILD, "/home/a user/tools/wild")]);
+    assert!(
+        spaced.ends_with(
+            "cargo::error=hilavitkutin-build: Wild was given `/home/a user/tools/wild` for wild, and the wrapper \
+             cannot carry a path with a space: set HILAVITKUTIN_BUILD_TOOLS_HOME to a directory without one\n"
+        ),
+        "{spaced}"
+    );
+    assert!(
+        !directives::<(Wild,)>(elf(), &[ToolPath::new(&WILD, "/t/wild")]).contains("cargo::error")
+    );
+    // A tool that is a package needs no path: it is on the machine's own.
+    assert!(!directives::<(Mold,)>(elf(), &[]).contains("cargo::error"));
+}
+
+/// A pragma the target does not admit fails the build with one error
+/// each. On a target that admits them the same set writes none.
+#[test]
+fn a_pragma_the_target_does_not_admit_fails_the_build() {
+    let wasm = directives::<(Mold, FastMath, DylibDomain)>(target("unknown", "wasm32"), &[]);
+    assert_eq!(
+        wasm,
+        format!(
+            "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Cprefer-dynamic\n\
+             cargo::error=hilavitkutin-build: Mold links ELF only, and this target's objects are not ELF: name a \
+             prototype whose set for this profile leaves Mold out on this target\n\
+             cargo::error=hilavitkutin-build: DylibDomain has no meaning on wasm, which this target is: name a \
+             prototype whose set for this profile leaves DylibDomain out on this target\n"
+        )
+    );
+    assert!(!directives::<(Mold, FastMath, DylibDomain)>(elf(), &[]).contains("cargo::error"));
+    let mach_o = directives::<(Mold, DylibDomain)>(target("macos", "aarch64"), &[]);
+    assert_eq!(mach_o.matches("cargo::error=").count(), 1, "{mach_o}");
+    assert!(
+        mach_o.contains("cargo::error=hilavitkutin-build: Mold links ELF only"),
+        "{mach_o}"
+    );
+}
+
+/// `Bolt` is ELF only and in every release set. It is not refused on a
+/// target of another format, so a release build there is as on ELF.
+#[test]
+fn the_default_release_set_is_refused_on_no_target() {
+    let on_elf = directives::<<Defaults as Prototype>::Release>(elf(), &[]);
+    for other in [
+        target("macos", "aarch64"),
+        target("windows", "x86_64"),
+        target("unknown", "wasm32"),
+        Target::default(),
+    ] {
+        assert_eq!(
+            directives::<<Defaults as Prototype>::Release>(other, &[]),
+            on_elf
+        );
+    }
 }
 
 /// Compile a one-function library with the pinned `rustc` under `flags`,
@@ -175,8 +207,11 @@ fn pinned_rustc_takes(flags: &str, name: &str) -> bool {
 #[test]
 fn the_pinned_rustc_takes_every_release_flag() {
     let mut flags = String::new();
-    write_rustflags(Profile::Release.default_pragmas(), &mut flags)
-        .expect("writing to a String cannot fail");
+    write_rustflags::<<Defaults as Prototype>::Release, _>(
+        &Site::new(Profile::Release, "", &[]),
+        &mut flags,
+    )
+    .expect("writing to a String cannot fail");
     assert!(
         pinned_rustc_takes(&flags, "release"),
         "rustc refused {flags:?}"
@@ -192,6 +227,8 @@ fn the_pinned_rustc_takes_every_release_flag() {
 fn release_env(key: &'static str) -> Maybe<String> {
     match key {
         "PROFILE" => Maybe::Is(String::from("release")),
+        "CARGO_CFG_TARGET_OS" => Maybe::Is(String::from("linux")),
+        "CARGO_CFG_TARGET_ARCH" => Maybe::Is(String::from("x86_64")),
         "RUSTC_WORKSPACE_WRAPPER" => {
             Maybe::Is(String::from("/repo/.cargo/hilavitkutin-rustc-wrapper"))
         },
@@ -200,7 +237,7 @@ fn release_env(key: &'static str) -> Maybe<String> {
 }
 
 #[test]
-fn configure_reads_profile_features_and_wrapper_through_the_closure() {
+fn configure_reads_the_build_the_triple_and_the_wrapper_through_the_closure() {
     let mut asked = Vec::new();
     let mut out = String::new();
     configure(
@@ -213,17 +250,90 @@ fn configure_reads_profile_features_and_wrapper_through_the_closure() {
     .expect("writing to a String cannot fail");
     assert_eq!(asked, [
         "PROFILE",
+        "CARGO_CFG_TARGET_OS",
+        "CARGO_CFG_TARGET_ENV",
+        "CARGO_CFG_TARGET_ARCH",
         "CARGO_CFG_TARGET_FEATURE",
+        "TARGET",
         "RUSTC_WORKSPACE_WRAPPER"
     ]);
     assert_eq!(
         out,
         format!(
-            "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
-             cargo::rustc-check-cfg=cfg(arvo_fast_math)\n\
-             cargo::rustc-cfg=arvo_fast_math\n\
+            "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
              cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
         )
+    );
+}
+
+/// A prototype of a consumer's own, with a linker for release builds.
+struct Linked;
+
+impl Prototype for Linked {
+    type Ci = ();
+    type Dev = (Pgo,);
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (Mold, SharedGenerics);
+}
+
+/// A prototype that names a tool only `script!` can find.
+struct Wilded;
+
+impl Prototype for Wilded {
+    type Ci = ();
+    type Dev = ();
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (Wild,);
+}
+
+fn configured<P: Prototype>(env: impl Fn(&'static str) -> Maybe<String>) -> String {
+    let mut out = String::new();
+    configure_as::<P, _, _>(env, &mut out).expect("writing to a String cannot fail");
+    out
+}
+
+/// A script written by hand names a prototype of its own: the set is the
+/// one of the profile cargo names, and the target is read from cargo.
+#[test]
+fn configure_as_writes_the_named_prototypes_set_for_the_profile() {
+    assert_eq!(
+        configured::<Linked>(release_env),
+        format!(
+            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Clink-arg=-fuse-ld=mold -Zshare-generics=y\n"
+        )
+    );
+    let dev = configured::<Linked>(|key| {
+        match key {
+            "PROFILE" => Maybe::Is(String::from("debug")),
+            _ => release_env(key),
+        }
+    });
+    assert_eq!(
+        dev,
+        format!("{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=\n")
+    );
+
+    // The same release build for a target cargo says is not ELF is refused.
+    let on_mac = configured::<Linked>(|key| {
+        match key {
+            "CARGO_CFG_TARGET_OS" => Maybe::Is(String::from("macos")),
+            _ => release_env(key),
+        }
+    });
+    assert!(
+        on_mac.contains("cargo::error=hilavitkutin-build: Mold links ELF only"),
+        "{on_mac}"
+    );
+}
+
+#[test]
+fn configure_as_refuses_a_tool_only_script_finds() {
+    let out = configured::<Wilded>(release_env);
+    assert!(
+        out.contains("cargo::error=hilavitkutin-build: Wild was given no path for wild"),
+        "{out}"
     );
 }
 
@@ -234,62 +344,26 @@ fn configure_reads_profile_features_and_wrapper_through_the_closure() {
 fn a_missing_wrapper_is_warned_of_when_there_are_flags() {
     for wrapper in [Maybe::Isnt, Maybe::Is(String::new()), Maybe::Is(String::from("rustc-wrapper"))]
     {
-        let mut out = String::new();
-        configure(
-            |key| {
-                match key {
-                    "RUSTC_WORKSPACE_WRAPPER" => wrapper.clone(),
-                    _ => release_env(key),
-                }
-            },
-            &mut out,
-        )
-        .expect("writing to a String cannot fail");
+        let out = configured::<Defaults>(|key| {
+            match key {
+                "RUSTC_WORKSPACE_WRAPPER" => wrapper.clone(),
+                _ => release_env(key),
+            }
+        });
         assert!(
             out.contains("cargo::warning=hilavitkutin-build chose rustc flags"),
             "{out}"
         );
     }
-    let mut out = String::new();
-    configure_with(
-        |key| {
-            match key {
-                "RUSTC_WORKSPACE_WRAPPER" => Maybe::Isnt,
-                _ => release_env(key),
-            }
-        },
-        |_| PragmaSet::new().with(Pragma::FastMath),
-        &mut out,
-    )
-    .expect("writing to a String cannot fail");
+    // The dev set of `Linked` writes no flag, so nothing is dropped.
+    let out = configured::<Linked>(|key| {
+        match key {
+            "PROFILE" => Maybe::Is(String::from("debug")),
+            "RUSTC_WORKSPACE_WRAPPER" => Maybe::Isnt,
+            _ => release_env(key),
+        }
+    });
     assert!(!out.contains("cargo::warning"), "{out}");
-}
-
-/// Taking a pragma out takes what stands on it: MathPeephole goes with
-/// FastMath, Profiling with the last of Pgo and Bolt.
-#[test]
-fn a_tuned_set_is_made_coherent() {
-    let release = Profile::Release.default_pragmas();
-    assert!(release.contains(Pragma::MathPeephole));
-    let tuned = release.without(Pragma::FastMath).coherent();
-    assert!(!tuned.contains(Pragma::MathPeephole));
-    assert!(tuned.contains(Pragma::LoopOptimization));
-
-    let profiling = Profile::Profiling.default_pragmas();
-    assert!(
-        profiling
-            .without(Pragma::Pgo)
-            .coherent()
-            .contains(Pragma::Profiling)
-    );
-    assert!(
-        !profiling
-            .without(Pragma::Pgo)
-            .without(Pragma::Bolt)
-            .coherent()
-            .contains(Pragma::Profiling)
-    );
-    assert_eq!(release.coherent(), release);
 }
 
 /// The wrapper the crate writes, run with `echo` standing in for rustc,
@@ -331,49 +405,8 @@ fn the_wrapper_appends_the_variable_and_nothing_else() {
     }
 }
 
-/// A deterministic simulation crate turns FastMath off, and the cfg goes
-/// while the loop flags stay.
-#[test]
-fn configure_with_tunes_the_default_set() {
-    let mut out = String::new();
-    configure_with(
-        |key| {
-            match key {
-                "PROFILE" => Maybe::Is("release"),
-                _ => Maybe::Isnt,
-            }
-        },
-        |p| p.without(Pragma::FastMath),
-        &mut out,
-    )
-    .expect("writing to a String cannot fail");
-    assert!(!out.contains("cargo::rustc-cfg=arvo_fast_math"), "{out}");
-    assert!(out.contains(LOOP_FLAGS), "{out}");
-}
-
-#[test]
-fn the_config_file_records_profile_and_fast_math() {
-    let release = BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt);
-    assert_eq!(
-        config_file(&release),
-        "# generated by hilavitkutin-build (skeleton placeholder)\n\
-         # real schema lands with the wrapper-generation round\n\
-         profile = Release\n\
-         fast_math = true\n",
-    );
-
-    let dev = BuildConfig::from_cargo(Maybe::Isnt, Maybe::Isnt);
-    assert_eq!(
-        config_file(&dev),
-        "# generated by hilavitkutin-build (skeleton placeholder)\n\
-         # real schema lands with the wrapper-generation round\n\
-         profile = Dev\n\
-         fast_math = false\n",
-    );
-}
-
 /// A sink that refuses every write, so an error from the writer has to come
-/// back out of both functions rather than being swallowed.
+/// back out of every function rather than being swallowed.
 struct Refusing;
 
 impl core::fmt::Write for Refusing {
@@ -384,12 +417,14 @@ impl core::fmt::Write for Refusing {
 
 #[test]
 fn a_failing_writer_is_reported_not_swallowed() {
-    let release = BuildConfig::from_cargo(Maybe::Is("release"), Maybe::Isnt);
-    assert!(write_directives(&release, &mut Refusing).is_err());
-    assert!(write_config_file(&release, &mut Refusing).is_err());
-
-    let dev = BuildConfig::from_cargo(Maybe::Is("debug"), Maybe::Isnt);
-    assert!(write_directives(&dev, &mut Refusing).is_err());
+    let cfg = BuildConfig::from_cargo::<Defaults>(Maybe::Is("release"), elf());
+    let site = Site::new(Profile::Release, "", &[]);
+    assert!(
+        write_directives::<<Defaults as Prototype>::Release, _>(&cfg, &site, &mut Refusing)
+            .is_err()
+    );
+    assert!(write_directives::<(), _>(&cfg, &site, &mut Refusing).is_err());
+    assert!(write_rustflags::<(SharedGenerics,), _>(&site, &mut Refusing).is_err());
     assert!(write_wrapper(&mut Refusing).is_err());
 }
 
@@ -399,18 +434,12 @@ fn a_failing_writer_is_reported_not_swallowed() {
 #[test]
 fn clippy_driver_as_the_wrapper_is_not_warned_of() {
     let run = |name: &'static str| {
-        let mut out = String::new();
-        configure(
-            |key| {
-                match key {
-                    "RUSTC_WORKSPACE_WRAPPER" => Maybe::Is(String::from(name)),
-                    _ => release_env(key),
-                }
-            },
-            &mut out,
-        )
-        .expect("writing to a String cannot fail");
-        out
+        configured::<Defaults>(move |key| {
+            match key {
+                "RUSTC_WORKSPACE_WRAPPER" => Maybe::Is(String::from(name)),
+                _ => release_env(key),
+            }
+        })
     };
     let clippy = run("/home/u/.rustup/toolchains/nightly/bin/clippy-driver");
     assert!(!clippy.contains("cargo::warning"), "{clippy}");

@@ -1,0 +1,31 @@
+[workspace]
+
+[package]
+name = "flat-tuple-set"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[[example]]
+name = "ok"
+test = false
+
+[[example]]
+name = "breaks_all"
+test = false
+
+[[example]]
+name = "breaks_any"
+test = false
+
+[[example]]
+name = "breaks_group"
+test = false
+
+[[example]]
+name = "breaks_reach"
+test = false

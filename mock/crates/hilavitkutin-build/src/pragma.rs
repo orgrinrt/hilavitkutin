@@ -1,17 +1,33 @@
-//! Pragma enum + fixed-size `PragmaSet` tag-set.
+//! A pragma is one build choice, a unit type.
 //!
-//! Pure data. `PragmaSet` is a 13-variant bit mask over the base
-//! pragma variants; `ParallelCodegen(u8)`'s parameter is stored
-//! separately because it carries a runtime value. The mask reserves
-//! room for future growth (u16, 16 slots).
+//! What a pragma is, what it requires of the set it is in, which choice
+//! it is a value of and what it writes are all on the [`Pragma`] trait. A
+//! set of pragmas is a tuple of the types ([`Set`](crate::Set)), so what
+//! a set holds is known before any build script runs.
 
-/// One of the 13 built-in compilation pragmas documented in
-/// `DESIGN.md` (§Pragma system, Q4f).
+use core::fmt::Write;
+use core::marker::PhantomData;
+
+use notko::Maybe;
+
+use crate::set::Set;
+use crate::target::Target;
+use crate::tools::Tool;
+
+/// The bits of a set: one per pragma in a set's mask, one per group in
+/// its group mask.
+pub type Mask = u64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a set's mask, the crate takes no arvo dependency; tracked: #72
+
+/// The words a pragma, a group or a set is said in: a name, or the
+/// sentence of what is wrong.
+pub type Words = &'static str; // lint:allow(no-bare-static-str) reason: a build-dependency only, it reaches no binary; tracked: no_bare_static_str_does_not_know_a_build_dependency_only_cra
+
+/// The place of every pragma in a set's mask, one list.
 ///
-/// `ParallelCodegen` carries a `u8` parameter: `0` means auto-detect
-/// via `std::thread::available_parallelism()` at wrapper time.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub enum Pragma {
+/// A pragma's [`BIT`](Pragma::BIT) is its place here, so two pragmas
+/// cannot be given one bit by two files that do not know of each other.
+#[derive(Clone, Copy)]
+pub(crate) enum Slot {
     LoopOptimization,
     Polly,
     MathPeephole,
@@ -21,153 +37,274 @@ pub enum Pragma {
     Bolt,
     Profiling,
     BuildStd,
-    ParallelCodegen(u8), // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: pragma parameter: unit count, bounded [0, 255]; tracked: #72
+    ParallelCodegen,
     SharedGenerics,
     LoopFusion,
     MimallocAllocator,
+    Mold,
+    Wild,
+    Bfd,
+    DylibDomain,
+    ThinLto,
+    Incremental,
+    NoIncremental,
+    Cranelift,
+    GccDriver,
+    ClangDriver,
+    GccCc,
+    ClangCc,
 }
 
-impl Pragma {
-    /// Stable bit index for this pragma. `ParallelCodegen` collapses
-    /// to a single slot because its param is stored separately in
-    /// `PragmaSet::parallel_codegen_units`.
-    const fn bit(self) -> u16 {
-        let idx: u8 = match self {
-            Pragma::LoopOptimization => 0,
-            Pragma::Polly => 1,
-            Pragma::MathPeephole => 2,
-            Pragma::FastMath => 3,
-            Pragma::ExpandedLto => 4,
-            Pragma::Pgo => 5,
-            Pragma::Bolt => 6,
-            Pragma::Profiling => 7,
-            Pragma::BuildStd => 8,
-            Pragma::ParallelCodegen(_) => 9,
-            Pragma::SharedGenerics => 10,
-            Pragma::LoopFusion => 11,
-            Pragma::MimallocAllocator => 12,
-        };
-        1u16 << idx
+impl Slot {
+    /// The bit of this place.
+    pub(crate) const fn bit(self) -> Mask {
+        1 << self as Mask
     }
+}
 
-    /// Inverse of `bit`: rebuild the canonical `Pragma` value for a
-    /// given bit index. `ParallelCodegen`'s param is supplied
-    /// separately by the caller (from `PragmaSet::parallel_codegen_units`).
-    const fn from_index(idx: u8, parallel_units: u8) -> Option<Pragma> {
-        match idx {
-            0 => Some(Pragma::LoopOptimization),
-            1 => Some(Pragma::Polly),
-            2 => Some(Pragma::MathPeephole),
-            3 => Some(Pragma::FastMath),
-            4 => Some(Pragma::ExpandedLto),
-            5 => Some(Pragma::Pgo),
-            6 => Some(Pragma::Bolt),
-            7 => Some(Pragma::Profiling),
-            8 => Some(Pragma::BuildStd),
-            9 => Some(Pragma::ParallelCodegen(parallel_units)),
-            10 => Some(Pragma::SharedGenerics),
-            11 => Some(Pragma::LoopFusion),
-            12 => Some(Pragma::MimallocAllocator),
-            _ => None,
+/// The place of every group in a set's group mask, one list.
+#[derive(Clone, Copy)]
+pub(crate) enum GroupSlot {
+    Linker,
+    Edge,
+    Lto,
+    Incremental,
+    Backend,
+    Driver,
+    Cc,
+}
+
+impl GroupSlot {
+    /// The bit of this place.
+    pub(crate) const fn bit(self) -> Mask {
+        1 << self as Mask
+    }
+}
+
+/// What a pragma reaches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Reach {
+    /// The crate whose script names the set: the flags the wrapper
+    /// appends to its rustc, the linker's among them, and its cfg.
+    Crate,
+    /// Cargo's configuration, which cargo reads before any script runs
+    /// and applies to every crate it builds.
+    Workspace,
+}
+
+impl Reach {
+    /// The wider of the two.
+    pub const fn widest(self, other: Reach) -> Reach {
+        match (self, other) {
+            (Reach::Crate, Reach::Crate) => Reach::Crate,
+            _ => Reach::Workspace,
         }
     }
 }
 
-/// Tag-set of pragmas. Fixed-size bit mask over the 13 base variants;
-/// `ParallelCodegen`'s `u8` parameter stored separately.
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+/// Whether the keys a pragma's group shares across profiles are still to
+/// be written.
+///
+/// A key that belongs to no profile is in the generated cargo file once,
+/// however many profiles' sets hold its pragma.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Shared {
+    /// No profile before this one wrote them, so this writer does.
+    Owed,
+    /// A profile before this one wrote them, so this writer leaves them.
+    Written,
+}
+
+/// What a pragma's writer is handed.
+#[derive(Debug, Clone, Copy)]
+pub struct Written<'a> {
+    profile: &'a str, // lint:allow(no-bare-string) reason: the profile's name as cargo has it; tracked: #72
+    triple:  &'a str, // lint:allow(no-bare-string) reason: the target triple as the build script read it; tracked: #72
+    tool:    Maybe<&'a str>, // lint:allow(no-bare-string) reason: a path as the build script found it; tracked: #72
+    shared:  Shared,
+}
+
+impl<'a> Written<'a> {
+    /// What a writer is handed, from its four parts.
+    pub const fn new(
+        profile: &'a str, // lint:allow(no-bare-string) reason: the profile's name as cargo has it; tracked: #72
+        triple: &'a str, // lint:allow(no-bare-string) reason: the target triple as the build script read it; tracked: #72
+        tool: Maybe<&'a str>, // lint:allow(no-bare-string) reason: a path as the build script found it; tracked: #72
+        shared: Shared,
+    ) -> Self {
+        Written {
+            profile,
+            triple,
+            tool,
+            shared,
+        }
+    }
+
+    /// The profile's name as cargo has it: `dev`, `release`.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub const fn profile(&self) -> &'a str { // lint:allow(no-bare-string) reason: the profile's name as cargo has it; tracked: #72
+        self.profile
+    }
+
+    /// The target triple.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub const fn triple(&self) -> &'a str { // lint:allow(no-bare-string) reason: the target triple as the build script read it; tracked: #72
+        self.triple
+    }
+
+    /// Where the pragma's tool is, where the script found one.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub const fn tool(&self) -> Maybe<&'a str> { // lint:allow(no-bare-string) reason: a path as the build script found it; tracked: #72
+        self.tool
+    }
+
+    /// Whether the keys the pragma's group shares across profiles are owed.
+    pub const fn shared(&self) -> Shared {
+        self.shared
+    }
+}
+
+/// A choice of which a set holds one value at most.
+pub trait Group {
+    /// The group's bit, or zero for [`Free`].
+    const BIT: Mask;
+    /// What is said of a set that holds two of the group.
+    const CLASH: Words;
+    /// Whether the group's keys belong to no profile, so the sets of a
+    /// prototype that claims the workspace hold one value of it in every
+    /// profile.
+    const SHARED: bool = false; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time fact, the crate takes no arvo dependency; tracked: #72
+}
+
+/// The group of a pragma that is one value of no choice.
+#[derive(Debug, Clone, Copy)]
+pub struct Free;
+
+impl Group for Free {
+    const BIT: Mask = 0;
+    const CLASH: Words = "";
+}
+
+/// What a pragma requires of the set it is in, as three masks.
+pub trait Requirement {
+    /// Every one of these bits is in the set.
+    const ALL: Mask;
+    /// At least one of these bits is in the set, where any is named.
+    const ANY: Mask;
+    /// None of these bits is in the set.
+    const NONE: Mask;
+}
+
+impl Requirement for () {
+    const ALL: Mask = 0;
+    const ANY: Mask = 0;
+    const NONE: Mask = 0;
+}
+
+/// Every pragma of the list is in the set.
+#[derive(Debug, Clone, Copy)]
+pub struct All<L>(PhantomData<L>);
+
+/// At least one pragma of the list is in the set.
+#[derive(Debug, Clone, Copy)]
+pub struct Any<L>(PhantomData<L>);
+
+/// No pragma of the list is in the set.
+#[derive(Debug, Clone, Copy)]
+pub struct Not<L>(PhantomData<L>);
+
+impl<L: Set> Requirement for All<L> {
+    const ALL: Mask = L::MASK;
+    const ANY: Mask = 0;
+    const NONE: Mask = 0;
+}
+
+impl<L: Set> Requirement for Any<L> {
+    const ALL: Mask = 0;
+    const ANY: Mask = L::MASK;
+    const NONE: Mask = 0;
+}
+
+impl<L: Set> Requirement for Not<L> {
+    const ALL: Mask = 0;
+    const ANY: Mask = 0;
+    const NONE: Mask = L::MASK;
+}
+
+/// One build choice.
+///
+/// The three writers are the routes a pragma's text takes, and each
+/// writes nothing unless the pragma says otherwise. Rustc flags are
+/// separated by single spaces, with none before the first or after the
+/// last, and a linker's argument is one of them, `-Clink-arg=`. Cfgs are
+/// one to a line. Cargo configuration
+/// is whole lines in dotted keys with no table header, since two pragmas
+/// write keys of one table and TOML takes a header once.
+pub trait Pragma {
+    /// The pragma's name in every sentence said about it.
+    const NAME: Words;
+    /// The pragma's place in a set's mask.
+    const BIT: Mask;
+    /// What the pragma reaches.
+    const REACH: Reach = Reach::Crate;
+    /// What is said of a set that does not meet [`Requires`](Pragma::Requires).
+    const UNMET: Words = "";
+    /// The tools the pragma waits on, rows of [`TOOLS`](crate::TOOLS):
+    /// every program its text names. Its writer is handed the path of
+    /// the first.
+    const NEEDS: &'static [&'static Tool] = &[];
+
+    /// The choice the pragma is one value of.
+    type Group: Group;
+    /// What the pragma requires of the set it is in.
+    type Requires: Requirement;
+
+    /// The sentence of a refusal where the target cannot carry the
+    /// pragma, or nothing where it can.
+    #[allow(unused_variables)]
+    fn admitted(target: &Target) -> Maybe<&'static str> {
+        Maybe::Isnt
+    }
+
+    /// The flags the wrapper appends to the crate's rustc.
+    #[allow(unused_variables)]
+    fn write_rustflags<W: Write>(with: &Written<'_>, out: &mut W) -> core::fmt::Result {
+        Ok(())
+    }
+
+    /// The cfgs set for the crate, one to a line.
+    #[allow(unused_variables)]
+    fn write_cfgs<W: Write>(out: &mut W) -> core::fmt::Result {
+        Ok(())
+    }
+
+    /// The lines of the generated cargo file, in dotted keys.
+    #[allow(unused_variables)]
+    fn write_cargo_config<W: Write>(with: &Written<'_>, out: &mut W) -> core::fmt::Result {
+        Ok(())
+    }
+}
+
+/// The folded value of a set: every member's bit.
+///
+/// Nothing changes one. A set is changed by naming another type.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct PragmaSet {
-    mask:                   u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: 13-pragma bit-mask algorithmic width; tracked: #72
-    parallel_codegen_units: Option<u8>, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-option) lint:allow(no-public-raw-field) reason: pragma parameter storage; Option because pragma may be absent from the set; tracked: #72
+    mask: Mask,
 }
 
 impl PragmaSet {
-    /// Empty set.
-    pub const fn new() -> Self {
+    /// The folded value of the set `S`.
+    pub const fn of<S: Set>() -> Self {
         PragmaSet {
-            mask:                   0,
-            parallel_codegen_units: None,
+            mask: S::MASK,
         }
     }
 
-    /// Add `p` to the set. For `ParallelCodegen`, stores the unit
-    /// count (overwriting any previous value).
-    pub const fn with(mut self, p: Pragma) -> Self {
-        self.mask |= p.bit();
-        if let Pragma::ParallelCodegen(n) = p {
-            self.parallel_codegen_units = Some(n);
-        }
-        self
-    }
-
-    /// Remove `p` from the set. For `ParallelCodegen`, also clears
-    /// the stored unit count.
-    pub const fn without(mut self, p: Pragma) -> Self {
-        self.mask &= !p.bit();
-        if let Pragma::ParallelCodegen(_) = p {
-            self.parallel_codegen_units = None;
-        }
-        self
-    }
-
-    /// The set with every pragma whose required pragma is absent taken
-    /// out: MathPeephole without FastMath, Profiling without Pgo or
-    /// Bolt. Applied after a crate tunes its set, so taking a pragma out
-    /// takes what stands on it too.
-    pub const fn coherent(self) -> Self {
-        let mut set = self;
-        if !set.contains(Pragma::FastMath) {
-            set = set.without(Pragma::MathPeephole);
-        }
-        if !set.contains(Pragma::Pgo) && !set.contains(Pragma::Bolt) {
-            set = set.without(Pragma::Profiling);
-        }
-        set
-    }
-
-    /// Check membership. For `ParallelCodegen(n)`, matches on the
-    /// slot (ignores `n`): use `parallel_codegen_units()` to read
-    /// the stored param.
-    pub const fn contains(self, p: Pragma) -> bool {
-        (self.mask & p.bit()) != 0
-    }
-
-    /// The stored `ParallelCodegen` unit count, if the pragma is set.
-    pub const fn parallel_codegen_units(self) -> Option<u8> {
-        self.parallel_codegen_units
-    }
-
-    /// Iterate the set in stable bit-index order.
-    pub fn iter(self) -> PragmaIter {
-        PragmaIter {
-            mask:           self.mask,
-            parallel_units: self.parallel_codegen_units.unwrap_or(0),
-            idx:            0,
-        }
-    }
-}
-
-/// Iterator over the pragmas in a `PragmaSet`. Yields in ascending
-/// bit-index order (matches the order of the `Pragma` enum's declared
-/// variants).
-pub struct PragmaIter {
-    mask:           u16, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: PragmaIter scans the 13-pragma bit-mask; mirrors PragmaSet width; tracked: #72
-    parallel_units: u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: unit count carried through iteration; tracked: #72
-    idx:            u8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) reason: iterator cursor over 13 pragma bits; tracked: #72
-}
-
-impl Iterator for PragmaIter {
-    type Item = Pragma;
-
-    fn next(&mut self) -> Option<Pragma> {
-        while self.idx < 13 {
-            let bit = 1u16 << self.idx;
-            let i = self.idx;
-            self.idx += 1;
-            if (self.mask & bit) != 0 {
-                return Pragma::from_index(i, self.parallel_units);
-            }
-        }
-        None
+    /// Whether the set holds the pragma `P`. A pragma with a value,
+    /// `ParallelCodegen<N>`, is held whatever its value.
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    pub const fn contains<P: Pragma>(self) -> bool { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+        self.mask & P::BIT != 0
     }
 }

@@ -31,13 +31,11 @@ print!("{out}");
 ```
 
 That call is also what a script written by hand uses, and it does
-nothing about the wiring. A crate that tunes its pragmas calls
-`configure_with` the same way, with a
-function over the profile's default `PragmaSet`. The tuned set is made
-coherent, so a pragma whose required pragma was taken out goes with
-it. A crate whose own code must not take fast float math removes
-FastMath, `configure_with(env, |p| p.without(Pragma::FastMath), &mut out)`,
-which keeps the `arvo_fast_math` cfg off for that crate. kaski's
+nothing about the wiring. It takes the `Default` prototype. A crate
+with pragmas of its own calls `configure_as::<P, _, _>` the same way,
+with a `Prototype` it names. A crate whose own code must not take fast
+float math names `Deterministic`, whose sets hold no `FastMath`, which
+keeps the `arvo_fast_math` cfg off for that crate. kaski's
 deterministic simulation crates do this. The cfg reaches the
 configured crate alone: arvo's `Float` is resolved in arvo's own
 build, which no consumer's build script reaches, and takes fast float
@@ -48,12 +46,15 @@ simulation never makes it.
 The crate is `no_std` and does not allocate, like every hilavitkutin
 crate, so it touches neither the environment nor the filesystem. The
 build script owns both: it passes a closure that reads one variable,
-and the crate reads `PROFILE`, `CARGO_CFG_TARGET_FEATURE` and
+and the crate reads `PROFILE`, the `CARGO_CFG_TARGET_*` values and
 `RUSTC_WORKSPACE_WRAPPER` through it, resolves the `BuildConfig`, and writes the `cargo::` directives
 into the `core::fmt::Write` the script supplies, which the script
-prints. `BuildConfig::from_cargo`, `write_directives`,
-`write_rustflags`, `write_wrapper` and `write_config_file` are the
-parts `configure` composes, public for a script that needs one alone.
+prints. `BuildConfig::from_env`, which reads through the closure,
+`BuildConfig::from_cargo`, which takes the values already read,
+`write_directives` and `write_wrapper` are the parts `configure`
+composes, public for a script that needs one alone. `write_directives`
+is generic over the set it writes and takes the set's `Site`, and
+`Profile::name` is the profile as cargo spells it.
 Does NOT do live CPUID/sysctl detection, hardware topology
 (L1 sizes, core counts, P/E ratio) is a runtime concern of
 hilavitkutin's thread module, whose `classify_cores` reads it through
@@ -64,13 +65,26 @@ the platform's own interfaces without std.
 A build script is its project's. A consumer keeps one per crate, or
 one file that several crates name with `package.build`, or anything
 else cargo takes, at whatever path it chooses, and this crate asks
-nothing about where. What the crate gives is the body: `Prototype`
-names the scripts it offers, `Default` for `configure` and
-`Deterministic` for `configure_with` without FastMath, and
-`script!(<prototype>)` is the one line that runs the chosen one. A
-script that does more than configure writes that line and goes on with
-its own work. Nothing a prototype does is written out in a consumer, so
-there is nothing in a consumer to drift.
+nothing about where. What the crate gives is the body. A `Prototype`
+is a type that names one set of pragmas per profile, as its associated
+types `Dev`, `DevOpt`, `Release`, `Profiling` and `Ci`, and
+`script!(<prototype>)` is the one line that runs the chosen one. The
+crate's own are three unit types: `Default`, `Deterministic`, which is
+`Default` with no `FastMath`, and `Workspace`, which is `Default` with
+the pragmas that reach the whole workspace, for the one script that
+claims it (the section on reach below). `script!(Default)` names one
+of the three by its bare name. A consumer writes a prototype of its
+own in a crate among its build-dependencies and names it by its path,
+`script!(my_build::Sim)`, or writes it in the script's own file and
+names it `script!(crate::Sim)`: a bare name is always one of this
+crate's. A script that does more than configure
+writes that line and goes on with its own work. Nothing a prototype
+does is written out in a consumer, so there is nothing in a consumer
+to drift.
+
+The expansion holds one `const` item per profile's set that asserts
+over the set, so a set that breaks a requirement is refused by a check
+at the script's line, before any script runs.
 
 Taking the crate is two lines the consumer writes: the workspace's
 dependency on `hilavitkutin-build`, spelled over ssh while hilavitkutin
@@ -154,7 +168,10 @@ are the script's, in the code `script!` expands there.
 
 That code reaches the crate through public items, since a macro's
 expansion sees only what a consumer could name. `Tree` is whose the
-root is and whether the host runs the wrapper, decided by `Tree::of`.
+root is and whether the host runs the wrapper, decided by `Tree::of`
+from what the script found, each finding a type of its own so two
+cannot be swapped: `Unpacked`, `Placed` and `Host`, and `Flags` for
+whether the crate has flags to hand over.
 `WrapperFile` and `ConfigFile` are what the script found on disk, the
 second read from a config file's text by `ConfigFile::read`. `plan`
 takes those and answers a `Plan`: whether each file is written, and
@@ -186,14 +203,10 @@ Vendor identity via `CARGO_CFG_TARGET_VENDOR`. Architecture via
 groups.
 
 **3. RUSTC_WORKSPACE_WRAPPER:** the mechanism that puts the LLVM
-flags on the command line. A crate's build script chooses the flags
-for that crate from three axes:
-- **Target:** which target-specific flags apply, from
-  CARGO_CFG_TARGET_FEATURE
-- **Tier:** the profile cargo passes the script as PROFILE
-- **Passes:** which LLVM passes to activate beyond the default pipeline
-
-and `configure` writes them as
+flags on the command line. The flags of a crate follow from the set
+its prototype names for the profile cargo passes the script as
+PROFILE: each pragma of the set writes its own, and `configure` writes
+them as
 `cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=<flags>`. Cargo sets a
 `rustc-env` variable on the rustc process of that crate alone. The
 wrapper is a fixed POSIX shell script that appends the variable to
@@ -223,9 +236,14 @@ The same call writes the workspace's `.cargo/config.toml` where there
 is none, a path with a slash being relative to the directory holding
 `.cargo`:
 ```toml
+include = [{ path = "hilavitkutin-build.toml", optional = true }]
+
 [build]
 rustc-workspace-wrapper = ".cargo/hilavitkutin-rustc-wrapper"
 ```
+
+The first line takes the generated file of the section on reach, and
+is no error where that file is not there.
 
 Only affects workspace crates, not dependencies, and of those only the
 crates whose build script builds through this crate. Cargo finds
@@ -240,10 +258,10 @@ prints it once it has seen that the wiring is in place. Under
 `cargo clippy` cargo names `clippy-driver`, and nothing is said: a
 check generates no code, so the flags it does not get cost it nothing.
 
-**4. Generated config file:** pragmas that need Cargo profile
-settings (ExpandedLto, Pgo, BuildStd) write to
-`target/hilavitkutin-build/hilavitkutin-config.toml`. This file
-is generated, gitignored, and consumed by the Cargo profile.
+**4. Generated config file:** pragmas that are cargo configuration
+write to `.cargo/hilavitkutin-build.toml`, which the workspace's
+`config.toml` takes by one `include` line. The section on reach says
+which script writes it.
 
 ## cfg flag emission
 
@@ -266,22 +284,88 @@ crate does not have is rerun on every build.
 
 ## Pragma system (T4 §Q4f)
 
-Typed pragmas with dependency enforcement:
+A pragma is one build choice, a unit type, and a set of them is a
+tuple of types. What a pragma requires of the set it is in is checked
+before any build script runs.
 
 ```rust
-pub trait Pragma: 'static {
- const NAME: &'static str;
- type Requires: PragmaRequirement = ();
- fn rustc_flags() -> Vec<String> { vec![] }
- fn cfg_flags() -> Vec<String> { vec![] }
- fn post_build() -> Option<PostBuildAction> { None }
+pub trait Pragma {
+    const NAME: &'static str;
+    const BIT: u64;
+    const REACH: Reach = Reach::Crate;
+    const UNMET: &'static str = "";
+    const NEEDS: &'static [&'static Tool] = &[];
+    type Group: Group;
+    type Requires: Requirement;
+    fn admitted(target: &Target) -> Maybe<&'static str> { Maybe::Isnt }
+    fn write_rustflags<W: Write>(with: &Written, out: &mut W) -> fmt::Result { Ok(()) }
+    fn write_cfgs<W: Write>(out: &mut W) -> fmt::Result { Ok(()) }
+    fn write_cargo_config<W: Write>(with: &Written, out: &mut W) -> fmt::Result { Ok(()) }
 }
 ```
 
-Requirement combinators: `All<(A, B)>` (all must be active),
-`Any<(A, B)>` (at least one). Checked at `configure().run()` time.
+`NAME` is the pragma's name in every sentence said about it. `BIT` is
+its place in a set's mask, given by the crate in one list, and a test
+holds every two of them apart. `REACH` is the next section's. `UNMET`
+is the sentence for a set that does not meet `Requires`. `NEEDS` is the
+rows of the tools table the pragma waits on, every program its text
+names, and the first is the one whose path its writer is handed.
+`admitted` answers with
+the sentence of a refusal where the target cannot carry the pragma.
+The three writers are the routes a pragma's text takes: a flag the
+wrapper appends, a cfg, and lines of the generated cargo file. A
+linker's argument is a flag like any other, `-Clink-arg=`, and goes
+through the wrapper; the script prints no `cargo::rustc-link-arg`.
+`Written` is what a writer is handed: the profile's name as cargo has
+it, the target triple, the path of the pragma's tool where it has
+one, and a `Shared` that says whether the keys its group shares across
+profiles are still owed or already written. No function returns a
+collection; the crate does not allocate.
 
-**All built-in pragmas:**
+Each route has one form of text, so a set's text is its members' texts
+one after another. A pragma's rustc flags are separated by single
+spaces with none before the first or after the last, and the set puts
+one space between two pragmas that wrote any. Cfgs are one to a
+line. Cargo configuration is whole lines in dotted keys
+with no table header, `profile.release.lto = "fat"`, since two pragmas
+write keys of one table and TOML takes a header once.
+
+A `Requirement` is read as three masks, `ALL`, `ANY` and `NONE`.
+`All<(A, B)>` asks that every one of the list is in the set,
+`Any<(A, B)>` that at least one is, `Not<(A, B)>` that none is, and
+`()` asks nothing. A `Group` is a choice a set holds one value of at
+most, a type with a `BIT` and with `CLASH`, the sentence for a set
+that holds two of it; `Free` is the group of a pragma that is one
+value of no choice. A group whose keys belong to no profile, the link
+driver's and the C compiler's, says so in `SHARED`.
+
+`Set` is implemented for the flat tuples of pragmas, arities zero
+through sixteen. It folds its members into constants: `MASK`, every
+member's bit, `GROUPS`, every member's group, `SHARED`, the bits of the
+members whose group is shared, `REACH`, the widest reach among them,
+and `VERDICT`, the first thing wrong with the set (a pragma named
+twice, a group held twice, a requirement unmet) as that pragma's or
+group's own sentence, or the empty string. A mask is a `Mask` and a
+name or a sentence is `Words`, the two aliases the constants are
+written in. `checked::<S>()` is a `const fn` that panics with the
+verdict where there is one, and `crate_reach::<S>()` one that panics
+where the set holds a pragma of workspace reach. `script!` calls both
+in a `const` item per profile, which a check evaluates, so the refusal
+arrives at the line that names the set. `Set` also walks its members:
+`Set::each` hands every member, as a type, to a `Visit`, and the four
+writers, `admitted` and the tools are each one visit. What a walk is
+handed is a `Site`: the profile, the target triple and the tools the
+script found, each a `ToolPath` of a tool and where it is, from which
+the walk makes every member its `Written`. `each_tool` is the walk
+that hands over every member's tool, and `writes_flags` asks a set at
+its site whether any member writes a flag, which is what the wiring's
+notices turn on.
+
+`PragmaSet` is the folded value of a set, the mask a `BuildConfig`
+carries, built by `PragmaSet::of::<S>()` and read by `contains::<P>()`.
+Nothing changes one: a set is changed by naming another type.
+
+**The pragmas of the crate:**
 
 | Pragma | What it does | Mechanism |
 |---|---|---|
@@ -299,18 +383,255 @@ Requirement combinators: `All<(A, B)>` (all must be active),
 | `LoopFusion` | Fuse adjacent loops. EXPERIMENTAL. Not in defaults. Benchmark before enabling | Rustc wrapper |
 | `MimallocAllocator` | Recommends mimalloc. Consumer sets #[global_allocator] | Advisory |
 
-**Default pragma sets per profile:**
+`MathPeephole` requires `All<(FastMath,)>` and `Profiling` requires
+`Any<(Pgo, Bolt)>`. `ParallelCodegen` takes its count as a const
+parameter and has one bit whatever the count.
 
-| Profile | Default pragmas |
+**The seven build choices.** Each is a group, with one pragma per
+value that differs from the toolchain's own. A group with no pragma in
+the set leaves the choice to the toolchain.
+
+| Choice | Group | Pragmas | Reach | Takes effect by |
+|---|---|---|---|---|
+| linker | `LinkerGroup` | `Mold`, `Wild`, `Bfd` | crate | through the wrapper: `-Clink-arg=-fuse-ld=mold`, `-Clink-arg=-fuse-ld=bfd`, and for `Wild` the pair `-Clinker=clang -Clink-arg=--ld-path=<its path>` |
+| edge form | `EdgeGroup` | `DylibDomain` | crate | `-Cprefer-dynamic` through the wrapper, on the crate that is the dylib |
+| LTO | `LtoGroup` | `ThinLto`, `ExpandedLto` | workspace | `lto` and, for `ExpandedLto`, `codegen-units = 1` in the profile's table |
+| incremental | `IncrementalGroup` | `Incremental`, `NoIncremental` | workspace | `incremental` in the profile's table |
+| backend | `BackendGroup` | `Cranelift` | workspace | `[unstable] codegen-backend = true` and `codegen-backend` in the profile's table |
+| link driver | `DriverGroup` | `GccDriver`, `ClangDriver` | workspace | `[target.<triple>] linker` |
+| C compiler | `CcGroup` | `GccCc`, `ClangCc` | workspace | `CC`, `CXX` and `AR` under `[env]` |
+
+lld is what the pinned toolchain links with on x86_64 Linux when
+nothing is asked, so it has no pragma. gold links and rustc warns
+against it on every build, so it has none either. Incremental has a
+pragma for each of its two values because cargo's own default differs
+by profile, so neither value is the same as saying nothing.
+`Cranelift` requires `Not<(ThinLto, ExpandedLto)>`. `Wild` is told to
+clang by its path, since a gcc older than 15 knows a fixed list of
+linkers and wild is not on it, so `Wild` waits on clang beside wild.
+Every linker's flags go by the one
+route, the wrapper. The first build of a workspace runs without the
+wrapper, so it links as the toolchain does by itself, like every flag
+of that build, and the ones after it link with the linker the set
+names. The wrapper splits its
+flags on spaces, so a tool's path that holds one is refused by a
+`cargo::error` that names the tools home's variable. `DylibDomain` writes the flag and no
+more: that the crate's manifest says `crate-type = ["dylib"]` is the
+consumer's to write, and nothing here checks it.
+
+**Default pragma sets per profile.** A prototype's sets, as `Default`
+has them:
+
+| Profile | `Default` |
 |---|---|
 | dev | ParallelCodegen, SharedGenerics |
 | dev-opt | ParallelCodegen, SharedGenerics, LoopOptimization |
-| release | ParallelCodegen, LoopOptimization, MathPeephole, FastMath, ExpandedLto, Bolt, Pgo |
+| release | ParallelCodegen, LoopOptimization, MathPeephole, FastMath, Bolt, Pgo |
 | profiling | ParallelCodegen, LoopOptimization, MathPeephole, FastMath, Profiling, Pgo, Bolt |
-| ci | Same as release |
+| ci | ParallelCodegen, LoopOptimization |
+
+`Deterministic` is the same without FastMath and without MathPeephole,
+which stands on it. `Workspace` is `Default` with `ExpandedLto` in
+release and in ci. The ci set is selected by no build yet, like the
+other two custom profiles' sets, and the generated file has keys for
+`dev` and `release` alone; its `ExpandedLto` is the design's statement
+of what ci is, held for when cargo tells a script which profile it
+builds.
+
+No set of the three holds a pragma of the seven choices other than
+`ExpandedLto`: each choice is the toolchain's own until a bench cell
+shows another value ahead on a target, and the default then changes
+for that target by a change that cites the cell's run directory where
+the default is declared.
 
 Not in any default: Polly (requires special LLVM), BuildStd (build
 time), LoopFusion (experimental).
+
+## Reach
+
+A pragma reaches one of two things. `Reach::Crate` is the crate whose
+script names the set: the flags the wrapper appends to that crate's
+rustc, the linker's among them, and its cfg.
+`Reach::Workspace` is cargo configuration, which cargo reads before
+any script runs and applies to every crate it builds, the
+dependencies and the build scripts among them. No one crate's set can
+hold such a choice for the others, so the workspace's pragmas are
+named once, by the one script of the workspace written
+`script!(<prototype>, workspace)`. Every other script asserts
+`crate_reach` over its sets, and naming a pragma of workspace reach
+there does not compile.
+
+The script that claims the workspace writes the generated cargo file,
+`.cargo/hilavitkutin-build.toml`, beside the wrapper and with the same
+care: under a name of its own first, and never into one of the roots
+the wiring leaves alone. Where there was no file it is placed by a
+hard link, which refuses where a file is already there, so of two
+scripts that both found none one places its file and the other reads
+whose it is. Where the file is this crate's and holds another text it
+is moved into place. `write_generated`
+writes its text: a first line that names the crate it was written for,
+then every key the workspace's pragmas write, for the `dev` and the
+`release` profile. A key that belongs to no profile is in the file
+once: the pragma that writes it is told through its `Shared` when a
+profile before this one has written it, and one key twice is a file
+cargo cannot read, which stops every build before any script runs. So
+the sets of a prototype that claims the workspace hold the same pragma
+of a shared group in every profile, and `claimed::<P>()`, the `const
+fn` the claiming script's `const` item calls, refuses a prototype
+whose sets differ there. A script that finds the file holding another text
+for its own crate writes it again. A script that claims the workspace
+and finds the file written for another crate writes nothing and fails
+the build with a `cargo::error` that names both crates, since two
+crates claiming one workspace is a mistake only its author can
+resolve; `Claim` is what the script found (no file, its own, another
+crate's by name) and `claim` reads it from the file's first line.
+`Notice` has the two things said about this file: that it was written
+and the next build takes its keys, and that `config.toml` lacks the
+`include` line, which `includes_generated` reads from its text.
+
+The claiming script asks to be run again when the generated file
+changes, so one edited by hand is written again by the next build.
+
+A key in the file is read by cargo before any script runs, so the file
+is written only where the build can carry every key in it. Before it
+writes, the claiming script looks at every pragma of workspace reach
+in the `dev` and the `release` set, whichever profile is being built:
+the target has to admit it and the machine has to have every tool it
+needs.
+`write_uncarried` writes one `cargo::error` for each that fails, with
+the profile it is in, and where it wrote any the file is left as it
+was and the build fails. A file written while a tool was there, whose
+tool has since gone, is beyond the script: cargo hands the key to a
+rustc that cannot follow it before the script is built.
+
+The key of a link driver is `target.<triple>.linker`, for the target
+of the build that wrote the file. A build for another target writes
+the file again for that one, so a workspace built for two targets in
+turn has the file written at every turn, and the build that wrote it
+is, as ever, not the one that takes it.
+
+Cargo takes the file by the `include` line of `config.toml`, which is
+the constant `INCLUDE_LINE`.
+`write_cargo_config` writes that line with the wrapper's, so a
+workspace the first build wires has both. A `config.toml` that exists
+without the line is left as it is, and the notice names the line to
+add, as with the wrapper's. The build that writes the generated file
+runs before cargo has read it, and the next one takes its keys, which
+the script says in one `cargo::warning`.
+
+The three custom profiles get no table: cargo tells a script only
+`debug` or `release`, and a table for a profile the consumer's
+manifest does not define is an error.
+
+One thing is not checked. A requirement holds within one set, so
+between a pragma of one script and a pragma of another nothing is
+enforced: `DylibDomain` in one crate and an LTO pragma in the
+workspace's set are each accepted, though LTO does not cross a dylib
+edge.
+
+## The target and what it admits
+
+`Target` is the target's facts as the crate reads them from
+`CARGO_CFG_TARGET_OS`, `CARGO_CFG_TARGET_ENV`, `CARGO_CFG_TARGET_ARCH`
+and `CARGO_CFG_TARGET_FEATURE` through the script's closure: an `Os`,
+an `Env`, an `Arch`, the `ObjectFormat` that follows from the three,
+and an `Isa`, the widest instruction set among the features. Each is
+an enum with `Other` for a value the crate has no name for, and
+`Target::from_cargo` reads them. `BuildConfig` carries the `Target`.
+The enum of the target's environment is named in full, `target::Env`,
+since the crate's root has the closure's trait under that name.
+
+What a target admits is a requirement like the ones between pragmas,
+known only when the script runs. `Mold`, `Wild` and `Bfd` admit an ELF
+target only. `Cranelift` and `DylibDomain` do not admit wasm. Where
+`admitted` answers with a sentence, `configure` writes
+`cargo::error=` with the pragma's name, that sentence and the remedy,
+and the build fails. Nothing falls back to another value in silence.
+The same line is written for a pragma that needs a local build and
+whose `Site` holds no path for it, which is what a script written by
+hand gets where it names such a pragma: only `script!` provisions.
+
+`Bolt`, which is ELF only, is not held to this: it is in the release
+set of every prototype and writes nothing yet, and refusing it would
+fail every release build on macOS. It says so when it gains a hook.
+
+## Tools
+
+A pragma that needs something the toolchain does not bring names it in
+`NEEDS`, rows of `TOOLS`, one for every program its text names: a
+machine that has one and lacks another is refused by the crate, with
+the command that brings the missing one, and not by rustc or by a
+build script further on. `Wild` needs wild and clang. `GccCc` needs
+gcc, g++ and ar, and `ClangCc` clang, clang++ and llvm-ar, the three
+programs each puts under `[env]`. Every other pragma needs one tool or
+none. A `Tool` has a name, a pinned version, a
+`Source` and a `Proof`. A `Proof` is a `Line`, what the tool's version
+line has to start with or hold, or that the tool is found in the
+toolchain's sysroot, and for a linker the mark it leaves in `.comment`.
+The version line is the first two lines a tool prints when asked for
+its version, joined by a space: an llvm-ar built with no vendor name
+prints `LLVM (http://llvm.org/):` first and its version on the second.
+
+| Tool | Version | Source | Proof |
+|---|---|---|---|
+| mold | any the package gives | `Source::Package("mold")` | version line starts `mold `, mark `mold ` in `.comment` |
+| wild | 0.10.0 | `Source::LocalBuild("wild-linker")` | version line starts `Wild 0.10.0`, mark `Linker: Wild` in `.comment` |
+| clang | any the package gives | `Source::Package("clang")` | version line holds `clang version` |
+| gcc | any the package gives | `Source::Package("gcc")` | version line starts `gcc ` |
+| clang++ | any the package gives | `Source::Package("clang")` | version line holds `clang version` |
+| llvm-ar | any the package gives | `Source::Package("llvm")` | version line holds `LLVM version` |
+| g++ | any the package gives | `Source::Package("g++")` | version line starts `g++ ` |
+| ar | any the package gives | `Source::Package("binutils")` | version line starts `GNU ar ` |
+| cranelift | the toolchain's | `Source::Component("rustc-codegen-cranelift-preview")` | the component is in the sysroot |
+| the plugins and profile tools of the thirteen older pragmas | none | `Source::Awaited` | none |
+
+A package is taken from a trusted package manager and a local build is
+kept for what none carries. wild's pin moves to 0.11.0 when the
+toolchain pin reaches a rustc it builds on. A pragma whose tool is
+`Source::Awaited` writes what it can without it and is not refused,
+which is what those pragmas do today.
+
+`tools_home` decides where locally built tools live, and answers a
+`Home` or nothing:
+`HILAVITKUTIN_BUILD_TOOLS_HOME` where the builder sets it, else the
+per-user cache, `$XDG_CACHE_HOME/hilavitkutin-build/tools`, else
+`$HOME/.cache/hilavitkutin-build/tools`, and on macOS
+`$HOME/Library/Caches/hilavitkutin-build/tools`. `write_tool_dir`
+writes the directory of one tool under it,
+`<home>/<host triple>/<name>-<version>`, so a home is shared by every
+clone and worktree on the machine and survives `cargo clean`.
+
+`provision` answers what a script does about one tool, from what the
+script found, as a `Provision`: use the one on the path, where its
+version line passes the proof; use the one in the home; build it into
+the home; or refuse, with the command that brings it. Only a local
+build is built. A package and a component are refused where they are
+missing, `apt-get install mold` and
+`rustup component add rustc-codegen-cranelift-preview` being a
+machine's setup and outside what a build script may do.
+
+The `script!` expansion does the work on disk. It provisions the tools
+of every pragma in the set it runs, in a crate's script and in the
+workspace's alike. Where the answer is to build, it prints a
+`cargo::warning` that the tool is being built, runs
+`cargo install --locked --version <pin> --root <dir> <crate>`, and
+then removes every `<name>-<version>` directory beside the new one
+whose version `older` says is below the pin, so a pin that moved up
+leaves no old version behind. A newer version beside it is another
+clone's pin and stays. So does an older one whose lock the script
+cannot take at once: a clone that pins it is building it now. Nothing
+of it is done by hand. The build that
+needs a tool waits for it once per machine. Scripts of one workspace
+run side by side, so the one that builds holds a lock on a file beside
+the tool's directory, `<name>-<version>.lock`, and the others wait for
+the lock and then find the tool built. The lock is the operating
+system's and goes with the process that holds it, so a build that is
+interrupted leaves nothing to clear. The lock files themselves stay,
+those of removed versions too: a script that removed one could take it
+from under a script waiting on it, and each is an empty file. The child cargo is given a target directory of its own under
+the tool's, and none of the outer build's wrapper or flags. Where the
+answer is to refuse, the script prints the text of `write_refusal` as
+a `cargo::error`.
 
 ## LLVM pass plugin (T4 §Q4c)
 
@@ -351,13 +672,14 @@ yet find, and their pragmas write nothing meanwhile:
 
 | Pragma | Writes today | Waits on |
 |---|---|---|
-| `LoopOptimization` | the five `-C llvm-args` flags below, which need no plugin | `polka-passes.so` for its plugin passes, the requirement its row in `REQUIREMENTS` names |
+| `LoopOptimization` | the five `-C llvm-args` flags below, which need no plugin | `polka-passes.so` for its plugin passes, the awaited row of `TOOLS` its `NEEDS` names |
 | `FastMath` | the `arvo_fast_math` cfg | nothing |
 | `ParallelCodegen<N>` | `-Zthreads=N` | nothing |
 | `SharedGenerics` | `-Zshare-generics=y` | nothing |
 | `MathPeephole`, `Polly` | nothing | their plugins |
 | `Pgo`, `Bolt`, `Profiling` | nothing | merged profiles, `llvm-bolt` |
-| `ExpandedLto`, `BuildStd` | nothing | the consumer's Cargo profile |
+| `ExpandedLto` | its profile keys, in the generated cargo file of the script that claims the workspace | nothing |
+| `BuildStd` | nothing | the consumer's Cargo profile |
 
 **LoopOptimization:**
 - `-Z llvm-plugins=<path>/polka-passes.so` (once found)
@@ -405,9 +727,6 @@ only on the machine that built it, so it is no default.
 
 Cargo profile settings (`panic = "abort"`, `strip`, `opt-level`)
 remain in the consumer's Cargo.toml. NOT pragma-controlled.
-
-A tuned set is made coherent by `PragmaSet::coherent`: MathPeephole
-goes when FastMath is out, Profiling when Pgo and Bolt both are.
 
 The variable's name is a `const` string, `RUSTFLAGS_VAR`.
 `no-bare-static-str` keeps such text out of release binaries; this
@@ -463,11 +782,11 @@ BOLT is Linux ELF only (no Mach-O). macOS gets
 
 | Profile | Backend | Opt | Key settings |
 |---|---|---|---|
-| dev | Cranelift (workspace), LLVM (deps) | 0 | debug=1 (line-tables), incremental, fast iteration |
+| dev | LLVM | 0 | debug=1 (line-tables), incremental, fast iteration |
 | dev-opt | LLVM | 2 | + LoopOptimization. For testing MIR/LLVM behaviour |
 | release | LLVM | 3 | Full pragmas. strip=symbols |
 | profiling | LLVM | 3 | + debug info (line-tables). Runs benchmarks post-build |
-| ci | LLVM | 3 | Thin LTO for CI caching. codegen-units=1 |
+| ci | LLVM | 3 | ExpandedLto, as release, without the profile-guided pragmas |
 
 Cargo tells a build script only `debug` or `release` in `PROFILE`, by
 which of the two built-in profiles the one being built inherits from.
@@ -486,8 +805,9 @@ Silicon. No VM overhead, no Rosetta, no cross-compilation.
 
 ## Config files (T4 §Q7)
 
-Six kinds of file, five committed, one generated. The first build's
-`script!` writes the wrapper, and the config file where there is none:
+Six kinds of file, all committed. The first build's `script!` writes
+the wrapper, and the config file where there is none, and the script
+that claims the workspace writes the generated cargo file:
 
 | File | Committed | What |
 |---|---|---|
@@ -496,7 +816,7 @@ Six kinds of file, five committed, one generated. The first build's
 | `.cargo/config.toml` | yes, written by `script!` where missing | Wrapper path, minimal settings |
 | `.cargo/hilavitkutin-rustc-wrapper` | yes, written by `script!` from `write_wrapper` | The wrapper |
 | the consumer's build scripts | yes, written by the consumer, wherever it keeps them | One `script!` line each, and the script's own work |
-| `target/hilavitkutin-build/hilavitkutin-config.toml` | no (generated) | ExpandedLto, Pgo, BuildStd settings |
+| `.cargo/hilavitkutin-build.toml` | yes, written by the script that claims the workspace | The tables of the workspace's pragmas |
 
 ## Plugin and container sources
 
@@ -519,10 +839,8 @@ as an earlier draft described them:
  automatically), hash-based plugin compilation skip, cargo build
  with auto-detected plugin `.so` loading, interactive shell mode.
 
-These scripts are the runtime infrastructure that hilavitkutin-build's
-pragma system drives. The `configure().run()` API generates the rustc
-wrapper that references the plugin `.so` paths and injects the correct
-flags per pragma.
+These scripts are the infrastructure the plugin pragmas wait on. Their
+rows in `TOOLS` are `Source::Awaited` until the sources are in a tree.
 
 ## Dependencies
 
