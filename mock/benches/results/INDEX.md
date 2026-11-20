@@ -1002,6 +1002,19 @@ Latest: `20261119T150158Z-ffb57e5a`
 - [20261116T063249Z-f04daa0a-dirty](build-static/leaf_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/leaf_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
 
+## build-static/leaf_n97
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261119T203124Z-4228372a`
+
+| variant | median | vs best |
+|---|---|---|
+| llvm_incremental | 4011.75 ms | 1.00x |
+| llvm_non_incremental | 5821.77 ms | 1.45x |
+
+- [20261119T203124Z-4228372a](build-static/leaf_n97/linux-x86_64-c4-container-intel/20261119T203124Z-4228372a/report.md)
+
 ## build-static/mid_n25
 
 ### linux-x86_64-c4-container-intel, 2 run(s)
@@ -1016,6 +1029,19 @@ Latest: `20261119T150158Z-ffb57e5a`
 - [20261116T063249Z-f04daa0a-dirty](build-static/mid_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/mid_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
 
+## build-static/mid_n97
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261119T203124Z-4228372a`
+
+| variant | median | vs best |
+|---|---|---|
+| llvm_incremental | 2549.14 ms | 1.00x |
+| llvm_non_incremental | 33358.81 ms | 13.09x |
+
+- [20261119T203124Z-4228372a](build-static/mid_n97/linux-x86_64-c4-container-intel/20261119T203124Z-4228372a/report.md)
+
 ## build-static/root_n25
 
 ### linux-x86_64-c4-container-intel, 2 run(s)
@@ -1029,6 +1055,19 @@ Latest: `20261119T150158Z-ffb57e5a`
 
 - [20261116T063249Z-f04daa0a-dirty](build-static/root_n25/linux-x86_64-c4-container-intel/20261116T063249Z-f04daa0a-dirty/report.md)
 - [20261119T150158Z-ffb57e5a](build-static/root_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md)
+
+## build-static/root_n97
+
+### linux-x86_64-c4-container-intel, 1 run(s)
+
+Latest: `20261119T203124Z-4228372a`
+
+| variant | median | vs best |
+|---|---|---|
+| llvm_incremental | 7182.84 ms | 1.00x |
+| llvm_non_incremental | 89677.26 ms | 12.48x |
+
+- [20261119T203124Z-4228372a](build-static/root_n97/linux-x86_64-c4-container-intel/20261119T203124Z-4228372a/report.md)
 
 ## cache_layout/cache_layout_n1024
 
