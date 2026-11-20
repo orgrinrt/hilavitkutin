@@ -444,6 +444,15 @@ into it. At frame start `run_fused` clears the accumulator records and counts a
 previous `run` left, as `run` does. The gap is tracked as ticket `0fb716c5a463`; until it closes, an
 accumulator-writing unit goes through `run`.
 
+Nor does the fused entry take a buffered column. `FuseCarrier` wants each
+unit's read and write sets to be plain columns, so a unit over `Buffered` is
+refused at compile time. The chain it folds threads values over one
+reservation a column, and a buffered column is two reservations the boundary
+trades, which the chain does not carry. The three entries keep one meaning, so
+this is a gap of the fused entry, tracked as ticket
+`the_fused_entry_refuses_a_buffered_column`; until it closes, a unit over a
+buffered column goes through `run` or `run_parallel`.
+
 Appending past an accumulator's reserved capacity is refused, never written and
 never a silent drop. By default the refusal is a value the caller of the run
 entry is handed; the consumer can pick a run that panics on it instead, at
