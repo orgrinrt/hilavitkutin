@@ -1,0 +1,5 @@
+# written by hilavitkutin-build for dotted-taker: edits are lost
+unstable.codegen-backend = true
+profile.dev.incremental = false
+unstable.codegen-backend = true
+profile.release.lto = "fat"

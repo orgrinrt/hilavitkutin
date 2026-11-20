@@ -1,74 +1,6 @@
-//! `Profile::default_pragmas` matches DESIGN Q3 for every profile.
+//! The profiles: the one cargo's `PROFILE` names, and each as cargo spells it.
 
-use hilavitkutin_build::{Pragma, Profile};
-
-#[test]
-fn dev_defaults() {
-    let s = Profile::Dev.default_pragmas();
-    assert!(s.contains(Pragma::ParallelCodegen(0)));
-    assert!(s.contains(Pragma::SharedGenerics));
-
-    assert!(!s.contains(Pragma::LoopOptimization));
-    assert!(!s.contains(Pragma::FastMath));
-    assert!(!s.contains(Pragma::ExpandedLto));
-    assert!(!s.contains(Pragma::Pgo));
-    assert!(!s.contains(Pragma::Bolt));
-}
-
-#[test]
-fn dev_opt_defaults() {
-    let s = Profile::DevOpt.default_pragmas();
-    assert!(s.contains(Pragma::LoopOptimization));
-    assert!(s.contains(Pragma::ParallelCodegen(0)));
-    assert!(s.contains(Pragma::SharedGenerics));
-
-    assert!(!s.contains(Pragma::FastMath));
-    assert!(!s.contains(Pragma::ExpandedLto));
-}
-
-#[test]
-fn release_defaults() {
-    let s = Profile::Release.default_pragmas();
-    assert!(s.contains(Pragma::LoopOptimization));
-    assert!(s.contains(Pragma::MathPeephole));
-    assert!(s.contains(Pragma::FastMath));
-    assert!(s.contains(Pragma::ExpandedLto));
-    assert!(s.contains(Pragma::Pgo));
-    assert!(s.contains(Pragma::Bolt));
-    assert!(s.contains(Pragma::ParallelCodegen(0)));
-
-    assert!(!s.contains(Pragma::Profiling));
-    assert!(!s.contains(Pragma::SharedGenerics));
-    assert!(!s.contains(Pragma::BuildStd));
-}
-
-#[test]
-fn profiling_defaults() {
-    let s = Profile::Profiling.default_pragmas();
-    assert!(s.contains(Pragma::LoopOptimization));
-    assert!(s.contains(Pragma::MathPeephole));
-    assert!(s.contains(Pragma::FastMath));
-    assert!(s.contains(Pragma::Pgo));
-    assert!(s.contains(Pragma::Bolt));
-    assert!(s.contains(Pragma::Profiling));
-    assert!(s.contains(Pragma::ParallelCodegen(0)));
-
-    assert!(!s.contains(Pragma::ExpandedLto));
-    assert!(!s.contains(Pragma::SharedGenerics));
-}
-
-#[test]
-fn ci_defaults() {
-    let s = Profile::Ci.default_pragmas();
-    assert!(s.contains(Pragma::LoopOptimization));
-    assert!(s.contains(Pragma::ExpandedLto));
-    assert!(s.contains(Pragma::ParallelCodegen(0)));
-
-    assert!(!s.contains(Pragma::FastMath));
-    assert!(!s.contains(Pragma::Pgo));
-    assert!(!s.contains(Pragma::Bolt));
-    assert!(!s.contains(Pragma::Profiling));
-}
+use hilavitkutin_build::Profile;
 
 /// Cargo passes a build script `debug` or `release` and nothing else.
 #[test]
@@ -84,4 +16,16 @@ fn from_cargo_profile_unknown_falls_through_to_dev() {
     for name in ["", "bench", "Release", "dev", "dev-opt", "profiling", "ci"] {
         assert_eq!(Profile::from_cargo_profile(name), Profile::Dev, "{name:?}");
     }
+    assert_eq!(Profile::default(), Profile::Dev);
+}
+
+/// The names cargo has for the profiles in a manifest and in its
+/// configuration, which the generated cargo file's keys are written with.
+#[test]
+fn a_profile_is_named_as_cargo_spells_it() {
+    assert_eq!(
+        [Profile::Dev, Profile::DevOpt, Profile::Release, Profile::Profiling, Profile::Ci]
+            .map(Profile::name),
+        ["dev", "dev-opt", "release", "profiling", "ci"]
+    );
 }

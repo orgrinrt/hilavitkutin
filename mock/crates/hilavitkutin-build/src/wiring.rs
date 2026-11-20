@@ -37,33 +37,67 @@ pub enum Tree {
     Foreign,
 }
 
+/// Whether the root holds `Cargo.toml.orig`, which cargo leaves in a
+/// crate it unpacked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Unpacked {
+    /// The root holds the file.
+    Is,
+    /// It does not.
+    Isnt,
+}
+
+/// Where the wrapper cargo names sits, for a wrapper of ours.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Placed {
+    /// Cargo names this root's own wrapper file, or no wrapper of ours.
+    Here,
+    /// Cargo names a wrapper of ours that is not this root's own file.
+    Elsewhere,
+}
+
+/// The kind of host the script runs on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Host {
+    /// A unix host, which runs a POSIX `sh` wrapper.
+    Unix,
+    /// Any other host.
+    Other,
+}
+
+/// Whether the crate has rustc flags for the wrapper to hand over.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Flags {
+    /// A pragma of the set writes a flag.
+    Written,
+    /// None does.
+    Nothing,
+}
+
 impl Tree {
     /// Decide the tree from what the script found.
     ///
     /// `root` is the workspace root and `cargo_home` cargo's home, both as
-    /// the script shows them. `unpacked` is whether the root holds
-    /// `Cargo.toml.orig`, `elsewhere` whether cargo names a wrapper of ours
-    /// that is not this root's own file, and `unix` whether the host is
-    /// unix. A fetched tree comes first, so it is told nothing on any
-    /// host. A root is under the cargo home by whole path components: one
-    /// that only starts with the same letters is not.
+    /// the script shows them. A fetched tree comes first, so it is told
+    /// nothing on any host. A root is under the cargo home by whole path
+    /// components: one that only starts with the same letters is not.
     #[rustfmt::skip] // keeps the allows on the parameters they govern
     pub const fn of(
         root: &str, // lint:allow(no-bare-string) reason: a path as the build script read it; tracked: #72
         cargo_home: Maybe<&str>, // lint:allow(no-bare-string) reason: a path as the build script read it; tracked: #72
-        unpacked: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
-        elsewhere: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
-        unix: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+        unpacked: Unpacked,
+        placed: Placed,
+        host: Host,
     ) -> Tree {
         let under_home = match cargo_home {
             Maybe::Is(home) => is_under(root, home),
             Maybe::Isnt => false,
         };
-        if under_home || unpacked {
+        if under_home || matches!(unpacked, Unpacked::Is) {
             Tree::Fetched
-        } else if !unix {
+        } else if matches!(host, Host::Other) {
             Tree::NoShell
-        } else if elsewhere {
+        } else if matches!(placed, Placed::Elsewhere) {
             Tree::Foreign
         } else {
             Tree::Own
@@ -231,6 +265,12 @@ pub enum Notice {
     Dropped,
     /// The host runs no POSIX `sh` wrapper, so the flags are dropped.
     NoShell,
+    /// The generated cargo file was written, this build ran before cargo
+    /// read it, and the next one takes its keys.
+    Generated,
+    /// The generated cargo file is in place and `config.toml` has no
+    /// `include` line for it, so cargo never reads it. The line is named.
+    AddInclude,
 }
 
 /// What the script does next.
@@ -275,8 +315,7 @@ pub(crate) const fn names_the_wrapper(wrapper: Maybe<&str>) -> bool {
 
 /// Decide what the script writes and says.
 ///
-/// `wrapper` is the value of `RUSTC_WORKSPACE_WRAPPER`, and `flags` is
-/// whether the crate has rustc flags to hand over. A
+/// `wrapper` is the value of `RUSTC_WORKSPACE_WRAPPER`. A
 /// [`Fetched`](Tree::Fetched) or [`Foreign`](Tree::Foreign) tree is
 /// written nothing and told nothing, and a [`NoShell`](Tree::NoShell)
 /// tree is written nothing and told the flags are dropped where there
@@ -294,8 +333,9 @@ pub const fn plan(
     tree: Tree,
     wrapper_file: WrapperFile,
     config_file: ConfigFile,
-    flags: bool, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a build-time predicate, the crate takes no arvo dependency; tracked: #72
+    flags: Flags,
 ) -> Plan {
+    let flags = matches!(flags, Flags::Written);
     let left_alone = match tree {
         Tree::Own => Maybe::Isnt,
         Tree::Fetched | Tree::Foreign => Maybe::Is(Notice::Silent),
@@ -326,10 +366,20 @@ pub const fn plan(
     }
 }
 
-/// Write the `config.toml` a workspace gets where it has none: a
-/// `[build]` table with the one line that names the wrapper.
+/// The line by which a `config.toml` takes the generated cargo file. The
+/// path is relative to the file that holds the line, and `optional` makes
+/// a file that is not there yet no error.
+#[rustfmt::skip] // keeps the allow on the line it governs
+pub const INCLUDE_LINE: &str = "include = [{ path = \"hilavitkutin-build.toml\", optional = true }]"; // lint:allow(no-bare-static-str) reason: a build-dependency only, it reaches no binary; tracked: no_bare_static_str_does_not_know_a_build_dependency_only_cra
+
+/// Write the `config.toml` a workspace gets where it has none: the line
+/// that takes the generated cargo file, and a `[build]` table with the
+/// one line that names the wrapper.
 pub fn write_cargo_config<W: Write>(out: &mut W) -> core::fmt::Result {
-    writeln!(out, "[build]\n{WRAPPER_KEY} = \".cargo/{WRAPPER_NAME}\"")
+    writeln!(
+        out,
+        "{INCLUDE_LINE}\n\n[build]\n{WRAPPER_KEY} = \".cargo/{WRAPPER_NAME}\""
+    )
 }
 
 /// Write the two `cargo::rerun-if-changed` lines that name the wrapper
@@ -385,6 +435,21 @@ pub fn write_notice<W: Write, D: core::fmt::Display>(
                 out,
                 "cargo::warning=hilavitkutin-build chose rustc flags for this crate and hands them over through \
                  a POSIX sh wrapper, which this host does not run, so they are dropped"
+            )
+        },
+        Notice::Generated => {
+            writeln!(
+                out,
+                "cargo::warning=hilavitkutin-build wrote the workspace's pragmas to {dir}/hilavitkutin-build.toml: \
+                 this build ran before cargo read it, and the next one takes its keys"
+            )
+        },
+        Notice::AddInclude => {
+            writeln!(
+                out,
+                "cargo::warning=hilavitkutin-build left {dir}/config.toml as it is, and it does not take \
+                 {dir}/hilavitkutin-build.toml: add `{INCLUDE_LINE}` at its top, or the workspace's pragmas \
+                 are dropped"
             )
         },
     }

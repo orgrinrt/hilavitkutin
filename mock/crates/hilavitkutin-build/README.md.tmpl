@@ -6,4 +6,6 @@ build-dependency and writes one line, `hilavitkutin_build::script!(<prototype>)`
 in a build script it keeps wherever it wants. The first build writes
 the rustc wrapper and its `.cargo/config.toml` line into the workspace
 by itself, and the builds after it take the flags. The flags reach the
-consumer's own workspace members only, never its dependencies.
+consumer's own workspace members only, never its dependencies. The
+linker, the backend, LTO and the other build choices are pragmas too,
+and one script of a workspace names the ones that reach all of it.

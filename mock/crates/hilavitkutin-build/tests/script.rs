@@ -4,135 +4,20 @@
 //! runs the suite, offline, with no workspace wrapper named and with a
 //! rustc that writes down the arguments it was run with.
 
+mod harness;
+
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
 
-use hilavitkutin_build::write_wrapper;
-
-/// A fresh directory for one test.
-fn scratch(name: &str) -> PathBuf {
-    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
-    if dir.exists() {
-        fs::remove_dir_all(&dir).expect("the old scratch directory goes");
-    }
-    fs::create_dir_all(&dir).expect("the scratch directory");
-    dir
-}
-
-/// Write a crate at `dir` whose build script, at a path of its own, is the
-/// one line. `manifest_tail` is what follows the build-dependency.
-///
-/// The script carries a line that differs on every run, so cargo builds
-/// and runs it again where an earlier run of the suite left its output.
-fn write_crate(dir: &Path, name: &str, manifest_tail: &str) {
-    fs::create_dir_all(dir.join("scripts")).expect("the scripts directory");
-    fs::create_dir_all(dir.join("src")).expect("the source directory");
-    let build_crate = env!("CARGO_MANIFEST_DIR");
-    fs::write(
-        dir.join("Cargo.toml"),
-        format!(
-            "[package]\nname = \"{name}\"\nversion = \"0.0.0\"\nedition = \"2024\"\nbuild = \
-             \"scripts/anywhere.rs\"\n\n[build-dependencies]\nhilavitkutin-build = {{ path = \
-             \"{build_crate}\" }}\n\n{manifest_tail}"
-        ),
-    )
-    .expect("the manifest");
-    let run = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("a clock after 1970")
-        .as_nanos();
-    fs::write(
-        dir.join("scripts/anywhere.rs"),
-        format!(
-            "// run {run} of process {}\nfn main() {{\n    hilavitkutin_build::script!(Default);\n}}\n",
-            std::process::id()
-        ),
-    )
-    .expect("the build script");
-    fs::write(dir.join("src/lib.rs"), "").expect("the library");
-}
-
-/// A workspace of one crate, in a fresh directory.
-fn workspace(name: &str) -> PathBuf {
-    let root = scratch(name).join("ws");
-    write_crate(&root, &format!("scratch-{name}"), "[workspace]\n");
-    root
-}
-
-/// What one build said and what its rustc was run with.
-struct Built {
-    /// Cargo's standard error.
-    said:  String,
-    /// One line for each rustc call, its arguments joined by spaces.
-    rustc: String,
-}
-
-impl Built {
-    /// The rustc calls that compiled the library `krate`.
-    fn compiles_of(&self, krate: &str) -> Vec<&str> {
-        let name = format!("--crate-name {krate} ");
-        self.rustc
-            .lines()
-            .filter(|line| line.contains(&name))
-            .collect()
-    }
-}
-
-/// Build the workspace at `root`. The rustc cargo runs is a script beside
-/// the workspace that appends its arguments to a log and runs the real
-/// one, so what the wrapper appended can be read back.
-fn build(root: &Path) -> Built {
-    build_with(root, &[])
-}
-
-/// [`build`] with more arguments for cargo.
-fn build_with(root: &Path, more: &[&str]) -> Built {
-    let beside = root
-        .parent()
-        .expect("the workspace sits in a scratch directory");
-    let spy = beside.join("rustc-spy");
-    let log = beside.join("rustc.log");
-    fs::write(
-        &spy,
-        "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$SPY_LOG\"\nexec rustc \"$@\"\n",
-    )
-    .expect("the spying rustc");
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        fs::set_permissions(&spy, fs::Permissions::from_mode(0o755)).expect("the spy runs");
-    }
-    if log.exists() {
-        fs::remove_file(&log).expect("the old log goes");
-    }
-    let output = Command::new(std::env::var_os("CARGO").expect("cargo runs the suite"))
-        .args(["build", "--offline"])
-        .args(more)
-        .current_dir(root)
-        .env("RUSTC", &spy)
-        .env("SPY_LOG", &log)
-        .env_remove("RUSTC_WORKSPACE_WRAPPER")
-        .env_remove("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER")
-        .output()
-        .expect("cargo starts");
-    let said = String::from_utf8_lossy(&output.stderr).into_owned();
-    assert!(output.status.success(), "{said}");
-    Built {
-        said,
-        rustc: fs::read_to_string(&log).unwrap_or_default(),
-    }
-}
-
-fn wrapper_text() -> String {
-    let mut text = String::new();
-    write_wrapper(&mut text).expect("writing to a String cannot fail");
-    text
-}
-
-/// A flag the dev profile's pragmas choose, which only the wrapper puts on
-/// a rustc line.
-const A_FLAG_OF_OURS: &str = "-Zshare-generics=y";
+use harness::{
+    A_FLAG_OF_OURS,
+    WRITTEN_CONFIG,
+    build,
+    build_with,
+    scratch,
+    workspace,
+    wrapper_text,
+    write_crate,
+};
 
 #[test]
 fn the_first_build_wires_the_workspace_and_the_second_takes_the_flags() {
@@ -157,7 +42,7 @@ fn the_first_build_wires_the_workspace_and_the_second_takes_the_flags() {
     }
     assert_eq!(
         fs::read_to_string(&config).expect("the config file was written"),
-        "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
+        WRITTEN_CONFIG
     );
     assert_eq!(
         first.said.matches("in place under").count(),
@@ -216,7 +101,7 @@ fn several_members_wire_the_workspace_together_and_all_take_the_flags() {
     );
     assert_eq!(
         fs::read_to_string(&config).expect("the config file was written"),
-        "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
+        WRITTEN_CONFIG
     );
     // Nothing of a script's own is left beside the two files.
     let left: Vec<_> = fs::read_dir(root.join(".cargo"))

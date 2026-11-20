@@ -1,0 +1,50 @@
+14fa57ef fix: name no string for an id the arena did not issue
+2632b342 docs: add src changelist 202611192301-pt7z
+d6080f17 chore: lock doc changelist 202611192301-pt7z
+3da80cd7 docs: name no string for an id the arena did not issue
+c71be7f6 chore: open design round 202611192301-pt7z
+3f54e21f chore: close design round 202611192246-jute
+e5c7b93b chore: lock src changelist 202611192246-jute
+544f8fff docs: name the catalogue row in src changelist 202611192246-jute
+007f4de9 fix: stop claiming a foreign string handle resolves empty
+828d4e28 docs: write src changelist 202611192246-jute
+11c7faa0 chore: lock doc changelist 202611192246-jute
+ed1791e5 docs: regenerate the providers and str documents
+baba305d docs: say a string handle names no interner
+79c76487 docs: open round 202611192246-jute on what a foreign handle resolves to
+110ecccc chore: close design round 202611192051-ers6
+1b9a80cc chore: lock src changelist 202611192051-ers6
+492e9d4c fix: refuse a `MemoryArena` whose last id is the masked sentinel
+f79004be docs: write the source changelist that keeps ids below the sentinel
+65e72f06 chore: lock doc changelist 202611192051-ers6
+83e731cf docs: keep the arena's ids below the masked overflow sentinel
+8646d809 chore: unlock design round, deprecate src and unlock doc
+0a9dc496 chore: regenerate generated files after merge
+810e4a15 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+60512f10 fix: label the crate layers by dependency depth
+d96a2192 fix: make MemoryArena deduplicate and resolve only ids it issued
+b8920f95 research: read the canon on the api revision, placement and pieces
+18b55d72 fix: name notko's product with its carrier as a parameter
+be43d787 docs: write the source changelist for the deduplicating arena
+1689319e chore: lock doc changelist 202611192051-ers6
+bf4a29d2 docs: put the interning law on `ArenaInterner` and in `MemoryArena`
+c42ddab2 docs: open the round that makes the default interner deduplicate
+d11962c9 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+67e63ca4 feat: set a consumer's workspace up from one line with script!
+89fd7779 docs: record the expert seat on the four consumer surface asks
+3177527a docs: land the two stranded sketch records
+739b02e6 docs: land the unit-names-its-lists-only sketch and report
+252c5190 refactor: move the engine-only items out of the api crate
+07a9e9a3 bench: add the build and link bench with its first default cells
+7b1a6136 chore: configure the `commit-subject` gate
+dea557ae bench: port every bench onto the current harness
+2b137e9d docs: land the first stack audit
+0e098dc4 docs: land the second stack audit
+c5567576 bench: land the overwritten july m1 and november xeon runs
+f623ba58 bench: land the linux results of 14 november on the generated driver
+c6a00a64 research: port channel documents into the research dir
+5a64c58a fix: say nothing of dropped flags under `clippy-driver`
+638fb969 bench: land the m1 results of 14 november
+35f55e13 bench: land the m1 results of 14 november
+7cb45cd6 research: land the second stack audit
+266650fb feat: land the skip differential, memory provider and unit abort

@@ -57,18 +57,37 @@ Each tier is an independent round with its own profraw collection,
 sample-conversion tooling, and CI integration. Profile staleness
 warning (>50 commits diverged) ships with the PGO round.
 
-## hilavitkutin-config.toml schema
+## zig cc as a driver and a C compiler
 
-Skeleton writes a placeholder file. Real schema serialises the
-resolved `PragmaSet` for downstream tools (e.g. ide-helper,
-build-introspection). Follow-up round pins the TOML shape and
-adds a reader.
+Two pragmas, one in the driver group and one in the C compiler group,
+on a tool whose source is a prebuilt release checked against a digest.
+That source is a fourth kind beside the package, the component and the
+local build, and the script that fetches it lands with the pragmas.
+
+## An lld pragma
+
+The pinned toolchain links with its own lld on x86_64 Linux, so lld is
+the absence of a linker pragma there. A target whose toolchain links
+with something else gets a pragma for it when its bench arm asks.
+
+## The custom profiles in the generated cargo file
+
+The generated file has tables for dev and release. A table for
+dev-opt, profiling or ci waits on the same signal the entry on custom
+profiles above waits on.
+
+## A requirement between two scripts' sets
+
+A requirement is checked within one set. The dylib edge form in one
+crate against an LTO pragma in the workspace's set is the first case
+that would want one across two scripts; the script that claims the
+workspace could read what the others chose once they leave a record of
+it.
 
 ## Windows MSVC toolchain support
 
-DESIGN leans Linux + macOS. Windows MSVC needs its own flag-set
-mapping for the three axes. Defer until a Windows consumer
-surfaces.
+DESIGN leans Linux + macOS. Windows MSVC needs its own flags per
+pragma. Defer until a Windows consumer surfaces.
 
 ## Apple Container workflow for macOS
 

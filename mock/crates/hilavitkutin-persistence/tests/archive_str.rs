@@ -339,3 +339,20 @@ fn strings_sharing_28_bits_evict_to_different_keys() {
         Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
     }
 }
+
+/// A runtime handle the interner did not issue has no string behind it,
+/// so it has no key to evict it to: the masked overflow id of a full
+/// `MemoryArena`.
+#[test]
+#[ignore = "catalogue: evict_str stores the hash of the empty string; needs a resolve that can say it holds nothing; tracked #evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of"]
+fn evicting_an_overflow_handle_is_missing() {
+    let interner = StringInterner::new(hilavitkutin_providers::MemoryArena::<8, 2>::new());
+    let _ = interner.intern("abcd");
+    let _ = interner.intern("efgh");
+    let over = interner.intern("ijkl");
+    assert!(over.is_runtime().0);
+    match evict_str(over, &interner) {
+        Outcome::Err(e) => assert_eq!(e, PersistenceError::Missing),
+        Outcome::Ok(_) => panic!("a handle with no string behind it has no key"),
+    }
+}

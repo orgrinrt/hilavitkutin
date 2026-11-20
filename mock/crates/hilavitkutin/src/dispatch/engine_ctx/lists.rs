@@ -94,6 +94,12 @@ impl<T> ColRef<T> {
     pub const fn __write(&self) -> ColumnPtr<T> {
         self.write
     }
+
+    /// The record count of the column, which bounds a host range.
+    #[inline(always)]
+    pub(crate) const fn count(&self) -> USize {
+        self.count
+    }
 }
 
 impl<T> Copy for ColRef<T> {}
