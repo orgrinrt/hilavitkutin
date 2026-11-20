@@ -31,8 +31,8 @@ use notko::Maybe;
 /// [`ThreadPoolApi`]: hilavitkutin_api::ThreadPoolApi
 pub trait InternerApi: 'static {
     /// Intern a string. Const-table short-circuit applies before
-    /// the arena lookup.
-    fn intern(&self, s: &str) -> Str; // lint:allow(no-bare-string) reason: interner boundary; the input is the &str the consumer passes; tracked: #72
+    /// the arena lookup. `Maybe::Isnt` when the arena has no room for it.
+    fn intern(&self, s: &str) -> Maybe<Str>; // lint:allow(no-bare-string) reason: interner boundary; the input is the &str the consumer passes; tracked: #72
 
     /// Resolve a handle back to a string. Returns `Maybe::Isnt` for a
     /// const handle with no string behind it; a runtime id the arena
@@ -64,7 +64,7 @@ where
     fn intern(
         &self,
         s: &str, // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
-    ) -> Str {
+    ) -> Maybe<Str> {
         StringInterner::intern(self, s)
     }
 
@@ -96,13 +96,13 @@ where
 /// repeat spends neither bytes nor an entry slot.
 ///
 /// On capacity overflow (out of bytes or out of entry slots),
-/// `arena_intern` returns sentinel id `u32::MAX`. `arena_resolve`
-/// reads nothing for any id at or past the live entry count, the
-/// sentinel among them once `StringInterner` masks it to the 28-bit
-/// id field, and answers it with `""`, which aliases `""` once the arena
-/// holds it. A handle another arena issued is not told apart from one of
-/// its own. `ENTRIES` of 2^28 or more, whose last id would equal the
-/// masked sentinel, fails the build at [`MemoryArena::new`].
+/// `arena_intern` returns sentinel id `u32::MAX`, the arena's refusal,
+/// which `StringInterner` answers with `Maybe::Isnt` and builds no handle
+/// from. `arena_resolve` reads nothing for any id at or past the live
+/// entry count, and answers it with `""`, which aliases `""` once the
+/// arena holds it. A handle another arena issued is not told apart from
+/// one of its own. `ENTRIES` of 2^28 or more fails the build at
+/// [`MemoryArena::new`].
 pub struct MemoryArena<
     const BYTES: usize,
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array sizes; rust grammar requires usize; tracked: #121
@@ -124,13 +124,13 @@ impl<
     const ENTRIES: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; tracked: #121
 > MemoryArena<BYTES, ENTRIES>
 {
-    /// Every issued id stays below 2^28 - 1, the id the `u32::MAX`
-    /// sentinel becomes once masked into a `Str`; at 2^28 entries the
-    /// last slot would carry the sentinel's own id, and past it ids
-    /// alias each other.
+    /// Every issued id stays below 2^28 - 1, one short of what the 28-bit
+    /// `Str` id field holds: the bound was set when the sentinel was
+    /// masked into that field, and widening it is ticket
+    /// `the_memory_arena_s_entry_bound_is_one_short_of_the_28_bit_id_field`.
     const ENTRIES_FIT_THE_ID: () = assert!(
         ENTRIES < 1 << 28, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the const-generic entry cap against the 28-bit id width; tracked: #121
-        "MemoryArena: ENTRIES of 2^28 or more reach the masked overflow sentinel's 28-bit Str id; use at most 268435455 entries",
+        "MemoryArena: use at most 268435455 entries, one short of the 28-bit Str id field",
     );
 
     /// Construct an empty arena. Buffer initialised to zero, entry
@@ -262,9 +262,9 @@ impl<
         id: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
     ) -> &str { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: ArenaInterner trait method signature; tracked: #72
         let idx = id as usize; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: u32 id widens to usize for array index; tracked: #121
-        // Only ids below the live count are read. The sentinel arrives
-        // masked to 28 bits through `Str`, so it is caught by the count
-        // rather than by a value compare.
+        // Only ids below the live count are read. The sentinel never
+        // reaches a `Str`; an id another arena issued is caught by the
+        // count.
         if id == SENTINEL || idx >= self.count.get().0 {
             // FIXME(evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of): the empty string stands in for nothing held; a `&str` return cannot say the id was not issued.
             return "";

@@ -29,10 +29,13 @@ impl InterningDomain for StrDomain {
 
 impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
     #[rustfmt::skip]
-    fn intern(&self, value: &str) -> Sym<Standard> { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the interning boundary; tracked: #72
-        // Inherent `intern` (returns Str) shadows this trait method, so this is
-        // not a recursive call.
-        self.intern(value).as_sym()
+    fn intern(&self, value: &str) -> Maybe<Sym<Standard>> { // lint:allow(no-bare-string) reason: the string-domain Value is str; this is the interning boundary; tracked: #72
+        // Inherent `intern` (returns Maybe<Str>) shadows this trait method,
+        // so this is not a recursive call.
+        match self.intern(value) {
+            Maybe::Is(h) => Maybe::Is(h.as_sym()),
+            Maybe::Isnt => Maybe::Isnt,
+        }
     }
 
     #[rustfmt::skip]
@@ -50,15 +53,17 @@ impl<A: ArenaInterner> Interner<StrDomain> for StringInterner<A> {
 ///
 /// The arena keeps the interning law for runtime strings: equal
 /// strings get one id, so they give equal handles through
-/// `StringInterner`. Resolving an id at or past the arena's live count
-/// reads nothing outside the arena's storage; an overflow id masked into
-/// the 28-bit handle lands there. What it returns for such an id is not
+/// `StringInterner`. An id of 2^28 or more is the arena's refusal: it
+/// has no room for a string it does not hold, and `StringInterner`
+/// answers it with `Maybe::Isnt`. Resolving an id at or past the arena's
+/// live count reads nothing outside the arena's storage. What it returns for such an id is not
 /// part of the contract and may equal a held string, the empty one.
 /// A `Str` names no interner, so a handle carried to another interner
 /// resolves to whatever that interner holds at its id.
 pub trait ArenaInterner {
     /// Return the 28-bit ID of `s`: the ID already given to an equal
-    /// string, or a new one with `s` stored.
+    /// string, or a new one with `s` stored, or an ID of 2^28 or more
+    /// when there is no room for `s`.
     fn arena_intern(&self, s: &str) -> u32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-bare-string) reason: interner boundary: &str is the input string the arena wraps; u32 is the 28-bit id width; tracked: #72
     /// Resolve a previously-returned arena ID back to the stored string.
     /// An ID at or past the live count reads nothing outside the arena.
@@ -87,27 +92,23 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     /// Intern a string. Checks the const linker section first; on miss,
     /// falls back to the arena and tags the result as runtime. A runtime
     /// string is deduplicated by the arena, as `ArenaInterner` requires.
+    /// `Maybe::Isnt` when the arena has no room for it, which a const
+    /// string never meets.
     #[rustfmt::skip]
-    pub fn intern(&self, s: &str) -> Str { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
+    pub fn intern(&self, s: &str) -> Maybe<Str> { // lint:allow(no-bare-string) reason: interner boundary: incoming &str; tracked: #72
         if let Maybe::Is(h) = lookup_const_by_value(s) {
-            return h;
+            return Maybe::Is(h);
         }
-        let id = self.arena.arena_intern(s);
-        // Bits::from_raw is transparent; the 28-bit invariant is enforced by
-        // StrLayout::with_id (bitfield setter masks to field width). See the
-        // `make_masks_to_28_bits` test in tests/handle.rs for the contract.
-        Str::__runtime(Bits::<28, Hot>::from_raw(id))
+        runtime_handle(self.arena.arena_intern(s))
     }
 
     /// Intern a `'static` string. Same semantics as `intern`; the
     /// arena may be able to avoid copying.
-    pub fn intern_static(&self, s: &'static str) -> Str {
+    pub fn intern_static(&self, s: &'static str) -> Maybe<Str> {
         if let Maybe::Is(h) = lookup_const_by_value(s) {
-            return h;
+            return Maybe::Is(h);
         }
-        let id = self.arena.arena_intern(s);
-        // Same 28-bit invariant as `intern`; enforced by StrLayout::with_id.
-        Str::__runtime(Bits::<28, Hot>::from_raw(id))
+        runtime_handle(self.arena.arena_intern(s))
     }
 
     /// Resolve a handle back to a string.
@@ -115,8 +116,7 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
     /// Const handles delegate to the linker-section table; a
     /// const-table miss returns `Maybe::Isnt`. Runtime handles
     /// resolve via the arena and come back as `Maybe::Is`, an id
-    /// the arena did not issue (the masked overflow id among them)
-    /// included.
+    /// the arena did not issue included.
     #[rustfmt::skip]
     pub fn resolve(&self, s: Str) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary: resolved &str; tracked: #72
         if s.is_const().0 {
@@ -126,6 +126,19 @@ impl<A: ArenaInterner> StringInterner<A> { // lint:allow(no-alloc) reason: inter
             Maybe::Is(self.arena.arena_resolve(s.id().to_raw()))
         }
     }
+}
+
+/// The runtime handle for an arena id, or `Maybe::Isnt` for the arena's
+/// refusal, an id of 2^28 or more. No handle is built from a refusal, so
+/// every runtime handle carries an id the arena issued.
+#[rustfmt::skip]
+fn runtime_handle(id: u32) -> Maybe<Str> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the arena id width is the ArenaInterner contract (u32); tracked: #72
+    if id >> 28 != 0 {
+        return Maybe::Isnt;
+    }
+    // The check above keeps the id inside the 28-bit field, so
+    // Bits::from_raw carries it whole.
+    Maybe::Is(Str::__runtime(Bits::<28, Hot>::from_raw(id)))
 }
 
 /// Linear scan for a const-section entry matching `s` (by hash, then

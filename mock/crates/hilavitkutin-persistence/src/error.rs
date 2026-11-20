@@ -15,4 +15,6 @@ pub enum PersistenceError {
     Invariant,
     /// Expected resource not present.
     Missing,
+    /// The interner had no room for a string being injected.
+    Full,
 }

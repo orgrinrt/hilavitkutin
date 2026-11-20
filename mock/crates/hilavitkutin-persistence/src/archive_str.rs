@@ -50,7 +50,8 @@ pub fn evict_str<A: ArenaInterner>(
 /// only if the string it resolves to hashes back to the whole key, so a
 /// handle that shares 28 bits with the key and nothing else is not taken for
 /// the string. Otherwise looks up the bytes in `string_table` and interns
-/// them through the arena, returning a runtime handle.
+/// them through the arena, returning a runtime handle, or
+/// `PersistenceError::Full` when the interner has no room for them.
 pub fn inject_str<A: ArenaInterner>(
     content_hash: ContentHash,
     interner: &StringInterner<A>,
@@ -73,5 +74,8 @@ pub fn inject_str<A: ArenaInterner>(
         Ok(s) => s,
         Err(_) => return Outcome::Err(PersistenceError::Archive),
     };
-    Outcome::Ok(interner.intern(s))
+    match interner.intern(s) {
+        Maybe::Is(h) => Outcome::Ok(h),
+        Maybe::Isnt => Outcome::Err(PersistenceError::Full),
+    }
 }

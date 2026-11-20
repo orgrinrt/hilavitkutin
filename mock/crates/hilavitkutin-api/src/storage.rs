@@ -43,14 +43,15 @@ pub trait ColumnStorage {
     /// Reserve column `id` for `len` records of scalar `T`.
     ///
     /// Allocates through the bound `MemoryProvider`, 64-byte aligned,
-    /// stride `size_of::<T>()`. Re-reserving an existing `id` resizes
-    /// it. Returns `Outcome::Err` when the backing allocation fails.
+    /// stride `size_of::<T>()`. Re-reserving an existing `id` gives its
+    /// block back and takes a new one; no record is carried over.
+    /// Returns `Outcome::Err` when the backing allocation fails.
     fn reserve<T: ColumnValue>(&mut self, id: StoreId, len: USize) -> Outcome<(), Self::Error>;
 
     /// Base pointer of column `id`. Stride is `size_of::<T>()`.
     ///
     /// Raw, not a slice (R6). The pointer is valid for `count(id)`
-    /// records until a matching `release` or a resizing `reserve`.
+    /// records until a `release` or a `reserve` of the same `id`.
     ///
     /// # Safety
     ///
@@ -74,8 +75,10 @@ pub trait ColumnStorage {
     /// Advisory release of column `id`.
     ///
     /// Reader-count model: an impl decrements on fiber completion and
-    /// frees the column at zero. A no-op on the naive placeholder; the
-    /// columnar engine reclaims arena space.
+    /// frees the column at zero. An impl may give the column's block
+    /// back: every pointer the column handed out is dead after it, and
+    /// the id reads as unreserved, count zero, until it is reserved
+    /// again.
     fn release(&mut self, id: StoreId);
 }
 

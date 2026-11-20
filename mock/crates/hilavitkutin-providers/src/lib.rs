@@ -30,7 +30,7 @@ pub use crate::adapt_ema::{BlendFactor, NORM_1_OVER_8, NORM_7_OVER_8, ema_update
 pub use crate::adapt_kits::{OffAdaptKit, StandardAdaptKit};
 pub use crate::adapt_wu::AdaptWu;
 pub use crate::interner::{HasInterner, InternerApi, InternerKit, MemoryArena, default_interner};
-pub use crate::memory::StaticBumpMemory;
+pub use crate::memory::{StaticBumpMemory, StaticFreeListMemory};
 pub use crate::metrics::{
     CacheResidencyMetrics,
     ChangeClassMetrics,
