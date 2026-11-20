@@ -1699,7 +1699,10 @@ pub enum HostRefused {
 
 The copy half of the R2 host path: records move into a built scheduler's
 column and out of it between frames, without the host reaching into the
-bindings. A store is named by its marker type, `Column<T>` or
+bindings. The other half, `evict` and `inject`, which hand a column's
+reservation out of the engine and take one in, is not built; ticket
+`the_zero_copy_half_of_the_host_path_evict_and_inject_is_not` holds it. A
+store is named by its marker type, `Column<T>` or
 `Buffered<T, M>`, and found through `ColSelector`, the lookup a context
 projection walks, so the host and a unit resolve one store the same way. The
 bound is `ColMember` with `Kept`, which only those two markers carry, so an
@@ -1707,18 +1710,16 @@ bound is `ColMember` with `Kept`, which only those two markers carry, so an
 
 `import` copies `records` into the store from record `at`. A buffered column
 takes the copy on both of its reservations, so the two agree over the imported
-range. The frozen copy is the one the next pass reads. The live copy has no
-reader yet: the boundary carries a buffered store over only after a pass wrote
-it, and every pass that writes one writes each of its records, since `map`
-covers the unit's whole record range and the positional `write` reaches only a
-plain `Column<T>`. It is there for a write that covers part of a buffered
-store, which a `Snapshot` boundary would otherwise copy, stale outside the
-written records, over the import. It then marks
+range. The frozen copy is the one the next pass reads. The live copy keeps the
+import across a pass that writes part of the store: a unit's `execute` runs
+once per window and may call `map` in some windows and not in others, and the
+boundary after that pass carries the whole live side over, by the copy under
+`Snapshot` and by the flip under `Exchange`. Without the import on the live
+side, the records of every window the pass left would lose it there. It then marks
 the store changed for the next frame through the bit `mark_dirty` sets, so the
 units reading the store and their cone run. That mark is of the whole store:
 the per-morsel generation counters the canon asks for are not built, and a
-range mark waits on them, so no method that takes a range and marks the whole
-store is offered.
+range mark waits on them, so no `mark_dirty` over a range is offered.
 
 `dump` pushes records `at` to `at + len` into a `BulkPush` sink, read from the
 side the next pass reads, which on a buffered column is the one the last
