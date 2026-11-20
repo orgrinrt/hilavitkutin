@@ -50,16 +50,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arvo-comb"
-version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e92ad2b8176c2177d72a9cffa161b7b92e"
-dependencies = [
- "arvo",
- "arvo-bitmask",
- "arvo-tensor",
-]
-
-[[package]]
 name = "arvo-graph"
 version = "0.1.0"
 source = "git+ssh://git@github.com/orgrinrt/arvo.git?rev=1b2796e92ad2b8176c2177d72a9cffa161b7b92e#1b2796e92ad2b8176c2177d72a9cffa161b7b92e"
@@ -203,7 +193,6 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bitmask",
- "arvo-comb",
  "arvo-graph",
  "arvo-sparse",
  "arvo-spectral",
@@ -223,7 +212,6 @@ name = "hilavitkutin-api"
 version = "0.1.0"
 dependencies = [
  "arvo",
- "arvo-bitmask",
  "arvo-tensor",
  "hilavitkutin-build",
  "hilavitkutin-ctx",
@@ -277,7 +265,6 @@ dependencies = [
 name = "hilavitkutin-extensions"
 version = "0.1.0"
 dependencies = [
- "arvo",
  "hilavitkutin-build",
  "hilavitkutin-linking",
  "notko",
@@ -324,7 +311,6 @@ name = "hilavitkutin-linking"
 version = "0.1.0"
 dependencies = [
  "arvo",
- "arvo-bits",
  "hilavitkutin-build",
  "libc",
  "notko",
@@ -351,7 +337,6 @@ name = "hilavitkutin-providers"
 version = "0.1.0"
 dependencies = [
  "arvo",
- "arvo-bits",
  "arvo-tensor",
  "hilavitkutin",
  "hilavitkutin-api",

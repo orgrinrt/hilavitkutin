@@ -9,7 +9,6 @@ repository.workspace = true
 [dependencies]
 hilavitkutin-linking.workspace = true
 notko.workspace = true
-arvo.workspace = true
 
 
 [features]
