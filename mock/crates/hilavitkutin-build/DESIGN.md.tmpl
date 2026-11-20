@@ -359,7 +359,8 @@ script found, each a `ToolPath` of a tool and where it is, from which
 the walk makes every member its `Written`. `each_tool` is the walk
 that hands over every member's tool, and `writes_flags` asks a set at
 its site whether any member writes a flag, which is what the wiring's
-notices turn on.
+notices turn on. `write_set_config` is the walk that writes the cargo
+configuration of every member of one set at one site.
 
 `PragmaSet` is the folded value of a set, the mask a `BuildConfig`
 carries, built by `PragmaSet::of::<S>()` and read by `contains::<P>()`.
@@ -382,10 +383,14 @@ Nothing changes one: a set is changed by naming another type.
 | `SharedGenerics` | `-Zshare-generics=y`. Reduces link time in debug builds | Rustc wrapper |
 | `LoopFusion` | Fuse adjacent loops. EXPERIMENTAL. Not in defaults. Benchmark before enabling | Rustc wrapper |
 | `MimallocAllocator` | Recommends mimalloc. Consumer sets #[global_allocator] | Advisory |
+| `ChecksumFreshness` | Cargo decides whether a file changed by its content and not by its time, so a tree whose files got new times and the same content rebuilds nothing. Not in defaults | Generated config |
 
 `MathPeephole` requires `All<(FastMath,)>` and `Profiling` requires
 `Any<(Pgo, Bolt)>`. `ParallelCodegen` takes its count as a const
-parameter and has one bit whatever the count.
+parameter and has one bit whatever the count. `ChecksumFreshness` is
+of the group `Free` and of workspace reach. Its one key,
+`unstable.checksum-freshness = true`, belongs to no profile and is
+written once, by the first set that holds the pragma.
 
 **The seven build choices.** Each is a group, with one pragma per
 value that differs from the toolchain's own. A group with no pragma in
@@ -445,7 +450,8 @@ for that target by a change that cites the cell's run directory where
 the default is declared.
 
 Not in any default: Polly (requires special LLVM), BuildStd (build
-time), LoopFusion (experimental).
+time), LoopFusion (experimental), ChecksumFreshness (cargo's flag for
+it is unstable).
 
 ## Reach
 
@@ -471,7 +477,10 @@ whose it is. Where the file is this crate's and holds another text it
 is moved into place. `write_generated`
 writes its text: a first line that names the crate it was written for,
 then every key the workspace's pragmas write, for the `dev` and the
-`release` profile. A key that belongs to no profile is in the file
+`release` profile, each set's through `write_set_config`. A caller
+that builds without the generated file, a bench of the build itself,
+hands the same lines to cargo one by one as `--config`, since a dotted
+key with its value is the form that option takes. A key that belongs to no profile is in the file
 once: the pragma that writes it is told through its `Shared` when a
 profile before this one has written it, and one key twice is a file
 cargo cannot read, which stops every build before any script runs. So
@@ -633,6 +642,39 @@ the tool's, and none of the outer build's wrapper or flags. Where the
 answer is to refuse, the script prints the text of `write_refusal` as
 a `cargo::error`.
 
+## The linker of a set
+
+A set is linked by one linker, and the crate answers which.
+`linker_of::<S>()` answers a `Linker`: `Linker::Toolchain` where the
+set holds no pragma of `LinkerGroup`, else `Linker::Named` with the
+pragma's name and the mark its tool leaves in `.comment`, the `mark`
+of the first row of its `NEEDS`, which is nothing for `Bfd`: GNU ld
+leaves none. `linker_named` answers the same from a name, `toolchain`
+or a pragma's name, and nothing for any other. It is for a reader that
+has a recorded name and no type. `Linker::name` is the name
+`linker_named` takes back.
+
+`Linker::leaves` says whether a mark read from an executable is that
+linker's. A named linker with a mark leaves a text that starts with
+it. A named linker with none leaves nothing. The toolchain's own
+leaves exactly the mark the caller worked out for it and hands in.
+
+The toolchain's own linker differs by target, and rustc says which in
+its description of the target, the text `--print target-spec-json`
+prints. `ToolchainLinker::of` reads that text:
+`ToolchainLinker::RustLld` where the linker flavor is an lld one and
+`link-self-contained` names the linker, else `ToolchainLinker::Other`
+with the flavor as the text has it. The crate reads the two fields it
+needs by searching the text and parses no JSON. `rust_lld_mark` takes
+the first line `rust-lld` printed for `--version` and answers a
+`RustLldMark`, which displays as `Linker: ` and the version with the
+LLVM commit it was built from, or nothing where the line is not
+lld's. For any other toolchain linker the crate has no mark, and a
+caller that needs one refuses.
+
+The running of rustc and of `rust-lld` stays the caller's, as every
+looking does.
+
 ## LLVM pass plugin (T4 §Q4c)
 
 A ~40-line C++ file compiled against LLVM headers. Registers passes
@@ -680,6 +722,7 @@ yet find, and their pragmas write nothing meanwhile:
 | `Pgo`, `Bolt`, `Profiling` | nothing | merged profiles, `llvm-bolt` |
 | `ExpandedLto` | its profile keys, in the generated cargo file of the script that claims the workspace | nothing |
 | `BuildStd` | nothing | the consumer's Cargo profile |
+| `ChecksumFreshness` | its one key, in the generated cargo file or as a `--config` line | nothing |
 
 **LoopOptimization:**
 - `-Z llvm-plugins=<path>/polka-passes.so` (once found)
