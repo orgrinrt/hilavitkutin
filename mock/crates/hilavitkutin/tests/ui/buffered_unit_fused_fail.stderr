@@ -1,0 +1,103 @@
+error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:61:22
+   |
+61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+   |                      ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
+   |
+note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:40:17
+   |
+40 |     type Read = Bare;
+   |                 ^^^^
+   = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
+              found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
+   = note: required for `Raise` to implement `Link`
+
+error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:61:22
+   |
+61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+   |                      ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
+   |
+note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:41:18
+   |
+41 |     type Write = Bare;
+   |                  ^^^^
+   = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
+              found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
+   = note: required for `Raise` to implement `Link`
+
+error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+   |
+61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+   |                                ^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
+   |
+note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:40:17
+   |
+40 |     type Read = Bare;
+   |                 ^^^^
+   = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
+              found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
+   = note: required for `Raise` to implement `Link`
+   = note: required for `WuCons<ChainWu<OpCons<Raise, OpNil<_>>>, WuNil>` to implement `RunFiber<ColumnBinding<A, BindingNil, Snapshot>, Cons<(hilavitkutin_api::Empty, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+  --> src/scheduler/run_fused.rs
+   |
+   |     pub fn run_fused<W2>(&mut self) -> Cfg::Out
+   |            --------- required by a bound in this associated function
+...
+   |             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+
+error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+   |
+61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+   |                                ^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
+   |
+note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
+  --> tests/ui/buffered_unit_fused_fail.rs:41:18
+   |
+41 |     type Write = Bare;
+   |                  ^^^^
+   = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
+              found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
+   = note: required for `Raise` to implement `Link`
+   = note: required for `WuCons<ChainWu<OpCons<Raise, OpNil<_>>>, WuNil>` to implement `RunFiber<ColumnBinding<A, BindingNil, Snapshot>, Cons<(hilavitkutin_api::Empty, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+  --> src/scheduler/run_fused.rs
+   |
+   |     pub fn run_fused<W2>(&mut self) -> Cfg::Out
+   |            --------- required by a bound in this associated function
+...
+   |             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+
+error[E0277]: the trait bound `BindingNil: ColSelector<_, _>` is not satisfied
+  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+   |
+61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+   |                                ^^^^^^^^^ the trait `ColSelector<_, _>` is not implemented for `BindingNil`
+   |
+   = help: the following other types implement trait `ColSelector<T, Index, K>`:
+             `AccumBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+             `ColPtrCons<T, Tail, K>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::Here, K>`
+             `ColPtrCons<U, Tail, J>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+             `ColumnBinding<T, Tail, K>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::Here, K>`
+             `ColumnBinding<U, Tail, J>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+             `ResourceBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+             `VirtualBinding<U, Tail>` implements `ColSelector<T, hilavitkutin::dispatch::engine_ctx::There<I>, K>`
+   = note: required for `ColumnBinding<A, BindingNil, Snapshot>` to implement `ColSelector<_, hilavitkutin::dispatch::engine_ctx::There<_>>`
+   = note: required for `ColumnBinding<A, BindingNil, Snapshot>` to implement `ColProject<Cons<Column<_>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>>`
+   = note: required for `WuCons<ChainWu<OpCons<Raise, OpNil<_>>>, WuNil>` to implement `RunFiber<ColumnBinding<A, BindingNil, Snapshot>, Cons<(hilavitkutin_api::Empty, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, Cons<hilavitkutin::dispatch::engine_ctx::There<_>, hilavitkutin_api::Empty>, hilavitkutin_api::Empty, hilavitkutin_api::Empty, hilavitkutin::dispatch::engine_ctx::Here), hilavitkutin_api::Empty>>`
+note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
+  --> src/scheduler/run_fused.rs
+   |
+   |     pub fn run_fused<W2>(&mut self) -> Cfg::Out
+   |            --------- required by a bound in this associated function
+...
+   |             RunFiber<<Vals as BindingsFor>::Bindings, W2>,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`

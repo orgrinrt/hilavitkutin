@@ -14,7 +14,7 @@ mod common;
 mod fixed_workers;
 mod stable_provider;
 
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use arvo::USize;
 use fixed_workers::FixedWorkers;
@@ -367,13 +367,15 @@ fn an_empty_import_marks_nothing() {
     );
 }
 
-// A buffered column, in both modes: each frame imports, runs a unit raising
-// every record by one, and dumps. Exchange trades the two reservations at
-// every boundary, so the even and the odd frame read different sides. An
-// import that missed the frozen side fails here on either mode. One that
-// missed the live side reads the same, since `Raise` writes every record and
-// the live copy has no reader until a write covers part of a buffered store,
-// which no unit can make yet (the design's `Host import and dump`).
+// A buffered column, in both modes. Exchange trades the two reservations at
+// every boundary, so the even and the odd frame read different sides, and an
+// import that missed the frozen side fails the every-frame test on either mode,
+// under `run` and `run_parallel`; the fused entry takes plain columns only
+// (`tests/ui/buffered_unit_fused_fail.rs`). The live copy is what keeps an
+// import across a pass that writes part of the store: `execute` runs once per
+// window and may call `map` in some windows only, and the boundary after that
+// pass carries the whole live side over. An import that missed the live side
+// fails the partial-pass test.
 macro_rules! buffered {
     ($name:ident, $mode:ty) => {
         mod $name {
@@ -402,15 +404,53 @@ macro_rules! buffered {
                 }
             }
 
+            // Raises the records of the first window it is handed in a frame
+            // and leaves every other window unwritten.
+            #[derive(Copy, Clone)]
+            struct FirstWindow(&'static AtomicUsize, &'static AtomicBool);
+
+            impl BuilderInput for FirstWindow {
+                type Dispatch = UnitDispatch<Self>;
+                type Init = Self;
+            }
+
+            impl WorkUnit<Always> for FirstWindow {
+                type Ctx<'frame> = EngineCtx<'frame, Bare, Bare, SnapNil, Cols, Cols, AccPtrNil>;
+                type Hint = (Immediate, Atomic, Normal);
+                type Read = Bare;
+                type Write = Bare;
+
+                fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+                    self.0.fetch_add(1, Ordering::Relaxed);
+                    if self.1.swap(false, Ordering::Relaxed) {
+                        ctx.each().map(|read| rec![A(read.get(Col::new()).0 + 1)]);
+                    }
+                }
+            }
+
+            fn frame_values(frame: u32) -> [u32; 4] {
+                [frame * 10, frame * 10 + 1, frame * 10 + 2, frame * 10 + 3]
+            }
+
+            fn raised(values: &[u32; 4]) -> Vec<A> {
+                values.iter().map(|v| A(v + 1)).collect()
+            }
+
+            macro_rules! built {
+                () => {
+                    Scheduler::builder()
+                        .with(Col::start_from(A(0)))
+                        .with(Raise)
+                        .build(store(), USize(4))
+                        .unwrap_or_else(|_| panic!("build should succeed"))
+                };
+            }
+
             #[test]
             fn every_frame_reads_the_import_on_whichever_side_is_frozen() {
-                let mut scheduler = Scheduler::builder()
-                    .with(Col::start_from(A(0)))
-                    .with(Raise)
-                    .build(store(), USize(4))
-                    .unwrap_or_else(|_| panic!("build should succeed"));
+                let mut scheduler = built!();
                 for frame in 1 ..= 4u32 {
-                    let values = [frame * 10, frame * 10 + 1, frame * 10 + 2, frame * 10 + 3];
+                    let values = frame_values(frame);
                     assert!(matches!(
                         scheduler.import::<Col, _, _>(USize(0), &a_records(&values)),
                         Outcome::Ok(())
@@ -421,9 +461,76 @@ macro_rules! buffered {
                         scheduler.dump::<Col, _, _>(USize(0), USize(4), &mut sink),
                         Outcome::Ok(())
                     ));
-                    let want: Vec<A> = values.iter().map(|v| A(v + 1)).collect();
-                    assert_eq!(sink.got, want, "frame {frame}");
+                    assert_eq!(sink.got, raised(&values), "run, frame {frame}");
                 }
+            }
+
+            #[test]
+            fn every_frame_reads_the_import_under_run_parallel() {
+                let pool = FixedWorkers::<4>;
+                let scheduler = built!();
+                let mut scheduler = core::pin::pin!(scheduler);
+                for frame in 1 ..= 4u32 {
+                    let values = frame_values(frame);
+                    // SAFETY: not established. Between frames the workers are
+                    // parked, but each still holds a shared borrow of the
+                    // scheduler across the `&mut` taken here, the aliasing Miri
+                    // reports for `replace_value`.
+                    // FIXME(placeholders_tagged_74e2b9918149): the parked workers' shared borrow aliases this `&mut`.
+                    let parked = unsafe { scheduler.as_mut().get_unchecked_mut() };
+                    assert!(matches!(
+                        parked.import::<Col, _, _>(USize(0), &a_records(&values)),
+                        Outcome::Ok(())
+                    ));
+                    assert!(matches!(
+                        scheduler.as_mut().run_parallel(&pool),
+                        Outcome::Ok(())
+                    ));
+                    let mut sink = Collect::new();
+                    assert!(matches!(
+                        scheduler
+                            .as_ref()
+                            .dump::<Col, _, _>(USize(0), USize(4), &mut sink),
+                        Outcome::Ok(())
+                    ));
+                    assert_eq!(sink.got, raised(&values), "run_parallel, frame {frame}");
+                }
+            }
+
+            #[test]
+            fn an_import_outlives_a_pass_that_writes_one_window() {
+                const RECORDS: usize = 20_000;
+                let calls = counter();
+                let first: &'static AtomicBool = Box::leak(Box::new(AtomicBool::new(true)));
+                let mut scheduler = Scheduler::builder()
+                    .with(Col::start_from(A(0)))
+                    .with(FirstWindow(calls, first))
+                    .build(store(), USize(RECORDS))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let windows = calls.load(Ordering::Relaxed);
+                assert!(
+                    windows >= 2,
+                    "the premise: {windows} windows over {RECORDS} records"
+                );
+                let imported: Vec<A> = (0 .. RECORDS).map(|_| A(100)).collect();
+                assert!(matches!(
+                    scheduler.import::<Col, _, _>(USize(0), &imported),
+                    Outcome::Ok(())
+                ));
+                first.store(true, Ordering::Relaxed);
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let mut sink = Collect::new();
+                assert!(matches!(
+                    scheduler.dump::<Col, _, _>(USize(0), USize(RECORDS), &mut sink),
+                    Outcome::Ok(())
+                ));
+                assert_eq!(sink.got[0], A(101), "the window the pass wrote");
+                assert_eq!(
+                    sink.got[RECORDS - 1],
+                    A(100),
+                    "a window the pass left keeps the import"
+                );
             }
         }
     };
@@ -487,8 +594,11 @@ fn run_and_run_parallel_and_run_fused_give_one_history() {
     let parallel = two_units!(4, counter(), counter());
     let mut parallel = core::pin::pin!(parallel);
     let got = history(|v| {
-        // SAFETY: between frames every worker is parked, and the import moves
-        // nothing out of the pinned scheduler.
+        // SAFETY: not established. Between frames every worker is parked and
+        // the import moves nothing out of the pinned scheduler, but each worker
+        // still holds a shared borrow of it across the `&mut` taken here, the
+        // aliasing Miri reports for `replace_value`.
+        // FIXME(placeholders_tagged_74e2b9918149): the parked workers' shared borrow aliases this `&mut`.
         let parked = unsafe { parallel.as_mut().get_unchecked_mut() };
         assert!(matches!(
             parked.import::<Column<A>, _, _>(USize(0), &a_records(v)),

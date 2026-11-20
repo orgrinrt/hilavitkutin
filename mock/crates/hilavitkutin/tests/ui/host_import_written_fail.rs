@@ -1,4 +1,4 @@
-// `Written<Column<A>>` carries `ColMember` and is refused as the store of an import by `Kept` alone.
+// `Written<Column<A>>` carries `ColMember` and is refused as the store of an import by `Kept`, and by the lookup, which finds no store of that marker.
 
 include!("host_import_body.in");
 
