@@ -22,11 +22,11 @@ Round topic `202611200201-yszg_topic.memory-the-consumer-takes-back.md`.
 
 ### 4. A full interner refuses, and the caller sees it
 
-`mock/crates/hilavitkutin-sym/DESIGN.md.tmpl`, "`Interner`, the dedup-and-resolve producer": `intern` returns `Outcome<Sym<D::Shape>, InternRefused>`. `InternRefused` is the sym crate's refusal of an intern, with one case, `Full`: the producer has no room left for a value it does not hold. A value already held is never refused.
+`mock/crates/hilavitkutin-sym/DESIGN.md.tmpl`, "`Interner`, the dedup-and-resolve producer": `intern` returns `Maybe<Sym<D::Shape>>`, `Maybe::Isnt` when the producer has no room left for a value it does not hold, the shape `Generator::mint` already gives its exhaustion. A value already held is never refused.
 
-`mock/crates/hilavitkutin-str/DESIGN.md.tmpl`: `StringInterner::intern` and `intern_static` return `Outcome<Str, InternRefused>`. The `ArenaInterner` contract says an id of 2^28 or more is the arena's refusal, which `MemoryArena`'s sentinel is; `StringInterner` returns `Full` for it and never builds a handle from it. `IntoStr::into_str` returns the same outcome, a `Str` passing through as `Ok`. The list item naming the interner's contract reads `intern(&str) -> Outcome<Str, InternRefused>`.
+`mock/crates/hilavitkutin-str/DESIGN.md.tmpl`: `StringInterner::intern` and `intern_static` return `Maybe<Str>`. The `ArenaInterner` contract says an id of 2^28 or more is the arena's refusal, which `MemoryArena`'s sentinel is; `StringInterner` returns `Maybe::Isnt` for it and never builds a handle from it. `IntoStr::into_str` returns the same, a `Str` passing through as `Maybe::Is`. The list item naming the interner's contract reads `intern(&str) -> Maybe<Str>`.
 
-`mock/crates/hilavitkutin-providers/DESIGN.md.tmpl`: `InternerApi::intern` returns the same outcome. The `MemoryArena` paragraph on capacity overflow says the sentinel reaches `StringInterner` and is refused there, so no handle carries it; the build check on `ENTRIES` against 2^28 stays, since an issued id must stay below the refusal.
+`mock/crates/hilavitkutin-providers/DESIGN.md.tmpl`: `InternerApi::intern` returns the same. The `MemoryArena` paragraph on capacity overflow says the sentinel reaches `StringInterner` and is refused there, so no handle carries it; the build check on `ENTRIES` against 2^28 stays, since an issued id must stay below the refusal.
 
 `mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl`: inject's intern can be refused, and `inject_str` answers a refusal with `PersistenceError::Full`, a new case: the interner had no room for the string.
 

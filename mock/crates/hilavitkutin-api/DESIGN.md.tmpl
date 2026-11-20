@@ -769,7 +769,8 @@ pub trait ColumnStorage {
 
     // Reserve column `id` for `len` records of scalar `T`, 64-byte
     // aligned, stride size_of::<T>(). Allocates through the bound
-    // MemoryProvider. Re-reserving an existing id resizes it.
+    // MemoryProvider. Re-reserving an existing id gives its block back
+    // and takes a new one; no record is carried over.
     fn reserve<T: ColumnValue>(&mut self, id: StoreId, len: USize)
         -> Outcome<(), Self::Error>;
 
@@ -782,7 +783,10 @@ pub trait ColumnStorage {
     unsafe fn column_ptr_mut<T: ColumnValue>(&self, id: StoreId) -> *mut T;
 
     fn count(&self, id: StoreId) -> USize;        // record count
-    fn release(&mut self, id: StoreId);           // advisory, reader-count model
+    // Advisory, reader-count model. May give the column's block back:
+    // every pointer the column handed out is dead after it, and the id
+    // reads as unreserved, count zero, until it is reserved again.
+    fn release(&mut self, id: StoreId);
 }
 ```
 
@@ -832,12 +836,15 @@ implementer's, and `MemoryProviderApi` is an `unsafe trait`:
 ```rust
 pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8;
+    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8 {
+        // allocate, then write `len` zero bytes into a non-null block
+    }
     unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize);
     unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool);
 }
 ```
 
-An implementation promises four things, and every `unsafe impl` says in
+An implementation promises five things, and every `unsafe impl` says in
 its safety comment how it keeps them:
 
 1. A non-null block from `allocate(len, align)` is aligned to `align`
@@ -847,10 +854,19 @@ its safety comment how it keeps them:
    Moving the provider moves and frees no block, so a provider that
    keeps its memory inline in itself cannot implement the trait.
 3. Two live blocks do not overlap.
-4. All three methods may be called from several threads at once.
+4. Every method may be called from several threads at once.
+5. A non-null block from `allocate_zeroed(len, align)` keeps the first
+   promise and reads as `len` zero bytes.
 
-Null is always a valid answer from `allocate` and means the block was
-refused; the caller checks. The `# Safety` section on each method is the
+`allocate_zeroed` is there for a caller that wants its cells default
+valued, as brotli's tables are. Its default calls `allocate` and writes
+the zeros, which keeps the fifth promise for any provider. A provider
+whose fresh blocks are already zero, as an anonymous mapping is,
+overrides it with `allocate` and the write is skipped; a provider that
+hands a given-back block out again keeps the default.
+
+Null is always a valid answer from `allocate` and `allocate_zeroed` and
+means the block was refused; the caller checks. The `# Safety` section on each method is the
 caller's half of the contract and is unchanged: a block is freed with the
 `len` and `align` it was allocated with, and `protect` covers only pages
 the provider owns.
@@ -1560,6 +1576,7 @@ back at every WU.
 ```rust
 pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
     unsafe fn allocate(&self, len: USize, align: USize) -> *mut u8;
+    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8; // provided
     unsafe fn deallocate(&self, ptr: *mut u8, len: USize, align: USize);
     unsafe fn protect(&self, ptr: *mut u8, len: USize, read: Bool, write: Bool);
 }

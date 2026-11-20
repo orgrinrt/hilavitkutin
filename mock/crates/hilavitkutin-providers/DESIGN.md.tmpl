@@ -12,7 +12,8 @@ Ships the interner surface and the default `ColumnStorage` backing
 arena-backed store the engine wires in via `CS: ColumnStorage`),
 `StaticBumpMemory`, the memory provider over a buffer the consumer
 hands it for as long as the provider lives (forever through `new`, by
-the caller's promise through `from_raw_parts`), and the adapt kits
+the caller's promise through `from_raw_parts`), `StaticFreeListMemory`,
+the provider over such a buffer that takes blocks back, and the adapt kits
 `StandardAdaptKit` and `OffAdaptKit` with their per-axis metrics
 resources. The default clock and the operating-system memory provider
 are not here today; the engine's `platform-os` feature carries `OsClock` and
@@ -22,7 +23,7 @@ are not here today; the engine's `platform-os` feature carries `OsClock` and
 
 | Type | Purpose |
 |------|---------|
-| `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Str`, `resolve(Str) -> Maybe<&str>`. |
+| `InternerApi` | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Maybe<Str>`, `resolve(Str) -> Maybe<&str>`. |
 | `HasInterner` | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
 | `MemoryArena<BYTES, ENTRIES>` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
 | `default_interner<BYTES, ENTRIES>()` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.with(Resource::new(...))` directly or implicitly through `InternerKit`. |
@@ -31,7 +32,8 @@ are not here today; the engine's `platform-os` feature carries `OsClock` and
 | `PassDurationMetrics`, `PhaseEMAMetrics`, `FiberEMAMetrics`, `ChangeClassMetrics`, `CacheResidencyMetrics`, `ThroughputTrendingMetrics`, `PredictiveParkingMetrics`, `MemoryWatermarkMetrics`, `CoreIdleTimeMetrics` | Per-axis AdaptMetrics sub-resources (Topic 5 axis F). Each ships individually under `pub mod metrics::*`. Per-axis `pub const DEFAULT_*` named constants per Topic 5 axis C. |
 | `StandardAdaptKit`, `OffAdaptKit` | Convenience Kit recipes bundling the nine axes (Topic 5 axis A). Standard ships all axes with bench-validated defaults; Off ships none (adapt observer disabled). Custom mixes via consumer-authored Kits per the themed-resource-sets-individuals-primary workspace convention. |
 | `ArenaColumnStorage<M, D>` | Naive arena-backed `ColumnStorage` impl: the default backing for the unified columnar store. `M: MemoryProviderApi` is the allocator; `D: Capacity = Dim<256>` caps the distinct-column count. Placeholder shape; the columnar engine replaces it later without touching any `CS: ColumnStorage` consumer. |
-| `StaticBumpMemory` | `MemoryProviderApi` impl bumping through a buffer the consumer supplies, a `&'static mut [MaybeUninit<u8>]` or, unsafely, a pointer and a length. Lock-free, `no_std`, never frees. The engine's tests and any consumer without an operating system build on it. |
+| `StaticBumpMemory` | `MemoryProviderApi` impl bumping through a buffer the consumer supplies, a `&'static mut [MaybeUninit<u8>]` or, unsafely, a pointer and a length. Lock-free, `no_std`, never frees. The engine's tests and any consumer without an operating system that never gives memory back build on it. |
+| `StaticFreeListMemory` | `MemoryProviderApi` impl over a buffer the consumer supplies, in the same two ways, that takes blocks back: first fit over an address-ordered free list kept in the free bytes, a block given back merged with its free neighbours. `no_std`, guarded by a one-flag spin lock. |
 
 ### `InternerApi`
 
@@ -80,17 +82,18 @@ id at or past the count is not read. A handle another arena issued
 is not told apart from one of its own.
 
 Capacity overflow (out of bytes or out of entry slots) returns
-sentinel id `u32::MAX` from `arena_intern`. Through
-`StringInterner` the sentinel is masked to the 28-bit id field,
-past every issued id, so the same check keeps it from being read.
-The arena still answers it with the empty string, so `evict_str`
-stores the hash of `""` where the persistence design asks for
-`Missing`; that waits on a resolve that can say it holds nothing
+sentinel id `u32::MAX` from `arena_intern`. An id of 2^28 or more is
+the arena's refusal under the `ArenaInterner` contract, so
+`StringInterner` answers the sentinel with `Maybe::Isnt` and builds
+no handle from it; the caller sees that its string was not
+interned. An id the arena did not issue, which a handle from another
+interner can carry, is still answered with the empty string, so
+`evict_str` stores the hash of `""` where the persistence design asks
+for `Missing`; that waits on a resolve that can say it holds nothing
 (ticket `evict_str_turns_an_unresolvable_runtime_str_into_the_hash_of`).
-The masked sentinel is id 2^28 - 1, the largest the 28-bit field holds, so the arena issues ids below it only: an
-`ENTRIES` of 2^28 or more, whose last slot would carry the
-sentinel's own id, fails the build at `MemoryArena::new`. Consumers tune
-`BYTES` and `ENTRIES` to their workload.
+An issued id has to stay below the refusal and fit the 28-bit field, so
+an `ENTRIES` of 2^28 or more fails the build at `MemoryArena::new`.
+Consumers tune `BYTES` and `ENTRIES` to their workload.
 
 `MemoryArena` is `!Sync` by default. The eventual
 `Resource<StringInterner<MemoryArena<...>>>` will need either a
@@ -185,11 +188,16 @@ pub struct ArenaColumnStorage<M: MemoryProviderApi, D: Capacity = Dim<256>> {
 ```
 
 `reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned
-through the bound `MemoryProvider`, recording the slot; a resizing
-re-reserve frees the prior block first. `column_ptr` / `column_ptr_mut`
+through the bound `MemoryProvider`, recording the slot. `column_ptr` / `column_ptr_mut`
 return the recorded base cast to the scalar type (raw, not a slice, per
-R6). `count` reads the slot. `release` is a no-op (the reader-count
-reclamation is a columnar-engine concern). `Drop` deallocates every
+R6). `count` reads the slot. `release` gives the slot's block back
+through the provider at the 64-byte alignment it was reserved at and
+empties the slot, so the id reads as unreserved with a count of zero
+until it is reserved again; a release of an unreserved id, or of one
+past the cap, does nothing. Whether the block is reused is the
+provider's: `StaticFreeListMemory` hands it out again, `StaticBumpMemory`
+does not. A re-reserve gives the old block back the same way before it
+takes the new one, and copies no record across. `Drop` deallocates every
 live slot through the provider, passing `CACHE_LINE_ALIGN` back so the free
 layout matches the reserve layout. Every column is reserved at that 64-byte
 alignment because the canonical design requires it, and a free that assumed
@@ -242,8 +250,76 @@ buffer's address is not the provider's, so no move of the provider moves
 a block, and the buffer outlives the provider (forever under `new`, by
 the caller's promise under `from_raw_parts`), which is all promise 2
 asks; the compare-exchange keeps live blocks apart. A consumer without an
-operating system builds it over a `static` buffer; the engine's tests
-build it over a leaked one.
+operating system that never gives memory back builds it over a `static`
+buffer; the engine's tests build it over a leaked one. A consumer that
+gives blocks back and wants them again builds `StaticFreeListMemory`.
+`allocate_zeroed` keeps the trait's default, since a buffer handed over
+as `MaybeUninit` bytes is not known to be zero.
+
+### `StaticFreeListMemory`
+
+A memory provider over one buffer the consumer hands it, as
+`StaticBumpMemory` is, that takes blocks back and hands them out again.
+It is for a consumer that keeps a store between rebuilds and reserves
+its columns again each time, or keeps an arena whose live peak is far
+below what it allocates over a run.
+
+```rust
+pub struct StaticFreeListMemory {
+    // the buffer it was built over, the head of the free list, the bytes
+    // handed out, and the one-flag lock over the list.
+}
+
+impl StaticFreeListMemory {
+    pub const fn new(buffer: &'static mut [MaybeUninit<u8>]) -> Self;
+    pub const unsafe fn from_raw_parts(base: *mut MaybeUninit<u8>, len: USize) -> Self;
+    pub fn used(&self) -> USize;
+    pub const fn capacity(&self) -> USize;
+}
+
+unsafe impl MemoryProviderApi for StaticFreeListMemory { /* ... */ }
+```
+
+The two constructors and what they ask of the buffer are
+`StaticBumpMemory`'s, and both providers hold the buffer through one
+private type that carries the constructors and that reasoning once.
+
+Free space is a list of free blocks in address order, and each free
+block holds its own list node, its length and the next free block, in
+its first bytes, so the provider keeps no table of its own. Every
+block's start and length are multiples of a grain, the size of that
+node (two machine words, a multiple of its alignment), so any piece a
+split leaves can hold a node. The usable span is the buffer's grain-aligned interior,
+which at first is one free block.
+
+`allocate(len, align)` rounds `len` up to the grain, a zero length
+taking one grain, and walks the list for the first free block that holds
+that length at `align`, or at the grain where `align` is smaller. The
+space before the block, which is a multiple of the grain, and the space
+after it stay on the list as free blocks. No block that fits, or an
+`align` that is not a power of two, returns null and changes nothing.
+`deallocate(ptr, len, align)` rounds `len` the same way, puts the block
+back in address order, and merges it with the free block before it and
+the one after it where they touch, so space given back in any order
+comes together again. `protect` does nothing, as for the bump provider.
+
+The list is changed by several threads through the trait, and the stack
+has no lock, so the provider keeps a one-flag spin lock over it: taken
+by compare-exchange, given back by a release store. Allocation happens
+at build and between frames, never in the morsel loop, so the spin is
+short; a lock of the stack's own replaces it (ticket
+`the_stack_has_no_lock_so_a_provider_keeps_a_spin_flag_of_its_own`).
+
+It keeps every promise of `MemoryProviderApi`. A block is cut from free
+space inside the buffer at an address rounded up to its alignment, which
+is promise 1, and the buffer outlives the provider and moves with
+nothing, which is promise 2. A block is on the list or handed out and
+never both, and merging joins only free blocks that touch, which is
+promise 3. Every change of the list happens under the lock, which is
+promise 4. `allocate_zeroed` keeps the trait's default, since a block
+given back and handed out again carries what its last owner wrote, and
+that keeps promise 5. `used()` is the bytes handed out and not given
+back, grain padding included, and `capacity()` the buffer's length.
 
 ## What this crate deliberately does not ship
 
@@ -257,8 +333,9 @@ build it over a leaked one.
  engine's `platform-os` feature carries both today, `OsClock` and
  `OsMemoryProvider`. A default of this crate's own lands in its own
  round when consumer demand surfaces; its scope until then is the
- interner, the `ArenaColumnStorage` backing, `StaticBumpMemory` and the
- adapt kits.
+ interner, the `ArenaColumnStorage` backing, the two providers over a
+ consumer's buffer (`StaticBumpMemory` and `StaticFreeListMemory`) and
+ the adapt kits.
 
 ## Cross-references
 

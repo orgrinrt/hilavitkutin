@@ -4,7 +4,8 @@ Default implementations of the hilavitkutin-api contracts, for a
 consumer to register on the scheduler builder with `.with(...)`, one
 store at a time or as a Kit. It ships `ArenaColumnStorage`, the arena
 `ColumnStorage` over a consumer's `MemoryProvider`; `StaticBumpMemory`,
-a memory provider over a buffer the consumer hands it; the interner
+a memory provider over a buffer the consumer hands it, and
+`StaticFreeListMemory`, one that takes blocks back; the interner
 (`StringInterner` over an inline `MemoryArena`, and `InternerKit`); the
 adapt unit `AdaptWu` with its EMA helpers and the `StandardAdaptKit` and
 `OffAdaptKit` presets; and the per-axis metrics resources with
