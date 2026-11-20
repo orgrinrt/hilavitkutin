@@ -33,3 +33,7 @@ Round topic `202611200201-yszg_topic.memory-the-consumer-takes-back.md`.
 ## Not changed
 
 The canon. Capacity stays a const generic on `MemoryArena`, and a re-reserve still keeps no record; both wait on the maintainer's answers to `whether_an_interner_s_capacity_may_be_set_when_it_is_built_a` and `when_a_column_s_capacity_is_reserved_and_whether_a_live_coun`. Per-record mark propagation is its own round.
+
+### 5. The count of promises
+
+`mock/crates/hilavitkutin-api/DESIGN.md.tmpl`, "Platform traits", and `mock/crates/hilavitkutin/DESIGN.md.tmpl`, "Platform implementations": the two places that count the provider's promises say five.

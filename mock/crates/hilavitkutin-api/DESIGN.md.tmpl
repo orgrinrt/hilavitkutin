@@ -1594,7 +1594,7 @@ pub trait ClockApi: Send + Sync + 'static {
 ```
 
 The memory provider is an `unsafe trait` for the reason its own section
-gives, which also carries the four promises an implementer makes. The
+gives, which also carries the five promises an implementer makes. The
 thread pool and the clock are safe traits.
 
 `deallocate` takes the same `align` the matching `allocate` was given,
