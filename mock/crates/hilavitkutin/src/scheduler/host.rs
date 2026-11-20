@@ -79,8 +79,11 @@ impl<
         // SAFETY: both bases name reservations of `count` records of `C::T`
         // made at build, and `at + len <= count` was checked above, so every
         // record written lies inside them. `records` is a host slice and no
-        // column memory, so the copy does not overlap. `&mut self` means no
-        // frame is in flight and no unit reads the store during the copy.
+        // column memory, so the copy does not overlap. That no unit reads the
+        // store during the copy is not established: under `run` and
+        // `run_fused` no frame is in flight across `&mut self`, but under
+        // `run_parallel` the parked workers hold a shared borrow of the
+        // scheduler across it.
         // FIXME(placeholders_tagged_74e2b9918149): under `run_parallel` a
         // parked worker still holds a `&Scheduler` across this `&mut self`,
         // as it does across `replace_value`.
