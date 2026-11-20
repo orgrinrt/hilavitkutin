@@ -2902,16 +2902,17 @@ Latest: `20261119T144616Z-6c89a959`
 
 ## link-static/dev_n97
 
-### linux-x86_64-c4-container-intel, 1 run(s)
+### linux-x86_64-c4-container-intel, 2 run(s)
 
-Latest: `20261116T083526Z-b2bbf4ba`
+Latest: `20261119T222847Z-2eb71914`
 
 | variant | median | vs best |
 |---|---|---|
-| default_relink | 524.41 ms | 1.64x |
-| default_replay | 319.64 ms | 1.00x |
+| default_relink | 510.24 ms | 1.73x |
+| default_replay | 295.63 ms | 1.00x |
 
 - [20261116T083526Z-b2bbf4ba](link-static/dev_n97/linux-x86_64-c4-container-intel/20261116T083526Z-b2bbf4ba/report.md)
+- [20261119T222847Z-2eb71914](link-static/dev_n97/linux-x86_64-c4-container-intel/20261119T222847Z-2eb71914/report.md)
 
 ## link-static/release_n25
 
