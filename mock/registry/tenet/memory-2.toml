@@ -24,8 +24,6 @@ origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
 superseded_by = ["the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_a_release_gives_the_block_back_as_reserved"]
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
 related = ["tenet::a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
 
@@ -253,6 +251,7 @@ ratified_by = 'op, 2026-11-20, answering ticket may_the_providers_crate_free_a_r
 ratified_from = ["quote: mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"]
 keywords = ["release", "frees", "StaticFreeListMemory", "StaticBumpMemory", "allocate_zeroed", "providers", "option a/b"]
 related = ["tenet::the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op", "tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
+lineage = ["the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op:bad65aa5e8149d4b"]
 
 [[tenet]]
 id = "op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only"

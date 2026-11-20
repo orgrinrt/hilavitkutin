@@ -32,7 +32,7 @@ quote = '''
 origin = "stated"
 standing = "held"
 keywords = ["os tier", "std tier", "mutually exclusive", "optimisation investment", "platform"]
-related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
+related = ["tenet::the_platform_has_two_tiers_no_os_and_os_and_a_build_on_default_features_is_the_no_os_tier"]
 
 [[tenet]]
 id = "the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"
@@ -48,7 +48,7 @@ standing = "ratified"
 ratified_by = 'op, by default from the written history and not by a walk, under his words of 2026-11-13 (mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md): "fill them as ratified by default from written history"'
 ratified_from = ["founding: mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:283-283"]
 keywords = ["no_os", "trait contracts", "consumer provides", "platform impls", "bare metal"]
-related = ["tenet::the_platform_has_three_tiers_no_os_os_and_std"]
+related = ["tenet::the_platform_has_two_tiers_no_os_and_os_and_a_build_on_default_features_is_the_no_os_tier"]
 
 [[tenet]]
 id = "the_platform_contracts_are_memory_provider_thread_pool_and_clock_traits_in_the_api_crate"
@@ -262,8 +262,6 @@ origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 7, agent-written, elevated to canon by the addendum"
 standing = "provisional"
 superseded_by = ["the_clock_is_a_builder_slot_provider_starting_at_the_os_clock_when_the_os_feature_is_on_and_at_a_null_clock_otherwise"]
-stamped_by = "maintainer"
-stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "no_os", "monotonic clock", ".with", "providers"]
 
 [[tenet]]
