@@ -122,5 +122,12 @@ and none of the `include!` macros, since either brings in a file from
 wherever it points, the unfrozen `tests/` included, and the ledger has no
 entry for it.
 
+The four lints read only the frozen crates, every crate whose name starts with
+`hilavitkutin-frozen-`, and each holds that scope in its own code rather than
+in a crate list of the configuration, so a frozen crate made later is in reach
+without anyone adding it. The scope is the name and not the presence of
+`LEDGER.toml`, since the ledger lint has to refuse a frozen crate that carries
+none.
+
 The files under `tests/` are not frozen. They are the harness that runs the
 units, and they change with the instruments.
