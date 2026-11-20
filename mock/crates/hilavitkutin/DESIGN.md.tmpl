@@ -1784,9 +1784,10 @@ lives until `munmap` in `deallocate`, and does not move with the provider.
 A mapping is page-aligned; an `align` wider than a page, or one that is not
 a power of two, is refused with null rather than handed a block that only
 looks aligned. A fresh anonymous mapping reads as zero, so the provider's
-`allocate_zeroed` is its `allocate` and writes nothing. The engine's null provider, the default memory type a bare `Scheduler`
-names, refuses every request, and so keeps the promises trivially; it keeps
-the default `allocate_zeroed`, which writes nothing into a null block.
+`allocate_zeroed` is its `allocate` and writes nothing. The engine's null
+provider, the default memory type a bare `Scheduler` names, refuses every
+request, and so keeps the promises trivially; it keeps the default
+`allocate_zeroed`, which writes nothing into a null block.
 
 no_os tier: trait contracts only. Consumer provides all impls.
 
