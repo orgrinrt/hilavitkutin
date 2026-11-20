@@ -53,7 +53,8 @@ macro_rules! cell {
     };
 }
 
-const CLASS: &str = "linux-x86_64-c4-container-intel";
+/// The key and the point of the one row that is not a timed call.
+const PLACEHOLDER: (u16, usize) = (call_key(LINK, DEV), 97);
 
 fn build_at_25(sweep: &str) -> Cell {
     match sweep {
@@ -213,12 +214,29 @@ fn every_row_of_the_first_call_table_is_the_reading_of_the_run_it_cites() {
         25,
         secs_up(first_call_ns(release_25.samples, None)),
     ));
-    // dev 97 is not a timed call: the untimed build of the 97 crates plus the
-    // relink, which the harness's probe counts (mockspace ticket
-    // `the_bench_harness_probe_counts_the_untimed_setup_of_a_build`). The row
-    // was first set from the earlier run's relink (0.478 s, run
-    // `20261116T083526Z-b2bbf4ba`) and this sum, from the run that ran under
-    // it, gives the same 119 s.
+    // the placeholder row at link dev 97 is no timed call and has its own test
+    let mut table: Vec<Row> = FIRST_CALL_S
+        .iter()
+        .copied()
+        .filter(|&(key, at, _)| (key, at) != PLACEHOLDER)
+        .collect();
+    table.sort_unstable();
+    expected.sort_unstable();
+    assert_eq!(table, expected);
+}
+
+/// The row at link dev 97 is a placeholder, the one the FIXME in `measured.rs`
+/// cites through the ticket `placeholders_tagged_the_bench_harness_probe_counts_the`:
+/// the untimed build of the 97 crates plus the relink, which the harness's
+/// probe counts (mockspace ticket
+/// `the_bench_harness_probe_counts_the_untimed_setup_of_a_build`). It was first
+/// set from the earlier run's relink (0.478 s, run `20261116T083526Z-b2bbf4ba`),
+/// and the sum below, from the run that ran under it, gives the same 119 s.
+/// The designed value, three times the first timed call of 1 s, returns when
+/// the probe leaves the setup out, and this test goes with the row.
+#[test]
+fn the_link_dev_97_row_is_the_placeholder_of_placeholders_tagged_the_bench_harness_probe_counts_the()
+ {
     let link_97 = cell!(
         "link-static",
         "dev_n97",
@@ -227,12 +245,19 @@ fn every_row_of_the_first_call_table_is_the_reading_of_the_run_it_cites() {
     );
     let build = first_call_ns(build_at_97("clean").samples, Some(NON_INCREMENTAL));
     let relink = first_call_ns(link_97.samples, Some("default_relink"));
-    expected.push((call_key(LINK, DEV), 97, secs_up(build + relink)));
-
-    let mut table = FIRST_CALL_S.to_vec();
-    table.sort_unstable();
-    expected.sort_unstable();
-    assert_eq!(table, expected, "{CLASS}");
+    let rows: Vec<&Row> = FIRST_CALL_S
+        .iter()
+        .filter(|&&(key, at, _)| (key, at) == PLACEHOLDER)
+        .collect();
+    assert_eq!(rows, [&(
+        PLACEHOLDER.0,
+        PLACEHOLDER.1,
+        secs_up(build + relink)
+    )]);
+    assert!(
+        secs_up(relink) < secs_up(build + relink),
+        "the row counts the build, which a timed call does not"
+    );
 }
 
 #[test]
