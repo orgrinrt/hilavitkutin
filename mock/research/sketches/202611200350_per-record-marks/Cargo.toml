@@ -1,0 +1,15 @@
+# Probe: a change mark carried along a gather and a fold, at three grains, in
+# a plain-Rust model of loru's site shape. No engine dependency: it checks the
+# shape of the relations and the corners, not hilavitkutin. Counts, no timer.
+[workspace]
+resolver = "3"
+
+[package]
+name = "per-record-marks-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "counts"
+path = "src/main.rs"
