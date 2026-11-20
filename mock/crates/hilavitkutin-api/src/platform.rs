@@ -44,8 +44,8 @@ pub type Nanos = UFixed<{ ibits(64) }, { fbits(0) }, Hot>;
 ///    overrides it and skips the write.
 ///
 /// Null is always a valid answer from `allocate` and
-/// `allocate_zeroed` and means the block was refused. The `# Safety` sections on the methods are the
-/// caller's half of the contract.
+/// `allocate_zeroed` and means the block was refused. The `# Safety`
+/// sections on the methods are the caller's half of the contract.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` does not implement Memory provider contract",
     note = "Provide a platform-specific impl. The engine builds against `MemoryProviderApi` via const generics; supply your own `MemoryProvider` to the scheduler at construction time."
@@ -70,8 +70,8 @@ pub unsafe trait MemoryProviderApi: Send + Sync + 'static {
     ///
     /// As `allocate`: alignment must be a power of two, and OOM
     /// returns null, which the caller checks.
-    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8 {
-        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
+    #[rustfmt::skip] // keeps the allow on the signature it governs
+    unsafe fn allocate_zeroed(&self, len: USize, align: USize) -> *mut u8 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: allocator ABI returns raw pointer by contract; tracked: #72
         // SAFETY: the caller keeps `allocate`'s half of the contract.
         let ptr = unsafe { self.allocate(len, align) };
         if !ptr.is_null() {
