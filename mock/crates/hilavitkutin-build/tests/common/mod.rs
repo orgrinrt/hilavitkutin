@@ -6,6 +6,7 @@ use hilavitkutin_build::{
     Bfd,
     Bolt,
     BuildStd,
+    ChecksumFreshness,
     ClangCc,
     ClangDriver,
     Cranelift,
@@ -89,7 +90,8 @@ pub fn held(set: hilavitkutin_build::PragmaSet) -> Vec<&'static str> {
         GccDriver,
         ClangDriver,
         GccCc,
-        ClangCc
+        ClangCc,
+        ChecksumFreshness
     ]
     .into_iter()
     .filter_map(|(held, name)| held.then_some(name))
@@ -114,7 +116,7 @@ pub fn walked<S: hilavitkutin_build::Set>() -> Vec<&'static str> {
 }
 
 /// How many pragmas the crate has.
-pub const PRAGMAS: usize = 25;
+pub const PRAGMAS: usize = 26;
 
 /// Every pragma of the crate, each named once, in the order of its bit.
 pub fn pragmas() -> Vec<Row> {
@@ -144,5 +146,6 @@ pub fn pragmas() -> Vec<Row> {
         row::<ClangDriver>(),
         row::<GccCc>(),
         row::<ClangCc>(),
+        row::<ChecksumFreshness>(),
     ]
 }

@@ -2,6 +2,7 @@
 //! first line, and whether a `config.toml` takes it.
 
 use hilavitkutin_build::{
+    ChecksumFreshness,
     Claim,
     ClangCc,
     ClangDriver,
@@ -16,7 +17,10 @@ use hilavitkutin_build::{
     Mold,
     NoIncremental,
     Pgo,
+    Profile,
     Prototype,
+    Set,
+    Site,
     Target,
     ThinLto,
     Workspace,
@@ -25,6 +29,7 @@ use hilavitkutin_build::{
     includes_generated,
     write_cargo_config,
     write_generated,
+    write_set_config,
     write_uncarried,
 };
 use notko::Maybe;
@@ -81,8 +86,21 @@ impl Prototype for GccDriven {
     type Release = (GccDriver, ThinLto);
 }
 
+/// Checksum freshness in both profiles: its key belongs to neither, and
+/// its pragma is of no group.
+struct BothFresh;
+
+impl Prototype for BothFresh {
+    type Ci = ();
+    type Dev = (Incremental, ChecksumFreshness);
+    type DevOpt = ();
+    type Profiling = ();
+    type Release = (ChecksumFreshness, ThinLto);
+}
+
 // The text below is asserted of files a claiming script can write: each
-// of the three is a prototype `claimed` accepts.
+// of the four is a prototype `claimed` accepts.
+const _: () = claimed::<BothFresh>();
 const _: () = claimed::<Everything>();
 const _: () = claimed::<BothCranelift>();
 const _: () = claimed::<GccDriven>();
@@ -123,6 +141,66 @@ fn a_key_of_no_profile_is_in_the_file_once() {
          profile.dev.lto = \"thin\"\n\
          target.\"x86_64-unknown-linux-gnu\".linker = \"gcc\"\n\
          profile.release.lto = \"thin\"\n"
+    );
+}
+
+/// A pragma of no group writes its key of no profile once too, by the
+/// first set that holds it.
+#[test]
+fn the_key_of_checksum_freshness_is_in_the_file_once() {
+    assert_eq!(
+        generated::<BothFresh>("a"),
+        "# written by hilavitkutin-build for a: edits are lost\n\
+         profile.dev.incremental = true\n\
+         unstable.checksum-freshness = true\n\
+         profile.release.lto = \"thin\"\n"
+    );
+}
+
+fn set_config<S: Set>(site: &Site<'_>) -> String {
+    let mut out = String::new();
+    write_set_config::<S, _>(site, &mut out).expect("a String takes every write");
+    out
+}
+
+/// One set's lines at one site are what the file holds for that profile,
+/// and a set written after another leaves the keys of no profile the
+/// first one wrote.
+#[test]
+fn a_sets_configuration_is_the_lines_the_file_holds_for_its_profile() {
+    let triple = "x86_64-unknown-linux-gnu";
+    let dev = Site::new(Profile::Dev, triple, &[]);
+    let dev_lines = set_config::<<Everything as Prototype>::Dev>(&dev);
+    assert_eq!(
+        dev_lines,
+        "unstable.codegen-backend = true\n\
+         profile.dev.codegen-backend = \"cranelift\"\n\
+         profile.dev.incremental = true\n\
+         target.\"x86_64-unknown-linux-gnu\".linker = \"clang\"\n\
+         env.CC = \"clang\"\n\
+         env.CXX = \"clang++\"\n\
+         env.AR = \"llvm-ar\"\n"
+    );
+    let release =
+        Site::new(Profile::Release, triple, &[]).after::<<Everything as Prototype>::Dev>();
+    let release_lines = set_config::<<Everything as Prototype>::Release>(&release);
+    assert_eq!(
+        generated::<Everything>("a"),
+        format!(
+            "# written by hilavitkutin-build for a: edits are lost\n{dev_lines}{release_lines}"
+        )
+    );
+    // The release set by itself owes the shared keys the dev set wrote.
+    let alone = Site::new(Profile::Release, triple, &[]);
+    assert_ne!(
+        set_config::<<Everything as Prototype>::Release>(&alone),
+        release_lines
+    );
+    // A set with no pragma of workspace reach has no line.
+    assert_eq!(set_config::<(Mold, FastMath)>(&dev), "");
+    assert_eq!(
+        set_config::<(ChecksumFreshness, NoIncremental)>(&alone),
+        "unstable.checksum-freshness = true\nprofile.release.incremental = false\n"
     );
 }
 

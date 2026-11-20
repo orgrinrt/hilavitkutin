@@ -174,6 +174,10 @@ impl Pragma for Wild {
     }
 }
 
+/// Every pragma of [`LinkerGroup`], for the walk that finds one by its
+/// name. A test holds the list to the pragmas above.
+pub(crate) type Linkers = (Mold, Wild, Bfd);
+
 /// The crate is a dylib its dependents link dynamically,
 /// `-Cprefer-dynamic`.
 ///

@@ -39,6 +39,18 @@ impl<W: Write> Visit for Configured<'_, '_, W> {
     }
 }
 
+/// Write the cargo configuration of every pragma of the set `S` at
+/// `site`, in whole lines of dotted keys.
+///
+/// A line is also what cargo's `--config` takes, so a caller that builds
+/// without the generated file hands these lines to cargo one by one.
+pub fn write_set_config<S: Set, W: Write>(site: &Site<'_>, out: &mut W) -> core::fmt::Result {
+    S::each(&mut Configured {
+        site,
+        out,
+    })
+}
+
 /// Write the generated cargo file of the prototype `P`, claimed by the
 /// crate `krate`, for the target `triple`.
 ///
@@ -56,15 +68,9 @@ pub fn write_generated<P: Prototype, W: Write>(
 ) -> core::fmt::Result {
     writeln!(out, "{HEAD}{krate}{TAIL}")?;
     let dev = Site::new(Profile::Dev, triple, &[]);
-    <P::Dev as Set>::each(&mut Configured {
-        site: &dev,
-        out,
-    })?;
+    write_set_config::<P::Dev, _>(&dev, out)?;
     let release = Site::new(Profile::Release, triple, &[]).after::<P::Dev>();
-    <P::Release as Set>::each(&mut Configured {
-        site: &release,
-        out,
-    })
+    write_set_config::<P::Release, _>(&release, out)
 }
 
 /// The walk that writes an error for every member of workspace reach the

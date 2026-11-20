@@ -31,6 +31,7 @@
 //! [`choice`] the seven build choices. [`profile`] names the profiles
 //! and [`prototype`] the sets a script builds each with. [`target`] is
 //! the target's facts and [`tools`] the tools a pragma waits on.
+//! [`linker`] answers the linker of a set and the toolchain's own.
 //! [`config`] exposes `BuildConfig`. [`flags`] puts a set's rustc flags
 //! together. [`bootstrap`] reads the environment through the script's
 //! closure and writes the directives and the wrapper. [`wiring`] decides
@@ -60,6 +61,7 @@
 //! | `SharedGenerics` | Generic instances shared across crates. | `-Zshare-generics=y`. |
 //! | `LoopFusion` | Adjacent loops fused. | Nothing. |
 //! | `MimallocAllocator` | A recommendation of mimalloc. | Nothing. |
+//! | `ChecksumFreshness` | A file is changed where its content is, whatever its time. | Cargo's unstable key, once. |
 //! | `Mold`, `Wild`, `Bfd` | The linker of what the crate links. | Rustc flags the wrapper appends: `-Clink-arg=-fuse-ld=` for `Mold` and `Bfd`, and for `Wild` clang as the driver and its path. |
 //! | `DylibDomain` | The crate as a dylib its dependents link dynamically. | `-Cprefer-dynamic`. |
 //! | `ThinLto` | Thin LTO for the profile. | Its profile key, in the generated cargo file. |
@@ -77,6 +79,7 @@ pub mod config;
 pub mod flags;
 pub mod generated;
 pub mod guards;
+pub mod linker;
 pub mod pragma;
 pub mod profile;
 pub mod prototype;
@@ -118,8 +121,10 @@ pub use generated::{
     claim,
     includes_generated,
     write_generated,
+    write_set_config,
     write_uncarried,
 };
+pub use linker::{Linker, RustLldMark, ToolchainLinker, linker_named, linker_of, rust_lld_mark};
 pub use pragma::{
     All,
     Any,
@@ -140,6 +145,7 @@ pub use prototype::{Default, Deterministic, Prototype, Workspace, claimed};
 pub use roster::{
     Bolt,
     BuildStd,
+    ChecksumFreshness,
     ExpandedLto,
     FastMath,
     LoopFusion,

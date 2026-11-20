@@ -53,6 +53,7 @@ pub(crate) enum Slot {
     ClangDriver,
     GccCc,
     ClangCc,
+    ChecksumFreshness,
 }
 
 impl Slot {

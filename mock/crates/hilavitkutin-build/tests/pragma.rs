@@ -120,6 +120,7 @@ fn every_pragma_is_of_the_group_and_the_reach_the_design_gives_it() {
             "Cranelift" => (BackendGroup::BIT, Reach::Workspace),
             "GccDriver" | "ClangDriver" => (DriverGroup::BIT, Reach::Workspace),
             "GccCc" | "ClangCc" => (CcGroup::BIT, Reach::Workspace),
+            "ChecksumFreshness" => (0, Reach::Workspace),
             _ => (0, Reach::Crate),
         };
         assert_eq!(row.group, group, "{}", row.name);

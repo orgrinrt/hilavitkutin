@@ -7,7 +7,7 @@
 use core::fmt::{self, Write};
 
 use crate::choice::LtoGroup;
-use crate::pragma::{All, Any, Free, Mask, Pragma, Reach, Slot, Words, Written};
+use crate::pragma::{All, Any, Free, Mask, Pragma, Reach, Shared, Slot, Words, Written};
 use crate::tools::{LLVM_BOLT, MATH_PEEPHOLE, MIMALLOC, POLKA_PASSES, POLLY, PROFDATA, Tool};
 
 /// The built-in LLVM options `LoopOptimization` owns without its plugin.
@@ -112,6 +112,31 @@ impl Pragma for SharedGenerics {
 
     fn write_rustflags<W: Write>(_with: &Written<'_>, out: &mut W) -> fmt::Result {
         out.write_str("-Zshare-generics=y")
+    }
+}
+
+/// Cargo decides whether a file changed by its content and not by its
+/// time, so a tree whose files got new times and the same content
+/// rebuilds nothing.
+///
+/// The key is cargo's unstable flag of the same name and belongs to no
+/// profile, so it is in the text once however many sets hold the pragma.
+#[derive(Debug, Clone, Copy)]
+pub struct ChecksumFreshness;
+
+impl Pragma for ChecksumFreshness {
+    type Group = Free;
+    type Requires = ();
+
+    const BIT: Mask = Slot::ChecksumFreshness.bit();
+    const NAME: Words = "ChecksumFreshness";
+    const REACH: Reach = Reach::Workspace;
+
+    fn write_cargo_config<W: Write>(with: &Written<'_>, out: &mut W) -> fmt::Result {
+        match with.shared() {
+            Shared::Owed => out.write_str("unstable.checksum-freshness = true\n"),
+            Shared::Written => Ok(()),
+        }
     }
 }
 
