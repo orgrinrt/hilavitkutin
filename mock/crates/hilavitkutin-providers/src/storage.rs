@@ -66,16 +66,18 @@ impl<M: MemoryProviderApi, D: Capacity> ColumnStorage for ArenaColumnStorage<M, 
         if *id.0 >= self.slots.as_ref().len() {
             return Outcome::Err(StorageError::IdOutOfRange);
         }
-        // A re-reserved id gives its block back first, and no record is
-        // carried over to the new one.
-        self.give_back(id);
         // Byte length = record count times element size, checked so a
         // large count cannot wrap to a small length and hand back an
         // undersized block (a write of `count` records would overrun).
+        // Checked before the give-back, so a refused argument leaves a
+        // live column as it was.
         let bytes = match (*count).checked_mul(size_of::<T>()) {
             Some(n) => USize(n), // lint:allow(no-bare-numeric) reason: byte length math; size_of returns usize by contract; tracked: #345
             None => return Outcome::Err(StorageError::LengthOverflow),
         };
+        // A re-reserved id gives its block back before the new one is
+        // taken, and no record is carried over to the new one.
+        self.give_back(id);
         let slot = if bytes == <USize as Identity<Additive>>::IDENTITY {
             ColumnSlot {
                 ptr: core::ptr::null_mut(),
