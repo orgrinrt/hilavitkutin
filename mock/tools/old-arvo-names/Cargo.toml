@@ -1,0 +1,26 @@
+# A root of its own, the shape `mock test` reaches a tool in: a member of the
+# workspace beside it would put this crate and what it builds on into that
+# workspace's graph.
+[workspace]
+
+[package]
+name = "old-arvo-names"
+description = "Counts, for each crate, the paths of the old arvo revision its tracked Rust files still name."
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+publish = false
+
+[dependencies]
+# the trait crate under the name the generated collector gives it; the engine
+# patches every spelling of it to the one it is built from
+mockspace = { package = "mockspace-lint-rules", git = "https://github.com/hiisi-digital/mockspace.git", rev = "f42844c7f7f8be9c54dd96b9a975a6c7da3fea5e" }
+
+# The mutants the test turns on are compiler flags, set by `RUSTFLAGS="--cfg
+# old_arvo_names_mutant_<name>"` and never features, so a build that has not
+# asked for one cannot pick one up. Each breaks one place where the count goes
+# wrong first, and is declared here so a misspelt one is reported.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  "cfg(old_arvo_names_mutant_blind, old_arvo_names_mutant_boundary)",
+] }

@@ -1,0 +1,9 @@
+[package]
+name = "new-side"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+arvo-new-numeral.workspace = true
+arvo-new-format.workspace = true

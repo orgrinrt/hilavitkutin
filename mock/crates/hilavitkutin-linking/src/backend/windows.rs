@@ -1,21 +1,18 @@
 //! Windows backend: LoadLibraryW / GetProcAddress / FreeLibrary.
 
-use crate::error::LinkError;
-use arvo::USize;
 use core::ffi::c_void;
+
 use notko::Outcome;
 use windows_sys::Win32::Foundation::{GetLastError, HMODULE};
-use windows_sys::Win32::System::LibraryLoader::{
-    FreeLibrary, GetProcAddress, LoadLibraryW,
-};
+use windows_sys::Win32::System::LibraryLoader::{FreeLibrary, GetProcAddress, LoadLibraryW};
+
+use crate::error::{LinkError, OsCode};
 
 // v1 supports ASCII paths only on Windows. Extended Unicode (full
 // UTF-16 path support) is a BACKLOG item.
 const MAX_PATH_WIDE: usize = 260;
 
-pub(crate) fn platform_load(
-    path: &[u8],
-) -> Outcome<*mut c_void, LinkError> {
+pub(crate) fn platform_load(path: &[u8]) -> Outcome<*mut c_void, LinkError> {
     let Some(wide) = ascii_to_wide(path) else {
         return Outcome::Err(LinkError::PathEncodingUnsupported);
     };
@@ -37,9 +34,7 @@ pub(crate) fn platform_resolve(
         return Outcome::Err(LinkError::SymbolMissing);
     }
     // SAFETY: handle came from LoadLibraryW; name is null-terminated.
-    let proc = unsafe {
-        GetProcAddress(handle as HMODULE, name.as_ptr() as *const u8)
-    };
+    let proc = unsafe { GetProcAddress(handle as HMODULE, name.as_ptr() as *const u8) };
     match proc {
         Some(p) => Outcome::Ok(p as *const c_void),
         None => Outcome::Err(LinkError::SymbolMissing),
@@ -76,8 +71,8 @@ fn is_null_terminated(bytes: &[u8]) -> bool {
     !bytes.is_empty() && bytes[bytes.len() - 1] == 0
 }
 
-fn read_last_error() -> USize {
+fn read_last_error() -> OsCode {
     // SAFETY: GetLastError is always safe to call.
     let code = unsafe { GetLastError() };
-    USize(code as usize)
+    OsCode::from_host(code as usize) // lint:allow(no-bare-numeric) reason: GetLastError is a u32 and from_host takes the host usize; tracked: #206
 }
