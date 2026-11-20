@@ -1,0 +1,50 @@
+b1862e36 chore: lock src changelist 202611192343-hx2c
+9c51fc6d test: refresh the host import compile-fail diagnostics
+82e956eb feat: add host import and dump of column records
+3e468b61 chore: drop the crate lists the frozen lints scope themselves
+a660fab6 docs: add src changelist 202611192343-hx2c
+b5ec8da5 Merge remote-tracking branch 'origin/work/hila-consumer-surface' into work/hila-consumer-surface
+adfb4eb3 chore: lock doc changelist 202611192343-hx2c
+3b7766e9 docs: design host import and dump of column records
+fad0d4a3 chore: open design round 202611192343-hx2c
+420b4997 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+56a4ba4f fix: make the default string interner deduplicate
+ae5a037b fix: make the default string interner deduplicate
+1409781a docs: record the interner deduplication landing
+cc45fb0a chore: close design round 202611192319-q4em
+d603f252 chore: lock src changelist 202611192319-q4em
+da91724d fix: stop claiming an unissued arena id aliases no held string
+6ba0dd64 docs: add src changelist 202611192319-q4em
+6d64b869 chore: lock doc changelist 202611192319-q4em
+4e1d94cc chore: unlock design round 202611192319-q4em to reopen its src window
+04ff3aaf chore: lock src changelist 202611192319-q4em
+9f46171b docs: add src changelist 202611192319-q4em
+f3552a21 chore: lock doc changelist 202611192319-q4em
+bd1c196f docs: say an unissued arena id may alias a held empty string
+3021aa0f chore: open design round 202611192319-q4em
+0c1fadef chore: close design round 202611192301-pt7z
+14fa57ef fix: name no string for an id the arena did not issue
+2632b342 docs: add src changelist 202611192301-pt7z
+d6080f17 chore: lock doc changelist 202611192301-pt7z
+3da80cd7 docs: name no string for an id the arena did not issue
+c71be7f6 chore: open design round 202611192301-pt7z
+a6e8cb46 bench: price the accumulator grouped by the data
+3f54e21f chore: close design round 202611192246-jute
+e5c7b93b chore: lock src changelist 202611192246-jute
+544f8fff docs: name the catalogue row in src changelist 202611192246-jute
+007f4de9 fix: stop claiming a foreign string handle resolves empty
+828d4e28 docs: write src changelist 202611192246-jute
+11c7faa0 chore: lock doc changelist 202611192246-jute
+ed1791e5 docs: regenerate the providers and str documents
+baba305d docs: say a string handle names no interner
+79c76487 docs: open round 202611192246-jute on what a foreign handle resolves to
+110ecccc chore: close design round 202611192051-ers6
+1b9a80cc chore: lock src changelist 202611192051-ers6
+492e9d4c fix: refuse a `MemoryArena` whose last id is the masked sentinel
+f79004be docs: write the source changelist that keeps ids below the sentinel
+65e72f06 chore: lock doc changelist 202611192051-ers6
+83e731cf docs: keep the arena's ids below the masked overflow sentinel
+8646d809 chore: unlock design round, deprecate src and unlock doc
+0a9dc496 chore: regenerate generated files after merge
+810e4a15 Merge remote-tracking branch 'origin/dev' into work/hila-consumer-surface
+60512f10 fix: label the crate layers by dependency depth
