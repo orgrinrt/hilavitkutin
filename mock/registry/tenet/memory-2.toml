@@ -23,6 +23,7 @@ allocator.
 origin = "proposed"
 written_by = "the design template of hilavitkutin-providers, agent-written, undated"
 standing = "provisional"
+superseded_by = ["the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_a_release_gives_the_block_back_as_reserved"]
 stamped_by = "maintainer"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["reserve", "column_ptr", "column_ptr_mut", "64-byte aligned", "release no-op", "raw pointer R6", "Drop deallocate", "reader-count reclamation"]
@@ -235,3 +236,88 @@ written_by = "sketch findings column-source-dual-selector of 2026-06-04 (round c
 standing = "held"
 keywords = ["reservation timing", "Timing X", "reserve at build", "stable pointer", "column_ptr_mut", "record count metadata", "ColumnBinding", "per-frame allocation"]
 related = ["tenet::an_accumulator_append_saturates_at_the_reserved_capacity_which_equals_the_record_count_at_build"]
+
+[[tenet]]
+id = "op_ruled_that_a_released_column_gives_its_block_back_and_the_providers_over_a_consumer_buffer_stay_in_the_providers_crate"
+subject = "memory"
+what = "Op ruled on 2026-11-20 that a released column gives its block back to the memory provider, so the provisional row that release is a no-op is superseded, and that StaticFreeListMemory, StaticBumpMemory and the zeroed block on the memory provider contract stay where they are, each implementation behind a feature."
+mechanism = "`ArenaColumnStorage::release` frees the slot's block; `StaticBumpMemory` and `StaticFreeListMemory` in `hilavitkutin-providers`; `MemoryProviderApi::allocate_zeroed`. Op's answer took options a and b together: release frees (both) and the providers stay in the crate (a), behind an opt-in feature (his words)."
+source = "mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"
+provenance = ["mock::research::202611200520_default-impls-opt-in::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+Option a/b but make the default impls an opt in feature on their respective crates. Default to contracts only. The default impls we already have for other things should probably move there too and the readmes should mention the different principled features for impls to opt in optionally (there are different principles on the impls now so each needs a unified name)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, 2026-11-20, answering ticket may_the_providers_crate_free_a_released_column_and_ship_a_no among options a (supersede the release row so release frees; keep StaticFreeListMemory and allocate_zeroed in hilavitkutin-providers as defaults over the contracts), b (release frees, but StaticFreeListMemory and StaticBumpMemory move out of the hilavitkutin family; allocate_zeroed stays), c (release stays a no-op): "Option a/b but make the default impls an opt in feature on their respective crates"'
+ratified_from = ["quote: mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"]
+keywords = ["release", "frees", "StaticFreeListMemory", "StaticBumpMemory", "allocate_zeroed", "providers", "option a/b"]
+related = ["tenet::the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_its_release_is_a_no_op", "tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
+
+[[tenet]]
+id = "op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only"
+subject = "identity"
+what = "Op ruled on 2026-11-20 that every default implementation of a contract, the ones that existed before and the new ones, sits in its own crate behind a cargo feature the consumer turns on; a build on default features carries the contracts only; each principle an implementation rests on has one feature name, the same in every crate; and the readmes name those features."
+mechanism = "Every crate's `default` feature list is empty. The engine's `OsClock` and `OsMemoryProvider`, carried before by the default-on `platform-os` feature, and every implementation in `hilavitkutin-providers` sit behind a feature named for what the implementation rests on."
+source = "mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"
+provenance = ["mock::research::202611200520_default-impls-opt-in::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+Option a/b but make the default impls an opt in feature on their respective crates. Default to contracts only. The default impls we already have for other things should probably move there too and the readmes should mention the different principled features for impls to opt in optionally (there are different principles on the impls now so each needs a unified name)
+'''
+origin = "stated"
+standing = "ratified"
+ratified_by = 'op, 2026-11-20, answering ticket may_the_providers_crate_free_a_released_column_and_ship_a_no among options a (supersede the release row so release frees; keep StaticFreeListMemory and allocate_zeroed in hilavitkutin-providers as defaults over the contracts), b (release frees, but StaticFreeListMemory and StaticBumpMemory move out of the hilavitkutin family; allocate_zeroed stays), c (release stays a no-op): "Option a/b but make the default impls an opt in feature on their respective crates"'
+ratified_from = ["quote: mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"]
+keywords = ["opt-in feature", "default features", "contracts only", "default implementation", "unified feature name", "readme", "principle"]
+related = ["tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation", "tenet::each_platform_tier_ships_defaults_and_the_consumer_overrides_them_through_the_scheduler_builder"]
+
+[[tenet]]
+id = "the_arena_column_storage_reserves_64_byte_aligned_blocks_through_the_memory_provider_and_a_release_gives_the_block_back_as_reserved"
+subject = "memory"
+what = "Reserving a column allocates its byte count 64-byte aligned through the bound memory provider and records the slot, and a resizing reserve frees the prior block first. The column pointer accessors return the recorded base cast to the scalar type, raw and not a slice, and the count reads the slot. A release gives the slot's block back to the provider with the layout it was reserved at and empties the slot, and dropping deallocates every live slot the same way, so every free matches its reserve."
+mechanism = "`reserve<T>` allocates `count * size_of::<T>()` bytes 64-byte aligned; `column_ptr` / `column_ptr_mut` return a raw pointer, not a slice, per R6; `count`; `release` deallocates with `CACHE_LINE_ALIGN` and empties the slot; `Drop` deallocates every live slot with `CACHE_LINE_ALIGN`."
+source = "mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"
+provenance = ["mock::research::202611200520_default-impls-opt-in::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+Option a/b but make the default impls an opt in feature on their respective crates. Default to contracts only. The default impls we already have for other things should probably move there too and the readmes should mention the different principled features for impls to opt in optionally (there are different principles on the impls now so each needs a unified name)
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202611200518-zrf9 default implementations behind opt-in features, 2026-11-20, agent-written: the provisional row it supersedes, with the sentence that release is a no-op replaced by what op's ruling op_ruled_that_a_released_column_gives_its_block_back_and_the_providers_over_a_consumer_buffer_stay_in_the_providers_crate says; the mechanism is not his words"
+standing = "held"
+keywords = ["reserve", "column_ptr", "64-byte aligned", "release frees", "raw pointer R6", "Drop deallocate", "free layout"]
+rejects = ["release as a no-op until the columnar engine reclaims"]
+related = ["tenet::op_ruled_that_a_released_column_gives_its_block_back_and_the_providers_over_a_consumer_buffer_stay_in_the_providers_crate", "tenet::a_column_s_lifetime_is_told_to_the_consumer_as_an_advisory_release"]
+
+[[tenet]]
+id = "the_platform_has_two_tiers_no_os_and_os_and_a_build_on_default_features_is_the_no_os_tier"
+subject = "memory"
+what = "There are two platform tiers, no_os and os, and neither is chosen for the consumer. A build on default features is the no_os tier, trait contracts only, with memory, threads and clock provided by the consumer. The os tier is a feature the consumer turns on, giving raw mmap and clock_gettime on Linux and macOS. Both abort on panic."
+mechanism = "No crate has a default feature. The engine's `os` feature carries `OsMemoryProvider`, `OsClock` and the operating-system arms of thread parking and thread classes; with it off the engine reaches no operating system."
+source = "mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"
+provenance = ["mock::research::202611200520_default-impls-opt-in::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+Option a/b but make the default impls an opt in feature on their respective crates. Default to contracts only. The default impls we already have for other things should probably move there too and the readmes should mention the different principled features for impls to opt in optionally (there are different principles on the impls now so each needs a unified name)
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202611200518-zrf9 default implementations behind opt-in features, 2026-11-20, agent-written: the held row it supersedes, without the std tier that there_is_no_std_platform_tier removes and with the os tier no longer the default, as op's ruling op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only says; the tier list is not his words"
+standing = "held"
+keywords = ["platform tiers", "no_os", "os", "default features", "contracts only", "mmap", "clock_gettime", "abort"]
+rejects = ["os as the default tier", "a std tier"]
+related = ["tenet::op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only", "tenet::there_is_no_std_platform_tier", "tenet::the_no_os_tier_is_trait_contracts_only_and_the_consumer_provides_every_platform_implementation"]
+
+[[tenet]]
+id = "the_clock_is_a_builder_slot_provider_starting_at_the_os_clock_when_the_os_feature_is_on_and_at_a_null_clock_otherwise"
+subject = "memory"
+what = "The clock is a builder-slot provider. The builder starts it at the os-tier monotonic clock when the consumer turns the os feature on, and at a null clock otherwise until the consumer supplies one. Platform inputs routed through the generic with call drop their values, so value-carrying providers get dedicated slots."
+mechanism = "`SchedulerBuilder::clock`; the builder's starting clock is `OsClock` under the `os` feature and `NullClock` without it; `.with(...)` drops platform input values."
+source = "mock/research/202611200520_default-impls-opt-in/OP-CALL.md:7-18"
+provenance = ["mock::research::202611200520_default-impls-opt-in::OP-CALL::#the-question-and-his-answer"]
+quote = '''
+Option a/b but make the default impls an opt in feature on their respective crates. Default to contracts only. The default impls we already have for other things should probably move there too and the readmes should mention the different principled features for impls to opt in optionally (there are different principles on the impls now so each needs a unified name)
+'''
+origin = "proposed"
+written_by = "doc changelist of round 202611200518-zrf9 default implementations behind opt-in features, 2026-11-20, agent-written: the provisional row it supersedes, with the os clock no longer under a default feature, as op's ruling op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only says; the slot shape is the superseded row's, not his words"
+standing = "held"
+keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "os feature", "monotonic clock", ".with"]
+rejects = ["the os-tier clock under a default feature"]
+related = ["tenet::op_ruled_that_every_default_implementation_sits_behind_an_opt_in_feature_on_its_own_crate_and_default_features_carry_the_contracts_only"]

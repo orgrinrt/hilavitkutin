@@ -17,6 +17,7 @@ quote = '''
 '''
 origin = "stated"
 standing = "held"
+superseded_by = ["the_platform_has_two_tiers_no_os_and_os_and_a_build_on_default_features_is_the_no_os_tier"]
 keywords = ["platform tiers", "no_os", "os", "std", "bare metal", "WASM", "mmap", "catch_unwind"]
 
 [[tenet]]
@@ -260,6 +261,7 @@ quote = '''
 origin = "proposed"
 written_by = "addendum A1 of 2026-06-11, constraint note 7, agent-written, elevated to canon by the addendum"
 standing = "provisional"
+superseded_by = ["the_clock_is_a_builder_slot_provider_starting_at_the_os_clock_when_the_os_feature_is_on_and_at_a_null_clock_otherwise"]
 stamped_by = "maintainer"
 stamp = 'provisional, 2026-11-13: nothing read in the written history shows it to be his or to be unbacked, and it stands on a stamp under the words of op "The rest can be on provisional stamps to begin with" (`mock/research/202611130850_the-record-read-whole/OP-ANSWERS-18.md:5`), and asked of the maintainer in ticket `make_formal_or_overturn_the_394_stamped_tenets_of_hilavitkut`'
 keywords = ["clock", "SchedulerBuilder::clock", "builder slot", "null clock", "no_os", "monotonic clock", ".with", "providers"]
