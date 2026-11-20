@@ -1,7 +1,9 @@
 //! Every row of the two tables in `measured.rs`, read back from the run
 //! directory its comment cites: the first warm pass of the slower arm rounded
-//! up to a second, and the largest target directory a cell left. A row that no
-//! run directory gives, or a run directory no row accounts for, fails here.
+//! up to a second, and the largest target directory a cell left. The test
+//! lists the cells it reads, and a row that none of them gives, or a listed
+//! cell that no row accounts for, fails here; a run directory outside the list
+//! fails nothing.
 
 use build_call::measured::{FIRST_CALL_S, Row, TARGET_BYTES, call_key, disk_key};
 
@@ -211,8 +213,11 @@ fn every_row_of_the_first_call_table_is_the_reading_of_the_run_it_cites() {
         secs_up(first_call_ns(release_25.samples, None)),
     ));
     // dev 97 is not a timed call: the untimed build of the 97 crates plus the
-    // relink, which the harness's probe counts (ticket
-    // `the_bench_harness_probe_counts_the_untimed_setup_of_a_build`)
+    // relink, which the harness's probe counts (mockspace ticket
+    // `the_bench_harness_probe_counts_the_untimed_setup_of_a_build`). The row
+    // was first set from the earlier run's relink (0.478 s, run
+    // `20261116T083526Z-b2bbf4ba`) and this sum, from the run that ran under
+    // it, gives the same 119 s.
     let link_97 = cell!(
         "link-static",
         "dev_n97",
