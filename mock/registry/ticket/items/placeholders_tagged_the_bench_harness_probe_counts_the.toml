@@ -1,0 +1,13 @@
+[[ticket]]
+id = "placeholders_tagged_the_bench_harness_probe_counts_the"
+title = "Placeholders tagged the_bench_harness_probe_counts_the_untimed_setup_of_a_build"
+kind = "task"
+what = "Placeholders tagged the_bench_harness_probe_counts_the_untimed_setup_of_a_build in benches, 1 marker. Filed by `mock owed`; the markers cite this ticket and it closes when none is left.\n\nAn agent is to evaluate each marker below: read the code at its place and the canon (`mock canon find`, `mock canon subject`), then do one of three things. Put a question to the maintainer, with a subject and real options, where the canon is silent and the gap is the maintainer's to settle. Settle the marker, where the code or the canon already answers it. Drop the marker, where it names nothing owed. This task files no question of its own, and the line of each marker is where it stood when the task was filed.\n\nCovers:\n- mock/benches/support/build-call/src/measured.rs:47: a placeholder, not a timed call. The relink at dev\n"
+
+[[ticket_move]]
+id = "m20261119230329_owed_a604"
+ticket = "placeholders_tagged_the_bench_harness_probe_counts_the"
+to = "backlog"
+by = "owed"
+at = "2026-11-19T23:03:29Z"
+why = "filed by mock owed for 1 marker(s)"

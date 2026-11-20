@@ -22,28 +22,52 @@ pub const fn disk_key(incremental: bool) -> u16 {
 }
 
 /// The first timed call measured at a cell, in whole seconds rounded up, the
-/// slower of the bench's two arms.
-pub const FIRST_CALL_S: [Row; 7] = [
-    // build-static, run 20261116T063249Z-f04daa0a-dirty, first warm pass
-    (call_key(0, 0), 25, 17),
+/// slower of the bench's two arms, with one row that is not a timed call
+/// (the last, a placeholder). `tests/measured.rs` reads each row back from the
+/// run directory it cites.
+pub const FIRST_CALL_S: [Row; 11] = [
+    // build-static at 25, run 20261119T150158Z-ffb57e5a, first warm pass:
+    // clean 22.28 s on, leaf 5.80 s off, mid 6.14 s off, root 16.83 s off
+    (call_key(0, 0), 25, 23),
     (call_key(1, 0), 25, 6),
-    (call_key(2, 0), 25, 6),
-    (call_key(3, 0), 25, 15),
-    // link-static, run 20261116T083526Z-b2bbf4ba, first warm pass: the
-    // relink, 0.157 s at dev 25, 0.478 s at dev 97, 0.138 s at release 25
+    (call_key(2, 0), 25, 7),
+    (call_key(3, 0), 25, 17),
+    // build-static at 97, first warm pass: the clean sweep from run
+    // 20261119T171604Z-fe400621 (123.17 s on, 118.47 s off) and the edit
+    // sweeps from run 20261119T203124Z-4228372a (leaf 5.95 s off, mid 33.47 s
+    // off, root 87.31 s off)
+    (call_key(0, 0), 97, 124),
+    (call_key(1, 0), 97, 6),
+    (call_key(2, 0), 97, 34),
+    (call_key(3, 0), 97, 88),
+    // link-static at 25, run 20261119T134226Z-07a9e9a3, first warm pass: the
+    // relink, under one second at dev and at release
     (call_key(4, 0), 25, 1),
-    (call_key(4, 0), 97, 1),
     (call_key(4, 1), 25, 1),
+    // FIXME(placeholders_tagged_the_bench_harness_probe_counts_the): a
+    // placeholder, not a timed call. The relink at dev 97 reads 0.51 s in run
+    // 20261119T222847Z-2eb71914, but the probe of the harness gives a cell ten
+    // times its bound from the whole first call, whose untimed setup builds
+    // the 97 crates, so a row of 1 s skipped the cell at 30 s and a bound
+    // scaled from 25 skipped it at 120 s. This row is the non-incremental
+    // clean build of run 20261119T171604Z-fe400621 (118.47 s) plus the
+    // relink, rounded up. It was set from the relink of the earlier run
+    // 20261116T083526Z-b2bbf4ba (0.478 s) before the run above existed, and
+    // that run's 0.51 s gives the same 119. It lets a bound of 357 s on a
+    // half second call stand until the probe leaves the setup out.
+    (call_key(4, 0), 97, 119),
 ];
 
-/// The largest target directory a cell left, in bytes.
-pub const TARGET_BYTES: [Row; 3] = [
-    // build-static, run 20261116T063249Z-f04daa0a-dirty: incremental on after
-    // a root edit, and off after a leaf edit
-    (disk_key(true), 25, 562_731_093),
-    (disk_key(false), 25, 82_479_237),
-    // link-static, run 20261116T083526Z-b2bbf4ba, dev 97, the replay's cell
-    (disk_key(false), 97, 364_947_567),
+/// The largest target directory a cell left, in bytes, over the four sweeps of
+/// build-static at the point: with incremental on it was after a root edit and
+/// off after a leaf edit in the runs
+/// `20261119T150158Z-ffb57e5a` (25) and `20261119T203124Z-4228372a` (97) and
+/// the clean sweep `20261119T171604Z-fe400621` (97).
+pub const TARGET_BYTES: [Row; 4] = [
+    (disk_key(true), 25, 562_731_084),
+    (disk_key(false), 25, 82_479_236),
+    (disk_key(true), 97, 3_893_504_668),
+    (disk_key(false), 97, 567_452_989),
 ];
 
 /// The reading of `key` at `n`: the row of `key` at the largest point at or

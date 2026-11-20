@@ -1,0 +1,35 @@
+  building arm link-static/arms/default_relink...
+  building arm link-static/arms/default_replay...
+  building generated bench driver...
+run plan: 1 bench(es), 1 config(s), run 20261119T222847Z-2eb71914 on linux-x86_64-c4-container-intel
+[1/1] link-static/dev n=97 (elapsed 0s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/link-static/default_relink/release/libdefault_relink.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (26s elapsed, ~130s left)
+  pass 2/6 cd=0ms... done (47s elapsed, ~94s left)
+  pass 3/6 cd=0ms... done (68s elapsed, ~68s left)
+  pass 4/6 cd=0ms... done (89s elapsed, ~44s left)
+  pass 5/6 cd=0ms... done (110s elapsed, ~22s left)
+  pass 6/6 cd=0ms... done (131s elapsed, ~0s left)
+  Total: 130.7s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795127327-15749/link-static/dev_n97/linux-x86_64-c4-container-intel/20261119T222847Z-2eb71914/samples.csv (24 rows)
+  link-static: the fixture's dev profile (baseline: default_relink)
+    default_relink            510.24 ms   1.73x  cv  5.6%  (baseline)
+    default_replay            295.63 ms   1.00x  cv  2.4%  Δbase -215.62 ms *
+    * Baseline (default_relink) is the SLOWEST variant; every rival beats it
+    * default_replay dominates: 73% faster than the next best (default_relink)
+    * default_replay beats baseline by 42% (significant)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795127327-15749/link-static/dev_n97/linux-x86_64-c4-container-intel/20261119T222847Z-2eb71914/report.md
+  after_cell: 90 calls, each held to scenario `link` at n=97
+
+bench                             n variant                    median  vs best
+link-static/dev                  97 default_relink          510.24 ms    1.73x
+link-static/dev                  97 default_replay          295.63 ms    1.00x
+
+total: 387.6s
