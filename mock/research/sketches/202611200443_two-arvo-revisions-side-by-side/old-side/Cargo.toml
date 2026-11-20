@@ -1,0 +1,8 @@
+[package]
+name = "old-side"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+arvo-old.workspace = true
