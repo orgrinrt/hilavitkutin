@@ -1,0 +1,32 @@
+$ CARGO_INCREMENTAL=0 cargo test -p hilavitkutin --test host_import -- --ignored an_import_of_one_record_reruns_only_the_morsel_that_covers_it   (worktree at 9918113f)
+    Finished `test` profile [unoptimized] target(s) in 12.15s
+     Running tests/host_import.rs (/home/user/target/debug/deps/host_import-f6a41d36a1c19381)
+
+running 1 test
+test an_import_of_one_record_reruns_only_the_morsel_that_covers_it ... FAILED
+
+failures:
+
+---- an_import_of_one_record_reruns_only_the_morsel_that_covers_it stdout ----
+
+thread 'an_import_of_one_record_reruns_only_the_morsel_that_covers_it' (11889) panicked at crates/hilavitkutin/tests/host_import.rs:823:5:
+assertion `left == right` failed: only the window holding record 0 reruns
+  left: 4
+ right: 1
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::assert_failed_inner
+   3: core::panicking::assert_failed::<usize, usize>
+   4: host_import::an_import_of_one_record_reruns_only_the_morsel_that_covers_it
+   5: host_import::an_import_of_one_record_reruns_only_the_morsel_that_covers_it::{closure#0}
+   6: <host_import::an_import_of_one_record_reruns_only_the_morsel_that_covers_it::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    an_import_of_one_record_reruns_only_the_morsel_that_covers_it
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `-p hilavitkutin --test host_import`
