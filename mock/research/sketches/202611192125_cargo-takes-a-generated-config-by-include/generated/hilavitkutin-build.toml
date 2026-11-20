@@ -1,0 +1,7 @@
+# Written by hilavitkutin-build for the crate `include-taker`.
+[profile.release]
+lto = "thin"
+incremental = false
+
+[profile.dev]
+incremental = false

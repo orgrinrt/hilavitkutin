@@ -1,48 +1,163 @@
-//! A prototype is a whole build script by name. These hold each one to the
-//! directives it writes, read against `configure` and `configure_with`,
-//! which a script that names no prototype still calls, over every profile
-//! name cargo can pass and every profile the crate has.
+//! A prototype names one set per profile. These hold the crate's three to
+//! the sets the design gives them, and to the directives they write.
 
-use hilavitkutin_build::{Pragma, PragmaSet, Profile, Prototype, configure, configure_with};
+mod common;
+
+use common::{held, walked};
+use hilavitkutin_build::{
+    Cranelift,
+    Default as Defaults,
+    Deterministic,
+    GccCc,
+    GccDriver,
+    PragmaSet,
+    Prototype,
+    Reach,
+    Set,
+    ThinLto,
+    Workspace,
+    claimed,
+    configure,
+    configure_as,
+};
 use notko::Maybe;
 
-/// The values of `PROFILE` a script can meet: the two cargo passes, and one
-/// the crate does not know, which resolves as a dev build.
-const PROFILE_NAMES: [&str; 3] = ["debug", "release", "bench"];
-
-/// Every profile the crate has.
-const PROFILES: [Profile; 5] =
-    [Profile::Dev, Profile::DevOpt, Profile::Release, Profile::Profiling, Profile::Ci];
-
-/// One of every pragma, to ask a set about each.
-const PRAGMAS: [Pragma; 13] = [
-    Pragma::LoopOptimization,
-    Pragma::Polly,
-    Pragma::MathPeephole,
-    Pragma::FastMath,
-    Pragma::ExpandedLto,
-    Pragma::Pgo,
-    Pragma::Bolt,
-    Pragma::Profiling,
-    Pragma::BuildStd,
-    Pragma::ParallelCodegen(0),
-    Pragma::SharedGenerics,
-    Pragma::LoopFusion,
-    Pragma::MimallocAllocator,
-];
-
-/// A build of `profile` with no workspace wrapper named, where `configure`
-/// warns when there are flags.
-fn unwrapped(profile: &'static str) -> impl Fn(&'static str) -> Maybe<&'static str> {
-    move |key| {
-        match key {
-            "PROFILE" => Maybe::Is(profile),
-            _ => Maybe::Isnt,
-        }
+/// The five sets of a prototype as the names they hold, dev, dev-opt,
+/// release, profiling and ci, each also held to its own rules and to
+/// naming its members in the order of their bits.
+fn sets<P: Prototype>() -> [Vec<&'static str>; 5] {
+    fn set<S: Set>() -> Vec<&'static str> {
+        assert_eq!(S::VERDICT, "");
+        let names = held(PragmaSet::of::<S>());
+        assert_eq!(
+            walked::<S>(),
+            names,
+            "a set names its members in the order of their bits"
+        );
+        names
     }
+    [
+        set::<P::Dev>(),
+        set::<P::DevOpt>(),
+        set::<P::Release>(),
+        set::<P::Profiling>(),
+        set::<P::Ci>(),
+    ]
 }
 
-/// The same build with the wrapper named, where nothing warns.
+#[test]
+fn the_default_sets_are_the_designs() {
+    assert_eq!(sets::<Defaults>(), [
+        vec!["ParallelCodegen", "SharedGenerics"],
+        vec!["LoopOptimization", "ParallelCodegen", "SharedGenerics"],
+        vec!["LoopOptimization", "MathPeephole", "FastMath", "Pgo", "Bolt", "ParallelCodegen"],
+        vec![
+            "LoopOptimization",
+            "MathPeephole",
+            "FastMath",
+            "Pgo",
+            "Bolt",
+            "Profiling",
+            "ParallelCodegen"
+        ],
+        vec!["LoopOptimization", "ParallelCodegen"],
+    ]);
+}
+
+/// `Deterministic` is `Default` with neither `FastMath` nor `MathPeephole`,
+/// which stands on it, and with nothing else gone.
+#[test]
+fn deterministic_is_default_without_fast_math_and_what_stands_on_it() {
+    let without = |names: Vec<&'static str>| -> Vec<&'static str> {
+        names
+            .into_iter()
+            .filter(|name| !matches!(*name, "FastMath" | "MathPeephole"))
+            .collect()
+    };
+    assert_eq!(sets::<Deterministic>(), sets::<Defaults>().map(without));
+    assert_eq!(sets::<Deterministic>()[2], [
+        "LoopOptimization",
+        "Pgo",
+        "Bolt",
+        "ParallelCodegen"
+    ]);
+}
+
+/// `Workspace` is `Default` with `ExpandedLto` in release and in ci.
+#[test]
+fn workspace_is_default_with_expanded_lto_in_release_and_ci() {
+    let [dev, dev_opt, release, profiling, ci] = sets::<Workspace>();
+    let [default_dev, default_dev_opt, _, default_profiling, _] = sets::<Defaults>();
+    assert_eq!(
+        (dev, dev_opt, profiling),
+        (default_dev, default_dev_opt, default_profiling)
+    );
+    assert_eq!(release, [
+        "LoopOptimization",
+        "MathPeephole",
+        "FastMath",
+        "ExpandedLto",
+        "Pgo",
+        "Bolt",
+        "ParallelCodegen"
+    ]);
+    assert_eq!(ci, ["LoopOptimization", "ExpandedLto", "ParallelCodegen"]);
+}
+
+/// Only `Workspace` reaches past its crate, so the other two are what a
+/// script that claims nothing may name.
+#[test]
+fn only_workspace_holds_a_pragma_of_workspace_reach() {
+    fn reaches<P: Prototype>() -> [Reach; 5] {
+        [
+            <P::Dev as Set>::REACH,
+            <P::DevOpt as Set>::REACH,
+            <P::Release as Set>::REACH,
+            <P::Profiling as Set>::REACH,
+            <P::Ci as Set>::REACH,
+        ]
+    }
+    assert_eq!(reaches::<Defaults>(), [Reach::Crate; 5]);
+    assert_eq!(reaches::<Deterministic>(), [Reach::Crate; 5]);
+    assert_eq!(reaches::<Workspace>(), [
+        Reach::Crate,
+        Reach::Crate,
+        Reach::Workspace,
+        Reach::Crate,
+        Reach::Workspace
+    ]);
+}
+
+/// A prototype that holds one driver and one C compiler in every profile,
+/// and other workspace pragmas that differ by profile.
+struct SameShared;
+
+impl Prototype for SameShared {
+    type Ci = (GccDriver, GccCc);
+    type Dev = (GccDriver, Cranelift, GccCc);
+    type DevOpt = (GccCc, GccDriver);
+    type Profiling = (GccDriver, GccCc, ThinLto);
+    type Release = (ThinLto, GccDriver, GccCc);
+}
+
+/// The claim holds of the crate's three and of a prototype whose shared
+/// groups agree, in a `const` item as the claiming script has it. The
+/// prototype it refuses is built and seen refused in `tests/refused.rs`.
+const _: () = {
+    claimed::<Workspace>();
+    claimed::<Defaults>();
+    claimed::<Deterministic>();
+    claimed::<SameShared>();
+};
+
+/// The five LLVM options LoopOptimization owns, as the flags carry them.
+const LOOP_FLAGS: &str = "-Cllvm-args=-enable-loop-distribute \
+    -Cllvm-args=-enable-loop-versioning-licm \
+    -Cllvm-args=-enable-interleaved-mem-accesses \
+    -Cllvm-args=-loop-prefetch-writes \
+    -Cllvm-args=-enable-histogram-loop-vectorization";
+
+/// A build of `profile` with the wrapper named, where nothing warns.
 fn wrapped(profile: &'static str) -> impl Fn(&'static str) -> Maybe<&'static str> {
     move |key| {
         match key {
@@ -53,140 +168,50 @@ fn wrapped(profile: &'static str) -> impl Fn(&'static str) -> Maybe<&'static str
     }
 }
 
-fn written(prototype: Prototype, profile: &'static str) -> String {
+fn written<P: Prototype>(profile: &'static str) -> String {
     let mut out = String::new();
-    prototype
-        .configure(unwrapped(profile), &mut out)
-        .expect("writing to a String cannot fail");
+    configure_as::<P, _, _>(wrapped(profile), &mut out).expect("writing to a String cannot fail");
     out
 }
 
+/// The directives of the two prototypes a crate's script names, as the
+/// text they were before a set was a type: a consumer's flags do not move.
 #[test]
-fn default_writes_what_configure_writes_less_the_warning() {
-    for profile in PROFILE_NAMES {
-        let mut configured = String::new();
-        configure(unwrapped(profile), &mut configured).expect("writing to a String cannot fail");
-        // Every profile writes a flag, so `configure` warns in each.
-        let (directives, warning) = configured
-            .split_once("cargo::warning=")
-            .expect("configure warns where no wrapper is named");
-        assert!(warning.contains("so they are dropped"), "{profile}");
-        assert_eq!(
-            written(Prototype::Default, profile),
-            directives,
-            "{profile}"
+fn the_directives_of_default_and_deterministic_are_the_text_they_were() {
+    const HEAD: &str = "cargo::rerun-if-env-changed=RUSTC_WORKSPACE_WRAPPER\n\
+                        cargo::rustc-check-cfg=cfg(arvo_fast_math)\n";
+    // The profile names cargo passes, and one the crate does not know.
+    for debug in ["debug", "bench"] {
+        let dev = format!(
+            "{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS=-Zthreads=0 -Zshare-generics=y\n"
         );
-
-        let mut quiet = String::new();
-        configure(wrapped(profile), &mut quiet).expect("writing to a String cannot fail");
-        assert_eq!(written(Prototype::Default, profile), quiet, "{profile}");
+        assert_eq!(written::<Defaults>(debug), dev);
+        assert_eq!(written::<Deterministic>(debug), dev);
     }
-    assert!(written(Prototype::Default, "release").contains("cargo::rustc-cfg=arvo_fast_math\n"));
-    assert!(!written(Prototype::Default, "debug").contains("cargo::rustc-cfg=arvo_fast_math\n"));
-}
-
-#[test]
-fn deterministic_writes_what_configure_with_writes_without_fast_math() {
-    for profile in PROFILE_NAMES {
-        let out = written(Prototype::Deterministic, profile);
-        assert!(!out.contains("cargo::rustc-cfg=arvo_fast_math"), "{out}");
-        assert!(
-            out.contains("cargo::rustc-check-cfg=cfg(arvo_fast_math)\n"),
-            "{out}"
-        );
-
-        let mut tuned = String::new();
-        configure_with(
-            wrapped(profile),
-            |pragmas| pragmas.without(Pragma::FastMath),
-            &mut tuned,
+    assert_eq!(
+        written::<Defaults>("release"),
+        format!(
+            "{HEAD}cargo::rustc-cfg=arvo_fast_math\n\
+             cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n"
         )
-        .expect("writing to a String cannot fail");
-        assert_eq!(out, tuned, "{profile}");
+    );
+    assert_eq!(
+        written::<Deterministic>("release"),
+        format!("{HEAD}cargo::rustc-env=HILAVITKUTIN_BUILD_RUSTFLAGS={LOOP_FLAGS} -Zthreads=0\n")
+    );
+}
+
+#[test]
+fn configure_takes_the_default_prototype() {
+    for profile in ["debug", "release", "bench"] {
+        let mut configured = String::new();
+        configure(wrapped(profile), &mut configured).expect("writing to a String cannot fail");
+        assert_eq!(configured, written::<Defaults>(profile), "{profile}");
     }
-    // The release build is where the two prototypes part.
     assert_ne!(
-        written(Prototype::Deterministic, "release"),
-        written(Prototype::Default, "release")
+        written::<Defaults>("release"),
+        written::<Deterministic>("release")
     );
-    assert!(
-        written(Prototype::Deterministic, "release")
-            .contains("-Cllvm-args=-enable-loop-distribute")
-    );
-}
-
-#[test]
-fn no_prototype_writes_a_warning() {
-    for prototype in [Prototype::Default, Prototype::Deterministic] {
-        for profile in PROFILE_NAMES {
-            let out = written(prototype, profile);
-            assert!(
-                !out.contains("cargo::warning"),
-                "{prototype:?} {profile}: {out}"
-            );
-        }
-    }
-}
-
-#[test]
-fn a_prototype_hands_back_the_build_it_resolved() {
-    let mut out = String::new();
-    let default = Prototype::Default
-        .configure(unwrapped("release"), &mut out)
-        .expect("writing to a String cannot fail");
-    assert_eq!(default.profile, Profile::Release);
-    assert_eq!(default.pragmas, Profile::Release.default_pragmas());
-
-    let deterministic = Prototype::Deterministic
-        .configure(unwrapped("release"), &mut out)
-        .expect("writing to a String cannot fail");
-    assert_eq!(deterministic.profile, Profile::Release);
-    assert!(!deterministic.fast_math());
-    // MathPeephole stands on FastMath, so the resolved set drops it too.
-    assert!(!deterministic.pragmas.contains(Pragma::MathPeephole));
-    assert!(deterministic.pragmas.contains(Pragma::LoopOptimization));
-
-    let dev = Prototype::Default
-        .configure(unwrapped("debug"), &mut out)
-        .expect("writing to a String cannot fail");
-    assert_eq!(dev.profile, Profile::Dev);
-}
-
-/// Over every profile's default set: `Default` leaves it as it is, and
-/// `Deterministic` differs from it in `FastMath` and in nothing else.
-#[test]
-fn tune_takes_fast_math_out_for_deterministic_alone() {
-    for profile in PROFILES {
-        let defaults = profile.default_pragmas();
-        assert_eq!(Prototype::Default.tune(defaults), defaults, "{profile:?}");
-        let tuned = Prototype::Deterministic.tune(defaults);
-        for pragma in PRAGMAS {
-            let expected = match pragma {
-                Pragma::FastMath => false,
-                _ => defaults.contains(pragma),
-            };
-            assert_eq!(tuned.contains(pragma), expected, "{profile:?} {pragma:?}");
-        }
-        assert_eq!(
-            tuned.parallel_codegen_units(),
-            defaults.parallel_codegen_units(),
-            "{profile:?}"
-        );
-    }
-    assert!(
-        PROFILES
-            .iter()
-            .any(|profile| profile.default_pragmas().contains(Pragma::FastMath)),
-        "no profile has FastMath, so the loop above took nothing out"
-    );
-}
-
-#[test]
-fn tune_runs_before_the_program_does() {
-    const RELEASE: PragmaSet = Profile::Release.default_pragmas();
-    const TUNED: PragmaSet = Prototype::Deterministic.tune(RELEASE);
-    assert!(RELEASE.contains(Pragma::FastMath));
-    assert!(!TUNED.contains(Pragma::FastMath));
 }
 
 /// A sink that refuses every write.
@@ -200,11 +225,6 @@ impl core::fmt::Write for Refusing {
 
 #[test]
 fn a_refusing_writer_is_reported() {
-    for prototype in [Prototype::Default, Prototype::Deterministic] {
-        assert!(
-            prototype
-                .configure(unwrapped("release"), &mut Refusing)
-                .is_err()
-        );
-    }
+    assert!(configure_as::<Defaults, _, _>(wrapped("release"), &mut Refusing).is_err());
+    assert!(configure_as::<Deterministic, _, _>(wrapped("debug"), &mut Refusing).is_err());
 }

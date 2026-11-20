@@ -5,17 +5,41 @@
 
 use hilavitkutin_build::{
     ConfigFile,
+    Flags,
+    Host,
+    INCLUDE_LINE,
     Notice,
+    Placed,
     Plan,
     Tree,
+    Unpacked,
     WRAPPER_NAME,
     WrapperFile,
+    includes_generated,
     plan,
     write_cargo_config,
     write_notice,
     write_watch,
 };
 use notko::Maybe;
+
+/// The tables below keep a column of `true` and `false` for each finding,
+/// which reads at a glance; these name the finding where it is handed over.
+const fn has(flags: bool) -> Flags {
+    if flags { Flags::Written } else { Flags::Nothing }
+}
+
+const fn holds_orig(unpacked: bool) -> Unpacked {
+    if unpacked { Unpacked::Is } else { Unpacked::Isnt }
+}
+
+const fn sits(elsewhere: bool) -> Placed {
+    if elsewhere { Placed::Elsewhere } else { Placed::Here }
+}
+
+const fn runs_sh(unix: bool) -> Host {
+    if unix { Host::Unix } else { Host::Other }
+}
 
 /// The values `RUSTC_WORKSPACE_WRAPPER` takes: unset, empty, the wrapper,
 /// cargo's own under `cargo clippy`, and somebody else's.
@@ -140,7 +164,7 @@ fn the_tables_cover_every_input_once() {
 fn the_own_tree_is_written_and_told_what_the_tables_say() {
     for (wrapper, wrapper_file, config_file, flags, expected) in every_case() {
         assert_eq!(
-            plan(wrapper, Tree::Own, wrapper_file, config_file, flags),
+            plan(wrapper, Tree::Own, wrapper_file, config_file, has(flags)),
             expected,
             "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
         );
@@ -157,7 +181,7 @@ fn a_fetched_and_a_foreign_tree_are_written_nothing_and_told_nothing() {
     for tree in [Tree::Fetched, Tree::Foreign] {
         for (wrapper, wrapper_file, config_file, flags, _) in every_case() {
             assert_eq!(
-                plan(wrapper, tree, wrapper_file, config_file, flags),
+                plan(wrapper, tree, wrapper_file, config_file, has(flags)),
                 nothing,
                 "{tree:?} {wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
             );
@@ -174,7 +198,7 @@ fn the_tree_and_the_wrapper_file_each_change_the_plan() {
         Tree::Own,
         WrapperFile::Missing,
         ConfigFile::Missing,
-        true,
+        Flags::Written,
     );
     assert_eq!(own, Plan {
         wrapper: true,
@@ -182,17 +206,29 @@ fn the_tree_and_the_wrapper_file_each_change_the_plan() {
         notice:  Notice::Wired,
     });
     for tree in [Tree::Fetched, Tree::Foreign] {
-        let left_alone = plan(UNSET, tree, WrapperFile::Missing, ConfigFile::Missing, true);
+        let left_alone = plan(
+            UNSET,
+            tree,
+            WrapperFile::Missing,
+            ConfigFile::Missing,
+            Flags::Written,
+        );
         assert_ne!(left_alone, own, "{tree:?}");
     }
 
-    let stale = plan(OURS, Tree::Own, WrapperFile::Stale, ConfigFile::Named, true);
+    let stale = plan(
+        OURS,
+        Tree::Own,
+        WrapperFile::Stale,
+        ConfigFile::Named,
+        Flags::Written,
+    );
     let current = plan(
         OURS,
         Tree::Own,
         WrapperFile::Current,
         ConfigFile::Named,
-        true,
+        Flags::Written,
     );
     assert_eq!(stale, Plan {
         wrapper: true,
@@ -213,7 +249,7 @@ fn a_plan_is_made_before_the_program_runs() {
         Tree::Own,
         WrapperFile::Missing,
         ConfigFile::Missing,
-        true,
+        Flags::Written,
     );
     assert_eq!(WIRED.notice, Notice::Wired);
 }
@@ -272,15 +308,31 @@ fn notice(notice: Notice) -> String {
 }
 
 /// The file written where there is none is one the crate itself reads as
-/// naming the wrapper, by the path cargo resolves against the workspace.
+/// naming the wrapper, by the path cargo resolves against the workspace,
+/// and as taking the generated cargo file.
 #[test]
-fn the_written_config_is_the_build_table_with_the_one_line() {
+fn the_written_config_is_the_include_line_and_the_build_table_with_the_one_line() {
     assert_eq!(
         cargo_config(),
-        "[build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
+        "include = [{ path = \"hilavitkutin-build.toml\", optional = true }]\n\n\
+         [build]\nrustc-workspace-wrapper = \".cargo/hilavitkutin-rustc-wrapper\"\n"
+    );
+    assert_eq!(
+        INCLUDE_LINE,
+        "include = [{ path = \"hilavitkutin-build.toml\", optional = true }]"
     );
     assert_eq!(ConfigFile::read(&cargo_config()), ConfigFile::Named);
+    assert!(includes_generated(&cargo_config()));
     assert_eq!(WRAPPER_NAME, "hilavitkutin-rustc-wrapper");
+}
+
+/// The config file this workspace commits takes the generated file and
+/// names the wrapper, as the one the crate writes does.
+#[test]
+fn the_committed_config_takes_the_generated_file_and_names_the_wrapper() {
+    let committed = include_str!("../../../.cargo/config.toml");
+    assert!(includes_generated(committed));
+    assert_eq!(ConfigFile::read(committed), ConfigFile::Named);
 }
 
 #[test]
@@ -309,6 +361,32 @@ fn each_notice_is_one_warning_line_and_silence_is_nothing() {
         "cargo::warning=hilavitkutin-build chose rustc flags for this crate and hands them over through a POSIX \
          sh wrapper, which this host does not run, so they are dropped\n"
     );
+    assert_eq!(
+        notice(Notice::Generated),
+        "cargo::warning=hilavitkutin-build wrote the workspace's pragmas to /repo/.cargo/hilavitkutin-build.toml: \
+         this build ran before cargo read it, and the next one takes its keys\n"
+    );
+    assert_eq!(
+        notice(Notice::AddInclude),
+        "cargo::warning=hilavitkutin-build left /repo/.cargo/config.toml as it is, and it does not take \
+         /repo/.cargo/hilavitkutin-build.toml: add `include = [{ path = \"hilavitkutin-build.toml\", optional = \
+         true }]` at its top, or the workspace's pragmas are dropped\n"
+    );
+}
+
+/// No plan of the wiring says either thing about the generated file: the
+/// script that claims the workspace says them itself.
+#[test]
+fn no_plan_says_anything_of_the_generated_file() {
+    for tree in [Tree::Own, Tree::Fetched, Tree::Foreign, Tree::NoShell] {
+        for (wrapper, wrapper_file, config_file, flags, _) in every_case() {
+            let said = plan(wrapper, tree, wrapper_file, config_file, has(flags)).notice;
+            assert!(
+                !matches!(said, Notice::Generated | Notice::AddInclude),
+                "{tree:?} {said:?}"
+            );
+        }
+    }
 }
 
 /// A host that cannot run the wrapper is written nothing whatever is on
@@ -322,7 +400,13 @@ fn a_host_with_no_shell_is_written_nothing_and_told_of_dropped_flags() {
             notice:  if flags { Notice::NoShell } else { Notice::Silent },
         };
         assert_eq!(
-            plan(wrapper, Tree::NoShell, wrapper_file, config_file, flags),
+            plan(
+                wrapper,
+                Tree::NoShell,
+                wrapper_file,
+                config_file,
+                has(flags)
+            ),
             expected,
             "{wrapper:?} {wrapper_file:?} {config_file:?} flags {flags}"
         );
@@ -433,12 +517,24 @@ fn the_tree_is_decided_from_the_root_the_cargo_home_and_the_host() {
     ];
     for (root, cargo_home, unpacked, elsewhere, unix, expected) in cases {
         assert_eq!(
-            Tree::of(root, cargo_home, unpacked, elsewhere, unix),
+            Tree::of(
+                root,
+                cargo_home,
+                holds_orig(unpacked),
+                sits(elsewhere),
+                runs_sh(unix)
+            ),
             expected,
             "{root} {cargo_home:?} unpacked {unpacked} elsewhere {elsewhere} unix {unix}"
         );
     }
-    const DECIDED: Tree = Tree::of("/home/u/work/app", HOME, false, false, true);
+    const DECIDED: Tree = Tree::of(
+        "/home/u/work/app",
+        HOME,
+        Unpacked::Isnt,
+        Placed::Here,
+        Host::Unix,
+    );
     assert_eq!(DECIDED, Tree::Own);
 }
 
@@ -466,7 +562,14 @@ impl core::fmt::Write for Refusing {
 fn a_refusing_writer_is_reported_by_every_text() {
     assert!(write_cargo_config(&mut Refusing).is_err());
     assert!(write_watch("/repo/.cargo", &mut Refusing).is_err());
-    for said in [Notice::Wired, Notice::AddLine, Notice::Dropped, Notice::NoShell] {
+    for said in [
+        Notice::Wired,
+        Notice::AddLine,
+        Notice::Dropped,
+        Notice::NoShell,
+        Notice::Generated,
+        Notice::AddInclude,
+    ] {
         assert!(
             write_notice(said, "/repo/.cargo", &mut Refusing).is_err(),
             "{said:?}"
