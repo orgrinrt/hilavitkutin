@@ -300,6 +300,7 @@ fn a_range_past_the_count_is_refused_and_moves_nothing() {
     for (at, values) in [
         (3, &[8, 9][..]),
         (5, &[8][..]),
+        (5, &[][..]),
         (0, &[8, 8, 8, 8, 8][..]),
         (usize::MAX, &[8][..]),
     ] {
@@ -370,14 +371,18 @@ fn an_empty_import_marks_nothing() {
 // A buffered column, in both modes. Exchange trades the two reservations at
 // every boundary, so the even and the odd frame read different sides, and an
 // import that missed the frozen side fails the every-frame test on either mode,
-// under `run` and `run_parallel`; the fused entry takes plain columns only
-// (`tests/ui/buffered_unit_fused_fail.rs`). The live copy is what keeps an
-// import across a pass that writes part of the store: `execute` runs once per
-// window and may call `map` in some windows only, and the boundary after that
-// pass carries the whole live side over. An import that missed the live side
-// fails the partial-pass test.
+// under `run` and `run_parallel`; the fused entry does not take a buffered
+// column yet (`tests/ui/buffered_unit_fused_fail.rs`). The live copy is what
+// keeps an import across a pass that writes part of the store: `execute` runs
+// once per window and may call `map` in some windows only, and the boundary
+// after that pass carries the whole live side over. An import that missed the
+// live side fails the partial-pass test. A unit that writes the store reruns
+// every frame whether or not it was marked, so the mark is seen by `Double`,
+// which only reads it. The same partial pass after a pass over every window
+// keeps the first pass's value under `Snapshot` and loses it under `Exchange`,
+// the red catalogued on that arm.
 macro_rules! buffered {
-    ($name:ident, $mode:ty) => {
+    ($name:ident, $mode:ty $(, #[$stale:meta])*) => {
         mod $name {
             use super::*;
 
@@ -404,27 +409,74 @@ macro_rules! buffered {
                 }
             }
 
-            // Raises the records of the first window it is handed in a frame
-            // and leaves every other window unwritten.
+            // Raises the records of every window it is handed while `every`
+            // holds, and of the first window only while `first` holds, and
+            // leaves the rest unwritten.
             #[derive(Copy, Clone)]
-            struct FirstWindow(&'static AtomicUsize, &'static AtomicBool);
+            struct Gated {
+                calls: &'static AtomicUsize,
+                every: &'static AtomicBool,
+                first: &'static AtomicBool,
+            }
 
-            impl BuilderInput for FirstWindow {
+            impl Gated {
+                fn new(every: bool, first: bool) -> Self {
+                    Self {
+                        calls: counter(),
+                        every: Box::leak(Box::new(AtomicBool::new(every))),
+                        first: Box::leak(Box::new(AtomicBool::new(first))),
+                    }
+                }
+            }
+
+            impl BuilderInput for Gated {
                 type Dispatch = UnitDispatch<Self>;
                 type Init = Self;
             }
 
-            impl WorkUnit<Always> for FirstWindow {
+            impl WorkUnit<Always> for Gated {
                 type Ctx<'frame> = EngineCtx<'frame, Bare, Bare, SnapNil, Cols, Cols, AccPtrNil>;
                 type Hint = (Immediate, Atomic, Normal);
                 type Read = Bare;
                 type Write = Bare;
 
                 fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
-                    self.0.fetch_add(1, Ordering::Relaxed);
-                    if self.1.swap(false, Ordering::Relaxed) {
+                    self.calls.fetch_add(1, Ordering::Relaxed);
+                    if self.every.load(Ordering::Relaxed)
+                        || self.first.swap(false, Ordering::Relaxed)
+                    {
                         ctx.each().map(|read| rec![A(read.get(Col::new()).0 + 1)]);
                     }
+                }
+            }
+
+            // Reads the buffered store and writes another, so it runs only
+            // in a frame where something marked the buffered store changed.
+            #[derive(Copy, Clone)]
+            struct Double(&'static AtomicUsize);
+
+            impl BuilderInput for Double {
+                type Dispatch = UnitDispatch<Self>;
+                type Init = Self;
+            }
+
+            impl WorkUnit<Always> for Double {
+                type Ctx<'frame> = EngineCtx<
+                    'frame,
+                    Bare,
+                    Cons<Column<B>, Empty>,
+                    SnapNil,
+                    Cols,
+                    ColPtrCons<B, ColPtrNil>,
+                    AccPtrNil,
+                >;
+                type Hint = (Immediate, Atomic, Normal);
+                type Read = Bare;
+                type Write = Cons<Column<B>, Empty>;
+
+                fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>) {
+                    self.0.fetch_add(1, Ordering::Relaxed);
+                    ctx.each().map(|read| rec![B(read.get(Col::new()).0 * 2)]);
                 }
             }
 
@@ -500,15 +552,14 @@ macro_rules! buffered {
             #[test]
             fn an_import_outlives_a_pass_that_writes_one_window() {
                 const RECORDS: usize = 20_000;
-                let calls = counter();
-                let first: &'static AtomicBool = Box::leak(Box::new(AtomicBool::new(true)));
+                let unit = Gated::new(false, true);
                 let mut scheduler = Scheduler::builder()
                     .with(Col::start_from(A(0)))
-                    .with(FirstWindow(calls, first))
+                    .with(unit)
                     .build(store(), USize(RECORDS))
                     .unwrap_or_else(|_| panic!("build should succeed"));
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
-                let windows = calls.load(Ordering::Relaxed);
+                let windows = unit.calls.load(Ordering::Relaxed);
                 assert!(
                     windows >= 2,
                     "the premise: {windows} windows over {RECORDS} records"
@@ -518,7 +569,7 @@ macro_rules! buffered {
                     scheduler.import::<Col, _, _>(USize(0), &imported),
                     Outcome::Ok(())
                 ));
-                first.store(true, Ordering::Relaxed);
+                unit.first.store(true, Ordering::Relaxed);
                 assert!(matches!(scheduler.run(), Outcome::Ok(())));
                 let mut sink = Collect::new();
                 assert!(matches!(
@@ -532,12 +583,141 @@ macro_rules! buffered {
                     "a window the pass left keeps the import"
                 );
             }
+
+            // A pass over every window, then a pass over the first window
+            // only: a record of a window the second pass left holds the first
+            // pass's value.
+            #[test]
+            $(#[$stale])*
+            fn a_pass_that_skips_a_window_keeps_the_last_value_there() {
+                const RECORDS: usize = 20_000;
+                let unit = Gated::new(true, false);
+                let mut scheduler = Scheduler::builder()
+                    .with(Col::start_from(A(0)))
+                    .with(unit)
+                    .build(store(), USize(RECORDS))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let windows = unit.calls.load(Ordering::Relaxed);
+                assert!(
+                    windows >= 2,
+                    "the premise: {windows} windows over {RECORDS} records"
+                );
+                unit.every.store(false, Ordering::Relaxed);
+                unit.first.store(true, Ordering::Relaxed);
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                assert!(
+                    unit.calls.load(Ordering::Relaxed) > windows,
+                    "the premise: the second pass ran"
+                );
+                let mut sink = Collect::new();
+                assert!(matches!(
+                    scheduler.dump::<Col, _, _>(USize(0), USize(RECORDS), &mut sink),
+                    Outcome::Ok(())
+                ));
+                assert_eq!(sink.got[0], A(2), "the window both passes wrote");
+                assert_eq!(
+                    sink.got[RECORDS - 1],
+                    A(1),
+                    "a window the second pass left keeps the first pass's value"
+                );
+            }
+
+            #[test]
+            fn an_import_wakes_a_reader_of_the_buffered_store() {
+                let ran = counter();
+                let mut scheduler = Scheduler::builder()
+                    .with(Col::start_from(A(0)))
+                    .with(Column::<B>::start_from(B(0)))
+                    .with(Double(ran))
+                    .build(store(), USize(4))
+                    .unwrap_or_else(|_| panic!("build should succeed"));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let rested = ran.load(Ordering::Relaxed);
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                assert_eq!(
+                    ran.load(Ordering::Relaxed),
+                    rested,
+                    "the premise: a clean frame rests the reader"
+                );
+                let values = [1, 2, 3, 4];
+                assert!(matches!(
+                    scheduler.import::<Col, _, _>(USize(0), &a_records(&values)),
+                    Outcome::Ok(())
+                ));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                assert!(
+                    ran.load(Ordering::Relaxed) > rested,
+                    "the import marked the buffered store, so its reader ran"
+                );
+                let mut doubled = Collect::new();
+                assert!(matches!(
+                    scheduler.dump::<Column<B>, _, _>(USize(0), USize(4), &mut doubled),
+                    Outcome::Ok(())
+                ));
+                assert_eq!(doubled.got, vec![B(2), B(4), B(6), B(8)]);
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let mut held = Collect::new();
+                assert!(matches!(
+                    scheduler.dump::<Col, _, _>(USize(0), USize(4), &mut held),
+                    Outcome::Ok(())
+                ));
+                assert_eq!(
+                    held.got,
+                    a_records(&values),
+                    "a frame where nothing writes the store keeps the import"
+                );
+            }
+
+            #[test]
+            fn a_refused_import_moves_nothing_on_either_side() {
+                let mut scheduler = built!();
+                assert!(matches!(
+                    scheduler.import::<Col, _, _>(USize(0), &a_records(&[1, 2, 3, 4])),
+                    Outcome::Ok(())
+                ));
+                for frame in 1 ..= 2u32 {
+                    assert!(matches!(
+                        scheduler.import::<Col, _, _>(USize(3), &a_records(&[8, 9])),
+                        Outcome::Err(HostRefused::PastCount { .. })
+                    ));
+                    assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                    let mut sink = Collect::new();
+                    assert!(matches!(
+                        scheduler.dump::<Col, _, _>(USize(0), USize(4), &mut sink),
+                        Outcome::Ok(())
+                    ));
+                    let expected: Vec<A> = [1, 2, 3, 4].iter().map(|v| A(v + frame)).collect();
+                    assert_eq!(sink.got, expected, "frame {frame}");
+                }
+            }
+
+            #[test]
+            fn a_dump_at_an_offset_gives_the_records_from_there() {
+                let mut scheduler = built!();
+                assert!(matches!(
+                    scheduler.import::<Col, _, _>(USize(0), &a_records(&[1, 2, 3, 4])),
+                    Outcome::Ok(())
+                ));
+                assert!(matches!(scheduler.run(), Outcome::Ok(())));
+                let mut sink = Collect::new();
+                assert!(matches!(
+                    scheduler.dump::<Col, _, _>(USize(1), USize(2), &mut sink),
+                    Outcome::Ok(())
+                ));
+                assert_eq!(sink.got, a_records(&[3, 4]));
+            }
         }
     };
 }
 
 buffered!(snapshot, Snapshot);
-buffered!(exchange, Exchange);
+buffered!(
+    exchange,
+    Exchange,
+    #[ignore = "catalogue: under Exchange a pass that skips a window publishes its records from two passes back; tracked #a_pass_that_skips_map_in_a_window_publishes_stale_records"]
+);
 
 // One history of imports, frames and dumps, under each of the three entries.
 fn history(mut step: impl FnMut(&[u32]) -> Vec<u32>) -> Vec<Vec<u32>> {

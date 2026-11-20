@@ -23,6 +23,7 @@ fn compile_fail_fixtures() {
     t.compile_fail("tests/ui/unmapped_unit_fused_fail.rs");
     t.pass("tests/ui/appending_unit_fused_pass.rs");
     t.compile_fail("tests/ui/appending_unit_fused_fail.rs");
+    t.pass("tests/ui/buffered_unit_fused_pass.rs");
     t.compile_fail("tests/ui/buffered_unit_fused_fail.rs");
     t.pass("tests/ui/assert_out_names_no_refusal_pass.rs");
     t.compile_fail("tests/ui/assert_out_names_no_refusal_fail.rs");

@@ -1,9 +1,10 @@
 // A unit reads and writes a buffered column and declares its value function
-// (`RecordOp`). The fused entry folds a carrier of units over plain columns
-// into a chain that threads values in registers, and a buffered column is two
-// reservations the boundary trades, which the chain does not carry. The unit
-// is refused at compile time; through `run` and `run_parallel` it runs, as the
-// buffered modules of `tests/host_import.rs` show.
+// (`RecordOp`). The fused entry folds a carrier of units over plain columns,
+// threading values over one reservation a column, and a buffered column is two
+// reservations the boundary trades, which the fold does not carry. The unit is
+// refused at compile time, a gap tracked as ticket
+// `the_fused_entry_refuses_a_buffered_column`; through `run` and
+// `run_parallel` it runs, as the buffered modules of `tests/host_import.rs` show.
 
 use core::mem::MaybeUninit;
 
@@ -51,12 +52,16 @@ impl RecordOp for Raise {
     }
 }
 
+fn store(provider: StaticBumpMemory) -> ArenaColumnStorage<StaticBumpMemory> {
+    ArenaColumnStorage::new(provider)
+}
+
 fn main() {
     let provider = StaticBumpMemory::new(std::vec![MaybeUninit::new(0); 4096].leak());
     let mut scheduler = Scheduler::builder()
         .with(Col::start_from(A(0)))
         .with(Raise)
-        .build(ArenaColumnStorage::new(provider), USize(4))
+        .build(store(provider), USize(4))
         .unwrap_or_else(|_| panic!("build should succeed"));
     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
 }

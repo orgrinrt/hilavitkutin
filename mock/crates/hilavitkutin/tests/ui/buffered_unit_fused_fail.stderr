@@ -1,43 +1,43 @@
 error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:61:22
+  --> tests/ui/buffered_unit_fused_fail.rs:66:22
    |
-61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+66 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
    |                      ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
    |
 note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:40:17
+  --> tests/ui/buffered_unit_fused_fail.rs:41:17
    |
-40 |     type Read = Bare;
+41 |     type Read = Bare;
    |                 ^^^^
    = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
               found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
    = note: required for `Raise` to implement `Link`
 
 error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:61:22
+  --> tests/ui/buffered_unit_fused_fail.rs:66:22
    |
-61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+66 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
    |                      ^^^^^^^^^^^^^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
    |
 note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:41:18
+  --> tests/ui/buffered_unit_fused_fail.rs:42:18
    |
-41 |     type Write = Bare;
+42 |     type Write = Bare;
    |                  ^^^^
    = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
               found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
    = note: required for `Raise` to implement `Link`
 
 error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+  --> tests/ui/buffered_unit_fused_fail.rs:66:32
    |
-61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+66 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
    |                                ^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Read == Cons<Column<_>, Empty>`
    |
 note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:40:17
+  --> tests/ui/buffered_unit_fused_fail.rs:41:17
    |
-40 |     type Read = Bare;
+41 |     type Read = Bare;
    |                 ^^^^
    = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
               found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
@@ -53,15 +53,15 @@ note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals,
    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
 
 error[E0271]: type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+  --> tests/ui/buffered_unit_fused_fail.rs:66:32
    |
-61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+66 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
    |                                ^^^^^^^^^ type mismatch resolving `<Raise as WorkUnit>::Write == Cons<Column<_>, Empty>`
    |
 note: expected this to be `Cons<Column<_>, hilavitkutin_api::Empty>`
-  --> tests/ui/buffered_unit_fused_fail.rs:41:18
+  --> tests/ui/buffered_unit_fused_fail.rs:42:18
    |
-41 |     type Write = Bare;
+42 |     type Write = Bare;
    |                  ^^^^
    = note: expected struct `Cons<Column<_>, hilavitkutin_api::Empty>`
               found struct `Cons<Buffered<A>, hilavitkutin_api::Empty>`
@@ -77,9 +77,9 @@ note: required by a bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals,
    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `scheduler::run_fused::<impl Scheduler<Cfg, WuVals, Vals, CS, D, Stores, Clk>>::run_fused`
 
 error[E0277]: the trait bound `BindingNil: ColSelector<_, _>` is not satisfied
-  --> tests/ui/buffered_unit_fused_fail.rs:61:32
+  --> tests/ui/buffered_unit_fused_fail.rs:66:32
    |
-61 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
+66 |     assert!(matches!(scheduler.run_fused(), notko::Outcome::Ok(())));
    |                                ^^^^^^^^^ the trait `ColSelector<_, _>` is not implemented for `BindingNil`
    |
    = help: the following other types implement trait `ColSelector<T, Index, K>`:
