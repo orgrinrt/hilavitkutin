@@ -1,8 +1,7 @@
 # The program `mock cross-target` builds for the host and for the target it is
-# asked about. A root of its own: built for wasm it takes the engine's tier
-# without an operating system, which a member of the workspace beside the
-# frozen crate could not, since that crate takes the default tier and cargo
-# would turn both on.
+# asked about. A root of its own: built for wasm it takes the engine without
+# the os tier, which a member of the workspace could not, since crates there
+# name the engine with `os` on and cargo would unify the two.
 
 [workspace]
 resolver = "2"

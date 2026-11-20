@@ -26,9 +26,6 @@ libc = { workspace = true, optional = true }
 # engine lib depends on the storage trait (hilavitkutin-api), never on
 # the default impl. providers forbids depending on the engine, so no cycle.
 hilavitkutin-providers = { workspace = true, features = ["static", "portable"] }
-# The engine's own tests build with the os tier, as they did when it was
-# the default.
-hilavitkutin = { workspace = true, features = ["os"] }
 # Compile-fail fixtures under tests/ui, run by tests/ui.rs.
 trybuild = "1"
 

@@ -1,7 +1,6 @@
 //! The default interner: the inline `MemoryArena`, the
-//! `default_interner` constructor, the `InternerKit` preset, and the
-//! bridge from `StringInterner` to [`InternerApi`]. Under the
-//! `portable` feature.
+//! `default_interner` constructor and the `InternerKit` preset. Under
+//! the `portable` feature.
 
 use core::cell::{Cell, UnsafeCell};
 
@@ -10,35 +9,8 @@ use arvo::strategy::{Additive, Identity};
 use hilavitkutin_api::builder_input::BuilderInput;
 use hilavitkutin_api::{Cons, Empty, Resource};
 use hilavitkutin_kit::{Kit, KitDispatch};
-use hilavitkutin_str::{ArenaInterner, Str, StringInterner};
+use hilavitkutin_str::{ArenaInterner, StringInterner};
 use notko::Maybe;
-
-use super::InternerApi;
-
-/// Blanket: any `StringInterner<A>` satisfies the InternerApi
-/// surface. Consumers wire `Resource<StringInterner<A>>` and the
-/// HasInterner accessor returns it; this impl bridges the trait.
-impl<A> InternerApi for StringInterner<A>
-where
-    A: ArenaInterner + 'static,
-{
-    #[inline(always)]
-    fn intern(
-        &self,
-        s: &str, // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
-    ) -> Maybe<Str> {
-        StringInterner::intern(self, s)
-    }
-
-    #[inline(always)]
-    #[rustfmt::skip] // keeps the allow on the signature it governs
-    fn resolve(
-        &self,
-        s: Str,
-    ) -> Maybe<&str> { // lint:allow(no-bare-string) reason: interner boundary mirror of the trait method; tracked: #72
-        StringInterner::resolve(self, s)
-    }
-}
 
 /// Inline-storage arena for runtime-interned strings.
 ///

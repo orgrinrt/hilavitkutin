@@ -6,3 +6,8 @@
 file = "Cargo.toml"
 hash = "fnv1a64:9bc9985988663310"
 reason = "The engine and hilavitkutin-providers carry their implementations behind features a consumer turns on, by op's ruling of 2026-11-20 (round 202611200518-zrf9), so the manifest names os on the engine and portable on the providers its tests use."
+
+[[break]]
+file = "Cargo.toml"
+hash = "fnv1a64:ad3ed8b7d684c665"
+reason = "Nothing here uses the engine's os tier, so the manifest stops turning it on and the crate builds on the engine's default, contracts-only build; the tests name `StaticBumpMemory`, so the providers dev-dependency turns on `static` beside `portable`, which it had only by the providers crate naming itself (round 202611200637-jibi)."

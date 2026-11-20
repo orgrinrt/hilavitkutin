@@ -16,8 +16,10 @@ hilavitkutin-kit.workspace = true
 hilavitkutin-str.workspace = true
 
 [dev-dependencies]
-# The crate's own tests and examples build with every implementation on.
-hilavitkutin-providers = { workspace = true, features = ["static", "portable"] }
+# The examples run on the engine's os tier, OsMemoryProvider under the column
+# store. The crate does not name itself here, so its suite runs on the build
+# a consumer gets; a binary that needs an implementation names its feature
+# below.
 hilavitkutin = { workspace = true, features = ["os"] }
 hilavitkutin-sym.workspace = true
 trybuild = "1"
@@ -34,3 +36,35 @@ portable = []
 
 [build-dependencies]
 hilavitkutin-build.workspace = true
+
+[[test]]
+name = "column_storage"
+required-features = ["static", "portable"]
+
+[[test]]
+name = "interner_law"
+required-features = ["portable"]
+
+[[test]]
+name = "smoke"
+required-features = ["portable"]
+
+[[test]]
+name = "static_bump_memory"
+required-features = ["static"]
+
+[[test]]
+name = "static_free_list_memory"
+required-features = ["static"]
+
+[[example]]
+name = "audio_mix"
+required-features = ["portable"]
+
+[[example]]
+name = "particle_collision"
+required-features = ["portable"]
+
+[[example]]
+name = "word_count"
+required-features = ["portable"]

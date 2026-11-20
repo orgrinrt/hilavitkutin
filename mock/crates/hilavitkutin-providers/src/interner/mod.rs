@@ -6,10 +6,13 @@
 //! tuple bound and call `ctx.interner().intern(s)` /
 //! `ctx.interner().resolve(handle)` from `execute()`. The default
 //! implementation, the inline `MemoryArena`, `default_interner` and
-//! `InternerKit`, is under the `portable` feature.
+//! `InternerKit`, is under the `portable` feature. The bridge that lets a
+//! `StringInterner` serve as an `InternerApi` provider is not.
 
 use hilavitkutin_str::Str;
 use notko::Maybe;
+
+mod bridge;
 
 #[cfg(feature = "portable")]
 mod arena;

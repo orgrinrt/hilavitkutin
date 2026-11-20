@@ -150,6 +150,10 @@ impl StaticFreeListMemory {
                     // buffer, at an address that is a multiple of the grain and
                     // so of the node's alignment.
                     let node = unsafe { base.add(lead) }.cast::<Node>();
+                    // SAFETY: `node` is in bounds and aligned, as above, and
+                    // `len` is a nonzero multiple of `GRAIN`, a node's size, so the
+                    // write stays inside the buffer; the lock is held, so no
+                    // other reference to these bytes exists.
                     unsafe {
                         node.write(Node {
                             len:  USize(len),
