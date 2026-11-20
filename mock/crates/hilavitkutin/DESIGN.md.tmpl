@@ -1785,8 +1785,16 @@ the engine reaches no operating system: parking spins and the builder
 starts at the null clock. The feature is named for what its
 implementations rest on, and the name means the same in every crate of
 the family; `hilavitkutin-providers` carries `static` and `portable`.
-The engine's one other feature, `intrinsics-std`, is not an
-implementation of a contract and stays as it is.
+The engine has two other features, `intrinsics-std` and the test-only
+`mutant-truncating-append`, and neither is an implementation of a
+contract.
+
+The engine does not name itself as a dev-dependency, so its suite runs
+on the build a consumer gets. Its tests that need the os tier carry
+`cfg(feature = "os")`; `cargo mock test -p hilavitkutin` runs the suite
+with the tier off and `--features os` with it on. A compile-fail twin
+holds that a default build cannot name `OsClock`, and its pass twin
+names `NullClock`.
 
 The os tier's memory provider keeps the api's five promises this way.
 Every block is a fresh anonymous mapping, so it is the provider's alone,

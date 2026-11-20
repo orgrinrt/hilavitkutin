@@ -74,9 +74,11 @@ concrete consumer surfaces the friction.
 ## Runtime-replaceable platform defaults
 
 MemoryProvider / ThreadPool / Clock ship as monomorphised trait
-bounds. Default no_os / std implementations are intended to live in
-the engine crate; this crate stays platform-agnostic. Consumer
-override is via the scheduler builder, not via dyn.
+bounds. The default implementations sit behind features on the crates
+that carry them, the engine's `os` and the providers' `static` and
+`portable`, and a build on default features carries none; this crate
+stays platform-agnostic. Consumer override is via the scheduler
+builder, not via dyn.
 
 ## Scheduling hint tuple specialisation
 

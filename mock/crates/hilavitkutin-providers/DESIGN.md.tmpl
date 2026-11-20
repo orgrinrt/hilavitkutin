@@ -33,7 +33,13 @@ the same in every crate of the family:
 | `os` | the operating system's services | not in this crate; the engine carries `OsMemoryProvider` and `OsClock` under it |
 
 The two contracts this crate declares, `InternerApi` and `HasInterner`,
-are not behind a feature. A consumer that wants a store over its own
+are not behind a feature, and neither is the bridge that lets a
+`StringInterner` of `hilavitkutin-str` serve as an `InternerApi`
+provider. The bridge rests on nothing a feature gates, since
+`hilavitkutin-str` is a dependency on every build, and only this crate
+can write it, since a consumer owns neither the trait nor the type. So a
+consumer with an arena of its own reaches its interner through
+`InternerApi` on a default build. A consumer that wants a store over its own
 buffer turns on `static` and `portable` together, since
 `ArenaColumnStorage` is the store and `StaticBumpMemory` the provider
 under it.
@@ -44,6 +50,7 @@ under it.
 |------|---------|---------|
 | `InternerApi` | none, a contract | Provider-shape trait paralleling `MemoryProviderApi` / `ClockApi`. Methods `intern(&str) -> Maybe<Str>`, `resolve(Str) -> Maybe<&str>`. |
 | `HasInterner` | none, a contract | Accessor trait for the Context-provider tuple. Mirrors `HasMemoryProvider` / `HasClock`. |
+| `StringInterner<A>` as `InternerApi` | none, a bridge | The impl of `InternerApi` for `StringInterner<A>` over any `ArenaInterner` `A`, so a consumer arena reaches its interner through the contract. Coherence lets only this crate write it. |
 | `MemoryArena<BYTES, ENTRIES>` | `portable` | Inline-storage `ArenaInterner` impl. Const-generic byte-cap and entry-cap. Backs the default `StringInterner`. |
 | `default_interner<BYTES, ENTRIES>()` | `portable` | Free fn building `StringInterner<MemoryArena<BYTES, ENTRIES>>`. The wiring building block; consumers call it via `builder.with(Resource::new(...))` directly or implicitly through `InternerKit`. |
 | `InternerKit<BYTES, ENTRIES>` | `portable` | Kit impl that declares `Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>` as `Owned`. Pure declaration; no install method. Engine reads `K::Units` and `K::Owned` at compile time on `.with(InternerKit::<BYTES, ENTRIES>)`. |
@@ -348,6 +355,18 @@ promise 4. `allocate_zeroed` keeps the trait's default, since a block
 given back and handed out again carries what its last owner wrote, and
 that keeps promise 5. `used()` is the bytes handed out and not given
 back, grain padding included, and `capacity()` the buffer's length.
+
+## Testing
+
+The crate does not name itself as a dev-dependency, so its suite runs
+on the build a consumer gets. `cargo mock test -p hilavitkutin-providers`
+builds it on default features, where only the contracts and the bridge
+exist. A test binary that needs an implementation names its feature as
+`required-features`, and `--features static,portable` runs those too.
+A compile-fail fixture holds that a default build names neither
+`StaticBumpMemory` nor `MemoryArena`, and a pass test runs an
+`ArenaInterner` of the test's own through `InternerApi` on the default
+build.
 
 ## What this crate deliberately does not ship
 
