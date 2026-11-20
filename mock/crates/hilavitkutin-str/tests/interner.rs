@@ -198,6 +198,27 @@ fn the_smallest_refusing_id_is_refused_and_does_not_wrap_to_zero() {
     assert!(interner.intern("anything").isnt());
 }
 
+/// An id of 2^28 - 1, the largest the 28-bit field holds, is a handle with
+/// that id, so the refusal starts at 2^28 and not below it.
+#[test]
+fn the_largest_id_the_field_holds_is_a_handle() {
+    const LAST: u32 = (1 << 28) - 1;
+    struct Last;
+    impl ArenaInterner for Last {
+        fn arena_intern(&self, _s: &str) -> u32 {
+            LAST
+        }
+
+        fn arena_resolve(&self, _id: u32) -> &str {
+            "last"
+        }
+    }
+    let interner = StringInterner::new(Last);
+    let handle = interner.intern("anything").expect("2^28 - 1 is an id");
+    assert_eq!(handle.id().to_raw(), LAST);
+    assert!(!handle.is_const().0);
+}
+
 /// `into_str` passes a carried `Str` through untouched, even on a full arena.
 #[test]
 fn into_str_passes_a_handle_through_on_a_full_arena() {

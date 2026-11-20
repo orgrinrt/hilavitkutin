@@ -318,6 +318,73 @@ fn a_released_column_reads_unreserved_and_the_others_hold() {
     }
 }
 
+/// A re-reserve refused for its length, past `usize` in bytes, changes
+/// nothing: the live column keeps its block and its count, and nothing is
+/// freed, at the refusal or later.
+#[test]
+fn a_re_reserve_refused_for_its_length_leaves_the_column_live() {
+    let ledger: &'static Ledger = Box::leak(Box::default());
+    {
+        let provider = RecordingProvider {
+            inner: bump(1 << 16),
+            ledger,
+        };
+        let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
+        let id = StoreId(USize(0));
+        assert!(matches!(
+            store.reserve::<u32>(id, USize(4)),
+            Outcome::Ok(())
+        ));
+        // SAFETY: `id` is reserved for 4 records of u32.
+        unsafe { store.column_ptr_mut::<u32>(id).write(41) };
+        assert!(matches!(
+            store.reserve::<u32>(id, USize(usize::MAX)),
+            Outcome::Err(StorageError::LengthOverflow)
+        ));
+        assert!(ledger.freed().is_empty(), "the refusal frees nothing");
+        assert_eq!(store.count(id), USize(4));
+        // SAFETY: `id` is still reserved for 4 records of u32.
+        assert_eq!(unsafe { store.column_ptr::<u32>(id).read() }, 41);
+    }
+    assert_eq!(
+        ledger.freed(),
+        ledger.reserved(),
+        "the drop frees the one block once"
+    );
+}
+
+/// A re-reserve whose block the provider refuses gives the old block back
+/// once and leaves the id unreserved, count zero; the drop frees nothing more.
+#[test]
+fn a_re_reserve_the_provider_refuses_leaves_the_id_unreserved() {
+    let ledger: &'static Ledger = Box::leak(Box::default());
+    {
+        let provider = RecordingProvider {
+            inner: bump(1024),
+            ledger,
+        };
+        let mut store: ArenaColumnStorage<RecordingProvider> = ArenaColumnStorage::new(provider);
+        let id = StoreId(USize(0));
+        assert!(matches!(
+            store.reserve::<u32>(id, USize(4)),
+            Outcome::Ok(())
+        ));
+        assert!(matches!(
+            store.reserve::<u32>(id, USize(1 << 20)),
+            Outcome::Err(StorageError::Exhausted)
+        ));
+        assert_eq!(
+            ledger.freed(),
+            ledger.reserved(),
+            "the old block went back once"
+        );
+        assert_eq!(store.count(id), USize(0));
+        // SAFETY: the pointer is read as a value and never dereferenced.
+        assert!(unsafe { store.column_ptr::<u32>(id) }.is_null());
+    }
+    assert_eq!(ledger.freed().len(), 1, "the drop frees nothing more");
+}
+
 /// A release of an id with no block, or of one past the cap, changes nothing.
 #[test]
 fn releasing_an_unreserved_or_out_of_range_id_changes_nothing() {
@@ -339,7 +406,7 @@ fn releasing_an_unreserved_or_out_of_range_id_changes_nothing() {
 }
 
 /// Reserve, then release or reserve again, many cycles over a buffer that
-/// holds two columns' worth: the case of ticket
+/// holds one column's worth: the case of ticket
 /// `arenacolumnstorage_release_is_a_no_op_so_a_store_under_a_bum`. It holds
 /// under a provider that takes blocks back, and a provider that does not runs
 /// out, which shows the cycle count reaches past the buffer.
@@ -359,8 +426,11 @@ fn cycles_without_running_out<M: MemoryProviderApi>(provider: M, by_release: boo
 
 #[test]
 fn a_store_reserved_again_every_cycle_does_not_run_out() {
-    // 1 KiB a reservation, a buffer of a little over two.
-    let bytes = 2 * 1024 + 128;
+    // 1 KiB a reservation, and a buffer of one column and the slack its
+    // 64-byte alignment can take from a byte-aligned start: the old block
+    // has to go back before the new one is taken, or the second reserve
+    // finds no room.
+    let bytes = 1024 + 64;
     assert!(
         cycles_without_running_out(free_list(bytes), true),
         "release then reserve"

@@ -25,8 +25,13 @@ const GRAIN: usize = 2 * core::mem::size_of::<usize>();
 
 /// A leaked buffer of `bytes`, starting on a 64-byte boundary.
 fn aligned(bytes: usize) -> &'static mut [MaybeUninit<u8>] {
-    let whole = std::vec![MaybeUninit::<u8>::uninit(); bytes + 64].leak();
-    let to_boundary = whole.as_ptr().addr().wrapping_neg() & 63;
+    aligned_to(bytes, 64)
+}
+
+/// A leaked buffer of `bytes`, starting on an `align`-byte boundary.
+fn aligned_to(bytes: usize, align: usize) -> &'static mut [MaybeUninit<u8>] {
+    let whole = std::vec![MaybeUninit::<u8>::uninit(); bytes + align].leak();
+    let to_boundary = whole.as_ptr().addr().wrapping_neg() & (align - 1);
     &mut whole[to_boundary .. to_boundary + bytes]
 }
 
@@ -145,6 +150,86 @@ fn a_gap_between_live_blocks_is_reused_and_not_widened() {
     free(&m, b, 64, 16);
     assert!(allocate(&m, 80, 16).is_null(), "the gap is 64 bytes");
     assert_eq!(allocate(&m, 64, 16), b, "the gap is handed out again");
+}
+
+/// A block aligned above the grain leaves the space in front of it on the
+/// list: a small block asked for after it lands in that space, and
+/// everything given back makes the whole span one block again.
+#[test]
+fn the_space_in_front_of_an_aligned_block_stays_free() {
+    let buffer = aligned_to(512, 128);
+    let base = buffer.as_ptr().addr();
+    let m = StaticFreeListMemory::new(buffer);
+    let small = allocate(&m, GRAIN, GRAIN);
+    assert_eq!(small.addr(), base, "the first block starts the buffer");
+    let wide = allocate(&m, 64, 128);
+    assert_eq!(wide.addr(), base + 128, "the next 128-byte boundary");
+    let gap = allocate(&m, GRAIN, GRAIN);
+    assert_eq!(gap.addr(), base + GRAIN, "the space in front of it is free");
+    free(&m, gap, GRAIN, GRAIN);
+    free(&m, wide, 64, 128);
+    free(&m, small, GRAIN, GRAIN);
+    assert_eq!(m.used(), USize(0));
+    assert!(
+        !allocate(&m, 512, GRAIN).is_null(),
+        "the whole span is one block again"
+    );
+}
+
+/// The list is laid over the grain-aligned interior of a buffer that starts
+/// off a grain boundary and does not end on one: the interior is handed out
+/// whole, at its first grain boundary, and nothing past the buffer's end is
+/// written. A buffer shorter than its way to the first boundary, or with
+/// less than a grain past it, hands out nothing.
+#[test]
+fn the_list_is_laid_over_the_grain_aligned_interior() {
+    const CANARY: u8 = 0x5A;
+    for offset in 1 .. GRAIN {
+        for len in [1000 + offset, 1001, 999 + 2 * offset] {
+            let whole = aligned(len + 2 * GRAIN);
+            for b in whole.iter_mut() {
+                b.write(CANARY);
+            }
+            let start = whole.as_ptr().addr() + offset;
+            let lead = GRAIN - offset;
+            let interior = (len - lead) & !(GRAIN - 1);
+            // SAFETY: `offset + len` lies inside `whole`, which is leaked and
+            // reached by nothing else while the provider runs.
+            let m = unsafe {
+                StaticFreeListMemory::from_raw_parts(whole.as_mut_ptr().add(offset), USize(len))
+            };
+            let p = allocate(&m, interior, GRAIN);
+            assert_eq!(
+                p.addr(),
+                start + lead,
+                "offset {offset}, len {len}: the interior starts at the first boundary"
+            );
+            assert!(p.addr() + interior <= start + len, "inside the buffer");
+            assert!(
+                allocate(&m, GRAIN, GRAIN).is_null(),
+                "offset {offset}, len {len}: the interior was handed out whole"
+            );
+            for (i, b) in whole[offset + len ..].iter().enumerate() {
+                // SAFETY: every byte of `whole` was written above.
+                assert_eq!(
+                    unsafe { b.assume_init() },
+                    CANARY,
+                    "offset {offset}, len {len}: byte {i} past the end is untouched"
+                );
+            }
+        }
+    }
+    for (offset, len) in [(1, GRAIN - 2), (1, GRAIN), (GRAIN - 1, 1)] {
+        let whole = aligned(2 * GRAIN);
+        // SAFETY: as above.
+        let m = unsafe {
+            StaticFreeListMemory::from_raw_parts(whole.as_mut_ptr().add(offset), USize(len))
+        };
+        assert!(
+            allocate(&m, 0, 1).is_null(),
+            "offset {offset}, len {len}: no grain fits"
+        );
+    }
 }
 
 /// A zero length takes one grain, and every length is rounded up to the
