@@ -1,0 +1,14 @@
+[[ticket]]
+id = "a_pass_that_skips_map_in_a_window_publishes_stale_records"
+title = "a pass that skips map in a window publishes stale records of a buffered store under Exchange"
+kind = "task"
+what = "DESIGN.md.tmpl, the buffered boundary paragraph, says the value function is applied at every record of the unit's range, so the live side is whole when the boundary takes it. A unit's execute runs per window and may call map in some windows and not others (shown by host_import's live-copy test, round 202611200058-dx86). Under Exchange the boundary then flips to a side whose unwritten windows hold the values of two passes before. Reasoned by the pass 2 reviewer of work/hila-consumer-surface, not run; a red test is owed with the fix. Under Snapshot it does not arise: the boundary copies the whole live side, and outside the written windows the live side holds what the last boundary copied."
+related = ["tenet::change_detection_is_per_morsel_and_skips_what_is_unchanged"]
+repos = ["orgrinrt/hilavitkutin"]
+
+[[ticket_move]]
+id = "m20261120005819_hila_consumer_surface_ef2d"
+ticket = "a_pass_that_skips_map_in_a_window_publishes_stale_records"
+to = "backlog"
+by = "hila-consumer-surface"
+at = "2026-11-20T00:58:19Z"
