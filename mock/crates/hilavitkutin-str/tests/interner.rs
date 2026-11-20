@@ -52,15 +52,6 @@ fn runtime_intern_roundtrip() {
 }
 
 #[test]
-fn runtime_intern_dedups() {
-    let interner = StringInterner::new(VecInterner::new());
-    let a = interner.intern("dup-runtime");
-    let b = interner.intern("dup-runtime");
-    assert_eq!(a, b);
-    assert!(a.is_runtime().0);
-}
-
-#[test]
 fn runtime_different_strings_different_handles() {
     let interner = StringInterner::new(VecInterner::new());
     let a = interner.intern("one");

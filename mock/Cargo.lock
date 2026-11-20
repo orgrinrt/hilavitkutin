@@ -358,7 +358,9 @@ dependencies = [
  "hilavitkutin-build",
  "hilavitkutin-kit",
  "hilavitkutin-str",
+ "hilavitkutin-sym",
  "notko",
+ "trybuild",
 ]
 
 [[package]]
@@ -424,12 +426,12 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 [[package]]
 name = "notko"
 version = "0.0.1"
-source = "git+https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed"
+source = "git+https://github.com/orgrinrt/notko.git?branch=dev#15a95316a6defda96a73524a05345260365e10bd"
 
 [[package]]
 name = "notko-hlist"
 version = "0.0.1"
-source = "git+https://github.com/orgrinrt/notko.git?branch=dev#8a74dbcda7fbee2d2e57b47474a3b1e6d08650ed"
+source = "git+https://github.com/orgrinrt/notko.git?branch=dev#15a95316a6defda96a73524a05345260365e10bd"
 
 [[package]]
 name = "object"

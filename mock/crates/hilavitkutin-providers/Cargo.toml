@@ -17,6 +17,8 @@ hilavitkutin-str.workspace = true
 
 [dev-dependencies]
 hilavitkutin.workspace = true
+hilavitkutin-sym.workspace = true
+trybuild = "1"
 
 [build-dependencies]
 hilavitkutin-build.workspace = true

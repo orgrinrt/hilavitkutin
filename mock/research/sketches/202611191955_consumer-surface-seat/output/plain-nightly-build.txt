@@ -1,0 +1,6 @@
+cargo 1.102.0-nightly (f93c676e3 2026-11-15)
+      1 error: could not compile `arvo-strategy` (lib) due to 133 previous errors
+    119 error: expected a trait, found type
+      2 error[E0277]: the trait bound `f32: Bounded` is not satisfied
+      2 error[E0277]: the trait bound `f32: Identity<Additive>` is not satisfied
+      2 error[E0277]: the trait bound `f32: Identity<Multiplicative>` is not satisfied

@@ -1,0 +1,37 @@
+error[E0599]: the method `build` exists for struct `SchedulerBuilder<Cons<InternsAName, Empty>, ..., ..., ..., ...>`, but its trait bounds were not satisfied
+  --> reach/src/lib.rs:67:10
+   |
+64 |       let mut scheduler = match Scheduler::builder()
+   |  _______________________________-
+65 | |         .with(Resource::new(value))
+66 | |         .with(InternsAName)
+67 | |         .build(ArenaColumnStorage::new(provider), USize(4))
+   | |         -^^^^^ method cannot be called due to unsatisfied trait bounds
+   | |_________|
+   |
+   |
+  ::: /home/user/.worktrees/hila-seat/mock/crates/hilavitkutin-str/src/interner.rs:60:1
+   |
+60 |   pub struct StringInterner<A: ArenaInterner> { // lint:allow(no-alloc) reason: interner wrapper name, not std `String`; tracked: #72
+   |   ------------------------------------------- doesn't satisfy `StringInterner<MemoryArena<256, 16>>: Copy` or `_: ResourceFootprint`
+   |
+  ::: /root/.cargo/git/checkouts/notko-f6f26a62b445f4df/8a74dbc/notko-hlist/src/list.rs:29:1
+   |
+29 |   pub struct Cons<H, T>(core::marker::PhantomData<(H, T)>);
+   |   --------------------- doesn't satisfy `_: StoreSizes<Dim<64>>`
+   |
+  ::: /home/user/.worktrees/hila-seat/mock/crates/hilavitkutin-api/src/store_values.rs:47:1
+   |
+47 |   pub struct Sv<H, T: StoreValues> {
+   |   -------------------------------- doesn't satisfy `_: DrainStores`
+   |
+   = note: the following trait bounds were not satisfied:
+           `StringInterner<MemoryArena<256, 16>>: ResourceFootprint`
+           which is required by `Cons<Resource<StringInterner<MemoryArena<256, 16>>>, hilavitkutin_api::Empty>: StoreSizes<arvo_tensor::capacity::Dim<64>>`
+           `StringInterner<MemoryArena<256, 16>>: Copy`
+           which is required by `Sv<StagedResource<StringInterner<MemoryArena<256, 16>>>, DefaultStoreValues>: DrainStores`
+   = note: the full name for the type has been written to '/home/user/target/debug/deps/consumer_surface_reach-b72a2d296f74a5fe.long-type-11796102893827263631.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `consumer-surface-reach` (lib) due to 1 previous error
