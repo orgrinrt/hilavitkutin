@@ -1,0 +1,126 @@
+  building arm build-static/arms/llvm_incremental...
+  building arm build-static/arms/llvm_non_incremental...
+  building generated bench driver...
+run plan: 4 bench(es), 4 config(s), run 20261119T150158Z-ffb57e5a on linux-x86_64-c4-container-intel
+[1/4] build-static/clean n=25 (elapsed 0s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/build-static/llvm_incremental/release/libllvm_incremental.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (316s elapsed, ~1580s left)
+  pass 2/6 cd=0ms... done (566s elapsed, ~1133s left)
+  pass 3/6 cd=0ms... done (813s elapsed, ~813s left)
+  pass 4/6 cd=0ms... done (1068s elapsed, ~534s left)
+  pass 5/6 cd=0ms... done (1330s elapsed, ~266s left)
+  pass 6/6 cd=0ms... done (1576s elapsed, ~0s left)
+  Total: 1576.1s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/clean_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/samples.csv (24 rows)
+  build-static: every crate built into an empty target directory (baseline: llvm_non_incremental)
+    llvm_incremental         21564.30 ms   1.11x  cv  6.2%  Δbase 2389.27 ms *
+    llvm_non_incremental     19350.54 ms   1.00x  cv  2.5%  (baseline)
+    * llvm_non_incremental dominates: 11% faster than the next best (llvm_incremental)
+    * No variant beats the baseline (llvm_non_incremental)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/clean_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md
+  after_cell: 90 calls, each held to scenario `clean` at n=25
+  REGRESSION: build-static/clean llvm_incremental (warm) +27.9% vs history
+  REGRESSION: build-static/clean llvm_non_incremental (warm) +23.5% vs history
+[2/4] build-static/leaf n=25 (elapsed 1941s, eta 5823s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/build-static/llvm_incremental/release/libllvm_incremental.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (83s elapsed, ~416s left)
+  pass 2/6 cd=0ms... done (154s elapsed, ~308s left)
+  pass 3/6 cd=0ms... done (226s elapsed, ~226s left)
+  pass 4/6 cd=0ms... done (299s elapsed, ~149s left)
+  pass 5/6 cd=0ms... done (372s elapsed, ~74s left)
+  pass 6/6 cd=0ms... done (444s elapsed, ~0s left)
+  Total: 444.4s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/leaf_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/samples.csv (24 rows)
+  build-static: rebuilt after an edit to one leaf implementation crate (baseline: llvm_non_incremental)
+    llvm_incremental         3920.36 ms   1.00x  cv  4.8%  Δbase -2104.38 ms *
+    llvm_non_incremental     5874.19 ms   1.50x  cv  4.3%  (baseline)
+    * Baseline (llvm_non_incremental) is the SLOWEST variant; every rival beats it
+    * llvm_incremental dominates: 50% faster than the next best (llvm_non_incremental)
+    * llvm_incremental beats baseline by 36% (significant)
+    * llvm_incremental shows alternating (throttle bounce) (autocorr -0.85)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/leaf_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md
+  after_cell: 90 calls, each held to scenario `leaf` at n=25
+  REGRESSION: build-static/leaf llvm_incremental (warm) +16.0% vs history
+  REGRESSION: build-static/leaf llvm_non_incremental (warm) +7.8% vs history
+[3/4] build-static/mid n=25 (elapsed 2480s, eta 2480s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/build-static/llvm_incremental/release/libllvm_incremental.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (58s elapsed, ~289s left)
+  pass 2/6 cd=0ms... done (111s elapsed, ~222s left)
+  pass 3/6 cd=0ms... done (166s elapsed, ~166s left)
+  pass 4/6 cd=0ms... done (220s elapsed, ~110s left)
+  pass 5/6 cd=0ms... done (276s elapsed, ~55s left)
+  pass 6/6 cd=0ms... done (327s elapsed, ~0s left)
+  Total: 327.0s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/mid_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/samples.csv (24 rows)
+  build-static: rebuilt after an edit to one mid contract crate (baseline: llvm_non_incremental)
+    llvm_incremental          586.04 ms   1.00x  cv  3.9%  Δbase -5490.10 ms *
+    llvm_non_incremental     6084.57 ms  10.38x  cv  4.8%  (baseline)
+    * Baseline (llvm_non_incremental) is the SLOWEST variant; every rival beats it
+    * llvm_incremental dominates: 938% faster than the next best (llvm_non_incremental)
+    * llvm_incremental beats baseline by 90% (significant)
+    * Wide spread: slowest is 10.4x the fastest
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/mid_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md
+  after_cell: 90 calls, each held to scenario `mid` at n=25
+  REGRESSION: build-static/mid llvm_non_incremental (warm) +9.0% vs history
+[4/4] build-static/root n=25 (elapsed 2886s, eta 962s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/build-static/llvm_incremental/release/libllvm_incremental.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (124s elapsed, ~619s left)
+  pass 2/6 cd=0ms... done (243s elapsed, ~485s left)
+  pass 3/6 cd=0ms... done (361s elapsed, ~361s left)
+  pass 4/6 cd=0ms... done (479s elapsed, ~240s left)
+  pass 5/6 cd=0ms... done (599s elapsed, ~120s left)
+  pass 6/6 cd=0ms... done (722s elapsed, ~0s left)
+  Total: 721.8s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/root_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/samples.csv (24 rows)
+  build-static: rebuilt after an edit to one root contract crate (baseline: llvm_non_incremental)
+    llvm_incremental         1247.25 ms   1.00x  cv  6.3%  Δbase -15490.28 ms *
+    llvm_non_incremental     16745.89 ms  13.43x  cv  3.1%  (baseline)
+    * Baseline (llvm_non_incremental) is the SLOWEST variant; every rival beats it
+    * llvm_incremental dominates: 1243% faster than the next best (llvm_non_incremental)
+    * llvm_incremental beats baseline by 93% (significant)
+    * llvm_incremental is fastest but the noisiest (CV 6.3%)
+    * Wide spread: slowest is 13.4x the fastest
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795100518-25156/build-static/root_n25/linux-x86_64-c4-container-intel/20261119T150158Z-ffb57e5a/report.md
+  after_cell: 90 calls, each held to scenario `root` at n=25
+  REGRESSION: build-static/root llvm_incremental (warm) +11.4% vs history
+  REGRESSION: build-static/root llvm_non_incremental (warm) +17.0% vs history
+
+bench                             n variant                    median  vs best
+build-static/clean               25 llvm_incremental      21564.30 ms    1.11x  REGRESSION
+build-static/clean               25 llvm_non_incremental  19350.54 ms    1.00x  REGRESSION
+build-static/leaf                25 llvm_incremental       3920.36 ms    1.00x  REGRESSION
+build-static/leaf                25 llvm_non_incremental   5874.19 ms    1.50x  REGRESSION
+build-static/mid                 25 llvm_incremental        586.04 ms    1.00x
+build-static/mid                 25 llvm_non_incremental   6084.57 ms   10.38x  REGRESSION
+build-static/root                25 llvm_incremental       1247.25 ms    1.00x  REGRESSION
+build-static/root                25 llvm_non_incremental  16745.89 ms   13.43x  REGRESSION
+
+total: 3772.7s

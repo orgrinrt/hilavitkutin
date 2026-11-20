@@ -83,3 +83,14 @@ fn the_runner_keeps_a_finding_on_a_line_with_a_marker() {
     );
     assert_eq!(marked, vec![1], "a marker on the line drops nothing");
 }
+
+#[test]
+fn the_lint_holds_its_own_scope_through_the_runner() {
+    let [authors, later, outside] = scan::runner::reach(lint, "#![recursion_limit = \"512\"]\n");
+    assert_eq!(authors, vec![1], "the frozen authors crate is read");
+    assert_eq!(later, vec![1], "a frozen crate no list names is read");
+    assert!(
+        outside.is_empty(),
+        "a crate outside the frozen family is not read"
+    );
+}

@@ -1,0 +1,74 @@
+  building arm link-static/arms/default_relink...
+  building arm link-static/arms/default_replay...
+  building generated bench driver...
+run plan: 2 bench(es), 3 config(s), run 20261119T144616Z-6c89a959 on linux-x86_64-c4-container-intel
+[1/3] link-static/dev n=25 (elapsed 0s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/link-static/default_relink/release/libdefault_relink.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (18s elapsed, ~92s left)
+  pass 2/6 cd=0ms... done (33s elapsed, ~66s left)
+  pass 3/6 cd=0ms... done (48s elapsed, ~48s left)
+  pass 4/6 cd=0ms... done (63s elapsed, ~31s left)
+  pass 5/6 cd=0ms... done (78s elapsed, ~16s left)
+  pass 6/6 cd=0ms... done (93s elapsed, ~0s left)
+  Total: 92.6s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795099576-19559/link-static/dev_n25/linux-x86_64-c4-container-intel/20261119T144616Z-6c89a959/samples.csv (24 rows)
+  link-static: the fixture's dev profile (baseline: default_relink)
+    default_relink            186.70 ms   2.38x  cv  7.1%  (baseline)
+    default_replay             78.47 ms   1.00x  cv  6.9%  Δbase -107.30 ms *
+    * Baseline (default_relink) is the SLOWEST variant; every rival beats it
+    * default_replay dominates: 138% faster than the next best (default_relink)
+    * default_replay beats baseline by 57% (significant)
+    * default_replay shows alternating (throttle bounce) (autocorr -0.66)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795099576-19559/link-static/dev_n25/linux-x86_64-c4-container-intel/20261119T144616Z-6c89a959/report.md
+  after_cell: 90 calls, each held to scenario `link` at n=25
+  REGRESSION: link-static/dev default_relink (warm) +20.2% vs history
+  REGRESSION: link-static/dev default_replay (warm) +13.9% vs history
+[2/3] link-static/dev n=97 (elapsed 153s, eta 307s)
+  SKIPPING default_relink: probe exceeded 120s
+  SKIPPING default_replay: probe exceeded 120s
+  Validating 0 variants × 1 seeds...
+  VALIDATION ERROR: validation failed for variant link-static/dev: all 2 variants were skipped before comparison (0 produced no output at all), so no arm was validated against any other
+  SKIPPED: every variant of `link-static/dev` n=97 failed validation; nothing to measure
+[3/3] link-static/release n=25 (elapsed 394s, eta 197s)
+  Validating 2 variants × 1 seeds...
+  Validation OK: all 2 variants passed the routine's own per-variant check and produce identical output
+  Determinism check: 2 variants × 1 seeds...
+  Determinism OK: all 2 variants are deterministic
+  Subprocess sanity: /home/user/hilavitkutin/mock/benches/target/mock-arms/link-static/default_relink/release/libdefault_relink.so (1 run, warm)...
+  Subprocess sanity OK
+  Warmup spawn complete.
+  ── Harness run 1/1 ──
+  pass 1/6 cd=0ms... done (18s elapsed, ~91s left)
+  pass 2/6 cd=0ms... done (33s elapsed, ~66s left)
+  pass 3/6 cd=0ms... done (47s elapsed, ~47s left)
+  pass 4/6 cd=0ms... done (62s elapsed, ~31s left)
+  pass 5/6 cd=0ms... done (77s elapsed, ~15s left)
+  pass 6/6 cd=0ms... done (91s elapsed, ~0s left)
+  Total: 91.2s
+  samples: /home/user/hilavitkutin/mock/benches/results/.inflight/1795099576-19559/link-static/release_n25/linux-x86_64-c4-container-intel/20261119T144616Z-6c89a959/samples.csv (24 rows)
+  link-static: the fixture's release profile (baseline: default_relink)
+    default_relink            161.64 ms   2.24x  cv  9.4%  (baseline)
+    default_replay             72.02 ms   1.00x  cv  5.2%  Δbase -90.36 ms *
+    * Baseline (default_relink) is the SLOWEST variant; every rival beats it
+    * default_replay dominates: 124% faster than the next best (default_relink)
+    * default_replay beats baseline by 56% (significant)
+    * default_relink shows alternating (throttle bounce) (autocorr -0.69)
+    -> Read the full report for details: /home/user/hilavitkutin/mock/benches/results/.inflight/1795099576-19559/link-static/release_n25/linux-x86_64-c4-container-intel/20261119T144616Z-6c89a959/report.md
+  after_cell: 90 calls, each held to scenario `link` at n=25
+
+bench                             n variant                    median  vs best
+link-static/dev                  25 default_relink          186.70 ms    2.38x  REGRESSION
+link-static/dev                  25 default_replay           78.47 ms    1.00x  REGRESSION
+link-static/release              25 default_relink          161.64 ms    2.24x
+link-static/release              25 default_replay           72.02 ms    1.00x
+
+total: 543.8s
+FAILED: a `required = true` bench dropped variants in validation
+bench driver exited with Some(1)
