@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794859108	07a9e9a3	cache_layout_n1024	layout_aos	1024	warm	12.5	12.5	12.9
+1794859108	07a9e9a3	cache_layout_n1024	layout_soa	1024	warm	13.3	13.3	13.3

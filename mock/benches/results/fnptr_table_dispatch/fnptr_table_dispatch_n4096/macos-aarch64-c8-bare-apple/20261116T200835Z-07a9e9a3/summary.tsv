@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794859724	07a9e9a3	fnptr_table_dispatch_n4096	fpt_match_16	4096	warm	786.7	786.7	787.9
+1794859724	07a9e9a3	fnptr_table_dispatch_n4096	fpt_table_16	4096	warm	1242.9	1242.9	1244.6

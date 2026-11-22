@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794834221	07a9e9a3	fold_strategy_n16384	fold_paired	16384	warm	1269.6	1269.6	1270.0
+1794834221	07a9e9a3	fold_strategy_n16384	fold_quad	16384	warm	657.5	657.5	658.3
+1794834222	07a9e9a3	fold_strategy_n16384	fold_sequential	16384	warm	2507.1	2507.1	2507.5

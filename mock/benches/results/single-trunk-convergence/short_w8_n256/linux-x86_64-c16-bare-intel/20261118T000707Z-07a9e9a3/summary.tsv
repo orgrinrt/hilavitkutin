@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794969557	07a9e9a3	short_w8_n256	head_tail	256	warm	11851.1	11851.1	12575.1
+1794969557	07a9e9a3	short_w8_n256	head_tail_dyn	256	warm	10383.1	10383.1	13376.3
+1794969557	07a9e9a3	short_w8_n256	kernel_nway	256	warm	17611.1	17611.1	19851.4
+1794969557	07a9e9a3	short_w8_n256	kernel_seq	256	warm	13940.0	13940.0	16696.7
+1794969557	07a9e9a3	short_w8_n256	nway	256	warm	48763.0	48763.0	57048.4
+1794969557	07a9e9a3	short_w8_n256	sequential	256	warm	18328.3	18328.3	19953.2
+1794969557	07a9e9a3	short_w8_n256	std_parallel	256	warm	71195.3	71195.3	75778.4

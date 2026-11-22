@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794833654	07a9e9a3	dispatch_static_n4096	dispatch_const_ptr	4096	warm	591.7	591.7	592.1
+1794833654	07a9e9a3	dispatch_static_n4096	dispatch_direct	4096	warm	591.7	591.7	592.1
+1794833654	07a9e9a3	dispatch_static_n4096	dispatch_trait	4096	warm	590.8	590.8	591.7

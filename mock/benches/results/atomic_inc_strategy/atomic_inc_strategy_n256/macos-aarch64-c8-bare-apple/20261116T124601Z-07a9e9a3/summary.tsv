@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794833169	07a9e9a3	atomic_inc_strategy_n256	inc_cas_loop	256	warm	610.4	610.4	611.5
+1794833169	07a9e9a3	atomic_inc_strategy_n256	inc_fetch_add	256	warm	493.7	493.7	494.2
+1794833169	07a9e9a3	atomic_inc_strategy_n256	inc_load_store	256	warm	0.4	0.4	0.4

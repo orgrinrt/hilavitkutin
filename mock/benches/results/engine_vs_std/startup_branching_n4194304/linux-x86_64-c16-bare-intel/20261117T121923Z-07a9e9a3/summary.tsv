@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794918973	07a9e9a3	startup_branching_n4194304	evs_engine_startup	4194304	warm	8922710.6	8922710.6	9009466.6
+1794918973	07a9e9a3	startup_branching_n4194304	evs_std_startup	4194304	warm	222331.3	222331.3	230631.3

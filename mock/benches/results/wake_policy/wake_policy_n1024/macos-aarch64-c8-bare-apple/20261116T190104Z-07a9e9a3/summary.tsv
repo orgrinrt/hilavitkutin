@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794855677	07a9e9a3	wake_policy_n1024	wp_isb8	1024	warm	9008.4	9008.4	10114.6
+1794855677	07a9e9a3	wake_policy_n1024	wp_lp0	1024	warm	8639.6	8639.6	8902.1
+1794855677	07a9e9a3	wake_policy_n1024	wp_nh128	1024	warm	9102.1	9102.1	9656.2
+1794855677	07a9e9a3	wake_policy_n1024	wp_nh2k	1024	warm	12302.0	12302.0	12739.6
+1794855677	07a9e9a3	wake_policy_n1024	wp_nh8k	1024	warm	17568.8	17568.8	19418.8
+1794855677	07a9e9a3	wake_policy_n1024	wp_park	1024	warm	8606.2	8606.2	8818.8
+1794855677	07a9e9a3	wake_policy_n1024	wp_spin	1024	warm	13243.8	13243.8	13804.2

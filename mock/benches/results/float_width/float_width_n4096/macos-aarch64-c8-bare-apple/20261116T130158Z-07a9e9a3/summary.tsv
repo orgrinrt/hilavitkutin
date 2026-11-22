@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794834129	07a9e9a3	float_width_n4096	float_f32	4096	warm	1208.3	1208.3	1208.8
+1794834129	07a9e9a3	float_width_n4096	float_f64	4096	warm	1270.8	1270.8	1271.5
+1794834129	07a9e9a3	float_width_n4096	float_i64_scaled	4096	warm	1621.2	1621.2	1622.1

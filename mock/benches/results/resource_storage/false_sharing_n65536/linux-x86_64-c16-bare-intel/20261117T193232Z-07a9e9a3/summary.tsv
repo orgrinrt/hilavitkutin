@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794944051	07a9e9a3	false_sharing_n65536	fs_packed	65536	warm	23432877.9	23432877.9	26658656.2
+1794944051	07a9e9a3	false_sharing_n65536	fs_padded	65536	warm	18437418.3	18437418.3	19009552.6
