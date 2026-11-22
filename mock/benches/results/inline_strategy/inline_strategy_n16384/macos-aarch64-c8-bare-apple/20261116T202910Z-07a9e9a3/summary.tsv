@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794860969	07a9e9a3	inline_strategy_n16384	inline_always	16384	warm	20407.7	20407.7	20430.2
+1794860969	07a9e9a3	inline_strategy_n16384	inline_default	16384	warm	20408.8	20408.8	20417.3
+1794860969	07a9e9a3	inline_strategy_n16384	inline_never	16384	warm	20466.8	20466.8	20490.4

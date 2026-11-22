@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794859302	07a9e9a3	ema_axis_h_n16384	ema_autovec	16384	warm	6527.1	6527.1	6528.3
+1794859302	07a9e9a3	ema_axis_h_n16384	ema_neon	16384	warm	1492.5	1492.5	1492.9
+1794859302	07a9e9a3	ema_axis_h_n16384	ema_scalar	16384	warm	1576.9	1576.9	1578.3

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794859401	07a9e9a3	accumulator_n4096	evs_engine	4096	warm	13020.9	13020.9	13625.0
+1794859401	07a9e9a3	accumulator_n4096	evs_engine_par	4096	warm	52941.7	52941.7	55800.0
+1794859401	07a9e9a3	accumulator_n4096	evs_std	4096	warm	416.7	416.7	416.7
+1794859401	07a9e9a3	accumulator_n4096	evs_std_par	4096	warm	28400.0	28400.0	35766.7
