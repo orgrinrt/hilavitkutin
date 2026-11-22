@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794815498	dea557ae	dep_graph_csr_9_n8	dep_graph_csr	8	warm	25.4	25.4	25.4
+1794815498	dea557ae	dep_graph_csr_9_n8	dep_graph_dense	8	warm	553.7	553.7	556.0
+1794815498	dea557ae	dep_graph_csr_9_n8	dep_graph_hybrid	8	warm	101.7	101.7	102.5

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794821611	dea557ae	rcm_order_n16384	rcm_adj	16384	warm	34816885.4	34816885.4	35654050.0
+1794821611	dea557ae	rcm_order_n16384	rcm_half	16384	warm	34722181.2	34722181.2	35064533.4
+1794821611	dea557ae	rcm_order_n16384	rcm_rev	16384	warm	36492925.0	36492925.0	39891608.4
+1794821611	dea557ae	rcm_order_n16384	rcm_scr	16384	warm	35079848.0	35079848.0	35344456.2

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794815434	dea557ae	branch_predictability_n16384	bp_balanced	16384	warm	20518.8	20518.8	20530.0
+1794815434	dea557ae	branch_predictability_n16384	bp_skew_high	16384	warm	20542.1	20542.1	20555.0
+1794815434	dea557ae	branch_predictability_n16384	bp_skew_low	16384	warm	20545.8	20545.8	20562.3
