@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794835515	07a9e9a3	match_arm_count_n1024	match_2_arms	1024	warm	97.1	97.1	97.9
+1794835515	07a9e9a3	match_arm_count_n1024	match_64_arms	1024	warm	231.2	231.2	232.1
+1794835515	07a9e9a3	match_arm_count_n1024	match_8_arms	1024	warm	156.7	156.7	157.9
