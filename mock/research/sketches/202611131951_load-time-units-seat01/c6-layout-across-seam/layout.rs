@@ -20,6 +20,7 @@
 use core::mem::offset_of;
 
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 struct Cell {
     fill:      u32,
     discharge: i16,
@@ -30,6 +31,7 @@ struct Cell {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
+#[allow(dead_code)]
 struct CellC {
     fill:      u32,
     discharge: i16,

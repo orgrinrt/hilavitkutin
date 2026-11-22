@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794858861	07a9e9a3	atomic_ordering_cost_n256	atomic_acquire	256	warm	161.7	161.7	162.5
+1794858861	07a9e9a3	atomic_ordering_cost_n256	atomic_relaxed	256	warm	34.2	34.2	35.0
+1794858861	07a9e9a3	atomic_ordering_cost_n256	atomic_seqcst	256	warm	166.7	166.7	167.1

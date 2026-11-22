@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794919601	07a9e9a3	wide_parallel_n4194304	evs_engine	4194304	warm	41502742.0	41502742.0	41538801.4
+1794919601	07a9e9a3	wide_parallel_n4194304	evs_engine_par	4194304	warm	21858888.6	21858888.6	28394972.9
+1794919601	07a9e9a3	wide_parallel_n4194304	evs_std	4194304	warm	43029436.8	43029436.8	44303022.5
+1794919601	07a9e9a3	wide_parallel_n4194304	evs_std_par	4194304	warm	24289205.1	24289205.1	28409218.8

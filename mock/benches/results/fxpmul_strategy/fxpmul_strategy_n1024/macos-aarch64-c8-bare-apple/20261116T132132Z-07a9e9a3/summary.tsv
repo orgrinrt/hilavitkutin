@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794835300	07a9e9a3	fxpmul_strategy_n1024	fxpmul_hot	1024	warm	91.2	91.2	92.5
+1794835300	07a9e9a3	fxpmul_strategy_n1024	fxpmul_precise	1024	warm	106.7	106.7	107.5

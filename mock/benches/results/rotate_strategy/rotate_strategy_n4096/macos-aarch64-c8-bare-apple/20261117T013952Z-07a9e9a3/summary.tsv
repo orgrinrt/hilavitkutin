@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794879605	07a9e9a3	rotate_strategy_n4096	rot_intrinsic_const	4096	warm	297.1	297.1	299.2
+1794879605	07a9e9a3	rotate_strategy_n4096	rot_manual_shifts	4096	warm	298.1	298.1	300.0
+1794879605	07a9e9a3	rotate_strategy_n4096	rot_variable_amount	4096	warm	953.3	953.3	955.4

@@ -30,7 +30,7 @@ skill_description: Guide for hilavitkutin lints. Use this when adding a lint, fi
 - Export one of `pub fn lint() -> Box<dyn CrateLint>` (per crate), `cross_lint()` (every crate at once), `repo_lint()` (paths, no crates) or `message_lint()` (a commit message or forge body).
 - Implement `Lint` (`name`, `description`, `default_severity`, and `per_file`, `markers_decide` where the defaults do not fit) and the kind's trait (`CrateLint::check` for a crate lint).
 - A crate lint that walks `ctx.all_sources()` itself returns `false` from `per_file`; one that reads `ctx.source()` keeps the default and is run per file.
-- Read the tree only through the context: `ctx.source()`, `ctx.all_sources()`, `ctx.tree()`, `ctx.registry()` and `ctx.view()`. Never `std::fs`, `std::process`, `std::env` or a walker; the run replays a lint by what it asked of the view.
+- Read the tree only through the context: `ctx.source()`, `ctx.all_sources()`, `ctx.tree()` and `ctx.view()` in a crate lint, and `ctx.registry()` in a repo lint. Never `std::fs`, `std::process`, `std::env` or a walker; the run replays a lint by what it asked of the view.
 - Return `LintError::with_severity(crate, line, name, message, severity)`, with `e.path` set to the crate-relative file.
 - The message says what is wrong and what to write instead.
 - Shared code and tests sit in a subdirectory, which discovery does not read, pulled in with `#[path = "<dir>/<file>.rs"] mod <name>;`. Copy `frozen/scan.rs` and `scan/code.rs`.

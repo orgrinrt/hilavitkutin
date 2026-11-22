@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794858946	07a9e9a3	bit_count_ops_n256	ctz_debruijn	256	warm	23.3	23.3	24.4
+1794858946	07a9e9a3	bit_count_ops_n256	ctz_intrinsic	256	warm	22.9	22.9	23.7
+1794858946	07a9e9a3	bit_count_ops_n256	ctz_loop	256	warm	50.8	50.8	52.1

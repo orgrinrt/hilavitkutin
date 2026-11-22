@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1794825481	dea557ae	rcm_rivals_n8192	riv_rcm	8192	warm	39434445.9	39434445.9	40202652.1
+1794825481	dea557ae	rcm_rivals_n8192	riv_rowm	8192	warm	40760983.3	40760983.3	41402545.8
+1794825481	dea557ae	rcm_rivals_n8192	riv_scr	8192	warm	39668235.5	39668235.5	41685508.4
+1794825481	dea557ae	rcm_rivals_n8192	riv_snake	8192	warm	39559656.2	39559656.2	42463954.1
+1794825481	dea557ae	rcm_rivals_n8192	riv_spec	8192	warm	39835233.4	39835233.4	41202818.8
