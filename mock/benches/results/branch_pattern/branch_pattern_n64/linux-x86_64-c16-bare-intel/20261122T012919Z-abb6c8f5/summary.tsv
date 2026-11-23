@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795311066	abb6c8f5	branch_pattern_n64	branch_cmov	64	warm	111.5	111.5	111.8
+1795311066	abb6c8f5	branch_pattern_n64	branch_if	64	warm	62.8	62.8	63.2

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795338382	abb6c8f5	hash_algos_n4096	hash_fnv1a	4096	warm	4567.3	4567.3	4567.4
+1795338382	abb6c8f5	hash_algos_n4096	hash_sip	4096	warm	784.3	784.3	786.7
+1795338382	abb6c8f5	hash_algos_n4096	hash_xxh	4096	warm	725.1	725.1	725.1

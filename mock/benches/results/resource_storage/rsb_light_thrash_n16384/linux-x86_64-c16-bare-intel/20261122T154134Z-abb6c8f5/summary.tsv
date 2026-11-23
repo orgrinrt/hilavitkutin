@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v0_blob	16384	warm	1634.6	1634.6	1635.8
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v1_snapshot	16384	warm	1636.7	1636.7	1639.3
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v2_decomposed	16384	warm	1641.0	1641.0	1642.3
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v3_shapebound	16384	warm	1640.3	1640.3	1643.9
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v4_erased	16384	warm	1637.3	1637.3	1641.1
+1795363219	abb6c8f5	rsb_light_thrash_n16384	v5_handletable	16384	warm	1635.8	1635.8	1636.9

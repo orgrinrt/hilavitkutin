@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795357716	abb6c8f5	rsb_bwide_n16384	wide_blob	16384	warm	13136.9	13136.9	13137.5
+1795357716	abb6c8f5	rsb_bwide_n16384	wide_decomposed	16384	warm	14212.5	14212.5	14214.5

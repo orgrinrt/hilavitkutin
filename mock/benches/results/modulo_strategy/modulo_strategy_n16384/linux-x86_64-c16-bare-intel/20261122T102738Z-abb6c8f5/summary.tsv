@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1795343878	abb6c8f5	modulo_strategy_n16384	mod_npow2_const	16384	warm	57067.2	57067.2	57068.4
+1795343878	abb6c8f5	modulo_strategy_n16384	mod_pow2_const	16384	warm	19407.7	19407.7	19408.2
+1795343878	abb6c8f5	modulo_strategy_n16384	mod_var	16384	warm	100433.3	100433.3	100435.2
