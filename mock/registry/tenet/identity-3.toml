@@ -6,7 +6,7 @@ subject = "identity"
 what = "A width the shape trait declares is one something constrains: a layout carries its own generated mask, and the width is counted from that mask by a function no implementation can override. Nobody writes the number, so nobody can write it wrong."
 mechanism = "`SymLayoutOps` carries `KIND_MASK` and `ID_MASK` in place of `KIND_WIDTH` and `ID_WIDTH`, each forwarded from the mask its own `bitfield!` generated; `width_of`, a free function."
 source = "mock/design_rounds/202608090700/202608090700_changelist.doc.lock.md:9-15, mock/design_rounds/202608090700/202608090700_changelist.src.lock.md:16-19"
-provenance = ["mock::design_rounds::202608090700::202608090700_changelist.doc.lock::#change-the-symshape-section"]
+provenance = ["mock::design_rounds::t202608090700::t202608090700_changelist<doc_lock_md>::change_the_symshape_section"]
 quote = '''
 The document says a width the trait declares is one something constrains. Round
 four made that half-true by tying a shape's declaration to a number the layout
@@ -33,7 +33,7 @@ what = "The width a shape declares comes from the associated types the layout's 
 because = "The earlier defence, that a layout which lied would have to lie about its mask, which its own accessors read through, is false: the accessor uses the bitfield's own mask directly, the forwarded mask has no reader outside the test law, and a layout may forward any mask while every accessor still round-trips."
 mechanism = "`KIND_BITS == width of Self::Kind` and `ID_BITS == width of Self::Id`, read through a `FieldWidth` trait with a blanket impl over `Bits<N, S>` yielding `N`; blanket because `specialization` is forbidden. `get_kind` returns `self.kind()`. Changing `type Kind = Bits<5, Hot>` to `Bits<9, Hot>` on a five-bit field is four `E0308`s."
 source = "mock/design_rounds/202608091100/202608091100_changelist.doc.lock.md:16-30, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:88-91, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:93-104"
-provenance = ["mock::design_rounds::202608091100::202608091100_changelist.doc.lock::#change-the-width-derivation-paragraph-from-the-mask-to-the-associated-type"]
+provenance = ["mock::design_rounds::t202608091100::t202608091100_changelist<doc_lock_md>::change_the_width_derivation_paragraph_from_the_mask_to_the_associated_type"]
 quote = '''
 The current text says the width is counted from the layout's generated mask, and
 defends that choice with: "a layout that lied would have to lie about its mask,
@@ -82,7 +82,7 @@ subject = "identity"
 what = "The associated type pins what the accessors are compiled against, and the round trip pins that the field behind them is that wide. The declaration reaches a value the code uses through both together, and neither alone is sufficient, because an accessor may convert and satisfy every signature while the field stays narrower. The design states what is currently checked and by what, and does not claim that this is the last rung."
 mechanism = "The associated type and the round-trip law of the shape."
 source = "mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md:11-19, mock/design_rounds/202608091600/202608091600_changelist.doc.lock.md:21-23"
-provenance = ["mock::design_rounds::202608091600::202608091600_changelist.doc.lock::#change-the-width-derivation-section-from-the-type-to-the-round-trip"]
+provenance = ["mock::design_rounds::t202608091600::t202608091600_changelist<doc_lock_md>::change_the_width_derivation_section_from_the_type_to_the_round_trip"]
 quote = '''
 The current text says the associated type is the rung that ends the class,
 because a layout naming a width its field does not have is a type error. That is
@@ -113,7 +113,7 @@ subject = "identity"
 what = "A law relating two declarations to each other constrains neither, so the counter width is tied to what the mechanism does. For every shape and every origin, the span a minter owns equals two to the power of the counter width minus one, read off the two functions that define it. The origin width then follows from the existing sum law. The law is written for every shape and not only the varying one."
 mechanism = "`origin_ceiling(o) - origin_base(o)  ==  2^COUNTER_BITS - 1`; `ORIGIN_BITS` follows from the existing sum law."
 source = "mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:31-34, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:38-48, mock/design_rounds/202608091100/202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate.md:50-51"
-provenance = ["mock::design_rounds::202608091100::202608091100_topic.widths-tied-to-the-mechanism-and-a-dead-gate::#one-the-split-between-origin-and-counter-is-free"]
+provenance = ["mock::design_rounds::t202608091100::t202608091100_topic::one_the_split_between_origin_and_counter_is_free"]
 quote = '''
 This is the fourth appearance of one class, and the shape of its survival is the
 part worth recording. **A law relating two declarations to each other constrains
@@ -148,7 +148,7 @@ subject = "identity"
 what = "The id width in the shape trait's signature is the default shape's twenty-eight bits, sitting where a shape cannot override it. Making the type follow the shape is a design question the round does not have the answer to, so it is documented instead of fixed, and two laws contain the hole meanwhile."
 mechanism = "`Uint<28, Hot>` in the trait."
 source = "mock/design_rounds/202608092200/202608092200_changelist.src.lock.md:43-47"
-provenance = ["mock::design_rounds::202608092200::202608092200_changelist.src.lock::#change-origins-must-fit-the-id-field-they-are-placed-in"]
+provenance = ["mock::design_rounds::t202608092200::t202608092200_changelist<src_lock_md>::change_origins_must_fit_the_id_field_they_are_placed_in"]
 quote = '''
 **The `Uint<28, Hot>` in the trait is not fixed here and is documented instead.**
 Twenty-eight is `Standard`'s id width sitting where a shape cannot override it,
@@ -168,7 +168,7 @@ what = "A shape declares which minter an origin is, by an index, and the run tha
 because = "Two laws had been written to reject the construction that had just been found, each did, and neither described the property; a law samples the shapes that exist, while a derivation covers the ones that do not yet."
 mechanism = "`origin_index` on the shape; free functions generic over the shape: `base = index << COUNTER_BITS`, `ceiling = base + (1 << COUNTER_BITS) - 1`; the run is `[index << COUNTER_BITS, ((index+1) << COUNTER_BITS) - 1]`. `origin_base` and `origin_ceiling` leave the trait."
 source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:11-22, mock/design_rounds/202608101000/202608101000_changelist.doc.lock.md:11-24"
-provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#change-symshape-declares-origin-index-base-and-ceiling-become-free-functions"]
+provenance = ["mock::design_rounds::t202608101000::t202608101000_changelist<src_lock_md>::change_symshape_declares_origin_index_base_and_ceiling_become_free_functions"]
 quote = '''
 `origin_base` and `origin_ceiling` leave the trait entirely. A shape declares
 `origin_index`, and the run it owns is derived by free functions generic over
@@ -213,7 +213,7 @@ subject = "identity"
 what = "A value derived from a shape is carried by a free function and not by a provided trait method. A provided method is overridable, so a shape could still supply a colliding value and the illegal state stayed representable, while a free function carries no such hole."
 mechanism = "`origin_base` and `origin_ceiling` were provided trait methods for one revision; the free functions are the instrument `width_of` already used in the crate for the same reason."
 source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:62-66, mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:68-69"
-provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#the-first-attempt-at-this-was-wrong-and-my-own-check-caught-it"]
+provenance = ["mock::design_rounds::t202608101000::t202608101000_changelist<src_lock_md>::the_first_attempt_at_this_was_wrong_and_my_own_check_caught_it"]
 quote = '''
 They were **provided trait methods** for one revision. That is overridable, so a
 shape could still supply a colliding `origin_base` and the illegal state stayed
@@ -239,7 +239,7 @@ subject = "identity"
 what = "The law that asserted the span a minter owns is deleted rather than kept, because the derivation now computes that span, so the law became a tautology that cannot fail. Its becoming tautological is the evidence that the derivation subsumes it, and the shipped shape keeps its numbers exactly."
 mechanism = "The span law asserted `ceiling - base == 2^COUNTER_BITS - 1`; `SixteenMinters` keeps its shipped numbers, checked against the raw values in `hilavitkutin-str/tests/handle.rs`."
 source = "mock/design_rounds/202608101000/202608101000_changelist.src.lock.md:80-86"
-provenance = ["mock::design_rounds::202608101000::202608101000_changelist.src.lock::#verification"]
+provenance = ["mock::design_rounds::t202608101000::t202608101000_changelist<src_lock_md>::verification"]
 quote = '''
 **The span law was deleted rather than kept.** It asserted `ceiling - base ==
 2^COUNTER_BITS - 1`, which the derivation now computes, so it became a tautology
@@ -265,7 +265,7 @@ what = "A shape can no longer supply a base, a ceiling or a counter projection. 
 because = "Five rounds claimed elimination and were wrong, and a design that has overclaimed that often has to say which parts are load bearing to be worth reading."
 mechanism = "`id_from_counter` leaves `SymShape`; the id width `Uint<28, Hot>` that a signature carried moves with the projection to the layout."
 source = "mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:7-19, mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:25-37, mock/design_rounds/202608101900/202608101900_topic.the-sixth-route-and-what-a-shape-may-still-decide.md:38-43"
-provenance = ["mock::design_rounds::202608101900::202608101900_changelist.doc.lock::#change-retract-the-uint-28-hot-in-the-trait-signature-is-gone"]
+provenance = ["mock::design_rounds::t202608101900::t202608101900_changelist<doc_lock_md>::change_retract_the_uint28_hot_in_the_trait_signature_is_gone"]
 quote = '''
 ## CHANGE: retract "the `Uint<28, Hot>` in the trait signature is gone"
 
@@ -317,7 +317,7 @@ subject = "identity"
 what = "Building a generator for an origin is fallible and refuses an origin whose index is out of range for its shape. A shape is an open extension point, so the only place a check binds unconditionally is where a generator is built."
 mechanism = "`Generator::at` returns `Maybe<Self>`."
 source = "mock/design_rounds/202608101900/202608101900_changelist.doc.lock.md:39-48"
-provenance = ["mock::design_rounds::202608101900::202608101900_changelist.doc.lock::#change-generator-at-is-fallible"]
+provenance = ["mock::design_rounds::t202608101900::t202608101900_changelist<doc_lock_md>::change_generatorat_is_fallible"]
 quote = '''
 ## CHANGE: `Generator::at` is fallible
 
@@ -345,7 +345,7 @@ what = "The build crate is no_std and touches neither the environment nor the fi
 because = "The workspace rule forbidding extern crate std settles it, and not a ruling."
 mechanism = "The crate is `#![no_std]`; takes `PROFILE` and the `CARGO_CFG_*` values as parameters; writes directives and config file text into any `core::fmt::Write`; `configure().run()` keeps its builder shape and takes that input. The earlier design read `CARGO_CFG_*`, emitted `cargo:rustc-cfg` lines and wrote config files from a build script."
 source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:66-66, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:85-85, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:25-25"
-provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#hilavitkutin-build"]
+provenance = ["mock::design_rounds::t202609181402::t202609181401_topic::hilavitkutin_build"]
 quote = '''
 `mock/crates/hilavitkutin-build/DESIGN.md.tmpl` has the crate read `CARGO_CFG_*`, emit `cargo:rustc-cfg` lines and write config files from a build script, which is std by nature. The crate already does not claim `no_std`. `mock/PRINCIPLES.md.tmpl` and the `hilavitkutin*` forbidden-imports scope say every crate is. The design of the crate and the principle over it disagree. Handed back.
 ---
@@ -368,7 +368,7 @@ subject = "identity"
 what = "The api crate is the consumer-facing contract surface: the work unit and the unit vocabulary, the access-set types, the three store types, the context, and the platform contracts for clock, memory provider and thread pool. It carries no contract surface for items received or emitted outside unit execution, and nothing that only the engine reads."
 mechanism = "`hilavitkutin-api`: `WorkUnit` and the unit vocabulary, `AccessSet`, `Column`/`Resource`/`Virtual`, the context traits, `Contains`, `ClockApi`/`MemoryProviderApi`/`ThreadPoolApi`."
 source = "mock/research/202611191345_api-placement/OP-CALL.md:7-16"
-provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+provenance = ["mock::research::t202611191345_api_placement::op_call::the_question_and_his_answer"]
 quote = '''
 - WorkUnit stays in the api. WorkUnit and the unit vocabulary stay in hilavitkutin-api, as the ratified rows have it. Domain crates are opt-in depends above it.
 - Capability, sink, codec leave. Capability, sink and codec leave hilavitkutin, since Push and BulkPush there duplicate notko's sink. This supersedes one sentence of a provisional row.
@@ -390,7 +390,7 @@ subject = "identity"
 what = "Op ruled on 2026-11-16 that capability, sink and codec leave hilavitkutin, since push and bulk push there duplicate notko's sink."
 mechanism = "The `capability`, `sink` and `codec` modules of `hilavitkutin-api`; `notko::sink::{Push, BulkPush}`. Op's answer: \"all four chosen\", the second being \"Capability, sink, codec leave\"."
 source = "mock/research/202611191345_api-placement/OP-CALL.md:12-16"
-provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+provenance = ["mock::research::t202611191345_api_placement::op_call::the_question_and_his_answer"]
 quote = '''
 - Capability, sink, codec leave. Capability, sink and codec leave hilavitkutin, since Push and BulkPush there duplicate notko's sink. This supersedes one sentence of a provisional row.
 '''
@@ -407,7 +407,7 @@ subject = "identity"
 what = "Op ruled on 2026-11-16 that the dispatch codegen, the pool frame, the wake strategy, the executor, its error, the hybrid executor and the ceiling division move into the engine, and that adaptation becomes a candidate opt-in crate."
 mechanism = "`dispatch_codegen`, `PoolFrame`, `WakeStrategy`, `Executor`, `ExecutorError`, `HybridExecutor` and `ceiling_div`, from `hilavitkutin-api` into `hilavitkutin`. Op's answer: \"all four chosen\", the third being \"Engine-only items to the engine\"."
 source = "mock/research/202611191345_api-placement/OP-CALL.md:13-16"
-provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+provenance = ["mock::research::t202611191345_api_placement::op_call::the_question_and_his_answer"]
 quote = '''
 - Engine-only items to the engine. dispatch_codegen, PoolFrame, WakeStrategy, Executor, ExecutorError, HybridExecutor and ceiling_div move into the engine, and adaptation becomes a candidate opt-in crate.
 '''
@@ -424,7 +424,7 @@ subject = "identity"
 what = "Op ruled on 2026-11-16 that WorkUnit and the unit vocabulary stay in the api crate, as the ratified rows have it, and that domain crates are opt-in dependencies above it."
 mechanism = "`WorkUnit` and the unit vocabulary in `hilavitkutin-api`. Op's answer: \"all four chosen\", the first being \"WorkUnit stays in the api\"."
 source = "mock/research/202611191345_api-placement/OP-CALL.md:11-16"
-provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+provenance = ["mock::research::t202611191345_api_placement::op_call::the_question_and_his_answer"]
 quote = '''
 - WorkUnit stays in the api. WorkUnit and the unit vocabulary stay in hilavitkutin-api, as the ratified rows have it. Domain crates are opt-in depends above it.
 '''
@@ -440,7 +440,7 @@ subject = "persistence"
 what = "Op ruled on 2026-11-16 that \"builds on str and api\" is read as a dependency: the memory provider contract stays in the api, and the held agent-written persistence row is superseded."
 mechanism = "`MemoryProviderApi` in `hilavitkutin-api`; the held row `the_persistence_crate_is_the_generic_hot_cold_storage_bridge_as_a_standalone_ecosystem_crate` superseded. Op's answer: \"all four chosen\", the fourth being \"Persistence builds on str and api\"."
 source = "mock/research/202611191345_api-placement/OP-CALL.md:14-16"
-provenance = ["mock::research::202611191345_api-placement::OP-CALL::#the-question-and-his-answer"]
+provenance = ["mock::research::t202611191345_api_placement::op_call::the_question_and_his_answer"]
 quote = '''
 - Persistence builds on str and api. "Builds on str and api" is read as a dependency: MemoryProviderApi stays in the api, and the held agent-written persistence row is superseded.
 '''

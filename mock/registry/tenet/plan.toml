@@ -5,7 +5,7 @@ id = "the_schedule_is_built_once_and_reused_across_frames"
 subject = "plan"
 what = "The schedule is constructed once and executed repeatedly across frames."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:857-857"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t12_morsel_model"]
 quote = '''
 - Schedule reusable across frames (construct once, execute repeatedly)
 '''
@@ -21,7 +21,7 @@ subject = "plan"
 what = "The plan derives the pipeline structure in seven steps, all at plan time and with no run-time cost: build the DAG, detect phases by waist analysis, identify trunks, assign branches and bridges, form fibers, size morsels per fiber and select an execution strategy per phase."
 mechanism = "(1) DAG from WU read/write sets (arvo-bitmask adjacency); (2) phases via waist analysis (arvo-graph waist detection); (3) trunks per phase (arvo-spectral for >5 fibers, else arvo-graph connected components on column-disjoint paths); (4) branches and bridges; (5) fibers within each trunk (arvo-comb greedy grouping + arvo-sparse RCM for ordering, per L1 + register budget); (6) morsel sizes per fiber; (7) execution strategy per phase."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:748-757"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t11_cache_hierarchy_tiling_and_phase_decomposition"]
 quote = '''
 Algorithm (all at plan time, zero runtime cost):
 1. Build DAG from WU read/write sets (arvo-bitmask for adjacency)
@@ -46,7 +46,7 @@ subject = "plan"
 what = "The number of fused columns against the maximum decides the phase strategy. Below fifty percent of the maximum the phase is fused into one trunk with large morsels, between fifty and a hundred percent a split is considered if the load is balanced and cores are available, and above the maximum it must be split."
 mechanism = "fused_cols < 50% max_cols → FUSE (one trunk, large morsels); 50-100% → CONSIDER SPLIT (if balanced + cores + record count); > max_cols → MUST SPLIT."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:788-791, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1158-1161"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#11-cache-hierarchy-tiling-and-phase-decomposition"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t11_cache_hierarchy_tiling_and_phase_decomposition"]
 quote = '''
 **Column-count-driven phase strategy (T6 L3696-3737):**
 - fused_cols < 50% max_cols → FUSE (one trunk, large morsels)
@@ -70,7 +70,7 @@ subject = "plan"
 what = "The access matrix is the unifying representation of the pipeline operations. Fiber formation is bandwidth minimisation, phase identification is block diagonal detection, trunk formation is spectral graph analysis when there are more than five fibers, and optimal grouping is the matrix chain dynamic program when there are more than ten ops."
 mechanism = "Fiber formation = bandwidth minimization (arvo-sparse RCM, always run, O(n+nnz)); phase identification = block diagonal detection (arvo-sparse Dulmage-Mendelsohn, always run); trunk formation = spectral graph analysis (arvo-spectral Fiedler, when >5 fibers); optimal grouping = matrix chain DP (arvo-comb, when >10 ops)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1044-1052"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 The access matrix (T3 L1590-1627) is the unifying representation. All
 pipeline operations map to arvo algorithms (see domain 15):
@@ -94,7 +94,7 @@ subject = "plan"
 what = "Fibers are formed by a topological sort followed by a greedy grouping walk. A unit joins a fiber when all its predecessors are in one fiber and the combined feasibility check passes, and otherwise it starts a new fiber with fence dependencies on the upstream fibers. The dependencies between fibers are then computed from the unit-level predecessors."
 mechanism = "arvo-graph Kahn's topological sort (fixed `[u16; MU]` queue + in-degree array, zero heap), then arvo-comb greedy grouping walk; inter-fiber deps from WU-level predecessors. Validated: 17-WU game world → 12 fibers (T6 bench)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1054-1055, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1060-1068"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 Core algorithm: arvo-graph Kahn's topological sort → arvo-comb greedy
 grouping walk (T2 §8.4, T6 §Q12, T7 §1.3):
@@ -122,7 +122,7 @@ subject = "plan"
 what = "The feasibility check on a fiber requires that the registers it needs fit in the available general-purpose registers: the arena base pointer, the column offset immediates, the write resource pointers, the loop counter, the intermediates and the constants. Co-location reduces the pressure on column pointers, and the register file is the binding constraint and not the L1 capacity."
 mechanism = "aarch64: ~14 usable registers; x86-64: ~10. Co-location: one base + offsets vs N separate pointers; write resource pointers are R5 `Field<T>` (T6 L3428-3505, T7 §1.1)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1070-1079"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 **Holistic feasibility check (one calculation):**
 
@@ -148,7 +148,7 @@ subject = "plan"
 what = "The sum of the sizes of the write columns and of the write resource collections must fit the L1 write budget, with read-only columns and read-only collections riding the L2 prefetcher, and all the accessed data must fit L1 and L2 combined."
 mechanism = "Σ write column sizes (`size_of::<T_i>()`, R3) + Σ write resource collection sizes (R5: Seq/Map const generic N) <= L1 write budget; L1+L2 total check."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1081-1087"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 L1 write budget: Σ write column sizes (`size_of::<T_i>()`, R3) +
 Σ write resource collection sizes (R5: Seq/Map const generic N) must
@@ -169,7 +169,7 @@ id = "a_unit_with_predecessors_in_more_than_one_fiber_starts_a_new_fiber_and_the
 subject = "plan"
 what = "A unit joins a fiber only when all its predecessors are in exactly one fiber. Predecessors in several fibers force a new fiber, which is a mandatory barrier and is a bridge."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1089-1090"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 No fan-in: all predecessors in exactly one fiber. Multi-fiber
 predecessors → new fiber (mandatory barrier = bridge).
@@ -185,7 +185,7 @@ id = "an_op_that_needs_all_its_input_records_before_output_is_a_pipeline_breaker
 subject = "plan"
 what = "An op that requires all its input records before it can produce output is a pipeline breaker and forms a materialisation boundary."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1092-1093"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 No pipeline breaker: ops requiring all input records before output →
 materialization boundary.
@@ -202,7 +202,7 @@ subject = "plan"
 what = "The fiber grouper classifies each column statically from the read and write declarations of the units: internal to the fiber, input from upstream, output to downstream, or both internal and output. An internal column is a register-to-register data path and dead-store elimination skips its memory operations; an input is read from memory at morsel start and an output is written to memory at morsel end."
 mechanism = "Fiber-internal: written by one WU, read only by the next WU in the same fiber, not read externally (`d(c(b(a(input_n))))`). Fiber-input: written by upstream fiber/trunk. Fiber-output: read by downstream fiber or final consumer. Fiber-internal AND fiber-output: local reused within the fiber (register) and stored for downstream."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1095-1108"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 **Column classification:**
 
@@ -231,7 +231,7 @@ subject = "plan"
 what = "The classification feeds the codegen flattener of the dispatch domain: read the inputs, run a pure function pipeline with locals, and store the outputs grouped at the end. Dead-store elimination gives about 0.95 to 0.96 of the baseline."
 mechanism = "DSE: 0.95-0.96x baseline."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1110-1112"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 Feeds the codegen flattener (domain 17): read inputs → pure function
 pipeline with locals → output stores grouped at end. DSE: 0.95-0.96x
@@ -250,7 +250,7 @@ subject = "plan"
 what = "A fiber's column budget uses the unique set of columns across all the grouped units and not the sum. The deduplication matters, and its mechanism is an implementation detail."
 mechanism = "Dedup via Read+Write tuple types (each column type is unique by definition)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1124-1128"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 **Unique column counting:**
 
@@ -270,7 +270,7 @@ subject = "plan"
 what = "Inside each phase, the spanning tree decomposition weights each unit by its column reads plus writes, takes the longest weighted path as the trunk, lets the trunk follow the heaviest child at a fan-out with the others becoming branches, records a bridge at a fan-in, and recurses per branch."
 mechanism = "Operates within each phase (waist boundaries from domain 11): (1) weight each WU: `col_reads + col_writes`; (2) longest weighted path = trunk (critical path); (3) fan-out: trunk follows heaviest child, others become branches; (4) fan-in: record bridge; (5) recurse per branch."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1130-1137"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 **Spanning tree decomposition:**
 
@@ -292,7 +292,7 @@ id = "fan_in_barriers_are_mandatory_fiber_breaks_and_the_grouper_decides_which_s
 subject = "plan"
 what = "Natural barriers, which are the fan-ins, are mandatory fiber break points, and between consecutive barriers lie candidate fiber segments. Walking back from the leaves gives the forced fibers and walking back from the barriers gives the maximum fiber count, and the grouper decides which segments to group and which to keep separate."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1139-1143"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 Natural barriers (fan-in) = mandatory fiber break points. Between
 consecutive barriers: candidate fiber segments. Walking back from
@@ -312,7 +312,7 @@ subject = "plan"
 what = "The grouper produces several configurations per phase: one that fuses everything that fits, one that splits at compute balance points, and one in which every segment between barriers is its own fiber. The selection per phase is based on the topology, and its logic lives in the strategy domain."
 mechanism = "MAX_FUSE: group everything that fits, fewest fibers, best cache (phases with a clear mega-trunk benefit most: sequential pass + head+tail convergence beat splitting even with many cores). BALANCED: split at compute balance points, weight proxy WU count × column accesses, ~10% extra data walk, ~30% parallelism gain. MAX_SPLIT: every barrier-to-barrier segment is its own fiber, maximum parallelism."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1145-1156"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#14-fiber-formation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t14_fiber_formation"]
 quote = '''
 **Per-phase adaptive configs:**
 
@@ -339,7 +339,7 @@ subject = "plan"
 what = "The access matrix, with units as one axis and stores as the other, is the unifying representation of the analysis. Every pipeline operation maps to a matrix or graph operation that the arvo crates provide."
 mechanism = "Matrix A, rows are units and columns are stores. DAG construction: arvo-bitmask, bitmask adjacency from read/write overlap. Topological sort: arvo-graph, Kahn's with a fixed-size queue. Node renumbering: arvo-graph. Upward rank: arvo-graph. Waist detection: arvo-graph, concurrent path counting in topological order. Fiber formation: arvo-sparse, RCM bandwidth minimisation. Phase identification: arvo-sparse, block diagonal plus Dulmage-Mendelsohn. Dead column elimination: arvo-sparse, D-M components. Trunk formation: arvo-spectral, Fiedler vector spectral bisection. Optimal fiber grouping: arvo-comb, matrix chain ordering DP. Greedy fiber grouping: arvo-comb, constrained interval grouping. Bit assignment: arvo-comb, two-level greedy bin-packing."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1240-1257"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **The access matrix is the unifying representation** (T3 decision #66).
 Matrix A where rows = WUs, columns = stores. All pipeline operations
@@ -372,7 +372,7 @@ id = "the_plan_time_analysis_runs_once_at_schedule_construction_or_when_the_unit
 subject = "plan"
 what = "The whole plan-time analysis pipeline runs once, at schedule construction or when the set of units changes, and costs nothing at run time. Every step works on the same access matrix built from the unit declarations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1261-1263"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 The entire plan-time pipeline runs once at schedule construction (or
 when the WU set changes). Zero runtime cost. Every step operates on
@@ -390,7 +390,7 @@ subject = "plan"
 what = "Each unit's read and write sets are lowered to bitmasks at registration, and one unit must precede another when the first one's write mask overlaps the second one's read mask. The result is a bit-matrix graph, built with one AND and compare per pair."
 mechanism = "`type Read: AccessSet` and `type Write: AccessSet` tuple types are lowered to `AccessMask` bitmasks. `read_masks[i]`: bit j set if unit i reads store j. `write_masks[i]`: bit j set if unit i writes store j. Edge: `(write_masks[i] & read_masks[j]) != 0` means unit i precedes unit j. O(N^2) on u64 values; for 50 units 2500 ANDs, about 1 microsecond. Result `dag[i] |= 1 << j` where i precedes j."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1265-1277"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **Step 1: Build the access matrix** (arvo-bitmask)
 
@@ -419,7 +419,7 @@ subject = "plan"
 what = "After the topological sort, all unit identifiers are renumbered to match reverse topological order, so that the upward rank traversal reads the rank array sequentially and the hardware prefetcher sees a sequential scan instead of random access."
 because = "It is the same principle as column co-location: make access patterns sequential for the prefetcher."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1283-1290"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **Step 2: Topological sort + renumbering** (arvo-graph)
 
@@ -443,7 +443,7 @@ what = "Each unit gets an upward rank: its cost plus the highest rank among its 
 because = "A unit's weight is the sum of the sizes of its accessed columns, which approximates per-element compute cost, since more column data means more memory operations and more time."
 mechanism = "`rank(u) = cost(u) + max(rank(successors(u)))`. Weight per unit: `Σ size_of::<T_i>()` over all accessed columns."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1292-1304"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **Step 3: Upward rank → critical path → trunk skeleton** (arvo-graph)
 
@@ -472,7 +472,7 @@ subject = "plan"
 what = "Waist detection walks the topological order and, at each level of units at the same depth, counts the independent paths still alive; where the count drops to a local minimum there is a waist and a phase boundary. It finds narrow bottlenecks within a connected graph, which differs from block diagonal detection, since one connected component can still have waists where all paths converge through a few units before fanning out again."
 mechanism = "A path is a unit with at least one unsatisfied downstream dependency. Implemented in arvo-graph."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1306-1317"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **Step 4: Waist detection → phase boundaries** (arvo-graph)
 
@@ -499,7 +499,7 @@ id = "a_column_no_downstream_unit_reads_is_eliminated_which_enlarges_morsels_and
 subject = "plan"
 what = "A column that no downstream unit reads is a wasted store: the fiber grouper marks it eliminable and the codegen flattener skips the store entirely. Dead column elimination reduces the column count in fibers, which means larger morsels and less register pressure."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1367-1371"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 Dead column elimination directly reduces the column count in fibers,
 which means larger morsels (domain 12 formula) and less register

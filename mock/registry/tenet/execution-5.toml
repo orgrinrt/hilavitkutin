@@ -6,7 +6,7 @@ subject = "execution"
 what = "Dropping the scheduler sets the shutdown flag, wakes every parked worker and waits until every worker has left its main loop. The engine holds no thread handle to join, because the threads belong to the consumer's executor."
 mechanism = "`Scheduler::Drop` sets `shutdown`, futex-wakes all parked, waits on the exit counter."
 source = "mock/DESIGN.md.tmpl:78-78"
-provenance = ["mock::DESIGN::#thread-pool-executor"]
+provenance = ["mock::design::thread_pool__executor"]
 quote = '''
 Work-stealing BACKLOG. Spin-budget calibration micro-bench at `ThreadPool::build()` BACKLOG; fixed 128 in v1. `Scheduler::Drop` sets `shutdown` flag, futex-wakes all parked, and waits on the exit counter until every worker has left its mainloop; the engine holds no thread handle to join, because the threads are the consumer executor's.
 '''
@@ -21,7 +21,7 @@ subject = "execution"
 what = "The morsel loop iterates forward by default. A head-and-tail variant is added for fibers that are commutative in a phase of a single trunk. The morsel size is fixed in the plan from the SIMD width and the write budget of the first-level cache."
 mechanism = "Topic 3 axis E adds head+tail convergence; morsel size baked into `ExecutionPlan` at plan-stage step 9 from SIMD-width + L1 write budget."
 source = "mock/DESIGN.md.tmpl:82-82"
-provenance = ["mock::DESIGN::#morsel-loop"]
+provenance = ["mock::design::morsel_loop"]
 quote = '''
 Forward iter by default; Topic 3 axis E adds head+tail convergence variant for commutative single-trunk-phase fibers. Morsel size baked into ExecutionPlan at plan-stage step 9 from SIMD-width + L1 write budget. Micro-morsel boundary every 64 records; sync via `core::hint::spin_loop` budget + 32-record drift tolerance (no futex inside morsel loop; phase barrier handles cross-phase parking).
 '''
@@ -39,7 +39,7 @@ subject = "execution"
 what = "A micro-morsel boundary falls every 64 records. Workers synchronise by a spin-loop budget with a tolerance of 32 records of drift, no operating-system wait happens inside the morsel loop, and the phase barrier handles parking across phases."
 mechanism = "`MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`, sync via `core::hint::spin_loop` budget; no futex inside the morsel loop."
 source = "mock/DESIGN.md.tmpl:82-82, mock/DESIGN.md.tmpl:150-150"
-provenance = ["mock::DESIGN::#morsel-loop"]
+provenance = ["mock::design::morsel_loop"]
 quote = '''
 Forward iter by default; Topic 3 axis E adds head+tail convergence variant for commutative single-trunk-phase fibers. Morsel size baked into ExecutionPlan at plan-stage step 9 from SIMD-width + L1 write budget. Micro-morsel boundary every 64 records; sync via `core::hint::spin_loop` budget + 32-record drift tolerance (no futex inside morsel loop; phase barrier handles cross-phase parking).
 ---
@@ -56,7 +56,7 @@ subject = "execution"
 what = "Generated code puts a store fence between the final non-temporal writes of a fiber's output and the release store of the progress counter, to hold the invariant named S3 in the third topic."
 mechanism = "`dmb st` (aarch64) / `sfence` (x86_64) between FiberOutput non-temporal `stnp` writes and the progress-counter Release store; Topic 3 invariant S3."
 source = "mock/DESIGN.md.tmpl:84-84"
-provenance = ["mock::DESIGN::#morsel-loop"]
+provenance = ["mock::design::morsel_loop"]
 quote = '''
 Codegen emits `dmb st` (aarch64) / `sfence` (x86_64) between final FiberOutput non-temporal `stnp` writes and progress-counter Release store, per Topic 3 invariant S3.
 '''
@@ -74,7 +74,7 @@ subject = "execution"
 what = "A default adapt unit observes the schedule end. It consumes the adapt metrics snapshot at the phase boundary and writes the predicted wait values for the next frame. Consumers register it for the default adapt behaviour, or ship their own adapt unit for custom adaptation."
 mechanism = "`AdaptWu` observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5; consumes `ResourceSnapshot<AdaptMetrics>` at the phase boundary and writes `predicted_wait_ns[]`; registered with `.with(AdaptWu::default())`."
 source = "mock/crates/hilavitkutin-providers/DESIGN.md.tmpl:25-25"
-provenance = ["mock::crates::hilavitkutin-providers::DESIGN::#surface"]
+provenance = ["mock::crates::hilavitkutin_providers::design::surface"]
 quote = '''
 | `AdaptWu` | Default substrate AdaptWu observing `ScheduleEnd` per Topic 1 axis 5 / Topic 5. Consumes `ResourceSnapshot<AdaptMetrics>` at phase boundary and writes `predicted_wait_ns[]` for the next frame. Consumers register via `.with(AdaptWu::default())` for substrate adapt behaviour; consumers ship their own AdaptWu for custom adaptation. |
 '''
@@ -91,7 +91,7 @@ id = "head_and_tail_convergence_is_designed_and_not_built_and_a_single_trunk_pha
 subject = "execution"
 what = "As of the engine design on the recovery branch, a single-trunk phase is the case trunk parallelism cannot help. The canon answers it with head and tail convergence, two threads walking one commutative fiber from opposite ends and meeting in the middle, skipped where resource accumulation is not commutative. That mechanism is not built, so a single-trunk phase runs serially; an earlier split of such phases into one record range per core was described as convergence, was not, and is gone."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:34-41"
-provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-291-to-308"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::recovered::mockcrateshilavitkutindesignmdtmpl_lines_291_to_308"]
 quote = '''
 owns the same trunks in every per-fiber walk. Single-trunk phases are the
 case trunk parallelism cannot help, since there is one trunk to distribute. Canon
@@ -117,7 +117,7 @@ what = "On every core the walk of a phase is fiber-outer: for each fiber in plan
 because = "A fiber's co-located columns stay L1-hot for the window run on every core rather than only on the single-core path."
 mechanism = "Windows `[0, record_count)` by the plan-baked `FiberDispatch.morsel_size`; `RunCfg::MORSEL_SIZE` remains the fallback for a degenerate zero window; the trunk rank advance is independent of the member restriction."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:26-34"
-provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-291-to-308"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::recovered::mockcrateshilavitkutindesignmdtmpl_lines_291_to_308"]
 quote = '''
 program. That per-phase walk is fiber-outer, matching `run`: for each fiber
 descriptor in plan order the worker restricts the walk to that fiber's members
@@ -142,7 +142,7 @@ subject = "execution"
 what = "Both dispatch paths run under the union of the per-fiber member masks, so a unit that no fiber descriptor names does not run at all, and the descriptors must cover every live unit. As of the recovery branch that coverage is checked by debug assertions only, and the flatten truncates silently once the descriptor pool is full, so a plan too large to describe becomes units that never execute in a release build; making the truncation visible is tracked as follow-up."
 mechanism = "Coverage is established by the flatten in `derive_phase_dispatch_order`, which assigns each live unit to exactly one fiber."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:47-57"
-provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-310-to-320"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::recovered::mockcrateshilavitkutindesignmdtmpl_lines_310_to_320"]
 quote = '''
 Because both paths now dispatch under the union of the per-fiber member masks
 rather than an all-ones mask, the descriptor set must cover every live unit: a
@@ -169,7 +169,7 @@ subject = "execution"
 what = "The region boundaries a worker appends within and the offsets the merge reads from are the same function of the total, the core count and the core, computed once and shared and never spelled twice. That is what makes the merge correct: it reads a core's region at exactly the offset that core wrote."
 because = "Two independent copies of the arithmetic would agree only by coincidence, and a divergence is silent, since the merge would read well-formed memory that belongs to a different core."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:99-105"
-provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-584-to-592"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::recovered::mockcrateshilavitkutindesignmdtmpl_lines_584_to_592"]
 quote = '''
 The worker's region boundaries and the merge's read offsets are the same
 function of `(total, ncores, core)`, computed once and shared rather than
@@ -191,7 +191,7 @@ id = "at_every_phase_boundary_the_engine_fences_release_on_the_producing_side_an
 subject = "execution"
 what = "At every phase boundary the engine emits a release fence on the producer side and an acquire fence on the consumer side. Worker writes between phase boundaries may be relaxed, since the phase barrier carries the visibility across threads; the adapt unit observes after the last barrier, so one acquire fence at its entry is enough for every metrics read."
 source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1210-1212"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<plan_algorithm_chain_md>::s7_cross_thread_atomic_ordering_protocol_added_2026_05_10_per_audit_2_structural_recommendation"]
 quote = '''
 **Phase-barrier release-fence convention (resolves audit M2):**
 
@@ -210,7 +210,7 @@ subject = "execution"
 what = "The contract for atomic ordering across threads is consolidated in one table: every cross-thread atomic in the design appears in it with the exact ordering on each side. A mismatch against the table when the source changelist is locked blocks the lock."
 because = "Two audit rounds found the ordering specified inconsistently across the progress counter, the snapshot, the virtuals, the parking predictions and the per-core idle breadcrumb."
 source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1170-1170, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1219-1219"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s7-cross-thread-atomic-ordering-protocol-added-2026-05-10-per-audit-2-structural-recommendation"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<plan_algorithm_chain_md>::s7_cross_thread_atomic_ordering_protocol_added_2026_05_10_per_audit_2_structural_recommendation"]
 quote = '''
 The substrate has multiple cross-thread atomic interactions; the audit-1 + audit-2 rounds found ordering was specified inconsistently across S3 (progress counter), Topic 5 Axis B (snapshot), Topic 5 Axis E (Virtuals), Topic 5 Axis G (parking predictions), and the per-core idle breadcrumb. S7 consolidates the contract; every cross-thread atomic in the design appears in this table with the exact `Ordering` on each side and the architectural mnemonic per platform.
 ---
@@ -229,7 +229,7 @@ subject = "execution"
 what = "On a carrier that mixes accumulator fibers with fibers that window their records, incremental skip is decided per fiber: accumulator fibers always run over the whole range and the other fibers keep the dirty gate. Output equivalence holds, while execution counts on mixed carriers change."
 mechanism = "`morsel_local` fibers keep the dirty gate; domain-16 output-equivalence."
 source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:80-84"
-provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+provenance = ["mock::design_rounds::t202607161810::t202607161800_topic::behaviour_deltas_intended_canonical_correcting"]
 quote = '''
 - **Mixed carriers keep incremental skip.** The old global either/or (any
   accumulator fiber forced the whole frame unit-outer with an all-ones mask)
@@ -253,7 +253,7 @@ what = "As of 2026-06-20, appending past the reserved capacity of a fixed-capaci
 because = "The run entries return the consumer-defined output, so there is no uniform outcome channel to carry a recoverable error, and a silent drop loses data with no signal when a consumer under-sizes an accumulator."
 mechanism = "`resolve_append` (dispatch/engine_ctx.rs) asserts `live < cap` before the write; it had returned without writing once the live length reached `cap`."
 source = "mock/design_rounds/202606200300/202606200300_topic.accum-overcap-hard-error.md:9-15, mock/design_rounds/202606200300/202606200300_topic.accum-overcap-hard-error.md:19-26"
-provenance = ["mock::design_rounds::202606200300::202606200300_topic.accum-overcap-hard-error::#problem"]
+provenance = ["mock::design_rounds::t202606200300::t202606200300_topic::problem"]
 quote = '''
 `resolve_append` (dispatch/engine_ctx.rs) saturates at the reserved capacity: once
 the live length reaches `cap`, the append `return`s without writing. That keeps
@@ -285,7 +285,7 @@ subject = "execution"
 what = "Giving each fiber its own morsel window on the parallel dispatch path is the same loop inversion as on the single-core path, and not a lookup of a window per unit. One dispatch call already spans every fiber of every trunk the core owns under a single morsel range, and those fibers have different windows, so a per-unit size cannot express it: the size has to select the loop and the loop is outside the call. The walk becomes fiber-outer, driven by the fiber descriptors, which already carry the fiber's unit order and its window, so no unit-to-fiber map is needed. Before this, the same pipeline got cache-sized windows on one core and a uniform constant window on many."
 mechanism = "`RunTrunkDispatch::dispatch_core` (dispatch/trunk_dispatch.rs:143-170) walks the whole carrier in one call under a single `MorselRange`; `run_core_phase` restructured fiber-outer from the `FiberDispatch` descriptors (`topo_order` slice and window); no third `[USize; GATE2_MAX_UNITS]` array and no `gate2_fiber`; the decision recorded in r6 about landing it pre-lift or mid-lift against #690 no longer applies."
 source = "mock/design_rounds/202607190930/202607190910_topic.a4-parallel-per-fiber-windows.md:19-23, mock/design_rounds/202607190930/202607190910_topic.a4-parallel-per-fiber-windows.md:29-38, mock/design_rounds/202607190930/202607190910_topic.a4-parallel-per-fiber-windows.md:40-45"
-provenance = ["mock::design_rounds::202607190930::202607190910_topic.a4-parallel-per-fiber-windows::#what-is-wrong-today"]
+provenance = ["mock::design_rounds::t202607190930::t202607190910_topic::what_is_wrong_today"]
 quote = '''
 The parallel path did not follow. `run_core_phase` still windows every fiber in the
 phase by one scalar `Cfg::MORSEL_SIZE` handed down from `worker_main`
@@ -326,7 +326,7 @@ subject = "execution"
 what = "Splitting the records of a single-trunk phase into one slice per core, all cores walking one direction, with no commutativity gate, is not head and tail convergence. The canon names two threads from opposite ends of a commutative fiber, which have one meeting point and so one join between two stack-local regions, and it skips non-commutative resource accumulation. An N-way split has N regions and N minus one joins and runs on any workload. Record splitting of one fiber exists only as a constrained two-way head-and-tail convergence in a single-trunk commutative phase, never as an N-way record or morsel partition, so the N-way branch is drift and not an alternative reading."
 mechanism = "`run_core_phase` single-trunk branch, `per = (total + ncores - 1) / ncores` and a `[lo, hi)` slice per core; spec `:770-771` and `:1840-1841`; amendment `202606111800:447-450`."
 source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:10-20, mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:22-33"
-provenance = ["mock::design_rounds::202607192110::202607192100_topic.n-way-record-split-is-not-convergence::#topic-the-n-way-record-split-is-not-head-tail-convergence"]
+provenance = ["mock::design_rounds::t202607192110::t202607192100_topic::topic_the_n_way_record_split_is_not_headtail_convergence"]
 quote = '''
 `run_core_phase` has a branch for the case canon cares most about: a single-trunk phase, where
 trunk-level parallelism has nothing to distribute because there is only one trunk. Canon's answer
@@ -368,7 +368,7 @@ subject = "execution"
 what = "Ownership of a record slice belongs to the accumulator path alone. The path without accumulators runs the phase walk for every core on every phase, and every worker participates in each waist even if it owned no trunk this phase. The two ownership models are mutually exclusive paths and cannot disagree, so deleting the N-way record split strands no trunks."
 mechanism = "`run_this` (:966) lives inside `worker_accum_unit_outer` (begins :933), which accumulator-bearing carriers reach and then `continue` at :873 without reaching `run_core_phase`; the other path calls `run_core_phase` unconditionally for every core on every phase and states the invariant at :913: \"every worker participates in each waist, even one that owned no trunk this phase\"."
 source = "mock/design_rounds/202607192410/202607192400_topic.delete-the-n-way-record-split.md:29-35, mock/design_rounds/202607192310/202607192320_changelist.src.lock.md:45-52"
-provenance = ["mock::design_rounds::202607192410::202607192400_topic.delete-the-n-way-record-split::#what-it-does-not-cost-established-by-experiment"]
+provenance = ["mock::design_rounds::t202607192410::t202607192400_topic::what_it_does_not_cost_established_by_experiment"]
 quote = '''
 An earlier pass in this arc concluded the deletion would strand trunks, on the grounds that
 `run_this` (`:966`) gates participation by record slice while dispatch ownership is by trunk rank.
@@ -402,7 +402,7 @@ subject = "execution"
 what = "The nested-carrier construction of phases and pipelines, walked by witness recursion, is the mechanism that the const-evaluated grouping with const-gated dead-code elimination replaced, and the replacement is what the scheduler's run uses. The module, its re-export, the test that only asserts the superseded walk matches the flat walk, and its local spin-only waist barrier are deleted, which resolves the finding of three barriers without a decision of its own."
 mechanism = "`dispatch/phase_run.rs` (`phase_run`, `RunPhase`, `RunPipeline`, `TrunkCons`/`PhaseCons` nests); `pub use` at dispatch/mod.rs:41; `tests/phase_pipeline_dispatch.rs`; its local `waist_barrier` (:105); A1 registry item 3 (`202606111400:184-185`)."
 source = "mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:1-5, mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:20-28, mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:30-34"
-provenance = ["mock::design_rounds::202607192910::202607192900_topic.delete-superseded-dispatch-and-barrier::#topic-delete-the-superseded-nested-carrier-dispatch-and-its-barrier"]
+provenance = ["mock::design_rounds::t202607192910::t202607192900_topic::topic_delete_the_superseded_nested_carrier_dispatch_and_its_barrier"]
 quote = '''
 # Topic: delete the superseded nested-carrier dispatch and its barrier
 
@@ -441,7 +441,7 @@ subject = "execution"
 what = "Canon's silence on a run-time barrier shape does not make two incompatible protocols on one word acceptable: it makes the shipped one the answer and the other drift, waiting for someone to wire it and corrupt the live path. The unwired arrive, reset and observe barrier family shares a word with the live sense-reversing waist barrier under a different reset discipline and is deleted. The design promise that it will be wired in a following round is deleted and not honoured."
 mechanism = "`phase_barrier_arrive` / `_reset` / `_observe` on `pool.phase_arrived`, in `thread/barrier.rs`; the live `waist_barrier`; `DESIGN.md.tmpl:231`."
 source = "mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:1-5, mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:36-48"
-provenance = ["mock::design_rounds::202607192910::202607192900_topic.delete-superseded-dispatch-and-barrier::#topic-delete-the-superseded-nested-carrier-dispatch-and-its-barrier"]
+provenance = ["mock::design_rounds::t202607192910::t202607192900_topic::topic_delete_the_superseded_nested_carrier_dispatch_and_its_barrier"]
 quote = '''
 # Topic: delete the superseded nested-carrier dispatch and its barrier
 
@@ -478,7 +478,7 @@ subject = "execution"
 what = "The engine clamps the worker count it runs on to the ceiling its per-core state is sized by, and past the ceiling the extra workers are never handed a closure. Without the clamp, a worker count past the ceiling indexes past the per-core state and panics. The design was silent on this, and the code already expects a worker count past the ceiling."
 mechanism = "`run_parallel` indexes `worker_ctxs[c]` for every `c < worker_count()`; `worker_ctxs` holds `MAX_CORES` (256), so 257 panics. `thread/barrier.rs` bounds its idle slot for a count past the ceiling and `classify_cores` clamps; `runnable_worker_count` is the thread module's `pub const fn` that computes it."
 source = "mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:44-44, mock/design_rounds/202609190201/202609190201_changelist.doc.lock.md:29-29, mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md:25-25"
-provenance = ["mock::design_rounds::202609190201::202609190200_topic.review-fixes-on-arvo-dev::#seven-an-executor-reporting-more-than-max-cores-workers-panics"]
+provenance = ["mock::design_rounds::t202609190201::t202609190200_topic::seven_an_executor_reporting_more_than_max_cores_workers_panics"]
 quote = '''
 `run_parallel` indexes `worker_ctxs[c]` for every `c < worker_count()`, and `worker_ctxs` holds `MAX_CORES` (256). At 257 it panics. At 0 it spawns nothing, publishes a frame nobody runs, and returns as though the frame ran. The design is silent on both. The code already expects a worker count past `MAX_CORES` (`thread/barrier.rs` bounds its idle slot for exactly that, and `classify_cores` clamps), so the engine clamps the count it runs on into `1..=MAX_CORES`: past the ceiling the extra workers are never handed a closure, and at zero the engine still hands the executor one, since `spawn` submits work whatever the executor reports. The engine design gains the sentence.
 ---

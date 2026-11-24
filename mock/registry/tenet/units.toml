@@ -6,7 +6,7 @@ subject = "units"
 what = "A unit is a trait with a name, a read access set, a write access set, a scheduling hint with a default, a commutativity flag and an execute function that takes a context over its read and write sets. It is generic over its schedule condition, which defaults to always."
 mechanism = "`pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static { const NAME: &'static str; type Read: AccessSet; type Write: AccessSet; type Hint: SchedulingHint = (Immediate, Atomic, Normal); const COMMUTATIVE: bool; fn execute(&self, ctx: Context<Self::Read, Self::Write>); }`"
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:640-647"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 pub trait WorkUnit<Schedule = Always>: Send + Sync + 'static {
     const NAME: &'static str;
@@ -30,7 +30,7 @@ subject = "units"
 what = "A unit's schedule condition is either unconditional, which is the default, or on a virtual, which runs the unit when that virtual fires."
 mechanism = "`Always` (unconditional, default); `On<V>` (when virtual V fires)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:650-652"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 **Schedule conditions (T5 L280-282, T6 drops After<U>):**
 - `Always` — unconditional (default)
@@ -48,7 +48,7 @@ subject = "units"
 what = "The after condition on a unit is dropped, and a virtual with an on condition is used instead."
 mechanism = "`After<U>` DROPPED (T6); use `Virtual` + `On<V>`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:653-653"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - After<U> DROPPED (T6) — use Virtual + On<V> instead
 '''
@@ -66,7 +66,7 @@ what = "The context is received by shared reference, and this is load-bearing be
 mechanism = "`&self` receiver on Context."
 because = "Load-bearing: prevents noalias UB."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:656-656"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - `&self` receiver on Context (load-bearing: prevents noalias UB)
 '''
@@ -81,7 +81,7 @@ id = "a_unit_reaches_a_resource_through_a_pointer_to_external_storage"
 subject = "units"
 what = "A unit reaches a resource through a pointer to external storage."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:659-659"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Resource access via pointer to external storage (R5)
 '''
@@ -97,7 +97,7 @@ subject = "units"
 what = "A unit registers its ops through the each, batch and reduce operations of the context."
 mechanism = "`ctx.each()` / `ctx.batch()` / `ctx.reduce()` op registration (T6 L768-783)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:660-660"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - `ctx.each()` / `ctx.batch()` / `ctx.reduce()` op registration (T6 L768-783)
 '''
@@ -112,7 +112,7 @@ id = "the_op_author_controls_the_inner_loop_and_the_framework_controls_the_morse
 subject = "units"
 what = "The author of an op controls the inner loop, and the framework controls the morsel boundaries."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:663-663"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Op author controls inner loop, framework controls morsel boundaries
 '''
@@ -128,7 +128,7 @@ subject = "units"
 what = "The morsel dispatch loop is marked to be always inlined."
 mechanism = "`#[inline(always)]` on morsel dispatch loop."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:664-664"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - `#[inline(always)]` on morsel dispatch loop
 '''
@@ -144,7 +144,7 @@ subject = "units"
 what = "The framework constrains the inputs of an op: column values that are copyable and at most sixteen bytes, type-native stride, contiguous storage, and non-aliasing read and write sets."
 mechanism = "ColumnValue (Copy + 'static, <= 16 bytes), type-native stride, contiguous, non-aliasing Read/Write."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:665-666"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Framework constrains inputs: ColumnValue (Copy+'static, ≤16 bytes),
   type-native stride, contiguous, non-aliasing Read/Write
@@ -161,7 +161,7 @@ subject = "units"
 what = "An optional utility covers a common pattern of the inner loop contract."
 mechanism = "`for_each_row` utility (optional)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:667-667"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 **Inner loop contract (T3 L3418-3560):**
 ---
@@ -179,7 +179,7 @@ subject = "units"
 what = "The batch processing call is the single entry point of the inner loop contract."
 mechanism = "`process_batch` = single entry point (T3 decision #82)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:662-662, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:668-668"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 **Inner loop contract (T3 L3418-3560):**
 ---
@@ -197,7 +197,7 @@ subject = "units"
 what = "A unit is implemented by hand, hilavitkutin itself provides no registration attribute, and the consumers handle registration in their own ways."
 mechanism = "No `#[register]` in hilavitkutin itself; polka uses inventory, saalis uses Named, loimu uses macros."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:671-672"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Manually implementable (no #[register] in hilavitkutin itself)
 - Consumers handle registration (polka: inventory, saalis: Named, loimu: macros)
@@ -213,7 +213,7 @@ id = "the_scheduler_accepts_units_through_an_explicit_builder_api"
 subject = "units"
 what = "The scheduler accepts units through an explicit builder interface."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:673-673"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Scheduler accepts WUs via explicit builder API
 '''
@@ -229,7 +229,7 @@ subject = "units"
 what = "The read and write declarations of a unit are its dependency injection, an ECS treated as dependency injection."
 mechanism = "ECS-as-DI: Read/Write declarations ARE dependency injection."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:674-674"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - ECS-as-DI: Read/Write declarations ARE dependency injection
 '''
@@ -245,7 +245,7 @@ subject = "units"
 what = "A unit is guided to use at most eight unique columns, as a guideline against register pressure and not as a constraint."
 mechanism = "<= 8 unique columns per WU."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:677-677, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1178-1179"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - ≤8 unique columns per WU (register pressure guideline, not constraint)
 ---
@@ -264,7 +264,7 @@ subject = "units"
 what = "Writing a store implies reading it."
 mechanism = "Write implies Read (T5 §Q6)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:678-678"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Write implies Read (T5 §Q6)
 '''
@@ -280,7 +280,7 @@ subject = "units"
 what = "A unit must declare its read column set, its write column set and its scheduling hints, and everything else is derived: the DAG, the ordering, phases, trunks, fibers, morsel sizes, strategy, codegen and synchronisation."
 mechanism = "`type Read: AccessSet`, `type Write: AccessSet`, `type Hint: SchedulingHint` (Urgency, Divisibility, Significance)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:679-679, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1181-1188"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - WU must declare: read column set, write column set, scheduling hints
 ---
@@ -306,7 +306,7 @@ subject = "units"
 what = "Loaders have no special status in the engine. A loader declares no reads, which makes it a root node of the graph, and the scheduler treats it like any other unit: the consumer writes it and the engine schedules it."
 mechanism = "`type Read = ()`, `type Write = (Column<A>, ...)`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1481-1484"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t16_data_loading"]
 quote = '''
 **Loaders are just WorkUnits.** They have no special status in the
 engine. They happen to have `type Read = ()` which makes them root
@@ -326,7 +326,7 @@ subject = "units"
 what = "One add call on the builder registers any unit and handles all schedule conditions, such as the always and on conditions, because the condition is part of the trait implementation and not of the builder call. There is no separate add for on-conditions."
 mechanism = "`.add::<MyWU>()` handles all schedule conditions; `Always`, `On<V>` and the rest are on the trait impl, not the builder call. No separate `add_on`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2101-2103"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 One `.add::<MyWU>()` handles all schedule conditions — `Always`,
 `On<V>`, etc. are on the trait impl, not the builder call. No
@@ -344,7 +344,7 @@ subject = "units"
 what = "Consumers register units through the explicit builder API, and the engine itself provides no register attribute. Consumers handle registration in their own way, and in the ECS-as-dependency-injection view the read and write declarations are the dependency injection."
 mechanism = "No `#[register]` in hilavitkutin itself. polka: inventory, saalis: Named, loimu: macros."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2105-2108"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 Consumer registers WUs via explicit builder API (T5 §Q8). No
 `#[register]` in hilavitkutin itself — consumers handle registration
@@ -364,7 +364,7 @@ what = "A unit's execute method returns nothing and carries no result on the hot
 because = "Abort enables more aggressive LLVM optimisation, with no unwind tables and no landing pads."
 mechanism = "`execute()` returns `()`. No `Result` return type on the hot path. The founding text also names `catch_unwind` on a std tier, which his later answer removes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2147-2153, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2157-2157, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2448-2452"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Error handling (resolved):**
 
@@ -393,7 +393,7 @@ id = "a_unit_signals_failure_through_data_flow_by_writing_an_error_column_or_fir
 subject = "units"
 what = "A unit that needs to signal failure writes to an error column or fires an error virtual, so that failure is data flow and not control flow. The scheduler detects the failure through version stamps or the error virtual, then poisons the dependents."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2154-2156"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 - If a WU needs to signal failure: write to an error column or fire
   an error virtual. Data flow, not control flow. The scheduler detects
@@ -412,7 +412,7 @@ subject = "units"
 what = "The scheduler is constructed through a builder that is const-generic over the maximum number of units, stores and lanes. It registers units, columns and resources, and optionally overrides the memory provider, the thread pool and the clock before building the scheduler."
 mechanism = "`Scheduler::<MAX_UNITS, MAX_STORES, MAX_LANES>::builder().add::<MyWU>().resource::<T>(initial).resource_default::<T>().column::<T>().memory(my_provider).threads(my_pool).clock(my_clock).build()`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2087-2099"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Builder API (T6 §Q6, const generics):**
 
@@ -440,7 +440,7 @@ id = "a_failed_fiber_freezes_its_progress_counter_and_poisons_its_dependents_whi
 subject = "units"
 what = "A fiber failure freezes the fiber's progress counter and poisons all dependent fibers, while independent fibers continue."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2159-2162"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Error propagation (T3 decisions #106-110):**
 
@@ -460,7 +460,7 @@ subject = "units"
 what = "Running the pipeline returns only a result status with a per-fiber state of completed, failed or poisoned. The consumer decides whether a partial failure is acceptable, and it reads the column storage directly, since no result is extracted from the run."
 mechanism = "`PipelineResult`: per-fiber status (Completed / Failed / Poisoned). `Pipeline::run()` returns `PipelineResult` status only."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2163-2167"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 - PipelineResult: per-fiber status (Completed / Failed / Poisoned)
 - Consumer decides if partial failure is acceptable
@@ -480,7 +480,7 @@ subject = "units"
 what = "There are two access modes only, read and write, and write implies read. The seven access modes of loimu control ordering, freshness and determinism within its double-buffered view system and are loimu-specific concerns tied to its temporal prediction, rotation groups and frame generation; polka and saalis need none of this. In the founding record, loimu maps its seven modes to read and write at the hilavitkutin boundary and implements the richer semantics in its own layer. If a third mode is needed later, it can be added as a new store wrapper type in the access set without changing the unit trait."
 mechanism = "loimu's modes: `Pinned`, `Immediate`, `MutImmediate`, `Sample`, `Post`, `Approx`, `Defer`. A later third mode, e.g. `ReadExclusive`, would be a wrapper such as `Exclusive<Resource<T>>` in the `AccessSet`."
 source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:643-661"
-provenance = ["mock::design_rounds::202604200055::202603141800_topic.hilavitkutin-core-design::#key-design-questions"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_topic::key_design_questions"]
 quote = '''
 **Q6. Access mode granularity — RESOLVED**
 

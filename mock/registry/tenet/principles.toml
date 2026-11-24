@@ -5,7 +5,7 @@ id = "a_change_keeps_the_intent_and_does_not_compromise_the_pillars"
 subject = "principles"
 what = "Things can be added, extended and changed in hilavitkutin as long as the main principles and the intent do not change with it and its main pillars are not compromised. The pillars are full, exhaustive typestate; contracts first, with all machinery and logic running on contracts alone, so that people implement its parts and the engine runs them through the contracts; and optimisation first and foremost, always, though it can start simpler and go deeper later, incrementally. Whatever gets added matches in taste and execution and is not a drop looser in typestate or strictness, with no std and no alloc unless behind a feature that is entirely opt-in and not required for things to work."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS.md:339-339"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS::#said-unprompted-at-05-52"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers::said_unprompted_at_0552"]
 quote = '''
 > And things can be added and extended and changed in hilavitkutin as long as the main principles and paradigm itself, the intent, doesn't change with it and it doesn't compromise on its main pillars of full, exhaustive typestate, contracts first, all machinery and logic runs on contracts alone, people impl its parts and the engine runs it via the contracts. And optimisations first and foremost, always, though as said, we can start simpler and later go deeper, incrementally. And whatever gets added, matches in taste and execution, is not a drop looser in typestate or strictness with no std, no alloc, unless behind a feature that is entirely opt in and not required for things to work
 '''
@@ -20,7 +20,7 @@ id = "the_hilavitkutin_crates_depend_on_no_polka_crate_no_std_no_alloc_and_no_ex
 subject = "principles"
 what = "None of the three hilavitkutin crates depends on any polka crate, on std, on alloc or on any external crate."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:62-63"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::crate_structure"]
 quote = '''
 No dependency on polka-*, std, alloc, or external crates in any of
 the three crates. Designed for extraction to a separate repository.
@@ -34,7 +34,7 @@ id = "the_arvo_crates_are_no_std_without_alloc_and_sized_by_const_generics"
 subject = "principles"
 what = "Every arvo crate is no_std, uses no alloc, sizes its structures by const generics and keeps the same LLVM optimisation discipline as the numerics. Each primitive is defined once and reused everywhere."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:142-143"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - All crates: `#![no_std]`, no alloc, const-generic sizing, same
   LLVM optimisation discipline as numerics. Define once, reuse everywhere.
@@ -51,7 +51,7 @@ subject = "principles"
 what = "Weights and costs in the graph, sparse and combinatorial crates use arvo fixed-point newtypes rather than raw integers, which gives validation and semantic clarity at no machine-code cost. The lint that requires arvo types applies to all arvo crates and rejects non-arvo numerics in data-facing structs."
 mechanism = "The arvo-types-only lint; after compilation the newtypes translate to the same machine instructions as raw integers (u32/usize)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:166-170, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:261-262"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 arvo-graph, arvo-sparse, and arvo-comb depend on arvo for weight and
 cost types. The arvo-types-only lint applies to all arvo sub-crates:
@@ -75,7 +75,7 @@ what = "Fat link-time optimisation with a single codegen unit is required for th
 mechanism = "The `ExpandedLto` pragma (fat LTO + codegen-units=1); without it struct-field fn arrays do not devirtualise (12.6x slower)."
 because = "Without it, struct-field fn arrays do not devirtualise (12.6x slower)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:364-367"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **Critical for hilavitkutin execution model (T6):**
 - ExpandedLto pragma (fat LTO + codegen-units=1) is REQUIRED for
@@ -94,7 +94,7 @@ subject = "principles"
 what = "The alloc crate is technically available in no_std mode, but hilavitkutin does not use it: there are no heap vectors, boxes or strings. All dynamic storage goes through slab columns, which use mmap on the os tier and consumer-provided memory on the no_os tier, and fixed-size structures use stack arrays, arrayvec or a slab column. Consumers may use alloc in their own code."
 mechanism = "SlabColumn (mmap on os, consumer-provided on no_os); stack arrays; arrayvec. The founding text also names std::alloc on a std tier, which his later answer removes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:284-286, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:308-310"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#02-platform-tiers"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t02_platform_tiers"]
 quote = '''
 - `alloc` crate is technically available in no_std mode but hilavitkutin
   does NOT use it. No Vec, Box, String. All dynamic storage via SlabColumn
@@ -116,7 +116,7 @@ subject = "principles"
 what = "The ban on raw primitives is an internal lint of the hilavitkutin crates and is not enforced on consumers, who store whatever they want."
 mechanism = "arvo-types-only lint (T4 §Q8)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:458-459"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#05-column-value-types"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t05_column_value_types"]
 quote = '''
 - **No raw primitives** is our internal lint (arvo-types-only, T4 §Q8),
   NOT enforced on consumers. Consumers store whatever they want.
@@ -134,7 +134,7 @@ what = "The context reads and writes through raw pointers and has no slice metho
 mechanism = "`unsafe fn read<T>(&self, i) -> T`, `unsafe fn write<T>(&self, i, val)`; no slice methods."
 because = "Slices cause aliasing UB when WUs fused."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:657-658"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#09-workunit-trait"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t09_workunit_trait"]
 quote = '''
 - Raw pointer access: `unsafe fn read<T>(&self, i) -> T`, `unsafe fn write<T>(&self, i, val)`
 - No slice methods (slices cause aliasing UB when WUs fused)
@@ -150,7 +150,7 @@ id = "idiomatic_rust_comes_first_and_assembly_replaces_it_only_where_measurement
 subject = "principles"
 what = "Idiomatic Rust comes first, then profiling, and assembly replaces it only where the measurement confirms a win."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:883-884"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#13-intrinsics-and-microkernels"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t13_intrinsics_and_microkernels"]
 quote = '''
 **Principle (T5 L1008):** idiomatic Rust first. Profile. Replace with
 asm where measurement confirms the win.
@@ -167,7 +167,7 @@ subject = "principles"
 what = "Pipeline composition is static: every unit is registered through the builder at compile time, and everything the builder defines is statically analysable and computable. The unit set, the graph structure, the fiber, trunk and phase topology and the monomorphised dispatch functions are all fixed at build time, with no runtime unit registration and no dynamic schedules."
 because = "It is what enables LLVM devirtualisation, since the schedule is statically analysable."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2110-2114, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2435-2440"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Static schedule (resolved):**
 
@@ -193,7 +193,7 @@ id = "the_type_taxonomy_is_trait_newtype_repr_c_enum_or_primitive_and_it_governs
 subject = "principles"
 what = "Every type takes one of four forms: a trait, a newtype, a C-layout enum or a primitive. The type taxonomy governs what form every type takes."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2205-2206"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - **Type taxonomy:** trait / newtype / repr(C) enum / primitive.
   Governs what form every type takes. (T1 L140-162 §3)
@@ -207,7 +207,7 @@ id = "dyn_is_banned_entirely_with_no_exceptions"
 subject = "principles"
 what = "Dynamic dispatch is banned entirely, with no exceptions."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2207-2207"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - **dyn ban:** entirely banned, no exceptions. (T1 L169-170 §4.1)
 '''
@@ -223,7 +223,7 @@ subject = "principles"
 what = "The standard any facility is banned: there is no type identity query and no type erasure."
 mechanism = "No `TypeId`, no `std::any`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2208-2208"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - **std::any ban:** no TypeId, no type erasure. (T1 L171 §4.1)
 '''
@@ -238,7 +238,7 @@ id = "a_raw_string_vec_or_box_must_be_a_documented_newtype"
 subject = "principles"
 what = "A raw string, vector or box may appear only as a documented newtype."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2209-2210"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - **Newtype mandate:** raw String/Vec/Box must be documented newtypes.
   (T1 L172-192 §4.1-4.3)
@@ -254,7 +254,7 @@ id = "the_implementation_is_our_own_and_duckdb_is_an_architectural_reference_and
 subject = "principles"
 what = "The engine is implemented by us. DuckDB is an architectural reference and not a dependency."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2211-2212"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - **Own implementation:** DuckDB as architectural reference, not a
   dependency. (T1 L1414 decision #91, T2 L961 decision #7)
@@ -270,7 +270,7 @@ id = "contracts_come_before_implementations_and_traits_come_first_always"
 subject = "principles"
 what = "Contracts come before implementations: traits first, always."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2221-2221"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Contracts before implementations — traits first, always (#49)
 '''
@@ -285,7 +285,7 @@ id = "zero_sized_types_are_the_logic_layer"
 subject = "principles"
 what = "Zero-sized types are the logic layer."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2222-2222"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - ZSTs are the logic layer (#50)
 '''
@@ -300,7 +300,7 @@ id = "there_are_no_dyn_escape_hatches_and_a_need_for_one_is_answered_by_a_redesi
 subject = "principles"
 what = "There are no dynamic dispatch escape hatches: where one seems needed, the design is redone."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2223-2223"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - No dyn escape hatches — redesign instead (#51)
 '''
@@ -316,7 +316,7 @@ id = "every_heap_allocation_is_documented"
 subject = "principles"
 what = "Every heap allocation is documented."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2224-2224"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Every heap allocation documented (#52)
 '''
@@ -331,7 +331,7 @@ id = "columnar_storage_maps_to_schema_as_traits"
 subject = "principles"
 what = "Columnar storage maps to schema-as-traits."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2225-2225"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Columnar storage maps to schema-as-traits (#53)
 '''
@@ -346,7 +346,7 @@ id = "repr_c_and_function_pointers_give_the_minimal_abi_surface"
 subject = "principles"
 what = "A C-layout representation together with function pointers gives the minimal ABI surface."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2226-2226"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - repr(C) + fn pointers = minimal ABI surface (#54)
 '''
@@ -361,7 +361,7 @@ id = "link_time_registration_through_inventory_is_complete_before_work_starts"
 subject = "principles"
 what = "Link-time registration through the inventory mechanism is complete before any work starts."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2227-2227"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - inventory link-time registration = complete before work (#55)
 '''
@@ -374,7 +374,7 @@ id = "the_compiler_metaphor_forces_data_transformation_thinking"
 subject = "principles"
 what = "The compiler metaphor forces thinking in terms of data transformation."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2228-2228"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Compiler metaphor forces data-transformation thinking (#56)
 '''
@@ -389,7 +389,7 @@ id = "there_is_no_ad_hoc_logic_and_only_reusable_abstractions"
 subject = "principles"
 what = "There is no ad-hoc logic: only reusable abstractions."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2229-2229"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - No ad-hoc logic — reusable abstractions (#57)
 '''
@@ -404,7 +404,7 @@ id = "a_pragmatic_shortcut_is_never_taken_and_the_design_changes_and_not_the_imp
 subject = "principles"
 what = "A pragmatic shortcut is never taken: where the implementation would need one, the design is changed and not the implementation."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2230-2230"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - NEVER "pragmatic shortcut" — change design not implementation (#58)
 '''
@@ -419,7 +419,7 @@ id = "typed_identifiers_are_used_everywhere"
 subject = "principles"
 what = "Typed identifiers are used everywhere."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2234-2234"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Typed IDs everywhere (#62)
 '''
@@ -434,7 +434,7 @@ id = "production_quality_applies_in_mockspace"
 subject = "principles"
 what = "Production quality applies in mockspace."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2235-2235"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Production quality in mockspace (#63)
 '''
@@ -450,7 +450,7 @@ subject = "principles"
 what = "Eight enforcement lints exist: one rejects raw primitives in struct fields and public functions, one rejects dynamic dispatch anywhere, one rejects type identity and the any facility, one requires arvo types in data-facing struct fields, one rejects unwrap calls outside tests, one rejects the TOML value type outside polka-data, one rejects a UI reference outside polka-cli, and one limits SDK crates to exporting traits, C-layout types and proc macros."
 mechanism = "no-raw-primitives: reject f32/f64/i8..u128 in struct fields and pub fn. no-dyn: reject dyn Trait anywhere. no-std-any: reject TypeId/Any. arvo-types-only: require arvo types in data-facing struct fields. no-unwrap: reject .unwrap() outside tests. no-toml-value: reject toml::Value outside polka-data. no-ui-below-cli: reject &Ui outside polka-cli. sdk-traits-only: SDK crates export only traits, repr(C), proc macros."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2240-2248"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 **Enforcement lints (T4 L2358-2428 §Q8, 8 lints):**
 - no-raw-primitives: reject f32/f64/i8..u128 in struct fields and pub fn
@@ -474,7 +474,7 @@ subject = "principles"
 what = "Nightly feature gates fall in three tiers: four are always on, four are used where useful, and three are only tracked."
 mechanism = "Always-on: min_specialization, min_generic_const_args, adt_const_params, const_trait_impl. Where-useful: explicit_tail_calls, loop_match, never_type, build_std. Tracking: scalable_vectors, reflection_and_comptime, dictionary_passing_style."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2250-2255"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 **Nightly feature gates (T4 L1989-2084 §Q6):**
 - Always-on: min_specialization, min_generic_const_args,
@@ -495,7 +495,7 @@ subject = "principles"
 what = "The design itself is the SIMD contract: of eight vectorisation killers, six are eliminated by design, loop-carried dependencies are partly eliminated by separate read and write declarations, and complex control flow is the op author's domain and not the framework's. No explicit SIMD intrinsics are needed in the common case, because LLVM auto-vectorises when the killers are absent."
 mechanism = "Opaque calls: eliminated by no-dyn monomorphisation. Heap allocation: eliminated by no-alloc and the at-most-16-byte constraint. Non-contiguous access: eliminated by columnar storage. Loop-carried dependencies: partially, by separate Read/Write declarations. Complex control flow: op author's domain. Interior mutability: eliminated by the Copy bound. Non-Copy types: eliminated by the Copy bound. Misaligned data: eliminated by 64-byte alignment."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2257-2271"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 **Auto-vectorisation contract (T3 L2500-3596, ~1100-line analysis):**
 

@@ -6,7 +6,7 @@ subject = "execution"
 what = "For any fiber dispatch function the generated assembly is verified against five checks: no indirect branch in the function body, all column accesses use indexed addressing, no stack loads in the per-record inner loop, the morsel size is an immediate constant, and no calls to a morsel size function or a fiber dispatch function."
 mechanism = "1. Zero `blr` in the function body. 2. All column accesses use indexed addressing `[reg, counter, lsl #3]`. 3. No `[sp, ...]` loads in the per-record inner loop (prologue and morsel only). 4. Morsel size is an immediate constant. 5. No `bl morsel_size` or `bl fiber_dispatch` calls. All 26 dispatch functions in the bench pass all 5 checks."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1636-1645"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t17_dispatch_codegen"]
 quote = '''
 **ASM verification checklist (T7 §3.2):**
 For any fiber dispatch function, verify:
@@ -30,7 +30,7 @@ id = "inline_fences_are_eliminated_because_progress_is_tracked_externally"
 subject = "execution"
 what = "Inline fence branch prediction is gone: fences are eliminated entirely by the external progress tracking."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1648-1649"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t17_dispatch_codegen"]
 quote = '''
 - T1 §11.4.4 inline fence branch prediction → fences eliminated
   entirely by T2 §7 external progress tracking
@@ -46,7 +46,7 @@ id = "the_dispatch_table_model_is_refined_to_monomorphised_tuple_dispatch"
 subject = "execution"
 what = "The earlier dispatch table model is refined into monomorphised tuple dispatch."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1650-1651"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t17_dispatch_codegen"]
 quote = '''
 - T2 dispatch table model → refined by T6 monomorphised tuple
   dispatch
@@ -62,7 +62,7 @@ id = "the_indirect_per_fiber_approach_is_superseded_by_the_trunk_and_schedule_ap
 subject = "execution"
 what = "The indirect per-fiber dispatch approach, which was initially preferred, is superseded by the trunk-level and whole-schedule approaches on the bench findings, because its 1.17x overhead is unacceptable."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1553-1555, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1653-1654"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t17_dispatch_codegen"]
 quote = '''
 | C: indirect per-fiber | one fn ptr per fiber per morsel | 1.17x |
 | D: trunk mega | `#[inline(always)]` fibers into trunk fn | 1.02x |
@@ -80,7 +80,7 @@ id = "phase_decomposition_is_part_of_the_cache_hierarchy_and_tiling_domain_and_n
 subject = "execution"
 what = "Phase decomposition is merged into the domain of the cache hierarchy, tiling and phase decomposition and has no domain of its own."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1673-1674"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#18-phase-decomposition-merged-into-domain-11"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t18_phase_decomposition__merged_into_domain_11"]
 quote = '''
 ### 18. Phase decomposition — MERGED INTO DOMAIN 11
 See domain 11 (cache hierarchy, tiling, and phase decomposition).
@@ -97,7 +97,7 @@ subject = "execution"
 what = "Units that accumulate into a resource have cross-record dependencies through it, so two head and tail convergence threads would otherwise accumulate into the same resource concurrently. Each convergence thread gets its own stack-local accumulator; after convergence an additive accumulation adds the two accumulators, and a non-commutative accumulation falls back to sequential processing of that fiber and skips head and tail."
 mechanism = "Uses the same stack-local caching pattern; each thread's snapshot is independent. `ru`/`rw` per element."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1750-1760, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1763"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t19_resource_handling"]
 quote = '''
 **Resource accumulation + convergence (T6 L2938-2961, T7 §4.3):**
 
@@ -126,7 +126,7 @@ id = "a_fiber_has_resource_accumulation_when_a_unit_writes_a_resource_it_also_re
 subject = "execution"
 what = "Resource accumulation is detected at plan time from the unit metadata: a fiber has it if any unit in the fiber writes a resource that it also reads. If the accumulation is non-commutative, convergence is skipped for that fiber."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1762-1766"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#19-resource-handling"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t19_resource_handling"]
 quote = '''
 The stack-local caching pattern handles this naturally — each thread's
 snapshot is independent. Detection at plan time from WU metadata:
@@ -146,7 +146,7 @@ subject = "execution"
 what = "On a machine with core types, the critical path trunks go to the P-cores and the leaf and branch fibers to the E-cores. P-cores get larger morsels because of their larger L1 and L2, and E-cores get proportionally smaller morsel ranges and not an equal distribution, because E-cores run at about 40% of P-core speed and drag performance down under an even split."
 mechanism = "Detected at startup, once: L1/L2 size per core type, core count per type (P-cores, E-cores), core type identity. T3 decision #39 for critical path to P-cores."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1810-1823"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 **Heterogeneous core awareness (T3 decision #37, T6 L1407-1458):**
 
@@ -176,7 +176,7 @@ subject = "execution"
 what = "The thread count is the smaller of the physical core count and the parallelisable width plus one, where the plus one is the chaser or convergence thread. In the bench on M1, eight threads (four P-cores plus four E-cores) were worse than four threads on the P-cores only."
 mechanism = "`min(physical_cores, parallelisable width + 1)`. Bench: 8 threads (4P+4E) worse than 4 threads (4P only) on M1 (T6 L1407-1458)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1825-1827"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 Bench: 8 threads (4P+4E) is WORSE than 4 threads (4P only) on M1
 (T6 L1407-1458). Thread count = min(physical_cores, parallelisable
@@ -193,7 +193,7 @@ id = "the_pool_moves_the_parallel_crossover_from_about_fifty_thousand_records_to
 subject = "execution"
 what = "A pool eliminates the small-N catastrophe: the record count at which parallel execution pays off drops from about 50K for spawn and join strategies to about 2K. At 2K records spawn and join was 2.33x worse and the pool is 0.93x, 7% faster than sequential."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1806-1808"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 Pool eliminates the small-N catastrophe: crossover ~2K records (vs ~50K
 for spawn/join strategies). At 2K records, spawn/join was 2.33x worse;
@@ -211,7 +211,7 @@ id = "phases_overlap_through_progress_counters_so_total_time_is_the_longest_phas
 subject = "execution"
 what = "Phases overlap through the progress counters: phase N+1 starts as soon as phase N has produced enough records for one morsel, so total time is about the longest phase plus fill latency and not the sum of the phases. With four cores and four phases all phases are active at once, each processing a different record window."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1847-1853"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 **Pipeline parallelism between phases (T6 L3087-3165):**
 
@@ -233,7 +233,7 @@ subject = "execution"
 what = "The default is deterministic morsel assignment, pre-partitioned at plan time with no atomic fetch-and-add. If variable per-record time causes imbalance, the consumer can provide a stealing executor through the executor trait, while the library provides the deterministic one."
 mechanism = "T3 decisions #96-97; T5 L1110-1113. Imbalance case T3 DF9."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1868-1874"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 **Work-stealing is NOT the default (T3 decisions #96-97):**
 
@@ -255,7 +255,7 @@ subject = "execution"
 what = "A thread spawn adds three malloc calls, which is negligible against a pipeline of about 17 milliseconds, and the pre-allocated pool eliminates them."
 mechanism = "`std::thread::spawn`: 3 `malloc` calls, ~100ns at ~17ms per pipeline, 0.0006%."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1876-1879"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#20-threading-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t20_threading_model"]
 quote = '''
 **Thread spawn overhead (T7 §3.4):**
 
@@ -273,7 +273,7 @@ id = "no_single_scheduling_strategy_dominates_and_the_best_depends_on_compute_ba
 subject = "execution"
 what = "No single scheduling strategy dominates all workloads: the best total wall time depends on the compute balance, the phase topology and the record count."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1902-1904"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **No single strategy dominates all workloads** (T6 L2203-2210).
 Best total wall time depends on compute balance, phase topology,
@@ -290,7 +290,7 @@ id = "below_ten_thousand_records_execution_is_sequential_and_above_one_hundred_t
 subject = "execution"
 what = "Below 10K records execution is always sequential, because thread overhead dominates; from 10K to 100K the choice depends on the pipeline shape; above 100K threading is always considered."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1906-1909"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Record count thresholds (T6 L2075-2077, T7 §5.1):**
 - <10K records: sequential always — thread overhead dominates
@@ -309,7 +309,7 @@ subject = "execution"
 what = "The pipeline shape selects the strategy: a wide pipeline, with many roots and low depth, uses adaptive or pipe-chase; a deep one, with serial dependencies and few roots, runs sequentially; a mixed one, where phases have parallel trunks, runs phased. Deep pipelines never significantly benefit from threading, because serial dependency depth is a fundamental limit."
 mechanism = "Wide: roots > depth/2. Deep: depth > fibers/2 and roots <= 2. Mixed: phases have parallel trunks. A 7-fiber deep pipeline gains nothing from threading and adds 1.03-1.05x overhead (T6 L2283-2355)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1911-1921"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Pipeline shape (T7 §5.2):**
 
@@ -335,7 +335,7 @@ subject = "execution"
 what = "Domain 14 produces adaptive configs per phase (maximum fuse, balanced, maximum split), and this domain selects one for each phase from that phase's own topology: a clear mega-trunk gets maximum fuse with head and tail convergence, wide independent branches get maximum split, moderate depth and width gets balanced. This is not a global heuristic, and each phase is evaluated independently."
 mechanism = "Configs MAX_FUSE / BALANCED / MAX_SPLIT, produced by domain 14."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1923-1932"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Per-phase config selection:**
 
@@ -360,7 +360,7 @@ subject = "execution"
 what = "At plan time the scheduler knows each fiber's column count, each fiber's unit count and complexity from the scheduling hints, the dependency graph and the total record count, and from these estimates compute weight ratios: below 10K records it is sequential, a consumer to producer weight ratio above 0.5 gives chase and steal, a producer weight below the light threshold gives adaptive, and otherwise pipe-chase. The weight estimate is rough, from unit count times column access counts in light, medium and heavy classes, and a wrong selection costs about 10 to 20% and is not catastrophic."
 mechanism = "`record_count < 10K` -> Sequential. `consumer_weight / producer_weight > 0.5` -> ChaseSteal. `producer_weight < LIGHT_THRESHOLD` -> Adaptive. else -> PipeChase. Bench at 2M records vs sequential: pipe-chase 0.56-0.58x (A+B interleaved core 0, C chases core 1), chase+steal 0.55-0.56x, adaptive 0.32-0.54x (no frame budget, continuous chaser); asymmetric L-H workload with chase+steal 0.34x."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1934-1962"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Plan-time strategy selection (T6 L2227-2260):**
 
@@ -403,7 +403,7 @@ id = "the_frame_budget_controls_incrementality_and_not_throughput_and_adaptive_s
 subject = "execution"
 what = "The frame budget controls incrementality, meaning the frame count, and not throughput. Adaptive strategies ignore the budget and sequential is stable across budgets; the budget matters mainly for game loops with time budgets and is irrelevant for batch pipelines."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1972-1977"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Frame budget (T7 §5.4):**
 
@@ -424,7 +424,7 @@ subject = "execution"
 what = "At phase boundaries the wait time is estimated from the compute weight of the other core's remaining work: a short wait spins, a medium wait spins with backoff, and a long wait parks the thread. A wrong prediction costs at most one park and unpark cycle."
 mechanism = "<100ns spin; 100ns-10µs `spin_loop()` with backoff; >10µs `thread::park()`. Wrong prediction costs ~1µs."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2050-2058"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t22_runtime_adaptation"]
 quote = '''
 **Predictive parking at sync points (T6 L3254-3267):**
 
@@ -448,7 +448,7 @@ subject = "execution"
 what = "No waker or wake slot concept is needed: the spin loop followed by parking in the hybrid wake pattern of the threading model is the answer."
 mechanism = "Hybrid wake: spin 128, then park."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2295-2297"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#previously-undecided-areas-all-resolved"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::previously_undecided_areas__all_resolved"]
 quote = '''
 - **Waker pattern:** RESOLVED. The spin loop + parking pattern in
   domain 20 (hybrid wake: spin 128 → park) is the answer. No
@@ -466,7 +466,7 @@ subject = "execution"
 what = "The minimum morsel size is configurable and is not a design decision."
 mechanism = "MIN_MORSEL."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2327-2327"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#from-t2-all-resolved"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::from_t2__all_resolved"]
 quote = '''
 9. **MIN_MORSEL** → configurable, not a design decision. Domain 12.
 '''
@@ -481,7 +481,7 @@ id = "the_apple_128_byte_dma_unit_is_dismissed_as_out_of_scope_and_sixty_four_by
 subject = "execution"
 what = "The 128-byte DMA coherency unit of Apple silicon is dismissed as out of scope: 64 bytes is the data alignment concern, while 128 bytes is for SoC-level prefetch configuration and not for column access. It is relevant only to false sharing in cross-core atomics, which the threading model already prevents through morsel boundary alignment."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2369-2373"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#from-t4-all-resolved"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::from_t4__all_resolved"]
 quote = '''
 34. **Apple 128B DMA** → dismissed as out-of-scope. 64B for data
     alignment (our concern, domain 04). 128B DMA coherency units are
@@ -500,7 +500,7 @@ id = "the_engine_is_one_and_the_core_count_is_configuration"
 subject = "execution"
 what = "There is no separate single-core or single-threaded engine, run or dispatch path. The engine is one thing: the runner is configured with a core count and then adapts by its usual rules, and the same primitives and the same code paths run at one core, two cores or seven. The plan always computes the single best sequence and the parallelised per-core programs it can from all statically available data within the configured core count; at one core that best sequence is serial, as a natural consequence of the same algorithms. Single-core mode is never special-cased against multi-core mode in code, and sequential is a per-phase strategy the plan may select, not a separate engine."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:7-9"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#the-ruling"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::the_ruling"]
 quote = '''
 There is no separate "single-core" or "single-threaded" engine, run, or dispatch path. The engine is one thing. You configure the runner with a core count; it then adapts by its usual rules. The same primitives and the same code paths run at 1 core, 2 cores, or 7 cores. The whole plan/algorithm pipeline always computes the single best, most optimal sequence and parallelised per-core programs it can from all statically-available data, within the configured core count. At 1 core that best sequence is serial, as a natural consequence of the same algorithms (the plan assigns every fiber to core 0 in the optimal order; phase sync points degenerate to one arriver; convergence is trivial; the pool has one worker). It is always distinctly the best, most optimal sequence computable from the static data, for whatever core count is configured.
 

@@ -6,7 +6,7 @@ subject = "principles"
 what = "The dispatch-determining traits are all sealed with a private supertrait, and a consumer reaches them only through derive macros, which force exactly one dispatch role per type. Without the seal a consumer could implement two roles on one type at once, leaving the builder input's dispatch ambiguous with an opaque coherence error."
 mechanism = "`RunCfg`, `Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock` sealed via `mod sealed { pub trait Sealed {} }`; derive macros `#[derive(Resource)]` / `#[derive(RunCfg)]` emit `impl sealed::Sealed`; `BuilderInput::Dispatch` resolution; invariant S2."
 source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1073-1076, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1090-1090"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s2-sealed-dispatch-determining-traits"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<plan_algorithm_chain_md>::s2_sealed_dispatch_determining_traits"]
 quote = '''
 `RunCfg`, `Resource`, `Column`, `Virtual`, `WorkUnit`, `Kit`, `MemoryProvider`, `ThreadPool`, `Clock` are ALL sealed via a private `Sealed` supertrait. Consumers cannot impl these traits for arbitrary types; the sealed pattern (canonical Rust idiom: a private `Sealed` super-trait defined in `mod sealed`) is required because:
 
@@ -28,7 +28,7 @@ subject = "principles"
 what = "Coherence safety of the sealed dispatch traits comes from the proc-macro-only implementation path, where a consumer type can implement the seal only through derive macros and the macro rejects a double derive. Minimal specialization resolves overlap within one trait, and does not stop the projections of two distinct traits from being computed on the same type."
 mechanism = "`#[derive(Resource)]` / `#[derive(RunCfg)]` rejecting double-derives; `min_specialization`; a `trybuild` fixture added to the Topic 11 test bar proving double-derive rejection; Topic 3 S2 text amended."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:276-276"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **(Audit-2 M5, 2026-05-10):** S2's attribution of pair-impl coherence safety to `min_specialization` is incorrect; the actual safety mechanism is the **proc-macro-only impl path** (consumer types can only impl `Sealed` via `#[derive(Resource)]` / `#[derive(RunCfg)]` / etc., and the proc-macro rejects double-derives). `min_specialization` is what resolves *within a single trait* when multiple blanket impls would otherwise overlap; it does NOT prevent two distinct traits' projections from being computed on the same type. Topic 3 S2 text amended (audit follow-up); a `trybuild` fixture is added to Topic 11 test bar that proves double-derive rejection.
 '''
@@ -47,7 +47,7 @@ subject = "principles"
 what = "Engine-side prose and source name the dispatch approaches by descriptive names only. The A, B, C, D and E letters of polka-dots are used only as bench-paper citations."
 mechanism = "Example: \"MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench\" in place of \"Approach A beats Approach C\"."
 source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.dispatch-codegen::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<dispatch_codegen_md>::decision_log"]
 quote = '''
 - [x] **Axis B — DispatchApproach selection: ship `MonoTuple` + `TrunkMega` + `ScheduleMega`.** Three variants by descriptive name. **Topic 3 amendment required:** Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong — `IndirectPerFiber` is polka-dots Approach C (1.17x penalty, superseded per Domain 17 L1654), not Approach A (mono tuple, 1.0x baseline). The intent is to ship A+D+E (mono-tuple baseline + trunk-mega for <10K + schedule-mega for ≥10K), so Topic 3's enum must change `IndirectPerFiber` to `MonoTuple` and update its plan-stage selector to choose `MonoTuple` for tests/baseline reference, `TrunkMega` for <10K, `ScheduleMega` for ≥10K. Approach C kept available only as a BACKLOG entry (re-add if a workload bench surfaces a need). **Vocabulary discipline:** polka-dots A/B/C/D/E letters are bench-paper citations only; engine-side prose and source use descriptive names exclusively (e.g., "MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench" instead of "Approach A beats Approach C"). Enum marked `#[non_exhaustive]` so future additions don't break consumers.
 '''
@@ -65,7 +65,7 @@ subject = "principles"
 what = "Fixed capacity is a non-generic capacity trait that carries the array as an associated type, with a macro-generated ladder of rungs, each binding a literal-length array."
 mechanism = "`trait Capacity { type Array<T>; const CAP: Cap; const N: usize; fn empty/as_slice/as_mut_slice }`; rungs `Cap4`, `Cap8`, `Cap16` with `type Array<T> = [T; 4]`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:25-27"
-provenance = ["mock::research::sketches::202605301145_capacity-as-type::FINDINGS::#result-works"]
+provenance = ["mock::research::sketches::t202605301145_capacity_as_type::findings::result_works"]
 quote = '''
 1. `trait Capacity { type Array<T>; const CAP: Cap; const N: usize; fn
    empty/as_slice/as_mut_slice }` with a macro-generated rung ladder
@@ -83,7 +83,7 @@ subject = "principles"
 what = "A single generic marker over one constant dimension implements the non-generic capacity trait, using the dimension directly as the array length and mapping the capacity value from it. The macro rung ladder is dropped."
 mechanism = "`Dim<const DIM: usize>` implementing the (non-generic) `Capacity` trait, with `DIM` as the array length and `CAP: Cap = cap(DIM)`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:126-130"
-provenance = ["mock::research::sketches::202605301145_capacity-as-type::FINDINGS::#addendum-2-2026-05-30-op-refinement-one-generic-dim-const-n-usize"]
+provenance = ["mock::research::sketches::t202605301145_capacity_as_type::findings::addendum_2_2026_05_30_op_refinement__one_generic_dimconst_n_usize"]
 quote = '''
 
 Op's refinement: drop the macro rung ladder; make a single generic marker
@@ -106,7 +106,7 @@ subject = "principles"
 what = "With a single generic dimension marker there are no fixed rungs, so the exact capacity is available for free and the earlier open question of exact capacity versus rounding up to a rung is moot. The only bare usize literal in live code is the dimension inside a plan-dimensions implementation, where the budget is declared once, and live code threads the plan-dimensions and capacity bounds and never a length."
 mechanism = "`Dim<N>` inside a `PlanDims` impl; live code threads `D: PlanDims` / `C: Capacity`."
 source = "mock/research/sketches/202605301145_capacity-as-type/FINDINGS.md:142-146"
-provenance = ["mock::research::sketches::202605301145_capacity-as-type::FINDINGS::#addendum-2-2026-05-30-op-refinement-one-generic-dim-const-n-usize"]
+provenance = ["mock::research::sketches::t202605301145_capacity_as_type::findings::addendum_2_2026_05_30_op_refinement__one_generic_dimconst_n_usize"]
 quote = '''
 This is strictly better than the rung ladder: no macro, no fixed rungs, and the
 earlier open "exact-N vs round-up-to-rung" question is MOOT — you get exact N
@@ -128,7 +128,7 @@ subject = "principles"
 what = "The primitive vocabulary documents which stack type replaces which bare primitive. It is not a table for the public interface only, and every mapping applies everywhere the bare primitive might otherwise appear. A mutable vector parameter becomes notko's push sink, since hilavitkutin ships no sink of its own."
 mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to `&mut impl Push<T>` from `notko::sink`; HashMap to `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
 source = "mock/PRINCIPLES.md.tmpl:159-178"
-provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+provenance = ["mock::principles::primitive_vocabulary_the_stacks_own"]
 quote = '''
 ## Primitive vocabulary (the stack's own)
 
@@ -164,7 +164,7 @@ what = "As a direct consequence of the two principles stated above it, trait ret
 mechanism = "Returns: `impl IntoIterator`, `AsRef<[T]>`, associated types. Sinks: `&mut impl Push<T>` / `&mut impl BulkPush<T>` from `notko::sink`."
 rejects = ["Vec in trait signatures", "Box<[T]> in trait signatures", "concrete collection types as contracts", "a sink surface of hilavitkutin's own"]
 source = "mock/PRINCIPLES.md.tmpl:60-66"
-provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+provenance = ["mock::principles::no_vec_or_boxt_in_trait_signatures"]
 quote = '''
 ## No `Vec` or `Box<[T]>` in trait signatures
 
