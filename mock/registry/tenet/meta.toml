@@ -5,7 +5,7 @@ id = "the_scheduler_is_itself_a_pipeline_and_meta_units_run_at_lifecycle_points"
 subject = "meta"
 what = "The scheduler is itself a pipeline: meta work units run at lifecycle points, so the scheduler schedules itself."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2119-2123"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Self-hosting scheduler (T5 §Q9, L716-802):**
 
@@ -25,7 +25,7 @@ subject = "meta"
 what = "There are four meta virtuals: plan stage, fired when the graph changes and the plan is to be recomputed; schedule ready, fired when the plan-stage units complete; pass start, fired at the start of each pass; and schedule end, fired after all consumer work."
 mechanism = "`meta::PlanStage`, `meta::ScheduleReady`, `meta::PassStart`, `meta::ScheduleEnd`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2124-2128"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 Meta virtuals:
 - `meta::PlanStage` — fired when DAG changes (recompute plan)
@@ -46,7 +46,7 @@ subject = "meta"
 what = "There are four meta resources, the dependency graph, the execution plan with the fiber, trunk and phase assignments, the core assignments, and the scheduler metrics with the EMA timing data. Access to them is restricted through a marker trait."
 mechanism = "`meta::Dag`, `meta::ExecutionPlan`, `meta::LaneAssignment`, `meta::SchedulerMetrics`; restricted via the `MetaAccess` marker trait."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2130-2134"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 Meta resources (restricted via MetaAccess marker trait):
 - `meta::Dag` — the dependency graph
@@ -63,7 +63,7 @@ id = "the_irreducible_kernel_is_about_fifty_lines_that_fire_plan_stage_wait_fire
 subject = "meta"
 what = "The irreducible kernel of the self-hosting scheduler is about 50 lines: fire plan stage, wait for the plan units, fire schedule ready, dispatch the consumer units, and fire schedule end."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2136-2137"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 The irreducible kernel is ~50 lines: fire PlanStage, wait for plan
 WUs, fire ScheduleReady, dispatch consumer WUs, fire ScheduleEnd.
@@ -80,7 +80,7 @@ subject = "meta"
 what = "The scheduler metrics resource carries the pass count, the EMA of pass duration, a per-unit EMA, the number of active units, the stolen count and the idle time. The EMA decays by one eighth per update, and a vectorised batch update refreshes all unit EMAs in one pass."
 mechanism = "`pass_count`, `ema_pass_duration_ns`, per-unit EMA, `active_units`, `stolen_count`, `idle_ns`. Decay `(ema * 7 + measured) / 8`. Vectorised batch update: NEON 4×u32 or AVX2 8×u32 (T5 L1054-1066)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2035-2040"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t22_runtime_adaptation"]
 quote = '''
 **EMA metrics (T5 §Q5, L601-637):**
 
@@ -100,7 +100,7 @@ id = "the_frame_time_prediction_from_the_ema_serves_frame_budgeting_and_progress
 subject = "meta"
 what = "An EMA of pass duration enables frame budgeting in game loops and progress bars in batch pipelines, and the consumer reads it through the scheduler metrics."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2060-2063"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t22_runtime_adaptation"]
 quote = '''
 **Frame time prediction (T3 decision #65):**
 
@@ -119,7 +119,7 @@ subject = "meta"
 what = "Cadence belongs to the consumer layer: the consumer reads the scheduler metrics through a unit that runs on schedule end and implements its own cadence logic. hilavitkutin provides the measurement data and the consumer decides policy."
 mechanism = "`On<meta::ScheduleEnd>` WU reads `SchedulerMetrics`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1985-1991"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Cadence as consumer-layer (T5 §Q5):**
 
@@ -141,7 +141,7 @@ subject = "meta"
 what = "The scheduler writes its metrics resource at the start of each pass, and what it writes is the previous pass's metrics. The data is always one pass behind, which is consistent, because the current pass is still in progress and cannot report its own metrics. The write happens at pass start, so it is the first thing in the DAG and all readers come after it, and its version stamp increments every pass, so readers always dispatch."
 mechanism = "`Resource<SchedulerMetrics>`; `pass_count` always changes."
 source = "mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:595-598, mock/design_rounds/202604200055/202603141800_topic.hilavitkutin-core-design.md:639-641"
-provenance = ["mock::design_rounds::202604200055::202603141800_topic.hilavitkutin-core-design::#key-design-questions"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_topic::key_design_questions"]
 quote = '''
 The scheduler writes `Resource<SchedulerMetrics>` at the START of
 each pass, containing the PREVIOUS pass's metrics. This is always
@@ -165,7 +165,7 @@ subject = "meta"
 what = "Whether meta units stay on the shared consumer carrier, with bands hoisted out of the morsel loop on every record-bearing path, once per frame, or move to a dedicated meta carrier with an independent band walk, is decided by sketching both shapes far enough to compare complexity and codegen. Either shape must cure the known warts: per-morsel meta execution on record-bearing paths, leading-band accumulator appends unsupported on the parallel unit-outer path, and the clear-on-dispatch semantics of slice 1b."
 mechanism = "Task #687 for the slice-1b clear-on-dispatch semantics; single-core and parallel alike."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:124-131"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-7-the-meta-carrier-question-is-sketch-decided"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::a1_7_the_meta_carrier_question_is_sketch_decided"]
 quote = '''
 Whether meta WUs stay on the shared consumer carrier (with bands hoisted out
 of the morsel loop on every record-bearing path, once per frame, single-core
@@ -188,7 +188,7 @@ subject = "meta"
 what = "Engine-owned mutable meta state lives in a scheduler field, because consumer resources are copy and read-only and cannot carry cells. The accessor gated by meta access exists only on a context that bears a meta reference, enforced at compile time."
 mechanism = "`MetaBlock` scheduler field; `MetaAccess`-gated accessor on a `MetaRef`-bearing Ctx; consumer resources are `Copy` read-only."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:161-164"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::constraint_notes_elevated_to_canon"]
 quote = '''
 5. Engine-owned mutable meta state lives in the `MetaBlock` scheduler field
    (consumer resources are `Copy` read-only and cannot carry Cells); the
@@ -208,7 +208,7 @@ subject = "meta"
 what = "Adaptation is a meta unit that observes the end of the schedule. A default one ships with the providers crate; the consumer registers it for the default behaviour, ships its own for custom behaviour, or leaves it out."
 mechanism = "`AdaptWu` observing `ScheduleEnd`; default in `hilavitkutin-providers`; registered via `.with(AdaptWu::default())`."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:15-15"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::inputs_from_prior_topics_binding"]
 quote = '''
 - **Topic 1 Axis 5.** Adapt is a meta-WU (`AdaptWu`) observing `ScheduleEnd`. Substrate ships default `AdaptWu` in `hilavitkutin-providers`; consumer registers via `.with(AdaptWu::default())` for substrate behaviour, ships own `AdaptWu` for custom, omits if not wanted. The integration shape is locked. This topic specifies what the WU body does and what metrics structure it reads/writes.
 '''
@@ -224,7 +224,7 @@ id = "each_adaptation_metric_is_its_own_axis_with_independent_tuning"
 subject = "meta"
 what = "Adaptation was first proposed as four opaque modes; the maintainer reframed it during the topic conversation so that each metric is its own axis with independent tuning, in line with the workspace's multi-axis pattern."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:48-48"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#axis-a-adaptconfig-multi-axis-shape-reframed-2026-05-10"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::axis_a_adaptconfig_multi_axis_shape_reframed_2026_05_10"]
 quote = '''
 Originally proposed as four opaque modes (Off / Fast / Standard / Aggressive). User reframed during topic conversation: each metric is its own axis with independent tuning, in line with the workspace's multi-axis design pattern (arvo Strategy markers, WorkUnit Hint).
 '''
@@ -240,7 +240,7 @@ subject = "meta"
 what = "The nine adaptation axes ship as individual builder inputs, each a specialised structure carrying only its own knobs, and there is no composite configuration structure above them. Kits are documented combinations of the axes: a consumer registers axes one by one, registers a kit, or registers a kit and then overrides one axis."
 mechanism = "`PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig` in `pub mod adapt`; sealed `AdaptAxis` with `is_enabled()` and `sample_skip()`; `StandardAdaptKit`, `OffAdaptKit`; a later `.with` replaces the slot for that axis."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:265-265"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis A. Multi-axis individual BuilderInputs + Kit-recipe presets (REFRAMED twice; final shape).** Nine axes ship as individual `BuilderInput`s in `pub mod adapt`: `PassDurationConfig`, `PhaseEmaConfig`, `FiberEmaConfig`, `ChangeClassConfig`, `CacheResidencyConfig`, `ThroughputConfig`, `PredictiveParkingConfig`, `MemoryWatermarkConfig`, `CoreIdleTimeConfig`. Each is a heterogeneous specialised struct (carries only its meaningful knobs); each impls `BuilderInput<Dispatch = <Self>Dispatch<Self>>` with its own dispatch slot (no collision); each impls sealed `AdaptAxis: Sealed` for the universal `is_enabled() + sample_skip()` accessors; each has `Default` impl (sensible-on baseline per axis) + `Self::off()` const fn (disabled shorthand). **No top-level `AdaptConfig` composite struct** — the user's Kit reframe replaced the struct + const fn presets with: (1) individual axis-configs as the primary surface and (2) Kit recipes (`StandardAdaptKit`, `OffAdaptKit`, optionally domain-specific consumer Kits) as documented combinations. Consumer registers axes individually `.with(my_phase_ema_config)`, or via a Kit `.with(StandardAdaptKit::default())`, or composes `.with(StandardAdaptKit).with(my_fiber_override)` (later `.with` replaces the slot for that axis). Cadence interleaving via per-axis `sample_skip`. Core-idle-time axis included for load-distribution sensitivity, breadcrumb mechanism in Topic 6's parking primitive. **C1 audit finding dissolves:** without a composite `AdaptConfig` struct, there is no `AdaptCfgDispatch<Self>` slot needed; each axis has its own slot via standard `BuilderInput` pattern. The workspace convention applies cleanly without scope-clarification gymnastics. Plan stage reads each axis-config via its accessor; absent registrations use the trivial-ctor default. **Workspace convention dogfooded properly:** individuals primary + Kits as recipes, same shape as Axis F's metrics layer. (Earlier "AdaptConfig as struct + const fn presets" framing retired by this reframe; the C1 audit response that locked `AdaptConfig` as a `BuilderInput` is also retired by the reframe.)
 '''
@@ -257,7 +257,7 @@ subject = "meta"
 what = "The adaptation metrics have a hybrid home: a scratch arena on the hot path, reached directly by the inner loop, and a snapshot resource the consumer can read, which the adapt unit refreshes from the arena at the end of the schedule. The snapshot is small."
 mechanism = "Axis B, option B3. The arena is reached by raw pointer; the snapshot is on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s. The vocabulary section names the raw region `AdaptArena` (not consumer-readable) and the consumer-readable side the per-axis `metrics::*` resources."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:266-266, mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:25-26"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis B. AdaptMetrics data plane: B3 hybrid.** Scratch-arena hot path + `Resource<SchedulerMetrics>` snapshot refreshed by AdaptWu at `ScheduleEnd`. Snapshot is small (per-phase + per-fiber + per-core counters, on the order of MAX_PHASES + MAX_FIBERS + MAX_LANES u64s). Inner loop accesses arena directly via raw pointer; consumer reads via standard `Has<SchedulerMetricsProvider>` Ctx bound.
 ---
@@ -277,7 +277,7 @@ subject = "meta"
 what = "The inline metric slots on a fiber's line are written only by the core that owns the fiber and read only after the phase barrier, by the adapt unit at the end of the schedule; no other core reads them mid-pass. A lint enforces that no consumer unit's access set reads an axis's inline metric directly, only the adapt unit's snapshot resource."
 because = "A line that holds both the progress counter, which another core reads, and inline metric slots risks cache-line ping-pong."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:269-269"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **(Audit-2 M3, 2026-05-10):** the per-fiber 64B line co-locating progress counter (cross-core read) + inline metric slots (producer-only writes) risks cache-line ping-pong. **Invariant locked:** inline metric slots on each per-fiber line are **write-only by the owning fiber's producer core, read-only-after-phase-barrier by AdaptWu at `ScheduleEnd`**. No other core reads the metrics slots mid-pass. The line is hot on the producer core throughout the fiber's execution (Modified state); the consumer-side `ldar` on the progress counter alone causes a coherence transition only at fiber completion, not during inner-loop morsels. This is the invariant the design relies on; a lint enforces it (no consumer-WU AccessSet may directly read an axis-config's inline-write metric — only the AdaptWu's snapshot Resource).
 '''
@@ -295,7 +295,7 @@ what = "The adapt unit writes a single fired flag for an anomaly, and the metric
 because = "Five flag types are five distinct write slots, and observers serialise behind the adapt unit; that risks an explosion of phases in the graph."
 mechanism = "`Virtual<AnomalyFired>`; for example `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:284-284"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **(Audit-2 M7, 2026-05-10):** AdaptWu writing five `Virtual<T>` types risks DAG phase-explosion (each Virtual is a distinct write slot, observers serialise behind AdaptWu). **Locked: AdaptWu writes a single `Virtual<AnomalyFired>` flag plus the five anomaly-typed `metrics::*` Resources carry per-anomaly detail.** Consumers observe `Virtual<AnomalyFired>` (single edge from AdaptWu), then query the relevant `metrics::*` Resource for the specifics. This collapses AdaptWu's write side from five Virtuals to one Virtual plus the already-locked `metrics::*` Resources. Per-anomaly Virtual proliferation (the previously locked Axis E shape) is retracted; the five anomaly types now live as fields on the snapshot Resources (e.g., `metrics::CoreIdleTimeMetrics::imbalance_detected: arvo::Bool`).
 '''
@@ -312,7 +312,7 @@ id = "the_adapt_unit_signals_and_does_not_re_plan"
 subject = "meta"
 what = "The adapt topic does not own the execution of a re-plan. The adapt unit signals, and the plan caching and dirty detection topic owns the observer that triggers the actual re-planning."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:314-314"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#notes"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::notes"]
 quote = '''
 - Topic 5 does not own re-plan execution. AdaptWu signals `Virtual<ReplanRequested>`; Topic 9 (plan caching + dirty-detection) owns the observer that triggers actual re-planning.
 '''
@@ -329,7 +329,7 @@ subject = "meta"
 what = "Predictive parking is split into policy and mechanism. The adapt unit computes the predicted wait per phase from history at the end of the schedule and writes it to the parking metrics; the parking primitive reads the prediction and picks spin, spin with backoff, or park by the three-tier rule."
 mechanism = "Axis G, option G1: `predicted_wait_per_phase[PhaseId]` written to `PredictiveParkingMetrics`; the parking contract is `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`; under 100ns spin, 100ns to 10us spin_loop with backoff, over 10us park."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:308-308"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis G. Predictive parking boundary: G1 policy in metrics, mechanism in Topic 6.** Policy/mechanism separation. AdaptWu (Topic 5) computes `predicted_wait_per_phase[PhaseId]: arvo::UFixed<I, F, S>` from history at `ScheduleEnd`, writes to `PredictiveParkingMetrics`. Topic 6's parking primitive reads `predicted_wait_ns: arvo::UFixed<I, F, S>` (a fixed-point nanoseconds duration; exact widths picked by Topic 6 to cover the canonical wait range) and dispatches the three-tier rule (under 100ns spin / 100ns to 10us spin_loop+backoff / over 10us thread::park). Topic 6 contract becomes pure: `(predicted_wait_ns: arvo::UFixed<...>) -> ParkStrategy`. **Type-discipline note:** `USize` is forbidden here per `no-bare-primitives.md` (it names index/length, not duration). The fixed-point duration type is the substrate-canonical shape for time intervals. Reasons: single source of truth for prediction logic; Topic 6 stays narrow; multi-axis-friendly (AdaptWu has access to all metrics; parking primitive does not need to declare AccessSet over them); update-rate separation (predictions cold-path once per pass; parking warm-path many times per pass; G3 would repeat prediction logic on the warm path); consumer-readable predictions (custom Executors share the same predictions); SRP-clean.
 '''
@@ -345,7 +345,7 @@ id = "adapt_writes_happen_at_fiber_completion_or_phase_boundaries_and_never_insi
 subject = "meta"
 what = "The adapt unit must not break the ASM 6-check invariants: writes to the adaptation metrics happen at fiber completion or at phase boundaries, never inside the inner record loop."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:18-18"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#inputs-from-prior-topics-binding"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::inputs_from_prior_topics_binding"]
 quote = '''
 - **Topic 4 Axis F.** AdaptWu must not break the ASM 6-check invariants: writes to AdaptMetrics happen at fiber-completion or phase boundaries, never inside the inner record loop.
 '''
@@ -362,7 +362,7 @@ subject = "meta"
 what = "At the end of the schedule the adapt unit observes the adaptation metrics through a resource snapshot, to derive the predicted waits it writes for the next frame. Through the snapshot it only reads."
 mechanism = "`ResourceSnapshot<AdaptMetrics>`; `fn execute<'phase>(&self, ctx: &Ctx<'phase>)` with the context holding the snapshot."
 source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:27-27, mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:78-78"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-a-resourcesnapshot-r-v1-semantics"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<resource_resolution_md>::axis_a_resourcesnapshotr_v1_semantics"]
 quote = '''
 Use case: AdaptWu at ScheduleEnd phase observes `ResourceSnapshot<AdaptMetrics>` to derive `predicted_wait_ns[]` writes for the next frame. No mutation; pure read.
 ---
@@ -379,7 +379,7 @@ subject = "meta"
 what = "As of 2026-06-20, the count of frames in which a store was dirty is kept on every run path, single-core, parallel and fused alike, so a hook that reads it at the end of the schedule never sees a stuck zero beside live siblings. It was first kept in the single-core fold only, and the design prose carried a single-core qualifier for that, which is removed."
 mechanism = "`change_seen_count`; capture `!store_dirty.get().is_empty().0` before the per-frame reset and increment in the EMA fold when set; paths `run`, `run_parallel`, `run_fused`; read by an `OnMeta<ScheduleEnd>` hook."
 source = "mock/design_rounds/202606200200/202606200200_topic.r3b-parallel-fused.md:9-18, mock/design_rounds/202606200200/202606200200_changelist.doc.lock.md:7-9"
-provenance = ["mock::design_rounds::202606200200::202606200200_topic.r3b-parallel-fused::#change"]
+provenance = ["mock::design_rounds::t202606200200::t202606200200_topic::change"]
 quote = '''
 PR #144 maintained `change_seen_count` (the change_class numerator) in the
 single-core `run` fold only. `run_parallel` and `run_fused` reset `store_dirty`
@@ -411,7 +411,7 @@ subject = "meta"
 what = "The per-phase duration average is the same one-eighth moving average the pass duration uses, seeded on the first frame. It folds how long a phase took in the whole frame, summed across its morsels, once per frame. It is not folded once per phase and morsel, which on a multi-morsel frame would leave the first frame holding the last morsel's duration and decay later frames per morsel."
 mechanism = "`phase_accum: [Cell<Nanos>; GATE2_MAX_UNITS]` beside `phase_ema`; `dispatch_trunks` adds each phase's per-morsel duration into `phase_accum[p]` (saturating) with no seed read; `run` folds `phase_accum[p]` into `phase_ema[p]` once at the pass-duration EMA fold point with the same `ema_seed`, after the morsel loop, then zeroes it."
 source = "mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:10-18, mock/design_rounds/202606192345/202606192345_topic.phase-ema-per-frame-fix.md:22-32"
-provenance = ["mock::design_rounds::202606192345::202606192345_topic.phase-ema-per-frame-fix::#current-state"]
+provenance = ["mock::design_rounds::t202606192345::t202606192345_topic::current_state"]
 quote = '''
 The per-phase EMA just landed (round 202606192301) folds the phase duration
 into `phase_ema[p]` INSIDE `dispatch_trunks`. But `dispatch_trunks` is called
@@ -450,7 +450,7 @@ subject = "meta"
 what = "Per-phase timing is taken per frame: each phase's duration accumulator folds one start and stop pair per phase per frame, where before it folded one per window."
 mechanism = "`phase_accum[p]`; scripted-clock tests that count `now_ns` reads rehab to the new counts."
 source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:85-87"
-provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+provenance = ["mock::design_rounds::t202607161810::t202607161800_topic::behaviour_deltas_intended_canonical_correcting"]
 quote = '''
 - **Per-phase timing is per frame.** `phase_accum[p]` folds one start/stop
   pair per phase per frame (previously per window). Scripted-clock tests
@@ -470,7 +470,7 @@ subject = "meta"
 what = "The meta bands run once per frame and not once per morsel window. The earlier shape ran every dirty meta unit per window on frames with several windows, while the self-hosting kernel design has the bands as per-pass lifecycle hooks."
 mechanism = "Self-hosting kernel design E4: the bands are per-pass lifecycle hooks."
 source = "mock/design_rounds/202607161810/202607161800_topic.a2b-dispatch-loop-inversion.md:77-79"
-provenance = ["mock::design_rounds::202607161810::202607161800_topic.a2b-dispatch-loop-inversion::#behaviour-deltas-intended-canonical-correcting"]
+provenance = ["mock::design_rounds::t202607161810::t202607161800_topic::behaviour_deltas_intended_canonical_correcting"]
 quote = '''
 - **Meta bands run once per frame**, not once per window. The old shape ran
   every dirty meta unit per window on multi-window frames; the self-hosting
@@ -492,7 +492,7 @@ what = "Each kind of anomaly the adapt unit can signal is its own typed flag. A 
 because = "It keeps remediation specific to each anomaly, costs nothing when a flag is not fired, and leaves the substrate exposing signals while the consumer interprets them."
 mechanism = "Five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis); the adapt unit's write side is `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`; no `Virtual<ReplanRequested>`."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:306-306"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis E. Reorganisation trigger: E2 pure per-anomaly Virtuals.** Substrate ships five typed Virtual marker types: `BalanceAnomaly` (from core_idle_time imbalance), `MemoryPressure` (from memory_watermark), `ThroughputAnomaly` (from throughput_trending), `FiberEMADrift` (from fiber_ema hysteresis), `PhaseEMADrift` (from phase_ema hysteresis). AdaptWu's Write side uses `AccessSet![Virtual<BalanceAnomaly>, Virtual<MemoryPressure>, Virtual<ThroughputAnomaly>, Virtual<FiberEMADrift>, Virtual<PhaseEMADrift>]`. Per-axis threshold-mask comparison fires the relevant Virtuals only. No coarse `Virtual<ReplanRequested>`; observers use AccessSet union for any-of-N semantics. Aligns with hilavitkutin's typed-virtual abstraction (the `Virtual<T>` generic carrier is the substrate's existing single uniform mechanism for fired flags); preserves consumer-driven anomaly-specific remediation (different anomalies → different observer responses); zero-overhead when Virtual not fired; toolbox-not-policer alignment (substrate exposes signals, consumer interprets).
 '''

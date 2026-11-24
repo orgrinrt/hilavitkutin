@@ -7,7 +7,7 @@ what = "With no composite adaptation configuration structure, the plan stage res
 because = "The registered values are concrete when the scheduler is built and are not hidden behind a preset enum, so a window analysis over the sampling cadences becomes feasible."
 mechanism = "Per-axis `sample_skip` values read from the registered axis configurations; the LCM-window analysis proposed by the M1 alternative; no preset enum."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:288-288"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **(Audit M1 dissolves with the Kit reframe.)** Without a composite `AdaptConfig` struct, presets are not const fns over a single struct; they are Kits over the individual axis-configs. The "M1 budget reservation: literal-skip-presets vs worst-case-all-active" question collapses: each consumer's actual registered set of axis-configs determines the per-axis `sample_skip` values; plan stage walks the registered axes and computes max-active-this-pass from those literal values. **Plan stage uses cadence-aware budget reservation** — the LCM-window analysis the M1 alternative proposed becomes feasible because the registered values are concrete at `.build()` time, not hidden behind a preset enum. No worst-case-all-active needed; the consumer's actual configuration determines the budget. This is strictly tighter than worst-case and was unlocked by the reframe.
 '''
@@ -24,7 +24,7 @@ what = "The plan stage reserves its cache budget as if every enabled adaptation 
 because = "A cadence-aware reservation would need per-pass-varying morsel sizes, which contradicts the design's commitment to a static morsel size per fiber."
 mechanism = "`hot_arena_bytes = sizeof(FiberHotSlot) * fibers_in_trunk + sizeof(CoreParkSlot) * MAX_LANES + sum_enabled_axes(active_inline_bytes(axis))`, worst-case and not cadence-tight; the cadence-aware alternative needs `morsel_size_per_pass_modulo: [USize; LCM]`; Topic 3 invariant M10 amended to this formula."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:277-283"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **(Audit-2 M6, 2026-05-10):** Topic 3 M10's `axis_writers_active_this_pass(AdaptConfig)` formula vs the conservative worst-case fallback: **picked worst-case-all-active at planning time.** The cadence-aware budget tightness would require per-pass-varying morsel sizes (an array `morsel_size_per_pass_modulo: [USize; LCM]`), which contradicts the design's static-morsel-per-fiber commitment. Conservative is correct: plan stage reserves L1 budget as if every enabled axis writes every pass; runtime cadence-skipping reduces CPU cost, not L1 reservation. Topic 3 M10 amended to reflect the locked formula:
    ```
@@ -50,7 +50,7 @@ what = "Each adaptation axis has its own consumer-readable metrics resource, and
 because = "Units reading one metric type do not conflict with units reading another, which lets the plan stage place fibers and trunks more tightly."
 mechanism = "`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`; optional `MetricsKit`; adapt unit write side `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]`; `AdaptArena` is the raw scratch and not a Resource; Axis F choice F2, Axis B lock B3."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:29-29, mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#vocabulary-canonical-post-axis-f-lock"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::vocabulary_canonical_post_axis_f_lock"]
 quote = '''
 Earlier draft referenced a unified `Resource<SchedulerMetrics>`. **That shape is retired** by Axis F (F2 chose per-axis sub-resources). Any prose below referencing `SchedulerMetrics` as a singular Resource is stale; the canonical replacement is the per-axis `metrics::*` set. Earlier `Resource<AdaptMetrics<...>>` references (B1 alternative) are also retired by Axis B's B3 lock — `AdaptMetrics` as a Resource type does not ship; `AdaptArena` is the raw scratch (not a Resource).
 ---
@@ -71,7 +71,7 @@ subject = "meta"
 what = "The nine metrics resources the substrate ships do not consume the consumer's column budget. They live under a separate substrate-managed cap sized for the worst-case enabled set, and plan-stage graph analysis treats them as an access-mask region separate from the resources and columns the consumer registers."
 mechanism = "Consumer `MAX_COLUMNS` budget not consumed; separate const-generic cap `MAX_SUBSTRATE_RESOURCES`; documented in Topic 3 Axis B alongside the const-generic count; audit M6."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis F. Per-axis sub-resources + Kit recipe.** Each AdaptConfig axis gets its own consumer-readable Resource (`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`). Optional `MetricsKit` ships the standard combination as a recipe (Topic 2 Kit pattern). DAG benefit: per-axis Resources mean WUs reading one metric type don't conflict with WUs reading another, enabling tighter fiber/trunk placement during plan stage. AdaptWu's Write side becomes `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]` (only over the registered axes). **Capacity note (audit M6):** the nine substrate-shipped metrics Resources do NOT consume the consumer's `MAX_COLUMNS` budget; they live on a separate substrate-managed const-generic cap (`MAX_SUBSTRATE_RESOURCES`, sized for the worst-case enabled set). Plan-stage DAG analysis treats them as a separate access-mask region from consumer-registered Resources/Columns. Documented in Topic 3 Axis B alongside the const-generic count. **Consumer Ctx-bound note (audit M7):** consumer reads a per-axis Resource via the canonical `Has<metrics::PassDurationMetrics>` Ctx bound (resource-type-named, not `Has<...Provider>`). The "Provider" suffix vocabulary is reserved for the registration-side trait (Topic 2's `BuilderInput`); accessor traits use the bare resource type. Workspace convention recorded: individuals are primary surface; Kits are documented recipes; no Cfg-as-resource gate.
 '''
@@ -89,7 +89,7 @@ subject = "meta"
 what = "A consumer reads a per-axis metrics resource through a context bound named after the resource type itself. The provider suffix is reserved for the registration-side trait, and accessor traits use the bare resource type."
 mechanism = "`Has<metrics::PassDurationMetrics>` Ctx bound, resource-type-named and not `Has<...Provider>`; \"Provider\" vocabulary reserved for Topic 2's `BuilderInput`; workspace convention recorded: individuals are primary surface, Kits are documented recipes, no Cfg-as-resource gate; audit M7."
 source = "mock/design_rounds/202605101036/202605101036_topic.adapt-subsystem.md:307-307"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.adapt-subsystem::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<adapt_subsystem_md>::decision_log"]
 quote = '''
 - [x] **Axis F. Per-axis sub-resources + Kit recipe.** Each AdaptConfig axis gets its own consumer-readable Resource (`metrics::{PassDurationMetrics, PhaseEmaMetrics, FiberEmaMetrics, ChangeClassMetrics, CacheResidencyMetrics, ThroughputMetrics, PredictiveParkingMetrics, MemoryWatermarkMetrics, CoreIdleTimeMetrics}`). Optional `MetricsKit` ships the standard combination as a recipe (Topic 2 Kit pattern). DAG benefit: per-axis Resources mean WUs reading one metric type don't conflict with WUs reading another, enabling tighter fiber/trunk placement during plan stage. AdaptWu's Write side becomes `AccessSet![metrics::PassDurationMetrics, metrics::FiberEmaMetrics, ...]` (only over the registered axes). **Capacity note (audit M6):** the nine substrate-shipped metrics Resources do NOT consume the consumer's `MAX_COLUMNS` budget; they live on a separate substrate-managed const-generic cap (`MAX_SUBSTRATE_RESOURCES`, sized for the worst-case enabled set). Plan-stage DAG analysis treats them as a separate access-mask region from consumer-registered Resources/Columns. Documented in Topic 3 Axis B alongside the const-generic count. **Consumer Ctx-bound note (audit M7):** consumer reads a per-axis Resource via the canonical `Has<metrics::PassDurationMetrics>` Ctx bound (resource-type-named, not `Has<...Provider>`). The "Provider" suffix vocabulary is reserved for the registration-side trait (Topic 2's `BuilderInput`); accessor traits use the bare resource type. Workspace convention recorded: individuals are primary surface; Kits are documented recipes; no Cfg-as-resource gate.
 '''
@@ -108,7 +108,7 @@ what = "Meta units declare a schedule marker distinct from the consumer's one, b
 because = "A blanket implementation for the consumer default plus a specific one for the meta marker conflict, a negative bound is not expressible, and full specialization is forbidden by the workspace's unstable-features rule."
 mechanism = "`OnMeta<V>` in place of canonical `On<meta::V>`; `impl Lifecycle for Always`, `impl<V> Lifecycle for On<V>` (`RANK_CONSUMER`), `impl<V: MetaVirtual> Lifecycle for OnMeta<V>` (`<V as MetaVirtual>::RANK`); `MetaVirtual` on `PlanStage` / `ScheduleReady` / `PassStart` / `ScheduleEnd`; E0119; sketch `202606082000_e4-slice2-lifecycle-classify` WORKS; core-design `:720`/`:757`/`:764`."
 source = "mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md:56-65, mock/design_rounds/202606082100/202606082100_changelist.doc.lock.md:67-80"
-provenance = ["mock::design_rounds::202606082100::202606082100_changelist.doc.lock::#forced-surface-deviation-onmeta-v-not-on-meta-v"]
+provenance = ["mock::design_rounds::t202606082100::t202606082100_changelist<doc_lock_md>::forced_surface_deviation_onmetav_not_onmetav"]
 quote = '''
 ## Forced surface deviation: `OnMeta<V>` not `On<meta::V>`
 
@@ -151,7 +151,7 @@ subject = "meta"
 what = "The kernel fires real flags for the meta virtuals at the lifecycle points, so that a consumer unit declaring the ordinary schedule on the end-of-schedule marker has its gate open and can read the scheduler metrics to implement its own cadence policy. The earlier slice only sequenced meta units by lifecycle band order and fired no real flags, the meta gate being constant-open."
 mechanism = "Consumer declares `On<meta::ScheduleEnd>` and reads `SchedulerMetrics`; kernel fires real `Virtual<meta::V>` flags so the consumer's `On<V>` gate (stamp == epoch) opens; slice 2 meta WUs are `OnMeta<V>` in lifecycle band order, and the `OnMeta<V>` gate is const-open."
 source = "mock/design_rounds/202606090400/202606090000_topic.gate2-e4-slice3-consumer-meta-hooks.md:8-16"
-provenance = ["mock::design_rounds::202606090400::202606090000_topic.gate2-e4-slice3-consumer-meta-hooks::#topic-gate-2-e4-slice-3-consumer-meta-hooks-real-meta-firing-metaaccess-schedulermetrics"]
+provenance = ["mock::design_rounds::t202606090400::t202606090000_topic::topic_gate_2_e4_slice_3__consumer_meta_hooks_real_meta_firing__metaaccess__schedulermetrics"]
 quote = '''
 Slice 2 made the meta WUs (`OnMeta<V>`) run in lifecycle band order, with the
 plan band skipped on a clean frame. It did NOT fire real `Virtual<meta::V>`
@@ -178,7 +178,7 @@ what = "In the first slice-3 design, the scheduler metrics are an ordinary consu
 because = "The overlap of head-is-metrics and head-is-other implementations is an E0119 error, and the witness path requires the resource to be present, so it cannot express absent meaning no-op."
 mechanism = "`SchedulerMetrics` gains `pass_count` as `Cell<USize>`; provided `SchedulerMetricsWu` scheduled `OnMeta<PassStart>` incrementing it through the shared cell; consumer `OnMeta<ScheduleEnd>` hook; `ctx.resource()` accessor; the RAW edge check skips `i == j`; `Selector<SchedulerMetrics, I>`."
 source = "mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:9-13, mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:17-30, mock/design_rounds/202606090400/202606090200_changelist.doc.deprecated.md:36-47"
-provenance = ["mock::design_rounds::202606090400::202606090200_changelist.doc.deprecated::#doc-changelist-gate-2-e4-slice-3a-schedulermetrics-provided-metrics-wu-consumer-hook"]
+provenance = ["mock::design_rounds::t202606090400::t202606090200_changelist<doc_deprecated_md>::doc_changelist_gate_2_e4_slice_3a__schedulermetrics__provided_metrics_wu__consumer_hook"]
 quote = '''
 Slice 3a ships the first working consumer meta hook end to end: a consumer reads
 a meta resource (`SchedulerMetrics`) that hilavitkutin populates, via an
@@ -227,7 +227,7 @@ what = "Meta state is engine-owned, held in a block on the scheduler and not in 
 because = "A consumer resource is Copy and read-only after init, so it cannot carry mutable per-pass state, and the resource-backed design hit a hard compile wall."
 mechanism = "`MetaBlock` on the scheduler; `MetaRef`; `meta::<T>()` accessor with `T: MetaAccess` implemented only on the Ctx carrying a `MetaRef`; consumer `MetaNil` Ctx has none; `SchedulerMetrics::pass_count` maintained per pass by `run`; read by an `OnMeta<ScheduleEnd>` hook as `ctx.meta::<SchedulerMetrics>()`; sketch `202606090300` candidate 1 (the bridge); resolution `202606090100` Correction 2."
 source = "mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:32-40, mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:44-51, mock/design_rounds/202606090400/202606090400_changelist.doc.lock.md:62-69"
-provenance = ["mock::design_rounds::202606090400::202606090400_changelist.doc.lock::#what-this-round-locks"]
+provenance = ["mock::design_rounds::t202606090400::t202606090400_changelist<doc_lock_md>::what_this_round_locks"]
 quote = '''
 - A `meta::<T>()` accessor (`T: MetaAccess`) is implemented ONLY on the Ctx
   carrying a `MetaRef`. A consumer work unit's `MetaNil` Ctx has no such method,

@@ -5,7 +5,7 @@ id = "lock_free_dispatch_is_a_library_guarantee_and_the_only_atomics_are_progres
 subject = "principles"
 what = "Dispatch is lock-free by construction: a static dispatch table, one writer and N readers, and deterministic morsel assignment. There are no locks and no compare-and-swap in the dispatch path, and the only atomics are progress counters using plain store and load, never read-modify-write. This is a library guarantee and not an Executor implementation detail."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1629-1634"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#17-dispatch-codegen"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t17_dispatch_codegen"]
 quote = '''
 **Lock-free guarantee (T3 decisions #103-104):**
 - Lock-free dispatch by construction: static dispatch table,
@@ -26,7 +26,7 @@ subject = "principles"
 what = "Consumer-tunable caps get a redesign arc now. The fixed caps exist because current rustc rejects field access on generic constants and the trait solver overflows on config-driven sizes. The rule that caps are defaults and never policy outranks the convenience of the workaround, so a sketch arc investigates cap-lifting shapes before more code accretes on the fixed sizes."
 mechanism = "Fixed caps: `GATE2_MAX_UNITS = 256`, `GATE2_MAX_ACCUMS = 16`, `plan_dirty: [AtomicBool; 256]`, `MAX_CORES`. Cause: no field access on generic constants under `generic_const_exprs`, and trait-solver overflow on `Cfg`-driven sizes. Shapes to investigate: macro-generated per-cap instantiations, associated-const indirection, alternative bound layering. The rule is called the substrate rule in the text."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:61-68"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-2-consumer-tunable-caps-get-a-redesign-arc-now"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::a1_2_consumer_tunable_caps_get_a_redesign_arc_now"]
 quote = '''
 The fixed caps (`GATE2_MAX_UNITS = 256`, `GATE2_MAX_ACCUMS = 16`,
 `plan_dirty: [AtomicBool; 256]`, `MAX_CORES`) exist because current rustc
@@ -48,7 +48,7 @@ id = "a_documented_fixed_cap_is_acceptable_only_as_the_proven_infeasible_fallbac
 subject = "principles"
 what = "Documented fixed caps remain acceptable only as the proven-infeasible fallback, and each carries a tracked lift condition."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:68-70"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-2-consumer-tunable-caps-get-a-redesign-arc-now"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::a1_2_consumer_tunable_caps_get_a_redesign_arc_now"]
 quote = '''
 before more code accretes on the fixed sizes. Documented fixed caps remain
 acceptable only as the proven-infeasible fallback, each carrying a tracked
@@ -67,7 +67,7 @@ subject = "principles"
 what = "Dead-weight cleanup is not a standalone round. Each item of the dead inventory is deleted by the first charted slice that touches its file, with the no-legacy-shims rule applying at that point, and the inventory is the checklist those slices consult."
 mechanism = "The inventory: `topo_order` / `topo_count`, `PlanCache`, `synthesise_core_programs` / `CoreProgram`, `RecommendedOrder`'s run-path absence, the `AdaptMode` alias. The state assessment of 2026-06-11 calls `topo_order`, `topo_count`, `synthesise_core_programs`, `CoreProgram` and `RecommendedOrder` dead or error-path-only weight."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:43-45, mock/research/202606111400_canonical-design-addendum-a1.md:93-100"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::state_assessment_truth_of_impl_2026_06_11"]
 quote = '''
 declared but stride is `size_of::<T>()`; `topo_order` / `topo_count`,
 `synthesise_core_programs` / `CoreProgram`, and `RecommendedOrder` are dead
@@ -94,7 +94,7 @@ subject = "principles"
 what = "The flat 1.10 times bar of the perf gate retires. The gate demands per-arm calibrated bars, tight where the engine should win and with parity tolerance mid-range, the std baseline upgrades to a persistent-pool variant matching the engine's spawn-once discipline, and measurement variance is fixed with median-of-N runs. The gate stays blocking."
 mechanism = "Flat 1.10x bar retired; per-arm bars; persistent-pool std baseline; median-of-N."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:135-139"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-8-the-perf-gate-moves-to-per-arm-bars-with-a-stricter-baseline"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::a1_8_the_perf_gate_moves_to_per_arm_bars_with_a_stricter_baseline"]
 quote = '''
 The flat 1.10x bar retires. The gate demands per-arm calibrated bars (tight
 where the engine should win, parity tolerance mid-range), the std baseline
@@ -113,7 +113,7 @@ subject = "principles"
 what = "Type-level N-way partition of a heterogeneous carrier requires the forbidden full specialization feature. The canonical mechanism is const data with const-gated dead-code elimination over a flat carrier, so the partition lives in const evaluation and never in the carrier type."
 mechanism = "Mechanism per r4: const data + const-gated DCE over a flat carrier. Toolchain pin nightly-2026-05-28."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:143-150"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::constraint_notes_elevated_to_canon"]
 quote = '''
 These are facts about building this design under the pinned toolchain
 (nightly-2026-05-28). The standalone spec must carry them; they are not
@@ -139,7 +139,7 @@ subject = "principles"
 what = "Type-keyed projection out of heterogeneous lists uses inferred index witnesses and never type-equality specialization."
 mechanism = "Inferred index witnesses `Here` / `There<I>`, `Selector`-family traits."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:151-153"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::constraint_notes_elevated_to_canon"]
 quote = '''
 2. Type-keyed projection out of heterogeneous lists uses inferred index
    witnesses (`Here` / `There<I>`, `Selector`-family traits), never
@@ -159,7 +159,7 @@ subject = "principles"
 what = "The generic const expressions feature carries two practical ceilings under the pinned toolchain: no field access on generic constants, so caps cannot be sized by configuration today, and a complexity limit on inline const blocks in bounds, worked around by associated-const carrier structs."
 mechanism = "`generic_const_exprs` ceilings; workaround carrier structs `IsRoot` / `PhaseAt`; toolchain nightly-2026-05-28; see A1-2."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:154-157"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#constraint-notes-elevated-to-canon"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::constraint_notes_elevated_to_canon"]
 quote = '''
 3. `generic_const_exprs` carries two practical ceilings: no field access on
    generic constants (caps cannot be `Cfg`-sized today; see A1-2) and a
@@ -180,7 +180,7 @@ subject = "principles"
 what = "No allocation is ad hoc. Allocation is managed by the scheduler and declared at compile time, and nothing fabricates it at runtime. No standard library and no allocator are the universe of the stack, before they are crate attributes, and the vector, box, reference-counted pointers, hash map, owned string and formatting macro do not exist in it."
 mechanism = "`#![no_std]` + `#![no_alloc]`; `Vec`, `Box`, `Rc`, `Arc`, `HashMap`, `String` and `format!` do not exist."
 source = "mock/PRINCIPLES.md.tmpl:5-10"
-provenance = ["mock::PRINCIPLES::#no-heap-ever"]
+provenance = ["mock::principles::no_heap_ever"]
 quote = '''
 ## No heap. Ever.
 
@@ -202,7 +202,7 @@ subject = "principles"
 what = "Where an interface seems to want a runtime-growable container, the shape is wrong and is reshaped toward a trait-bound emitter, an iterator or a bounded store. The heap is not temporarily available, and there is no use of it just for a moment."
 rejects = ["the heap being temporarily available", "using the heap just for this moment", "a runtime-growable container in an interface"]
 source = "mock/PRINCIPLES.md.tmpl:12-15"
-provenance = ["mock::PRINCIPLES::#no-heap-ever"]
+provenance = ["mock::principles::no_heap_ever"]
 quote = '''
 If an API feels like it wants a runtime-growable container, the shape
 is wrong: reshape toward a trait-bound emitter / iterator / bounded
@@ -222,7 +222,7 @@ what = "Bare numeric types, booleans, option and result types, owned strings and
 mechanism = "Banned: `u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`, `isize`, `bool`, `Option`, `Result`, `String`, non-static `&str`."
 rejects = ["bare primitives in public signatures", "bare primitives in private fields", "bare primitives in internal let bindings", "bare primitives in cast expressions", "bare primitives in literal suffixes", "bare primitives in type aliases", "bare primitives in const and static declarations", "bare primitives in trait method parameter types", "bare primitives in where clauses", "bare primitives in tuple-struct fields"]
 source = "mock/PRINCIPLES.md.tmpl:17-27"
-provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+provenance = ["mock::principles::no_bare_primitives_anywhere"]
 quote = '''
 ## No bare primitives. Anywhere.
 
@@ -247,7 +247,7 @@ subject = "principles"
 what = "The substitutes for the bare primitives live in arvo for fixed-point numbers, floats, sizes, capacities and booleans, and in notko for the maybe and outcome types. The interned string crate supplies the string identity."
 mechanism = "arvo: `UFixed` / `IFixed` / `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`; notko: `Maybe` / `Outcome` / `Just`; hilavitkutin-str: `Str`."
 source = "mock/PRINCIPLES.md.tmpl:26-29"
-provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+provenance = ["mock::principles::no_bare_primitives_anywhere"]
 quote = '''
 Substitute vocabulary lives in arvo (`UFixed` / `IFixed` /
 `FastFloat` / `StrictFloat` / `USize` / `Cap` / `Bool`) and notko
@@ -266,7 +266,7 @@ subject = "principles"
 what = "Six lints scan every line of every source file and block a commit the moment a bare primitive is physically written."
 mechanism = "`arvo-types-only`, `no-bare-numeric`, `no-bare-option`, `no-bare-result`, `no-bare-string` and `no-public-raw-field`."
 source = "mock/PRINCIPLES.md.tmpl:29-32"
-provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+provenance = ["mock::principles::no_bare_primitives_anywhere"]
 quote = '''
 interned string identity. The `arvo-types-only`, `no-bare-numeric`,
 `no-bare-option`, `no-bare-result`, `no-bare-string`, and
@@ -285,7 +285,7 @@ subject = "principles"
 what = "Where a foreign crate's trait or an unavoidable language feature forces a specific standard primitive, the first question is whether the foreign contract can be implemented on an arvo type, and if it can, that is the path. If it cannot, the crate is dropped."
 rejects = ["keeping a foreign crate that forces a bare primitive where the contract cannot be implemented on an arvo type"]
 source = "mock/PRINCIPLES.md.tmpl:34-37"
-provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+provenance = ["mock::principles::no_bare_primitives_anywhere"]
 quote = '''
 If a foreign crate's trait or an unavoidable language feature forces
 a specific std primitive, the first question is: *can we implement
@@ -305,7 +305,7 @@ what = "The lint allow escape hatch exists only for the genuinely unavoidable bo
 mechanism = "`// lint:allow(<rule>) reason:...; tracked: #N`."
 rejects = ["lint allow for skeleton convenience", "a lint suppression with no tracked follow-up task"]
 source = "mock/PRINCIPLES.md.tmpl:38-40, mock/PRINCIPLES.md.tmpl:186-188"
-provenance = ["mock::PRINCIPLES::#no-bare-primitives-anywhere"]
+provenance = ["mock::principles::no_bare_primitives_anywhere"]
 quote = '''
 hatch `// lint:allow(<rule>) reason:...; tracked: #N` exists only
 for the genuinely unavoidable boundary, always with a tracked
@@ -325,7 +325,7 @@ subject = "principles"
 what = "The escape hatches are implementations of standard trait methods whose signatures the language fixes. Each one carries a lint allow marker with the reason of standard trait parity and a tracked task, and everywhere else the rule stands."
 mechanism = "`fn next() -> Option<Self::Item>`, `fn partial_cmp() -> Option<Ordering>`, `fn fmt() -> fmt::Result`; each carries `// lint:allow(<rule>) reason: std trait parity; tracked: #N`."
 source = "mock/PRINCIPLES.md.tmpl:180-184"
-provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+provenance = ["mock::principles::primitive_vocabulary_the_stacks_own"]
 quote = '''
 Escape hatches: std trait method impls whose signatures are fixed by
 the language (`fn next() -> Option<Self::Item>`, `fn partial_cmp() ->
@@ -344,7 +344,7 @@ subject = "principles"
 what = "The primitive vocabulary documents which stack type replaces which bare primitive. It is not a table for the public interface only, and every mapping applies everywhere the bare primitive might otherwise appear."
 mechanism = "Option to Maybe and Result to Outcome (notko); Vec return to an iterator or trait-bound sink; mutable Vec parameter to a Collector sink; HashMap to a KeyValueStore sink or `Map<K, V, N>`; owned String to `Str`; non-static &str to `&'static str` or `Str`; usize and isize to `USize` / `ISize` / `Cap` / a domain newtype; u8..u128 and i8..i128 to `UFixed` / `IFixed` / `T: Boundable` / `T: NonZeroable`; f32 and f64 to `FastFloat` / `StrictFloat`; bool to `Bool`."
 source = "mock/PRINCIPLES.md.tmpl:159-178"
-provenance = ["mock::PRINCIPLES::#primitive-vocabulary-the-stack-s-own"]
+provenance = ["mock::principles::primitive_vocabulary_the_stacks_own"]
 quote = '''
 ## Primitive vocabulary (the stack's own)
 
@@ -378,7 +378,7 @@ id = "signatures_take_trait_bounds_and_the_concrete_type_is_whatever_the_caller_
 subject = "principles"
 what = "Signatures take trait bounds, and the concrete type is whatever the caller brings. The question at a position is not what type goes there but what contract the position represents."
 source = "mock/PRINCIPLES.md.tmpl:44-45, mock/PRINCIPLES.md.tmpl:47-48"
-provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+provenance = ["mock::principles::think_in_traits_not_types"]
 quote = '''
 Signatures take trait bounds. The concrete type is whatever the
 caller brings.
@@ -398,7 +398,7 @@ id = "monomorphisation_compiles_trait_generic_signatures_to_the_same_code_as_con
 subject = "principles"
 what = "Monomorphisation makes trait-generic signatures compile to the same code as concrete ones, and inference at call sites means no turbofish."
 source = "mock/PRINCIPLES.md.tmpl:48-50"
-provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+provenance = ["mock::principles::think_in_traits_not_types"]
 quote = '''
 this position represents".** Monomorphisation makes trait-generic
 signatures compile to the same code as concrete ones. Inference at
@@ -417,7 +417,7 @@ subject = "principles"
 what = "The patterns throughout the stack are instances of the single mental model that a position represents a contract. The arithmetic traits of arvo, the boolean try contract, the access, context and platform traits of the api and the rule against vectors in trait signatures are all the same rule."
 mechanism = "arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`, hilavitkutin-api's 22 access/context/platform traits, the \"no Vec in trait signatures\" rule."
 source = "mock/PRINCIPLES.md.tmpl:52-55"
-provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+provenance = ["mock::principles::think_in_traits_not_types"]
 quote = '''
 Patterns throughout the stack are instances of this single mental
 model: arvo's `UArith<BITS>` / `IArith<BITS>`, arvo-bits' `Bool: Try`,
@@ -435,7 +435,7 @@ id = "a_position_where_two_implementations_with_different_behaviour_are_imaginab
 subject = "principles"
 what = "Where two implementations with different behaviour can be imagined, the position is a trait slot and not a concrete type. A set that would need room for plugin extensions is not an enum and is a trait."
 source = "mock/PRINCIPLES.md.tmpl:57-58, mock/PRINCIPLES.md.tmpl:96-97, mock/PRINCIPLES.md.tmpl:99-100"
-provenance = ["mock::PRINCIPLES::#think-in-traits-not-types"]
+provenance = ["mock::principles::think_in_traits_not_types"]
 quote = '''
 **Decision test:** "Can I imagine two implementations with different
 behavior?" If yes, it's a trait slot, not a concrete type.
@@ -459,7 +459,7 @@ what = "As a direct consequence of the two principles stated above it, trait ret
 mechanism = "Returns: `impl IntoIterator`, `AsRef<[T]>`, associated types. Sinks: `&mut impl Collector<T>` / `&mut impl DiagnosticSink` / `&mut impl ByteEmitter`."
 rejects = ["Vec in trait signatures", "Box<[T]> in trait signatures", "concrete collection types as contracts"]
 source = "mock/PRINCIPLES.md.tmpl:60-66"
-provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+provenance = ["mock::principles::no_vec_or_boxt_in_trait_signatures"]
 quote = '''
 ## No `Vec` or `Box<[T]>` in trait signatures
 
@@ -480,7 +480,7 @@ id = "collections_never_cross_ecosystem_api_boundaries_and_the_boundary_carries_
 subject = "principles"
 what = "Collections never cross ecosystem interface boundaries. They live below the boundary on the implementer's side, and the boundary carries data flow and not storage."
 source = "mock/PRINCIPLES.md.tmpl:68-70"
-provenance = ["mock::PRINCIPLES::#no-vec-or-box-t-in-trait-signatures"]
+provenance = ["mock::principles::no_vec_or_boxt_in_trait_signatures"]
 quote = '''
 Collections never cross ecosystem API boundaries. They live below
 the boundary, on the implementer's side. The boundary carries data
@@ -499,7 +499,7 @@ what = "All dispatch goes through monomorphised trait bounds, and no dynamic dis
 because = "Dynamic dispatch forces late binding, heap through a boxed trait object, and vtable layouts that are not stable across compilations or dynamic library loading boundaries."
 rejects = ["dyn Trait", "Box<dyn>", "runtime dispatch"]
 source = "mock/PRINCIPLES.md.tmpl:72-76"
-provenance = ["mock::PRINCIPLES::#no-dyn-no-box-dyn-no-runtime-dispatch"]
+provenance = ["mock::principles::no_dyn_no_boxdyn_no_runtime_dispatch"]
 quote = '''
 ## No `dyn`, no `Box<dyn>`, no runtime dispatch
 

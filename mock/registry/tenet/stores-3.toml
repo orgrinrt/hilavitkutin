@@ -6,7 +6,7 @@ subject = "stores"
 what = "The drift-fix arc is the storage-model work: add the scalar stack snapshot, the live-streamed collection access, the noalias invariant and the erased static-shape addressing on the existing one-record blob. The layout is fully settled by the bench decision of blob, snapshot and live collections together with the maintainer's hybrid call of erased, global-capable addressing, and no open storage-model fork remains."
 mechanism = "Hybrid decision: `202606210600_topic.hybrid-decision.md`."
 source = "mock/research/202606210600_resource-storage-model-canonical-addendum.md:97-101"
-provenance = ["mock::research::202606210600_resource-storage-model-canonical-addendum::#status-of-dependent-work"]
+provenance = ["mock::research::t202606210600_resource_storage_model_canonical_addendum::status_of_dependent_work"]
 quote = '''
 - The drift-fix arc (add scalar stack-snapshot + live-streamed collection access + the noalias
   invariant + erased static-shape addressing on the existing one-record blob) is the storage-model
@@ -28,7 +28,7 @@ subject = "stores"
 what = "The swap spec answers the open item of the founding spec on the resource collection accessor shape: collection access, on the read side and the write side alike, is the pointer and length view over the member's collection-column region behind the erased descriptor. The concrete consumer-facing API lands with #344, shaped by this clause."
 mechanism = "ptr+len view over the member's collection-column region behind the erased descriptor; API with #344."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:71-75"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s3_collection_members"]
 quote = '''
 underspecified. The same resolution answers the founding spec's open
 "resource collection accessor shape" item: collection access, read side and
@@ -48,7 +48,7 @@ subject = "stores"
 what = "The api crate ships a negative implementation that no plan-affecting type is replaceable, behind the negative-impls feature gate, which is in the watch tier and allowed. The plan-affecting trait is dominant: a plan-affecting type can never take the cheap replace-value path, structurally, with the compiler rejecting the consumer's impl at the consumer's impl site, across crates. The evidence is the exclusivity sketch, both arms."
 mechanism = "`impl<T: PlanAffecting> !Replaceable for T` under `#![feature(negative_impls)]` (WATCH tier, allowed; the gate carries the standard vetting comment); E0751 at the consumer's impl site, cross-crate; sketch `202607193310_planaffecting-replaceable-exclusivity`."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:77-84"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s4_trait_relationship_resolved_by_sketch"]
 quote = '''
 ## S4: trait relationship (resolved by sketch)
 
@@ -71,7 +71,7 @@ subject = "stores"
 what = "The supertrait alternatives to the negative-impl wall fail on the merits. Making plan-affecting a subtrait of replaceable reopens the silent-skip hole, and making replaceable a subtrait of plan-affecting routes every app-state swap through the plan band. A lint is advisory where a structural wall exists."
 mechanism = "`PlanAffecting: Replaceable` reopens the silent-skip hole; `Replaceable: PlanAffecting` routes every app-state swap through the plan band."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:84-87"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s4-trait-relationship-resolved-by-sketch"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s4_trait_relationship_resolved_by_sketch"]
 quote = '''
 both arms. The supertrait alternatives fail on the merits
 (`PlanAffecting: Replaceable` reopens the silent-skip hole;
@@ -91,7 +91,7 @@ subject = "stores"
 what = "For an accumulator each core owns an exclusive region of the one reserved buffer and the main thread merges the regions after the workers rejoin, preserving append order. This regioning by core is what the design asks for on the accumulator, and it is a different mechanism from head and tail convergence, which splits input records between two threads."
 mechanism = "Cap = build-time record count (at most one append per record); regions tile `[0, total)` one per core: `per = ceil(total/ncores)`, `lo = (c*per).min(total)`, `hi = (lo+per).min(total)`, cap `hi_c - lo_c`, each with its own live-length cell."
 source = "mock/research/202611130850_the-record-read-whole/RECOVERED.md:61-70"
-provenance = ["mock::research::202611130850_the-record-read-whole::RECOVERED::#mock-crates-hilavitkutin-design-md-tmpl-lines-552-to-561"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::recovered::mockcrateshilavitkutindesignmdtmpl_lines_552_to_561"]
 quote = '''
 regions of the single reserved buffer. The accumulator reserves cap =
 build-time record count (the global at-most-one-append-per-record bound),
@@ -117,7 +117,7 @@ subject = "stores"
 what = "Each accumulator binding carries, beside its live length, a count of how many appends the frame asked of it. Every append raises that count. An append writes and raises the live length only when nothing has been refused yet and the live length is below the capacity; otherwise nothing is written. Once one append is refused, every later append on the same binding is refused. No flag is stored apart from the two counts."
 mechanism = "A second cell `wanted` beside `len` on the accumulator binding; write only when `wanted == len` and `len < cap`; refused exactly when `wanted > len`."
 source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:16-16"
-provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+provenance = ["mock::design_rounds::t202611130402::t202611130400_topic::the_shape"]
 quote = '''
 The sticky refusal is a second count on each accumulator binding beside the live length: how many appends the frame asked of it. Every append bumps it. An append writes and bumps the live length only when nothing has been refused yet (`wanted == len`) and the live length is below the capacity; otherwise it writes nothing and only `wanted` moves. So `wanted >= len` always, and the accumulator has refused this frame exactly when `wanted > len`. That is the sticky state: once one append is refused, every later append on the same binding is refused and the live length does not move, which is the law `notko`'s `Fill` keeps for a lend and the panel stated for the window (L75, N3). No flag is stored apart from the two counts, so there is nothing to keep consistent with them.
 '''
@@ -136,7 +136,7 @@ subject = "stores"
 what = "After the last band of the frame the run walks the bindings in registration order and returns the first accumulator that refused, as a value naming its position among the accumulators, how many appends were asked and the reserved capacity. The count asked does not depend on how the records were split, so the refusal of an emitter that asks more than the reserved capacity is the same value at one, two, four and the maximum number of workers."
 mechanism = "`AccumRefused` with the registration position and `notko::Exhausted { wanted, had }`, handed out through the run configuration's output type; on several workers the merge sums the per-core counts."
 source = "mock/design_rounds/202611130402/202611130400_topic.overflow-is-a-value.md:18-20"
-provenance = ["mock::design_rounds::202611130402::202611130400_topic.overflow-is-a-value::#the-shape"]
+provenance = ["mock::design_rounds::t202611130402::t202611130400_topic::the_shape"]
 quote = '''
 The refusal is read at the close. After the last band of the frame, `run` walks the bindings in registration order and returns the first accumulator whose `wanted > len`, as a value naming its registration position among the accumulators and `notko::Exhausted { wanted, had }`, with `had` the reserved capacity. The value goes out through the run-config's output: `RunCfg::Out` is bound on `From<Outcome<(), AccumRefused>>`, the default config's `Out` is `Outcome<(), AccumRefused>` (the reflexive `From` covers it), and every run entry returns `Cfg::Out::from(verdict)`. `RunCfg` is sealed, so the default config is the only impl and no consumer impl breaks.
 
@@ -155,7 +155,7 @@ id = "the_consumer_picks_on_the_run_configuration_whether_an_over_capacity_appen
 subject = "stores"
 what = "Asked whether an append past an accumulator's capacity should be a refusal as a value, among a refusal as a value everywhere, the assert staying the default with refusal a provider's opt-in, and configurable by the consumer through a const, generic or trait parameter on the run configuration with refuse as the default, op answered: configurable by the consumer."
 source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:9-9"
-provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+provenance = ["mock::design_rounds::t202611130554::t202611130600_topic::ops_ruling"]
 quote = '''
 Asked through the coordinator whether an append past an accumulator's capacity should be a refusal as a value, with the options [a refusal as a value everywhere | the assert stays the default, refusal is a provider's opt-in | configurable by the consumer: a const, generic or trait parameter on the run configuration picks refuse or assert, default refuse], op answered, verbatim: "Configurable by the consumer".
 '''
@@ -172,7 +172,7 @@ subject = "stores"
 what = "The round that carries op's ruling reads its intent as a pick at compile time on the run configuration, with the refusal as a value the default. It names the choice as a sealed set of two, refuse and assert, which it calls the engine's own fixed vocabulary and not content; each fixes the run's output type. The append path is the same under both: it refuses and counts. The assert fires at the close, on the thread that called the run, after every worker has parked again, so that a panic never hits a worker and stalls the join."
 mechanism = "Sealed `AccumOverflow` with `Refuse` and `Assert`; `RunCfg::Overflow: AccumOverflow<Out = Self::Out>`; `DefaultRunCfg<O: AccumOverflow = Refuse>`; `build_with::<DefaultRunCfg<Assert>, _, _>` takes the assert."
 source = "mock/design_rounds/202611130554/202611130600_topic.overflow-is-the-consumers-choice.md:11-21"
-provenance = ["mock::design_rounds::202611130554::202611130600_topic.overflow-is-the-consumers-choice::#op-s-ruling"]
+provenance = ["mock::design_rounds::t202611130554::t202611130600_topic::ops_ruling"]
 quote = '''
 The intent: the consumer picks, at compile time and on the run configuration, whether an over-capacity append comes back as a value or stops the run with a panic, and the refusal as a value is the default.
 
@@ -199,7 +199,7 @@ id = "under_the_parallel_run_each_core_s_accumulator_region_starts_after_the_lea
 subject = "stores"
 what = "Under the parallel run the region of each accumulator a core appends into starts after the records the leading bands already accepted, clipped to the capacity, and the merge compacts from there, so the leading bands' records survive and count, and a region with no room refuses and does not drop. On one thread the accepted records are a prefix of the appends; under the parallel run each region keeps its own prefix, so the bytes kept depend on the worker count while the refusal value does not."
 source = "mock/design_rounds/202611130500/202611130500_topic.overflow-review-fixes.md:22-23"
-provenance = ["mock::design_rounds::202611130500::202611130500_topic.overflow-review-fixes::#changes-proposed"]
+provenance = ["mock::design_rounds::t202611130500::t202611130500_topic::changes_proposed"]
 quote = '''
 2. The per-core region of each accumulator starts after the records the leading bands already accepted: core c appends at `len + lo_c`, clipped to the capacity, and the merge compacts from `len` rather than 0. The leading bands' records survive and count. The last regions lose that much room, which the region-skew gap (ticket 9979e2632a6a) already covers, and a region with no room refuses rather than drops. The merged `wanted` saturates.
 3. The rule for the accepted records is stated per region: on one thread the accepted records are a prefix of the appends; under `run_parallel` each region keeps its own prefix, so the bytes kept depend on the worker count while the `AccumRefused` value does not.
@@ -218,7 +218,7 @@ subject = "stores"
 what = "In a sketch, a lane is declared with its item type and its initial value and as one of two kinds, a frame lane or a landed store. The registry is the list of every lane, and the frame holds the rows of every lane twice, a committed form and a staged form."
 mechanism = "`Lane`, `FrameLane`, `LandedStore`; the registry is a `notko_hlist` list; `Frame<Reg, N>`."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:15-15"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_shape"]
 quote = '''
 A lane is a unit struct implementing `Lane` (its item type and initial value) and one of `FrameLane` or `LandedStore`. The registry is a type alias, a `notko_hlist` list of every lane. `Frame<Reg, N>` holds N rows of every lane twice, committed and staged.
 '''
@@ -236,7 +236,7 @@ subject = "stores"
 what = "In the same sketch, a step kernel is handed a view of the committed frame for the length of the step, restricted to the list of lanes it reads. The view can be copied and read from every thread and has no write. What the kernel writes goes through one write-only handle per lane of its write list, which has no read and cannot be copied."
 mechanism = "`View<'s, Reg, R>` with `view.get(Lane, row)` bounded on `R: Contains<Lane>`; `StagedLane<'s, X>` with `set(row, value)`, neither `Copy` nor `Clone`; a value kernel returns a tuple of values per row and the runner writes them through the handles."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:17-19"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_shape"]
 quote = '''
 `View<'s, Reg, R>` is the committed frame for the step `'s`, restricted to the read list `R`. It is a list of shared slices and a phantom, so it is `Copy`, and `Sync` exactly when every lane's item is, which `Lane::Item` requires. Its one read is `view.get(Lane, row)`, bounded on `R: Contains<Lane>`; it has no write method. `Row` is an opaque brand built only by the engine, with no order and no integer conversion (stamp 7, F's note).
 
@@ -256,7 +256,7 @@ subject = "stores"
 what = "In the same sketch, a close unit is handed, after the step lands, the landed stores it names, which it reads and writes. It has no path to the view of the committed frame."
 mechanism = "`Landed<'c, Reg, S>` with `get`, `set` and `rows`; the view's constructor is private to the engine crate."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:21-21"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_shape"]
 quote = '''
 `Landed<'c, Reg, S>` is what a close unit gets after the step lands: `get`, `set` and `rows` on the stores `S` names, which must be landed stores. There is no path from it to a view, and the view's constructor is crate-private.
 '''
@@ -274,7 +274,7 @@ subject = "stores"
 what = "As first proposed in the first slice of the per-fiber morsel sizing, each store marker contributes an element byte size to a per-store size array that feeds the morsel window formula. The column, resource, accumulator and staged resource markers over a column value give the bit width rounded up to whole bytes, and a virtual gives zero because it holds no record bytes."
 mechanism = "`StoreElemBytes { const BYTES: USize }` with disjoint per-marker impls, `(BIT_WIDTH + 7) / 8` for `Column`/`Resource`/`Accum`/`StagedResource` over `T: ColumnValue` and `USize::ZERO` for `Virtual<T>`; `StoreSizes<CS>` fold over the `Stores` cons-list, a sibling of `AccumStoresMask`; `store_sizes::<Stores, CS>()` entry."
 source = "mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:10-11, mock/design_rounds/202606202500/202606202500_topic.a3a-store-size-collection.md:21-26"
-provenance = ["mock::design_rounds::202606202500::202606202500_topic.a3a-store-size-collection::#current-state"]
+provenance = ["mock::design_rounds::t202606202500::t202606202500_topic::current_state"]
 quote = '''
 The A3 sketch proved the per-store element-byte-size collection + per-fiber
 write-byte sum. The L1 window formula (A3b) needs the size array. The plan stage
@@ -300,7 +300,7 @@ subject = "stores"
 what = "Only a column contributes its element bytes to the per-record morsel working set. A resource and a staged resource are singletons, accumulator fibers dispatch unit-outer with no morsel window, and a virtual is fired, so those four markers contribute zero with no column-value bound, which lets a resource over a value that is not a column value still be sized. The first slice had bounded all four on the column value and broke real carriers."
 mechanism = "`StoreElemBytes` in plan/project.rs: `Column<T: ColumnValue>` gives its element bytes; `Resource`, `StagedResource`, `Accum` and `Virtual` give `USize::ZERO` with no `ColumnValue` bound, so a `Resource<T>` over a non-ColumnValue provider or interner still satisfies `StoreSizes`."
 source = "mock/design_rounds/202606202700/202606202700_changelist.src.lock.md:29-38"
-provenance = ["mock::design_rounds::202606202700::202606202700_changelist.src.lock::#change-refine-storeelembytes-to-per-record-columns-only"]
+provenance = ["mock::design_rounds::t202606202700::t202606202700_changelist<src_lock_md>::change_refine_storeelembytes_to_per_record_columns_only"]
 quote = '''
 ## CHANGE: refine `StoreElemBytes` to per-record columns only
 File: `mock/crates/hilavitkutin/src/plan/project.rs`
@@ -327,7 +327,7 @@ subject = "stores"
 what = "A resource and a staged resource contribute to the morsel budget the first-level cache footprint that their value type declares, the collection footprint, in place of a flat scalar size. An accumulator contributes zero because it dispatches unit-outer, and a column and a virtual are unchanged."
 mechanism = "`StoreElemBytes` arms in plan/project.rs: `Resource<T>` and `StagedResource<T>` require `T: ResourceFootprint` and report `<T as ResourceFootprint>::L1_BYTES`; `Accum<T>` reports `USize::ZERO`; `Column<T>` and `Virtual<T>` unchanged; the R5 footprint model."
 source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-53, mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:62-63, mock/design_rounds/202607161410/202607161420_changelist.src.lock.md:24-29"
-provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+provenance = ["mock::design_rounds::t202607161410::t202607161400_topic::resolutions_this_round_settles"]
 quote = '''
 4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
    `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
@@ -359,7 +359,7 @@ subject = "stores"
 what = "A blanket footprint implementation over every column value is rejected, because it would cover every consumer struct and make the derived implementation a coherence conflict. The api instead ships explicit zero-footprint implementations for the bare scalar primitives, so a bare-scalar resource value is the degenerate single-field case and adds nothing to the first-level cache write budget, while consumer struct values use the derive."
 mechanism = "`impl<T: ColumnValue> ResourceFootprint for T` rejected; explicit zero-footprint impls for an unsigned or signed integer, `bool`, `char`, `arvo::USize` and `arvo::Bool` in the api footprint module; consumer structs use `#[derive(ResourceFootprint)]`."
 source = "mock/design_rounds/202607161410/202607161400_topic.a3b-l1-morsel-formula.md:51-60"
-provenance = ["mock::design_rounds::202607161410::202607161400_topic.a3b-l1-morsel-formula::#resolutions-this-round-settles"]
+provenance = ["mock::design_rounds::t202607161410::t202607161400_topic::resolutions_this_round_settles"]
 quote = '''
 4. **`Resource<T>` footprint sourcing and the coherence call.** The fold's
    `Resource<T>`/`StagedResource<T>` arms read `<T as ResourceFootprint>::L1_BYTES`
@@ -386,7 +386,7 @@ subject = "stores"
 what = "As first stated in the round of 2026-06-19, a resource is a handle whose field, sequence and map members each decompose into their own column in the unified type-erased columnar store, keyed by shape so that a field type appearing in many resources collapses to one column. The resource record holds only the pointers to those columns, in a separate handle store keyed by resource id with its own pointer provenance, and there is no private value arena. On that statement the one-record blob of the shipped drain was named the drift."
 mechanism = "`DrainStores` (bindings.rs:22) reserved a one-record opaque column per `Resource<T>` behind a single `ResourcePtr<T>`."
 source = "mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:10-18, mock/design_rounds/202607161000/202606210600_topic.resource-handle-storage-model.md:41-48"
-provenance = ["mock::design_rounds::202607161000::202606210600_topic.resource-handle-storage-model::#the-realization"]
+provenance = ["mock::design_rounds::t202607161000::t202606210600_topic<resource_handle_storage_model_md>::the_realization"]
 quote = '''
 A `Resource<T>` is a **handle**. It does not store its value inline. `T` decomposes
 per-member: each `Field`/`Seq`/`Map` member becomes its own column in the **unified,
@@ -420,7 +420,7 @@ subject = "stores"
 what = "The bench and the experts reverse the decomposition: a resource value is a one-record blob per resource, the handle pointing to a contiguous value, with a stack-local snapshot of the scalar members before the morsel loop and the large sequence and map members streamed live and not copied. The decision first stood provisional pending a second run, and the second run confirmed the first on every axis. The decomposed layout and the shape-bound shared layout are both refuted."
 mechanism = "Bench variants: V2 decomposed per-member columns loses axis B and axis C; V3 shape-bound shared columns lose axis E plus a resize-invalidates-all-sharers hazard; large collection members streamed live beat snapshot-copy about 2.5 times at 64 MiB."
 source = "mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:8-13, mock/design_rounds/202607161000/202606210600_topic.bench-decision.md:17-22, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:12-16, mock/design_rounds/202607161000/202606210600_topic.bench-run2-resolution.md:41-52"
-provenance = ["mock::design_rounds::202607161000::202606210600_topic.bench-decision::#status-provisional"]
+provenance = ["mock::design_rounds::t202607161000::t202606210600_topic<bench_decision_md>::status_provisional"]
 quote = '''
 ## Status: PROVISIONAL
 
@@ -471,7 +471,7 @@ subject = "stores"
 what = "The design documents state the resource binding recorded at drain as an erased base pointer plus a static shape descriptor, with the typed view recovered by a backcast when a unit's context is projected, in place of a monomorphised typed pointer recorded at drain. In process this is at parity with a monomorphised pointer, and it exists so that a resource value can cross a dynamic-library or wasm extension boundary near-natively. It applies to every resource uniformly, so any resource is extension-visible without a per-resource design change."
 mechanism = "`mock/crates/hilavitkutin/DESIGN.md.tmpl` domain-19 section and builder/drain paragraph; the drain still reserves a one-record column per `Resource<T>` and writes the staged value in; the typed `ResourcePtr<T>` is backcast at projection; zero-sized resources keep the dangling-pointer path."
 source = "mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:14-19, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:38-44, mock/design_rounds/202607161000/202607161000_changelist.doc.lock.md:54-58"
-provenance = ["mock::design_rounds::202607161000::202607161000_changelist.doc.lock::#current-state"]
+provenance = ["mock::design_rounds::t202607161000::t202607161000_changelist::current_state"]
 quote = '''
 `mock/crates/hilavitkutin/DESIGN.md.tmpl` carries the domain-19 resource-handling
 statement in its pre-bench form: stack-local caching and pointer separation are

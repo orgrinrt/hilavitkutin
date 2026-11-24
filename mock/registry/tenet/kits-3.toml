@@ -7,7 +7,7 @@ what = "A compile-time error on registering a marker twice cannot be delivered w
 because = "Rust has no predicate that one type is not another at the type level, so the positive blanket admits the case where the two types are equal and conflicts with the negative implementation. Every escape needs unstable specialisation, which the workspace forbids, or a type-inequality witness equivalent to `TypeId`, which it forbids as well."
 mechanism = "E0751 with and without `feature(with_negative_coherence)`; the proposal's \"engine-side check on Stores cons-list at runtime\" is wrong because Stores is a type and not a runtime value."
 source = "mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:26-26, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:36-48, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:52-52, mock/research/sketches/registrable-not-in-202605051200/FINDINGS.md:54-66"
-provenance = ["mock::research::sketches::registrable-not-in-202605051200::FINDINGS::#observed-result"]
+provenance = ["mock::research::sketches::registrable_not_in_202605051200::findings::observed_result"]
 quote = '''
 error[E0751]: found both positive and negative implementation of trait `NotIn<_>` for type `(_, _)`:
 ---

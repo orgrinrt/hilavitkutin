@@ -7,7 +7,7 @@ what = "A locked changelist stays as it was at lock time and is not edited. A dr
 because = "The mockspace command that deprecates operates on the current round's active changelists and has no path argument and no mechanism for picking a past round's locked changelist to deprecate."
 mechanism = "`cargo mock deprecate` has no path argument and in the TOPIC phase errors with `no changelist to deprecate (TOPIC phase)`; a supersession renames the original to `.deprecated.md` by manual `git mv` and the new round's changelist carries a `## Comparison to deprecated changelist` section."
 source = "mock/research/sketches/202605251500_cl-drift-closure-clarification.md:10-16, mock/research/sketches/202605251500_cl-drift-closure-clarification.md:56-63"
-provenance = ["mock::research::sketches::202605251500_cl-drift-closure-clarification::#what-this-sketch-closes"]
+provenance = ["mock::research::sketches::t202605251500_cl_drift_closure_clarification::what_this_sketch_closes"]
 quote = '''
 The previous two artefacts on #398 (the drift memo and the field-notes sketch) both treated "Option A: deprecate-and-replace via mockspace flow" as the intended reconciliation. Investigating the mockspace CLI source at `~/.cargo/git/checkouts/mockspace-d2db2c8fb6d9e932/0d2f5cf/src/design_round.rs` revealed two clarifying facts.
 

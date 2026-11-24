@@ -6,7 +6,7 @@ subject = "downstream"
 what = "In the founding record, the per-project strategy defaults follow the project's record count and pipeline shape: polka-dots with about 200 records and a deep pipeline runs sequentially in about a microsecond, saalis with 10K to 100K records and a mixed shape runs sequentially for deep pipelines and adaptively for wide ones, and loimu with 100K to 10M records and a wide shape runs phased with convergence."
 mechanism = "polka-dots: ~200 records, deep, sequential, 1µs total. saalis: 10K-100K, mixed, sequential for deep, adaptive for wide. loimu: 100K-10M, wide, phased with convergence."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1964-1970"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#21-scheduling-strategy"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t21_scheduling_strategy"]
 quote = '''
 **Per-project defaults (T7 §5.3):**
 
@@ -27,7 +27,7 @@ id = "polka_and_saalis_use_the_full_pipeline_and_loimu_uses_only_the_scheduler_a
 subject = "downstream"
 what = "In the founding record, polka and saalis use the full pipeline, and loimu uses the scheduler abstractions only."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2282-2283"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - Per-project: polka=full pipeline, saalis=full pipeline,
   loimu=scheduler abstractions only. (T4 L1958-1972)
@@ -43,7 +43,7 @@ id = "loimu_double_buffers_record_data_and_its_readers_get_the_frozen_snapshot"
 subject = "downstream"
 what = "In loimu, record data in views is double-buffered, frozen and live, by default. A behaviour that reads gets the frozen snapshot and runs in parallel, and a behaviour that writes gets the live buffer exclusively."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:826-828"
-provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#double-buffered-access"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_research<loimu_storage_md>::double_buffered_access"]
 quote = '''
 Record data in views is double-buffered (frozen + live) by default. Behaviors
 reading `nodes M` get the frozen snapshot (parallel); behaviors writing `nodes M`
@@ -63,7 +63,7 @@ subject = "downstream"
 what = "The synthesis of the loimu research rates loimu's swap buffer, with its exchange and snapshot modes, as directly portable: a double-buffering primitive for any column data."
 mechanism = "`SwapBuffer` (Exchange + Snapshot modes)."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:290-290, mock/design_rounds/202604200055/202603141800_research.loimu-synthesis.md:294-294"
-provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-synthesis::#7-portability-ratings"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_research<loimu_synthesis_md>::t7_portability_ratings"]
 quote = '''
 | loimu design element | Rating | Notes |
 ---
@@ -82,7 +82,7 @@ id = "loimu_s_layers_stay_in_loimu_and_hilavitkutin_provides_the_foundation"
 subject = "downstream"
 what = "The founding research on loimu's storage says that loimu layers temporal columns, spring dynamics, reel backends, cadence policies, signal arenas and seven access modes on top of the primitives, that those layers stay in loimu, and that hilavitkutin provides the foundation they build on."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-storage.md:1135-1137"
-provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-storage::#what-the-unified-store-should-look-like"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_research<loimu_storage_md>::what_the_unified_store_should_look_like"]
 quote = '''
 loimu layers temporal columns, spring dynamics, reel backends, cadence policies,
 signal arenas, and seven access modes on top of these primitives. Those layers
@@ -102,7 +102,7 @@ subject = "downstream"
 what = "Downstream consumer applications layer on top of the engine: signal and graph frameworks, language runtimes and other workloads shaped as pipelines. Each consumer registers its own units and storage shapes, and the engine schedules them all through the same plan, dispatch and adapt loop."
 mechanism = "Examples named: signal / DAG frameworks, language runtimes (macros, scratch buffers, generative pipelines)."
 source = "mock/DESIGN.md.tmpl:160-160"
-provenance = ["mock::DESIGN::#consumers"]
+provenance = ["mock::design::consumers"]
 quote = '''
 Downstream consumer applications layer on top of hilavitkutin: signal / DAG frameworks, language runtimes (macros, scratch buffers, generative pipelines), and other pipeline-shaped workloads. Each consumer registers its own WorkUnits and storage shapes; the engine schedules them through the same plan / dispatch / adapt loop.
 '''
@@ -118,7 +118,7 @@ id = "loimu_is_an_old_reference_that_hilavitkutin_primarily_replaces"
 subject = "downstream"
 what = "Loimu is an old reference. Hilavitkutin is primarily the replacement for it. Restarting loimu later on hilavitkutin is a pending consideration, and loimu is not remembered as important as anything other than a reference."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-14.md:4-4"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-14::#op-s-words-batch-14-13-november-2026-about-10-55-utc-said-unprompted"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers_14::ops_words_batch_14_13_november_2026_about_1055_utc_said_unprompted"]
 quote = '''
 And loimu is an old reference. I don't remember revitalizing it. Hilavitkutin is primarily the replacement for it, with a pending consideration to later down the line restart loimu based on hilavitkutin, I can't remember loimu being important as anything other than reference, so so weird you mention it at all
 '''
@@ -135,7 +135,7 @@ id = "ikiuni_s_design_applies_every_change_at_the_frame_barrier_by_a_double_buff
 subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, a change never takes effect in place. It applies at the next frame barrier: the frame a tick computes over is read-only for the whole computation, and every change the tick produces is published together into the next frame by a double-buffer swap. A tick reads the previous committed frame as an immutable input and writes the next frame as output, and no reader within a tick observes another reader's write."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:34-38"
-provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-0000-canonical-design-firstmost-reference-000-fundamentals-index-md-lines-177-to-186"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::ikiuni::mockresearch0000_canonical_design_firstmost_reference000_fundamentals_indexmd_lines_177_to_186"]
 quote = '''
 > A Mutation never takes effect in place. It applies at the next frame barrier: the frame a tick computes
 > over is read-only for the whole of that computation, and every Mutation the tick produces is published
@@ -156,7 +156,7 @@ id = "in_ikiuni_the_frame_close_bracket_of_the_tick_loop_swaps_the_double_buffer
 subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, frame-open and frame-close are reserved structural brackets and not systems. Frame-open ingests the committed frame. Frame-close drains the queue of changes, runs the conservation check, swaps the double buffer and seals the frame. Content systems schedule only in the interior between the brackets and cannot order themselves across one."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:58-64"
-provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-19-settling-200-engine-std-md-lines-51-to-57"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::ikiuni::mockresearch202606221200_imported_design_historydesign_archive2026_06_22_first_canonical_design_done2026_06_19_settling_200_engine_stdmd_lines_51_to_57"]
 quote = '''
 > - **Frame-open and frame-close are reserved structural brackets, not systems.** They ARE the next-frame
 >   keystone (000) made concrete, not nodes with empty dependency lists. Frame-open ingests the committed
@@ -179,7 +179,7 @@ id = "ikiuni_chose_bevy_s_ecs_because_the_hilavitkutin_stack_was_not_ready"
 subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, the store of entities and components was decided as bevy's on 16 June 2026, recorded as the user's call: the ideal would be the project's own stack of hilavitkutin, arvo and notko, but that was not ready, so the rebuild worked from existing options."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:74-80"
-provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-59-to-65"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::ikiuni::mockresearch202606221200_imported_design_historydesign_archive2026_06_22_first_canonical_design_done2026_06_16_data_oriented_engine_directionmd_lines_59_to_65"]
 quote = '''
 > ## ECS substrate: DECIDED = bevy_ecs (2026-06-16, user call)
 >
@@ -200,7 +200,7 @@ id = "in_ikiuni_bevy_is_one_engine_behind_a_contract_that_a_later_hilavitkutin_e
 subject = "downstream"
 what = "In ikiuni, a reference and not hilavitkutin's record, the models and contracts stay authoritative and bevy's store is one implementation that runs them, recorded as the user's call of 16 June 2026. An abstract runtime contract is what bevy satisfies, so a later engine on the hilavitkutin stack can satisfy the same contract and take bevy's place with no change to the models, the contracts or the systems written against them."
 source = "mock/research/202611130850_the-record-read-whole/IKIUNI.md:84-89"
-provenance = ["mock::research::202611130850_the-record-read-whole::IKIUNI::#mock-research-202606221200-imported-design-history-design-archive-2026-06-22-first-canonical-design-done-2026-06-16-data-oriented-engine-direction-md-lines-74-to-79"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::ikiuni::mockresearch202606221200_imported_design_historydesign_archive2026_06_22_first_canonical_design_done2026_06_16_data_oriented_engine_directionmd_lines_74_to_79"]
 quote = '''
 > ## Contracts above bevy: bevy is one swappable engine impl (2026-06-16, user call)
 >
