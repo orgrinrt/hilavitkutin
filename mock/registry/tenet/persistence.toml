@@ -6,7 +6,7 @@ subject = "persistence"
 what = "Column data is moved out of the engine and into it again through the evict and dump and the inject and import column data interfaces."
 mechanism = "evict/dump + inject/import column data APIs (R2)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:579-579"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#07-column-storage"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t07_column_storage"]
 quote = '''
 - evict/dump + inject/import column data APIs (R2)
 '''
@@ -23,7 +23,7 @@ subject = "persistence"
 what = "The persistence crate is the generic bridge between hot and cold storage, and a standalone ecosystem crate."
 mechanism = "`hilavitkutin-persistence`: generic hot-cold storage bridge (ecosystem, standalone)."
 source = "mock/DESIGN.md.tmpl:23-23"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-persistence` | Generic hot-cold storage bridge (ecosystem, standalone). |
 '''
@@ -39,7 +39,7 @@ subject = "persistence"
 what = "Persistence is supplied by the consumer through a persistence provider trait and a provider tuple. The engine never depends on the persistence crate's types directly, and an end-of-pass unit drains the accumulator columns into persistence through the provider's commit."
 mechanism = "`PersistenceProvider` trait + Provider tuple; `PassEnd` WU drains accumulator columns via `PersistenceProvider::commit`."
 source = "mock/DESIGN.md.tmpl:94-94"
-provenance = ["mock::DESIGN::#resource-resolution"]
+provenance = ["mock::design::resource_resolution"]
 quote = '''
 Persistence integration is consumer-supplied via `PersistenceProvider` trait + Provider tuple. The engine never depends on `hilavitkutin-persistence` types directly. PassEnd WU drains accumulator columns into persistence via `PersistenceProvider::commit`.
 '''
@@ -55,7 +55,7 @@ subject = "persistence"
 what = "The persistence crate is a bridge between the in-memory columnar hot store and the on-disk archived cold store, and it is consumer-agnostic. It carries no domain knowledge: it knows nothing of metadata tables, records or domain schemas, and any hilavitkutin consumer can reuse it."
 mechanism = "`#![no_std]`, no alloc. Design rule: no std, no alloc, no domain knowledge."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:23-27, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:231-234"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#hilavitkutin-persistence-design-overview"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::hilavitkutin_persistence_design_overview"]
 quote = '''
 `#![no_std]`, no alloc. Generic hot-cold storage bridge for the
 hilavitkutin ecosystem. All serialisation via rkyv. All memory
@@ -87,7 +87,7 @@ subject = "persistence"
 what = "The persistence crate does not depend on the engine. It operates on raw column data through the evict and inject pattern, and the consumer provides the column storage interface it works against."
 mechanism = "Dependencies: `hilavitkutin-str` (Str type, content hashing), `hilavitkutin-api` (the shared `MemoryProviderApi` the cold store maps and allocates through), `arvo` and `notko` (primitive vocabulary at the API boundary). The consumer provides the `ColumnStorage` interface. Evict/inject pattern (R2)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:8-21"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#dependencies"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::dependencies"]
 quote = '''
 ## Dependencies
 
@@ -118,7 +118,7 @@ subject = "persistence"
 what = "Everything that crosses between hot and cold storage is serialised in one archive format, and all memory the crate uses comes from the shared memory provider. The archive library is the format the file-backed round takes on, and it is not a dependency yet because the skeleton ships without it."
 mechanism = "rkyv `Archive` trait (no_std, no alloc for reads); `MemoryProvider`. rkyv is not a dependency yet."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:3-6, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:15-17, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:29-31"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#hilavitkutin-persistence-design-overview"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::hilavitkutin_persistence_design_overview"]
 quote = '''
 `#![no_std]`, no alloc. Generic hot-cold storage bridge for the
 hilavitkutin ecosystem. All serialisation via rkyv. All memory
@@ -146,7 +146,7 @@ subject = "persistence"
 what = "The plain column value types, integers, booleans, fixed-point and floating-point values, are archived as themselves and cost nothing."
 mechanism = "`ColumnValue` types (`u32`, `i64`, `bool`, fixed-point, float): `type Archived = Self`."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:33-36"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#standard-types-identity"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::standard_types_identity"]
 quote = '''
 ### Standard types, identity
 
@@ -166,7 +166,7 @@ subject = "persistence"
 what = "A string handle is specific to a session, so on disk it is stored as its content hash, which is stable across sessions. Evicting turns a handle into bytes and then into a content hash, and injecting looks the hash up in the string table and interns it into a runtime handle. Constant handles already are content hashes."
 mechanism = "`impl Archive for Str { type Archived = u64; }`: the full 64-bit FNV-1a content hash of the bytes. Runtime API uses arvo_hash `ContentHash` (alias for arvo_bits `Bits<64, Hot>`). An unresolvable handle evicts to `PersistenceError::Missing`; on inject the candidate const handle is built from the low 28 bits of the key and accepted only if its string hashes back to the whole key."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:38-77, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:177-178"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#str-content-hash-translation"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::str_content_hash_translation"]
 quote = '''
 ### Str, content hash translation
 
@@ -225,7 +225,7 @@ subject = "persistence"
 what = "Every value that crosses the archive boundary on disk is specified by its byte layout. The archived type names the disk form and the runtime type names the in-memory form. The runtime hash type has the width of the disk form, so the conversion between them is a plain copy."
 mechanism = "Pinned disk-layout types: Str Archived to u64 (the full 64-bit FNV-1a content hash; the const and runtime flag does not travel to disk); integer primitive columns archive to themselves. Runtime `ContentHash` = alias for arvo_bits `Bits<64, Hot>`; conversion is a plain copy."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:79-95"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#disk-layout-types-rkyv-abi"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::disk_layout_types_rkyv_abi"]
 quote = '''
 ### Disk-layout types (rkyv ABI)
 
@@ -257,7 +257,7 @@ id = "disk_layout_types_are_exempt_from_the_primitive_vocabulary_because_a_seman
 subject = "persistence"
 what = "Disk-layout types are exempt from the primitive-vocabulary discipline. They exist to pin a byte layout across sessions, and giving them a semantic newtype would add a conversion call on the hottest serialisation path without changing the on-disk format."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:102-105"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#disk-layout-types-rkyv-abi"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::disk_layout_types_rkyv_abi"]
 quote = '''
 Disk-layout types are exempt from the primitive-vocabulary
 discipline. They exist to pin a byte layout across sessions. Giving
@@ -277,7 +277,7 @@ subject = "persistence"
 what = "A consumer type that needs custom handling at the serialisation boundary implements the archive trait directly. It is the same mechanism as for the shipped types, and no new trait is introduced."
 mechanism = "Consumer types `impl Archive` directly."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:107-110"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#extending"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::extending"]
 quote = '''
 ### Extending
 
@@ -297,7 +297,7 @@ subject = "persistence"
 what = "Each consumer has one data directory holding a manifest with the table directory and metadata, one archive file of column data per table and one archive file for the runtime string table. The consumer extends the directory with domain-specific files of its own."
 mechanism = "`data_dir/manifest.rkyv`, `tables/<name>.rkyv`, `strings/runtime.rkyv` (content_hash to bytes). Consumer extensions named: locale overlays, search indices, warmup manifests."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:114-126"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#file-layout-per-consumer"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::file_layout_per_consumer"]
 quote = '''
 ### File layout (per consumer)
 
@@ -326,7 +326,7 @@ subject = "persistence"
 what = "Evicting serialises raw typed column arrays, translating string handles to content hashes and leaving everything else as it is, and writes the file through the memory provider. Injecting maps the archive file through the memory provider, reads the archived data directly with no copy, translates content hashes back into runtime handles for string columns and hands a pointer over for everything else, into the column storage."
 mechanism = "Evict: column data -> rkyv serialize (with `PersistenceContext` carrying the interner) -> Str handle to content_hash, all else identity -> write `.rkyv` via MemoryProvider. Inject: mmap `.rkyv` via MemoryProvider -> archived data directly accessible (zero-copy) -> Str columns content_hash to intern to runtime handle, all else pointer handoff -> inject into ColumnStorage."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:128-146"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#data-flow"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::data_flow"]
 quote = '''
 ### Data flow
 
@@ -362,7 +362,7 @@ subject = "persistence"
 what = "The cold store provides the mechanism for flushing, loading a table and taking a snapshot for backup, and the consumer decides when to flush."
 mechanism = "`flush(dirty_set)` serialises dirty data to disk; `load(table)` mmaps and injects a table; `snapshot(target)` copies all files for backup."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:148-154"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#flush-coordination"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::flush_coordination"]
 quote = '''
 ### Flush coordination
 
@@ -385,7 +385,7 @@ subject = "persistence"
 what = "Eviction uses a SIEVE cache that wraps the column storage. It is keyed by table and segment range and weighted by byte size."
 mechanism = "`SieveCache` wrapping `ColumnStorage`; key `(TableId, SegmentRange)`; weight `EvictionWeight` (u64 backing)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:156-159, mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:228-228"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::sieve_eviction"]
 quote = '''
 ## SIEVE eviction
 
@@ -406,7 +406,7 @@ id = "dirty_data_is_flushed_before_it_is_evicted_so_the_hot_store_is_reconstruct
 subject = "persistence"
 what = "Dirty data is flushed before it is evicted, and the hot store is fully reconstructable from the cold store files."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:161-162"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::sieve_eviction"]
 quote = '''
 Key invariant: dirty data is flushed before eviction. The
 hot store is fully reconstructable from cold store files.
@@ -424,7 +424,7 @@ subject = "persistence"
 what = "The consumer provides the memory budget the hot store gets, the changes of that budget between phases of the application and its preferences for eviction granularity."
 mechanism = "Example named: game launch to shrink."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:164-167"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#sieve-eviction"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::sieve_eviction"]
 quote = '''
 The consumer provides:
 - Memory budget (how much RAM the hot store gets)
@@ -444,7 +444,7 @@ subject = "persistence"
 what = "Runtime strings are persisted as pairs of content hash and string bytes. On load the constant table comes from the binary, each persisted pair is interned to a sequential identifier, and string column values are resolved by content hash lookup. The content hash is the stable file-level identity and the sequential identifier is the ephemeral session-level identity."
 mechanism = "`(content_hash, string_bytes)` pairs in `runtime.rkyv`; const table from the binary (linker section); `StringTable` type."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:169-178"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#string-table-persistence"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::string_table_persistence"]
 quote = '''
 ## String table persistence
 
@@ -470,7 +470,7 @@ subject = "persistence"
 what = "The manifest is the directory of tables, holding for each table its name hash, schema version, record count and column metadata. It is archived like everything else, and the consumer extends it with domain-specific metadata such as schema versions and migration state."
 mechanism = "`Manifest { tables: map of table_id -> TableMeta, count: ColumnCount }`; `TableMeta { name_hash: ContentHash, version: SchemaVersion, record_count: USize, column_count: ColumnCount, columns }`. Persistence-local newtypes over USize or raw integer: SchemaVersion (u32 ordinal), record_count, ColumnCount, Cardinality, BufferOffset, BufferLen, BitWidth (u32), EvictionWeight (u64)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:180-206"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#manifest"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::manifest"]
 quote = '''
 ## Manifest
 

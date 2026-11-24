@@ -6,7 +6,7 @@ subject = "governance"
 what = "The documents that fed the seed now live under the pre-seed research directory, or in the archived design rounds, as paper trail. They are citable by a commit reference for provenance, but they are no longer the reference for what the design is. The seed is."
 mechanism = "`mock/research/pre_seed/`; citation form `git::commit::<hash>`."
 source = "mock/research/seed/governance.md:34-37"
-provenance = ["mock::research::seed::governance::#sources-and-precedence"]
+provenance = ["mock::research::seed::governance::sources_and_precedence"]
 quote = '''
 All of those documents now live under `mock/research/pre_seed/` (or in the
 archived design rounds) as paper trail. They are citable by
@@ -27,7 +27,7 @@ subject = "governance"
 what = "While the manifest says the seed is not frozen, it is under construction and chapters may still be corrected against their sources."
 mechanism = "`frozen = false` in `MANIFEST.md`."
 source = "mock/research/seed/governance.md:41-43"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 While `frozen = false` in `MANIFEST.md`, this seed is under construction and
 chapters may still be corrected against their sources. The freeze is gated,
@@ -46,7 +46,7 @@ id = "the_seed_freeze_is_gated_in_order_by_the_collection_pass_the_open_question
 subject = "governance"
 what = "The freeze of the seed is gated, in order. First the collection pass completes, with every chapter drained from its sources and the manifest proving losslessness. Then every open question is resolved in one batch of in-flight design work, in which bench-decided forks are benched and the calls reserved to the maintainer are designed and ruled, and the chapters are updated with the resolutions. Then the independent verification passes audit the seed against the full research backdrop, and then the manifest declares the seed frozen. A seed with unresolved open questions does not freeze."
 source = "mock/research/seed/governance.md:43-49"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 in order: first the collection pass completes (every chapter drained from its
 sources with the manifest proving losslessness); then every open question
@@ -70,7 +70,7 @@ subject = "governance"
 what = "As of the notes of 2026-07-21, the seed's verification pass 1 ran on 2026-07-19 as four independent audits, with the verdict fit after listed fixes, and the fix batch is applied to the chapters as committed."
 mechanism = "Record `202607210010_seed-verification-pass-1.md` with the deep-audit report alongside."
 source = "mock/research/seed/governance.md:51-54"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 Verification pass 1 ran 2026-07-19 (four independent audits; record
 `202607210010_seed-verification-pass-1.md` with the deep-audit report
@@ -91,7 +91,7 @@ subject = "governance"
 what = "The maintainer ordered a redo of the verification pass, which ran on 2026-07-20 against the original sources: one deep audit verifying every manifest drain claim, plus three parallel sweeps for founding-spec coverage, amendment-chain coverage, and currency and self-containment. The verdict was fit after listed fixes, with no blockers and the chain sweep clean, and the fix batch is applied as committed."
 mechanism = "Record `202607210300_seed-verification-redo.md`; fix batch: stale wake and parking prose, spectral currency, manifest staleness and tier labels, S5, term definitions, consumer scale envelope."
 source = "mock/research/seed/governance.md:54-61"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 to the chapters as committed. An op-ordered redo of the pass ran 2026-07-20
 against the original sources (one deep audit verifying every manifest drain
@@ -115,7 +115,7 @@ subject = "governance"
 what = "Once the seed is frozen, its text never changes again. From that point every amendment, ruling, clarification and status change to canon lands as items in the registry, which is created at drain time."
 mechanism = "Registry at `mock/registry/`."
 source = "mock/research/seed/governance.md:64-66"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 Once frozen, the seed text never changes again. From that point every
 amendment, ruling, clarification, and status change to canon lands as rows
@@ -134,7 +134,7 @@ id = "a_registry_row_outranks_seed_text_wherever_the_two_conflict_and_the_absenc
 subject = "governance"
 what = "A registry item outranks seed text wherever the two conflict. The absence of a registry item on a point means the seed chapter is the current word."
 source = "mock/research/seed/governance.md:66-68"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 in the registry (`mock/registry/`, created at drain time), and a registry row outranks seed text
 wherever the two conflict. The absence of a registry row on a point means
@@ -158,7 +158,7 @@ subject = "governance"
 what = "The evidence-then-bless standard is part of canon and not process trivia. Shipped mechanisms that deviate from a canonical mechanism are neither blessed by default nor rebuilt by default. For each recorded deviation the canonical shape is built or sketched, benched against the shipped shape where a bench trigger is named, and the evidence is presented for a ruling to bless it or rebuild it. It governs the six GATE-2 agent-call deviations (`the_gate_2_agent_call_deviations_are_blessed_or_rebuilt_only_on_evidence_put_to_the_maintainer`) and the spectral role deviation (`the_spectral_role_deviation_follows_the_same_evidence_then_bless_standard`)."
 mechanism = "A2-4; chapters [[execution]] and [[plan]]."
 source = "mock/research/seed/governance.md:72-80"
-provenance = ["mock::research::seed::governance::#standards-the-seed-carries-forward"]
+provenance = ["mock::research::seed::governance::standards_the_seed_carries_forward"]
 quote = '''
 Two standing decision standards are part of canon, not process trivia:
 
@@ -183,7 +183,7 @@ id = "a_fork_over_which_implementation_performs_better_is_registered_open_with_a
 subject = "governance"
 what = "A fork that asks which implementation, algorithm or data shape performs better is resolved by building the candidates and benching them, and then ruling from the findings. Canon registers such forks open with a named bench oracle and does not pick by argument. The open bench forks are listed in the chapters that own them."
 source = "mock/research/seed/governance.md:82-86"
-provenance = ["mock::research::seed::governance::#standards-the-seed-carries-forward"]
+provenance = ["mock::research::seed::governance::standards_the_seed_carries_forward"]
 quote = '''
 **Bench-decided forks.** Where the fork is which implementation, algorithm,
 or data shape performs better, the resolver is to build the candidates and
@@ -204,7 +204,7 @@ id = "every_open_question_blocking_the_freeze_has_a_named_resolution_channel_and
 subject = "governance"
 what = "Canon currently knows what it does not say. Each listed open item has a named resolution channel and must be resolved, by the design work, the bench run or the ruling, in the pre-freeze resolution batch. The chapters state each item in place today, and the batch replaces those statements with the settled design."
 source = "mock/research/seed/governance.md:88-94"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 ## Open questions blocking the freeze
 
@@ -229,7 +229,7 @@ what = "The Replaceable swap semantics item is recorded as the spec implemented 
 mechanism = "Round `202607200500`; evidence record `202607201100_swap-semantics-ratification-evidence.md`; S1 witnessed blob install, S2 plan-dirty band trigger, S4 exclusivity, S6 suite, S7 benches; Swap-D decides whether the morsel budget's write-collection term absorbs swap traffic."
 source = "mock/research/seed/governance.md:96-106"
 rev = "c5f337a926adeddebc3b343a44d27e40c8a01503"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 1. **`Replaceable` swap semantics**: SPEC IMPLEMENTED AND BENCHED
    (2026-07-19, round `202607200500`; evidence record
@@ -256,7 +256,7 @@ subject = "governance"
 what = "The Replaceable swap semantics item is recorded as the spec implemented and benched on 2026-07-19, with the witnessed blob install, the plan-dirty band trigger and the exclusivity shipped and the test suite green, and the benches confirming the cost asymmetry. It landed under a provisional stamp on the maintainer's word of 2026-11-13, so the implementation ships and S1 through S7 are not ratified. Two gaps stay open against the spec: the plan-dirty bit is keyed by the store position where S2 says the plan-affecting id, and a fused frame neither consumes nor honours the bit. S3 and Swap-D stay gated on #344 inside the spec."
 mechanism = "Round `202607200500`; evidence record `202607201100_swap-semantics-ratification-evidence.md`; S1 witnessed blob install, S2 plan-dirty band trigger, S4 exclusivity, S6 suite, S7 benches; the choice \"Land as provisional\" among ratify and land, land as provisional, ratify with changes and keep holding; Swap-D decides whether the morsel budget's write-collection term absorbs swap traffic."
 source = "mock/research/seed/governance.md:96-112"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 1. **`Replaceable` swap semantics**: SPEC IMPLEMENTED AND BENCHED
    (2026-07-19, round `202607200500`; evidence record
@@ -290,7 +290,7 @@ id = "plan_affecting_is_ruled_an_open_marker_trait_and_what_a_plan_affecting_swa
 subject = "governance"
 what = "The plan-affecting marker is ruled an open marker trait by addendum A2-3, so the ruling is made, and the remaining interplay detail, which is what a plan-affecting swap propagates, resolves inside the swap-semantics item."
 source = "mock/research/seed/governance.md:168-171"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 6. **`PlanAffecting`** is ruled an open marker trait (A2-3); the ruling is
    made, and the remaining interplay detail (what a plan-affecting swap
@@ -311,7 +311,7 @@ subject = "governance"
 what = "The manifest records, for each chapter, which sources drained into it and what was deliberately left out as superseded."
 mechanism = "`MANIFEST.md`."
 source = "mock/research/seed/governance.md:200-201"
-provenance = ["mock::research::seed::governance::#chapter-map"]
+provenance = ["mock::research::seed::governance::chapter_map"]
 quote = '''
 `MANIFEST.md` records, per chapter, which sources drained into it and what
 was deliberately left out as superseded.
@@ -329,7 +329,7 @@ subject = "governance"
 what = "The runtime layer was crystallised in a design round, closed pending sketches on 2026-05-11, across eleven topics, and implementation lands bottom-up. Five items that the autonomous topic locks flagged for the maintainer's attention are constants or naming choices that can be revisited with low impact, and none of them blocks downstream implementation."
 mechanism = "Round 202605101036 (closed-pending-sketches 2026-05-11). Flagged: `WakeStrategy { p_spin_iters: 128, e_spin_iters: 32 }`, `MICRO_MORSEL_INTERVAL = 64`, `MAX_DRIFT_RECORDS = 32`, `MAX_PLAN_AFFECTING_RESOURCES = 16`, three example apps `word_count`, `particle_step`, `audio_mix`. Bench evidence in `mock/benches/NIGHT_FINDINGS_2026-05-11.md`."
 source = "mock/DESIGN.md.tmpl:38-38, mock/DESIGN.md.tmpl:146-156"
-provenance = ["mock::DESIGN::#runtime"]
+provenance = ["mock::design::runtime"]
 quote = '''
 The runtime layer (Scheduler + Executor + ExecutionPlan + dispatch + morsel loop + adapt + persistence wiring) crystallised in design round 202605101036. The locked shape:
 ---
@@ -356,7 +356,7 @@ subject = "governance"
 what = "The shipping commitment is the public surface described in the template plus the type and method names locked in the source changelist. Follow-up rounds may extend the crate, with type-level provider identifiers, lifecycle logging hooks and hot-reload orchestration named as examples, but must preserve the first-version contract unless an explicit deprecation is scheduled."
 mechanism = "Examples of extensions named: type-level provider ids, lifecycle logging hooks, hot-reload orchestration."
 source = "mock/crates/hilavitkutin-extensions/DESIGN.md.tmpl:189-191"
-provenance = ["mock::crates::hilavitkutin-extensions::DESIGN::#shipping-commitment"]
+provenance = ["mock::crates::hilavitkutin_extensions::design::shipping_commitment"]
 quote = '''
 ## Shipping commitment
 
@@ -375,7 +375,7 @@ subject = "governance"
 what = "The authority question was settled on 2026-07-19: neither standalone document blanket-supersedes the other, and each conflict resolves on its own merits with the consolidation spec as tiebreak. For the N-way record split that settles the question and does not block it, because the tiebreak document states the two-way requirement itself, so the amendment is a clarifying gloss consistent with the spec and not a competing rule."
 mechanism = "Spec `:770-771` and `:1840-1841`; amendment `202606111800:447-450`."
 source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:35-39"
-provenance = ["mock::design_rounds::202607192110::202607192100_topic.n-way-record-split-is-not-convergence::#why-this-is-drift-rather-than-an-alternative"]
+provenance = ["mock::design_rounds::t202607192110::t202607192100_topic::why_this_is_drift_rather_than_an_alternative"]
 quote = '''
 The authority question that phrasing raises was settled on 2026-07-19: neither standalone document
 blanket-supersedes the other, and each conflict resolves on its own merits with the consolidation
@@ -396,7 +396,7 @@ id = "a_backlog_note_answered_by_a_later_design_is_rewritten_as_a_record_of_its_
 subject = "governance"
 what = "A backlog note whose concern a later design answered, and did not drop, is kept and rewritten as a record of how the concern was resolved, instead of being left open against deleted code or deleted along with the code. A reader who finds both the code and the note gone could not tell whether the concern was addressed or abandoned."
 source = "mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:36-42, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:16-17, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:26-27"
-provenance = ["mock::design_rounds::202607192810::202607192800_topic.retire-the-fn-pointer-spawn::#the-design-note-the-check-surfaced"]
+provenance = ["mock::design_rounds::t202607192810::t202607192800_topic::the_design_note_the_check_surfaced"]
 quote = '''
 That round has since happened, and it resolved the concern differently from either option the note
 proposed. The live path never casts a function pointer: it copies a closure's bytes, and the closure
@@ -425,7 +425,7 @@ id = "code_superseded_by_a_later_design_decision_is_deleted_with_its_test_and_do
 subject = "governance"
 what = "Whether superseded code is kept is decided by supersession: has a later design decision replaced it. If so the code goes, and its test and its doc paragraph go with it, because they document the thing that lost. That something still references it, a test exercising it, a design paragraph naming it or a backlog note promising to wire it, is no reason to keep it, because that signal is satisfied by exactly the artefacts that describe the superseded mechanism and so always votes to keep drift alive."
 source = "mock/design_rounds/202607192910/202607192900_topic.delete-superseded-dispatch-and-barrier.md:10-18"
-provenance = ["mock::design_rounds::202607192910::202607192900_topic.delete-superseded-dispatch-and-barrier::#the-test-that-was-being-used-and-why-it-was-wrong"]
+provenance = ["mock::design_rounds::t202607192910::t202607192900_topic::the_test_that_was_being_used_and_why_it_was_wrong"]
 quote = '''
 ## The test that was being used, and why it was wrong
 
@@ -452,7 +452,7 @@ subject = "governance"
 what = "A claim in a changelist is verified against what landed and not against the working tree, because a claim verified before a commit can be falsified by that commit's own formatter. Until a claim-verifier lint exists, the discipline is to run every verification line of a changelist as a command against the committed state before the changelist locks."
 mechanism = "`git show HEAD` after the pre-commit autofix, which runs rustfmt; the claim-verifier lint of `cl-claim-sketch-discipline.md` is tracked upstream and does not exist yet."
 source = "mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md:55-63, mock/design_rounds/202608101600/202608101600_topic.a-locked-claim-that-was-never-executed.md:40-44"
-provenance = ["mock::design_rounds::202608090300::202608090300_topic.the-kind-width-is-still-fixed::#a-record-defect-worth-stating-because-it-will-recur"]
+provenance = ["mock::design_rounds::t202608090300::t202608090300_topic::a_record_defect_worth_stating_because_it_will_recur"]
 quote = '''
 `grep -c 'impl const SymShape for SixteenMinters'`, and the source reads `const
 impl`. The verification **was** run and **was** true when run. The pre-commit
@@ -482,7 +482,7 @@ id = "a_locked_changelist_stays_locked_and_is_corrected_by_a_later_round_and_a_s
 subject = "governance"
 what = "A locked changelist stays locked, and stays wrong where it is wrong, which is what an audit trail is for. The correction is recorded in a later round and not made by rewriting it. The subject of a check is not bent to make a wrongly written check true, because that is how a check stops measuring anything, and the correction belongs to the changelist rather than to the file."
 source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:37-39, mock/design_rounds/202608090300/202608090300_topic.the-kind-width-is-still-fixed.md:65-66, mock/design_rounds/202608101600/202608101600_changelist.src.lock.md:31-33"
-provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#why-this-round-exists"]
+provenance = ["mock::design_rounds::t202608090130::t202608090130_topic::why_this_round_exists"]
 quote = '''
 This round builds the mechanism. Round one's locked changelist stays locked and
 stays wrong about round one, which is what an audit trail is for; this topic is
@@ -509,7 +509,7 @@ subject = "governance"
 what = "A locked changelist whose wording drifted from shipped source is reconciled in a new round: a new topic file, a deprecation of the original, a replacement changelist with the changelist block corrected and a comparison to the deprecated changelist, a lock of the replacement, and a close of the round. The list, called Option A, stays canonical."
 mechanism = "`cargo mock deprecate`, `cargo mock lock`, `cargo mock close`; replacement CL at `mock/design_rounds/<new-timestamp>/<new-timestamp>_changelist.src.md` with the CHANGE block corrected to `fn validate_descriptor ADDED (public host-side helper)`; the `## Comparison to deprecated changelist` section the deprecation-comparison lint requires."
 source = "mock/research/sketches/202605251400_v2-phase-machine-field-notes.md:72-78"
-provenance = ["mock::research::sketches::202605251400_v2-phase-machine-field-notes::#what-ships-when-the-ceremony-eventually-runs"]
+provenance = ["mock::research::sketches::t202605251400_v2_phase_machine_field_notes::what_ships_when_the_ceremony_eventually_runs"]
 quote = '''
 The drift memo's Option A list stays canonical:
 

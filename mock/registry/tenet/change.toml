@@ -6,7 +6,7 @@ subject = "change"
 what = "Change detection is per morsel: a write marks the morsel as changed and an unchanged morsel is skipped. It propagates through the graph, so an unchanged root skips all its transitive dependents, which turns the pipeline from a batch processor into an incremental one."
 mechanism = "A per-morsel generation counter, bumped on write. Persistence to consumer storage goes through the evict and inject APIs."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:861-865"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#12-morsel-model"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t12_morsel_model"]
 quote = '''
 **Change detection (T3 decisions #57-58, R2 evict/inject):**
 - Per-morsel generation counter — bump on write, skip if unchanged
@@ -25,7 +25,7 @@ id = "the_engine_owns_the_generation_counters_and_the_skip_logic"
 subject = "change"
 what = "hilavitkutin owns the per-morsel generation counters and the logic that skips what is unchanged across the graph, as a runtime scheduling concern."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2406-2408"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#resolutions"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::resolutions"]
 quote = '''
 **R2. Incremental execution: counters in hilavitkutin, persistence via evict/inject API.** (item 5)
 hilavitkutin owns per-morsel generation counters and skip-unchanged
@@ -44,7 +44,7 @@ subject = "change"
 what = "At run time, before each pass, the generation counters on the root units' inputs are checked. What is unchanged since the last pass is clean, the mark propagates along every edge of the graph, and a unit whose whole predecessor set is clean skips execution entirely, so only what changed is re-run."
 mechanism = "`dirty[j] |= dirty[i]` for every edge i→j, as a bitmask OR sequence, `predecessors[N] & dirty_mask`: one AND per unit."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1418-1431"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **Step 9: Dirty propagation → incremental skip** (arvo-bitmask)
 
@@ -74,7 +74,7 @@ subject = "change"
 what = "Each store has a version stamp. The versions are captured before a unit runs and compared after, which gives the stores the unit actually modified. A stamp increments only on completion."
 mechanism = "Parallel arrays (SoA): separate contiguous `[u64; MAX_STORES]` for the before and the current stamps; the changed stores are a bitmask; 2 to 5 u64 per unit stamp view, packed in one cache line."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2139-2145"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#23-scheduler-builder-and-meta"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t23_scheduler_builder_and_meta"]
 quote = '''
 **Version stamps (T5 §Q10, T6 §Q10):**
 
@@ -96,7 +96,7 @@ id = "no_write_is_partial"
 subject = "change"
 what = "No write is partial: a unit buffers internally and writes on return, downstream units do not run until it completes, version stamps increment only on completion, and correctness does not depend on atomicity."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:615-619"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#08-determinism-and-ordering"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t08_determinism_and_ordering"]
 quote = '''
 **No partial writes (T5 L375-383):**
 - WUs buffer internally, write on return
@@ -116,7 +116,7 @@ subject = "change"
 what = "Across frames the engine classifies morsels as hot, warm or cold by how often they change, and uses that with per-morsel timing to assign them to cores: hot morsels to the fast cores, cold ones to the slow cores or deferred."
 mechanism = "Change frequency read from generation counter activity; hot morsels to P-cores, cold morsels to E-cores."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2021-2022, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2028-2033"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#22-runtime-adaptation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t22_runtime_adaptation"]
 quote = '''
 - Change frequency: classify morsels as hot/warm/cold based on
   generation counter activity (domain 12)
@@ -141,7 +141,7 @@ subject = "change"
 what = "Each morsel has a generation number, a monotonic counter that increments whenever any record in the morsel's range is modified; the column storage or a separate change-tracking layer bumps it when a write occurs. Each fiber, which the topic still calls a chain, records the generation it last processed for each of its input morsels. On the next frame an input morsel whose generation equals the last processed one is skipped, and the output from the previous frame is still valid; one whose generation is greater must be reprocessed. This is incremental execution: only what changed is processed again."
 mechanism = "Frame cost drops from O(total records times ops) to O(changed records times ops)."
 source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:907-927"
-provenance = ["mock::design_rounds::202604200055::202603121800_topic.dispatch-and-optimisation::#change-detection-and-incremental-execution"]
+provenance = ["mock::design_rounds::t202604200055::t202603121800_topic::change_detection_and_incremental_execution"]
 quote = '''
 **Mechanism: per-morsel generation counter.**
 
@@ -179,7 +179,7 @@ subject = "change"
 what = "The morsel cube has three dimensions: the records the morsel covers, the columns it accesses, and a temporal one, which is how many frames the morsel's cached result remains valid. Change detection determines the temporal extent: an unchanged morsel is skipped and a changed one must be reprocessed. For a single exhaustive run every morsel is processed exactly once and the cube degenerates to a two-dimensional window. The temporal dimension turns the pipeline from a batch processor into an incremental one: the schedule and the morsel sizes stay the same, and only the morsels whose input generations have advanced are dispatched."
 mechanism = "X (records), Y (columns), T (temporal). Unchanged morsels have T = infinity, changed morsels T = 0; for a single exhaustive run T = 1 for all morsels."
 source = "mock/design_rounds/202604200055/202603121800_topic.dispatch-and-optimisation.md:942-966"
-provenance = ["mock::design_rounds::202604200055::202603121800_topic.dispatch-and-optimisation::#change-detection-and-incremental-execution"]
+provenance = ["mock::design_rounds::t202604200055::t202603121800_topic::change_detection_and_incremental_execution"]
 quote = '''
 **The temporal cube, concretely:**
 
@@ -220,7 +220,7 @@ id = "hilavitkutin_should_own_the_version_stamp_and_early_cutoff_and_phantom_wri
 subject = "change"
 what = "The version stamp concept is universal: it tracks whether a resource actually changed. hilavitkutin should own the version stamp type and the early cutoff algorithm. Detection of a phantom write, by bitwise comparison for small values and explicit marking for large values, is a storage concern that each consumer can implement differently."
 source = "mock/design_rounds/202604200055/202603141800_research.loimu-dag.md:1021-1025"
-provenance = ["mock::design_rounds::202604200055::202603141800_research.loimu-dag::#what-simplifies-for-polka-saalis"]
+provenance = ["mock::design_rounds::t202604200055::t202603141800_research<loimu_dag_md>::what_simplifies_for_polkasaalis"]
 quote = '''
 **Version stamps:** the concept is universal (track whether a resource actually
 changed). hilavitkutin should own the version stamp type and the early cutoff
@@ -241,7 +241,7 @@ id = "the_dirty_seed_is_set_by_the_consumer_marking_a_store_dirty_or_by_a_resour
 subject = "change"
 what = "Before each frame a dirty seed, which stores changed since the last frame, propagates forward over the per-unit predecessor masks, and a unit whose entire predecessor set is clean is skipped for that frame, leaving its output columns untouched. The seed is set by the consumer marking a store dirty or by a resource replacement."
 source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:384-390"
-provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#7-incremental-dirty-skip"]
+provenance = ["mock::research::pre_seed::t202606111800_canonical_spec_standalone::t7_incremental_dirty_skip"]
 quote = '''
 A pipeline that runs the same graph every frame usually has frames where most
 inputs did not change. The engine turns the batch processor into an
@@ -265,7 +265,7 @@ subject = "change"
 what = "The maintainer directed that the missing swap specification is researched and designed explicitly and not picked from options. A design round is commissioned to produce the explicit swap specification under the bench-decided layout, covering the two replacement calls, the interplay with plan-affecting resources, the ownership of collection elements, dirty propagation and quiescence. Until it lands, replacing a value only marks the store dirty and the catalogued test stays red."
 mechanism = "`Replaceable` swap under the blob record, erased addressing and collection elements in collection columns; covers `replace_value`, `replace_resource`, the `PlanAffecting` interplay (A2-3), Seq/Map element ownership. `replace_value` stays mark-dirty-only."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
-provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
+provenance = ["mock::research::pre_seed::t202607193200_canon_amendment_a2_precedence_and_rulings::a2_5_the_202606210600_citation_correction_and_the_commissioned_swap_semantics_round"]
 quote = '''
 Op's direction (2026-07-19): the missing swap spec is researched and designed explicitly, not
 picked from options. A design round is commissioned to produce the explicit `Replaceable` swap
@@ -287,7 +287,7 @@ subject = "change"
 what = "The draft swap specification says that replacing a resource value installs the new value as the whole one-record blob and sets the store's dirty bit, without touching the plan-dirty state. The call is legal only between frames, so no swap can race a live-streamed read or a snapshot in flight. The swap is observable starting at the next run and at no earlier point, and of several swaps before a run only the last is ever observed."
 mechanism = "`Scheduler::replace_value<V: Replaceable>(&mut self, new: V)`: a `ptr::write` of `V` through the same `Selector<V, Index>` witness the drain and the projection read use; no drop of the old value (`V: ColumnValue` is `Copy`); `mark_dirty` on `Resource<V>`, never `plan_dirty`; `&mut self` plus the parked-between-frames invariant."
 source = "mock/research/pre_seed/202607193300_swap-semantics-panel/03-giesen-synthesis.md:23-23"
-provenance = ["mock::research::pre_seed::202607193300_swap-semantics-panel::03-giesen-synthesis::#2-draft-specification"]
+provenance = ["mock::research::pre_seed::t202607193300_swap_semantics_panel::t03_giesen_synthesis::t2_draft_specification"]
 quote = '''
 **S1 (replace_value mechanism).** `Scheduler::replace_value<V: Replaceable>(&mut self, new: V)` installs `new` as the whole one-record blob value: a `ptr::write` of `V` through the same `Selector<V, Index>` witness (the binding's backcast pointer) that the drain and the projection read use. No pointer derived by any other route. No drop of the old value (`V: ColumnValue` is `Copy`; the bytes are overwritten). The call additionally sets the store-dirty bit for `Resource<V>` via `mark_dirty`, and never touches `plan_dirty`. The call is legal only between frames: `&mut self` plus the parked-between-frames invariant (named as load-bearing, since worker raw pointers are outside the borrow checker's jurisdiction) means no swap can race a live-streamed read or an in-flight snapshot. The swap is observable starting at the next `run()` and at no earlier point; of multiple swaps before a `run()`, only the last is ever observed.
 '''
@@ -302,7 +302,7 @@ id = "the_per_morsel_generation_counters_are_not_built_and_the_engine_has_a_coar
 subject = "change"
 what = "The roadmap revision r6 records that the per-morsel generation counter the founding spec specifies, bumped on write and propagating through the graph so an unchanged root skips its transitive dependents, is not built: the engine has a coarse dirty state per store only. It asks for a design sketch before any implementation, on where the counters live with no allocation and a morsel count per fiber that varies with the window, and on how they compose with the existing store dirty mask."
 source = "mock/research/202607181300_engine-roadmap-r6.md:326-331"
-provenance = ["mock::research::202607181300_engine-roadmap-r6::#phase-d-adapt-completion"]
+provenance = ["mock::research::t202607181300_engine_roadmap_r6::phase_d_adapt_completion"]
 quote = '''
 **D-gen, per-morsel generation counters (S-6).** Domain 12 (`:861`) specifies a per-morsel
 generation counter bumped on write, propagating through the DAG so an unchanged root skips its
@@ -324,7 +324,7 @@ id = "the_commissioned_swap_round_also_corrects_the_artifacts_grounded_on_the_mi
 subject = "change"
 what = "The design round commissioned to specify the swap of a replaceable resource also corrects the artifacts that were grounded on the mis-citation of the expert input memo."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:88-94"
-provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#a2-5-the-202606210600-citation-correction-and-the-commissioned-swap-semantics-round"]
+provenance = ["mock::research::pre_seed::t202607193200_canon_amendment_a2_precedence_and_rulings::a2_5_the_202606210600_citation_correction_and_the_commissioned_swap_semantics_round"]
 quote = '''
 Op's direction (2026-07-19): the missing swap spec is researched and designed explicitly, not
 picked from options. A design round is commissioned to produce the explicit `Replaceable` swap
@@ -347,7 +347,7 @@ subject = "change"
 what = "As of 2026-06-11, addendum A1 records that the replace-resource and replace-value calls mark the store dirty without writing the value."
 mechanism = "`replace_resource` / `replace_value` mark dirty only."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:40-40"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::state_assessment_truth_of_impl_2026_06_11"]
 quote = '''
 `replace_resource` / `replace_value` mark dirty without writing the value;
 '''
@@ -365,7 +365,7 @@ subject = "change"
 what = "Replacing a plan-affecting resource performs the identical write and store-dirty mark as replacing a value, and additionally sets the plan-dirty bit for the type's plan-affecting identity in the scheduler's plan-dirty bit array. The very next run consumes that array: the band gate is the first frame or any plan-dirty bit, a plan-dirty frame enters the leading plan band at phase 0, and the consumed bits clear."
 mechanism = "`Scheduler::replace_resource<T: PlanAffecting>(&mut self, new: T)`; the S1 write and store-dirty mark; `plan_dirty` bit for `T`'s `PlanAffectingId`; band gate `first_frame OR any plan_dirty bit`; leading plan band at phase 0."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:40-47"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s1_replace_value_mechanism"]
 quote = '''
 ## S1: replace_value mechanism
 ---
@@ -390,7 +390,7 @@ subject = "change"
 what = "The signature obligation of the replace-resource clause rides #696: the plan-affecting marker becomes open on resource value types, with the builder-input supertrait and the seal drop, per addendum A2-3, and the locate target unifies with S1 to a locate bound on the resource store. The shipped locate shape is the form from before A2-3, and the implementing round corrects it."
 mechanism = "`BuilderInput` supertrait and the seal drop (A2-3); `Stores: Locate<Resource<T>, Index>`; shipped `Locate<T, Index>` is the pre-A2-3 form; #696."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:49-53"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s1_replace_value_mechanism"]
 quote = '''
 ## S1: replace_value mechanism
 ---
@@ -412,7 +412,7 @@ subject = "change"
 what = "As of 2026-07-19, the swap spec records a gap in the shipped plan-dirty wiring: the band gate is computed from the first frame only, and the replace-resource call sets no bit. Closing the gap is the first obligation of the implementing round."
 mechanism = "Band gate computed from `first_frame` only; `replace_resource` sets no bit."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:53-56"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s2-replace-resource-mechanism"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s2_replace_resource_mechanism"]
 quote = '''
 is the pre-A2-3 form; the implementing round corrects it. The shipped
 plan-dirty wiring gap (the band gate computed from `first_frame` only;
@@ -432,7 +432,7 @@ id = "a_swap_never_changes_the_base_pointer_of_a_seq_or_map_member_because_a_for
 subject = "change"
 what = "A swap never changes the base pointer of the pointer and length view of a sequence or map member. Columns are sized at plan time and never resized, and a foreign base pointer breaks provenance."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:60-62"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s3_collection_members"]
 quote = '''
 Normative now: (a) a swap never changes the base pointer of a `Seq`/`Map`
 member's ptr+len view; columns are sized at plan time and never resized, and
@@ -450,7 +450,7 @@ subject = "change"
 what = "A swap never writes past the capacity bound N of the member, because the new value shares the exact sequence type of the old value, so the bound holds by construction."
 mechanism = "`Seq<T, N>` same type for old and new value; `Cap` bound N."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:62-64"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s3_collection_members"]
 quote = '''
 a foreign base pointer breaks provenance. (b) A swap never writes past the
 member's `Cap` bound N; the new value shares the old value's exact
@@ -467,7 +467,7 @@ subject = "change"
 what = "The element bytes of a swap are written into the member's existing collection-column region, up to the new element count, and then the length updates. The blob carries only the pointer and length view."
 mechanism = "Elements up to N' written into the existing collection-column region; then length update; the blob holds ptr+len only."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:64-66"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s3_collection_members"]
 quote = '''
 `Seq<T, N>` type, so the bound holds by construction. (c) Element bytes are
 written into the member's existing collection-column region, up to N'
@@ -485,7 +485,7 @@ subject = "change"
 what = "The concrete accessor that writes the element bytes is contingent on the write-side wiring of #344. Until that lands, a collection-bearing swap installs the scalar members and the pointer and length view only, and the element-write half is unimplementable and not underspecified."
 mechanism = "#344 write-side wiring; the concrete accessor performs clause (c) of S3."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:68-71"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s3-collection-members"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s3_collection_members"]
 quote = '''
 Contingent on the #344 write-side wiring: the concrete accessor performing
 (c). Until that lands, a collection-bearing swap installs the scalar members

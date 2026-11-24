@@ -6,7 +6,7 @@ subject = "identity"
 what = "The design names three hilavitkutin crates: the api crate with the consumer-facing types, traits and platform contracts, the engine crate, and the build crate for build-time optimisation. Beside them stand the arvo crates for numeric, bitmask, sparse, graph, spectral and combinatorial primitives."
 mechanism = "hilavitkutin-api (consumer-facing types, traits, platform contracts); hilavitkutin (engine: scheduling, dispatch, codegen, platform impls); hilavitkutin-build (build-time optimisations: LLVM, MIR, codegen, cfg emission); arvo; arvo-bitmask; arvo-sparse; arvo-graph; arvo-spectral; arvo-comb."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:29-37"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::crate_structure"]
 quote = '''
 hilavitkutin-api       consumer-facing types, traits, platform contracts
 hilavitkutin           engine (scheduling, dispatch, codegen, platform impls)
@@ -30,7 +30,7 @@ subject = "identity"
 what = "At run time the consumer depends on the engine, and the engine depends on the api crate and on the arvo crates. The spectral crate depends on the sparse crate, and the combinatorial crate depends on the bitmask crate."
 mechanism = "consumer -> hilavitkutin -> hilavitkutin-api; arvo, arvo-bitmask, arvo-graph, arvo-sparse; arvo-spectral (deps: arvo-sparse); arvo-comb (deps: arvo-bitmask)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:40-47"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::crate_structure"]
 quote = '''
 Runtime dependency graph:
 ```
@@ -54,7 +54,7 @@ subject = "identity"
 what = "The build crate is a standalone build dependency with no runtime dependencies. The api crate, the engine and every consumer use it from their build script, and it provides configuration emission, compiler wrapper scripts, LLVM pass configuration, profile-guided and post-link workflows and pragma-based build configuration."
 mechanism = "hilavitkutin-api/build.rs, hilavitkutin/build.rs and consumer/build.rs each depend on hilavitkutin-build; it provides cfg emission, rustc wrapper scripts, LLVM pass config, PGO/BOLT workflows and pragma-based build configuration."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:50-60"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#crate-structure"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::crate_structure"]
 quote = '''
 Build-time dependency (independent of runtime graph):
 ```
@@ -80,7 +80,7 @@ subject = "identity"
 what = "Arvo is a standalone primitive library family used across projects, and its name is the Finnish word for value, worth or estimate."
 mechanism = "Standalone `#![no_std]` family; users named: polka, saalis, loimu, hilavitkutin."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:137-138, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:141-141"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Standalone `#![no_std]` primitive library family, cross-project
   (polka, saalis, loimu, hilavitkutin)
@@ -99,7 +99,7 @@ subject = "identity"
 what = "The numerics and bitmask crates depend on no other arvo crate, the sparse, graph and combinatorial crates build on the bitmask and numerics crates, and the spectral crate builds on the sparse crate."
 mechanism = "arvo (none); arvo-bitmask (none); arvo-sparse (arvo-bitmask, arvo); arvo-graph (arvo-bitmask, arvo); arvo-spectral (arvo-sparse); arvo-comb (arvo-bitmask, arvo)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:158-163"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 arvo                 (no deps within arvo — numerics are independent)
 arvo-bitmask         (no deps within arvo)
@@ -119,7 +119,7 @@ id = "hilavitkutin_does_not_care_what_is_in_the_columns_only_the_read_and_write_
 subject = "identity"
 what = "Column data types come from arvo, and hilavitkutin does not care what is in the columns, only the read and write dependency structure."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:247-248"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - "Column data types come from arvo; hilavitkutin doesn't care what's
   in the columns, only the read/write dependency structure"
@@ -136,7 +136,7 @@ subject = "identity"
 what = "Arvo detects hardware capabilities in its own build script from the target feature variable, not from custom cfg flags of the build crate. The only cfg it takes from the build crate is the fast math flag, set when the fast math pragma is active."
 mechanism = "`CARGO_CFG_TARGET_FEATURE` read in arvo's build.rs; the only cfg from hilavitkutin-build is `arvo_fast_math` (when the FastMath pragma is active)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:254-257"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Arvo detects hardware capabilities in its own build.rs via
   `CARGO_CFG_TARGET_FEATURE` (not custom cfg flags from
@@ -155,7 +155,7 @@ subject = "identity"
 what = "Arvo implementations choose a hardware intrinsic or a software approximation by target feature, and the math peephole LLVM pass fires on fast float operations."
 mechanism = "Backend selected via `target_feature`; `MathPeephole` LLVM pass fires on `FastFloat` operations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:258-260"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Arvo's impls select backend via target_feature (hardware intrinsic
   vs software approximation)
@@ -173,7 +173,7 @@ subject = "identity"
 what = "Several earlier terms are dead and have a named replacement. The words for the older grouping levels are replaced by fiber, trunk and phase, the word for column co-access is replaced by fiber, the two words for a data point by record, and an order on a unit by scheduling hints."
 mechanism = "chain → fiber; chain group → trunk; partition → phase; archetype → fiber (it was just column co-access, which is fiber formation); entity → record; row → record; order (on WU) → scheduling hints (WUs declare hints, the scheduler derives ordering)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:92-101"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#vocabulary"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::vocabulary"]
 quote = '''
 **Dead terms (do not use):**
 | Dead term | Replacement | Why |
@@ -200,7 +200,7 @@ subject = "identity"
 what = "The build crate is a shared build dependency and not an xtask. Every crate's build script calls its configure entry point, and it is independent of the runtime, optimising how the code is compiled."
 mechanism = "`hilavitkutin_build::configure().run()` in every crate's build.rs, under `[build-dependencies]`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:324-327"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **What hilavitkutin-build is:**
 - Shared build-dependency crate (`[build-dependencies]`), not an xtask
@@ -219,7 +219,7 @@ subject = "identity"
 what = "The build configuration has four parts: the build crate emits cfg flags, there are no custom cargo features because the compiler supplies target features, a compiler workspace wrapper carries all the LLVM codegen flags per target and tier, and mutually exclusive features are rejected with a compile error."
 mechanism = "(1) hilavitkutin-build (build-dep): cfg flag emission; (2) no custom cargo features (compiler provides target_feature, CARGO_CFG_*); (3) RUSTC_WORKSPACE_WRAPPER: all LLVM codegen flags per (target, tier); (4) compile_error! for mutually exclusive features. T4 §Q1."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:329-333"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **Four-part build config model (T4 §Q1):**
 1. hilavitkutin-build (build-dep): cfg flag emission
@@ -239,7 +239,7 @@ subject = "identity"
 what = "Build behaviour is set through pragmas that a builder enables per profile. The built-in pragmas cover loop optimisation, polyhedral optimisation, math peephole, fast math, expanded link-time optimisation, post-link optimisation, profile guidance, profiling, building the standard library, parallel codegen, shared generics and loop fusion."
 mechanism = '`configure().profile("release", |p| p.enable::<(LoopOptimization, FastMath, ExpandedLto, Bolt, Pgo)>()).run()`. Built-in pragmas: LoopOptimization, Polly, MathPeephole, FastMath, ExpandedLto, Bolt, Pgo, Profiling, BuildStd, ParallelCodegen<N>, SharedGenerics, LoopFusion.'
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:335-339"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **Pragma system (T4 §Q4f):**
 - Builder API: `configure().profile("release", |p| p.enable::<(LoopOptimization, FastMath, ExpandedLto, Bolt, Pgo)>()).run()`
@@ -259,7 +259,7 @@ subject = "identity"
 what = "A pragma declares which other pragmas it requires, so that dependencies between pragmas are enforced."
 mechanism = "Pragma trait with `type Requires`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:340-340"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 - Pragma trait with type Requires for dependency enforcement
 '''
@@ -275,7 +275,7 @@ subject = "identity"
 what = "Pragmas take effect by one of three mechanisms: generated configuration, the compiler wrapper, or a post-build hook."
 mechanism = "Generated config: ExpandedLto, Pgo, BuildStd. rustc wrapper: LoopOptimization, Polly, MathPeephole, FastMath. Post-build hook: Bolt, Profiling."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:341-343"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 - Effects by mechanism: generated config (ExpandedLto, Pgo, BuildStd),
   rustc wrapper (LoopOptimization, Polly, MathPeephole, FastMath),
@@ -293,7 +293,7 @@ subject = "identity"
 what = "LLVM offers 551 passes in LLVM 22.1.0. IR cleanup passes prepare for polyhedral loop detection, passes are registered at the vectorizer start and optimizer last extension points, and Polly works on aarch64 Linux."
 mechanism = "551 passes in LLVM 22.1.0; IRCE, LoopPredication, SimplifyCFG for Polly SCoP detection; registration at `VectorizerStartEP` + `OptimizerLastEP`; Polly confirmed on aarch64-linux (Apple Container)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:345-349"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **LLVM passes (T4 §Q4):**
 - 551 passes available in LLVM 22.1.0
@@ -313,7 +313,7 @@ subject = "identity"
 what = "Shared benchmark runs produce both the profile-guided optimisation data and the post-link optimisation data, and the pipeline is automatic through a post-build hook of the compiler wrapper."
 mechanism = "Shared benchmark runs produce PGO (.profraw) and BOLT (perf.data); automatic pipeline via rustc wrapper post-build hook."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:352-353"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 - Shared benchmark runs produce both PGO (.profraw) and BOLT (perf.data)
 - Automatic pipeline via rustc wrapper post-build hook
@@ -330,7 +330,7 @@ subject = "identity"
 what = "The post-link optimiser works on Linux ELF only and has no Mach-O support, and machine function splitting is a partial alternative on macOS."
 mechanism = "BOLT Linux ELF only (no Mach-O); machine-function-split as macOS partial alternative."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:354-354"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 - BOLT Linux ELF only (no Mach-O); machine-function-split as macOS partial alternative
 '''
@@ -346,7 +346,7 @@ subject = "identity"
 what = "The optimisation tiers run from stock through plugins, static BOLT and profile-guided optimisation to profile-guided BOLT."
 mechanism = "Stock → Plugins → Static BOLT → PGO → Profile-guided BOLT."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:355-355"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 - Optimization tiers: Stock → Plugins → Static BOLT → PGO → Profile-guided BOLT
 '''
@@ -362,7 +362,7 @@ subject = "identity"
 what = "There are five build profiles: dev, dev-opt, release, profiling and ci."
 mechanism = "dev (Cranelift for workspace, LLVM for deps); dev-opt (LLVM, opt-level=2, LoopOptimization); release (opt-level=3, full pragmas); profiling (inherits release, keeps debug info); ci (inherits release, thin LTO for caching)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:357-362"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#03-build-time-optimisation"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t03_build_time_optimisation"]
 quote = '''
 **Five profiles (T4 §Q3):**
 - dev (Cranelift for workspace, LLVM for deps)
@@ -383,7 +383,7 @@ subject = "identity"
 what = "The arvo numerics are fixed-point types over a sixty-four-bit integer, with strategy markers that cap the lanes for hot use, use the full width for precise use and decide at run time for warm use."
 mechanism = "`UFixed<I, F>` / `IFixed<I, F>` (repr(transparent) over u64/i64); strategy markers `Hot` (lane-capped), `Precise` (full-width), `Warm` (runtime)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:173-176"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Fixed-point: `UFixed<I, F>` / `IFixed<I, F>` (repr(transparent) over
   u64/i64)
@@ -402,7 +402,7 @@ subject = "identity"
 what = "Arvo wraps floats in a fast float that uses LLVM intrinsics with fast math and a strict float that follows IEEE 754."
 mechanism = "`FastFloat` (LLVM intrinsics, fast-math); `StrictFloat` (IEEE 754)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:177-178"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Float wrappers: `FastFloat` (LLVM intrinsics, fast-math),
   `StrictFloat` (IEEE 754)
@@ -419,7 +419,7 @@ subject = "identity"
 what = "Numeric capabilities are small composable traits, and there is no monolithic numeric trait: bounds are composed from the small traits as needed."
 mechanism = "`TotalOrd`, `Sqrt`, `Recip`, `Abs`, `FromConstant`; compose bounds: `T: Add + Mul + Sqrt`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:179-180, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:183-183"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Small composable traits: `TotalOrd`, `Sqrt`, `Recip`, `Abs`,
   `FromConstant`
@@ -438,7 +438,7 @@ subject = "identity"
 what = "Arvo provides semantic aliases for the common numeric roles."
 mechanism = "`Ratio`, `Factor`, `Norm`, `Coord`, `Angle`, `Count`, `Average`, `Deviation`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:181-182"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Semantic aliases: `Ratio`, `Factor`, `Norm`, `Coord`, `Angle`,
   `Count`, `Average`, `Deviation`
@@ -455,7 +455,7 @@ subject = "identity"
 what = "The bitmask crate holds fixed-width bitmask types, a bit-matrix adjacency for graphs of up to sixty-four nodes, the set operations, bit counting and scanning, and the dirty propagation as a sequence of ors."
 mechanism = "`Mask64(u64)`, `Mask256([u64; 4])`; bit-matrix adjacency `[u64; N]` for <=64 nodes; union, intersection, difference, complement; popcount, trailing/leading zeros, iterate set bits; dirty propagation (OR sequences): `predecessors[N] & dirty_mask`."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:187-191"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Fixed-width bitmask types: `Mask64(u64)`, `Mask256([u64; 4])`
 - Bit-matrix adjacency: `[u64; N]` for ≤64 nodes
@@ -474,7 +474,7 @@ id = "the_bitmask_crate_is_the_cross_cutting_foundation_of_the_other_arvo_crates
 subject = "identity"
 what = "The bitmask crate is the cross-cutting foundation for all the other arvo crates."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:186-186, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:192-192"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 **arvo-bitmask:**
 ---
@@ -492,7 +492,7 @@ subject = "identity"
 what = "The sparse crate holds the compressed sparse row format for more than two hundred and fifty-six nodes, the sparse binary matrix of the access matrix, bandwidth-minimising reordering, block diagonal detection and the Dulmage-Mendelsohn decomposition."
 mechanism = "CSR for >256 nodes; sparse binary matrix (access matrix); RCM reordering (bandwidth minimization, O(n+nnz)); block diagonal detection (permutation to block diagonal form); Dulmage-Mendelsohn decomposition (structural rank, fine/coarse, dead column elimination)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:197-202"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - CSR (compressed sparse row) format for >256 nodes
 - Sparse binary matrix representation (access matrix)
@@ -513,7 +513,7 @@ subject = "identity"
 what = "The spectral crate is const-generic and stack allocated, with a four kilobyte weight matrix, a two hundred and fifty-six byte eigenvector and thirty iterations."
 mechanism = "`[[u8; 64]; 64]` weight matrix (4 KB), `[f32; 64]` eigenvector (256 bytes), 30 iterations."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:224-225"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Const-generic stack-allocated: `[[u8; 64]; 64]` weight matrix
   (4 KB), `[f32; 64]` eigenvector (256 bytes), 30 iterations

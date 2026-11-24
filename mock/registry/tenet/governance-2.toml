@@ -6,7 +6,7 @@ subject = "governance"
 what = "After addendum A2 the registry of the amendment chain is: the consolidation spec; the unified-engine amendment; the rechart; the amendments named r3, r4, fairness, r2 and r5; the round-level amendments per item 6 of addendum A1; addendum A1; the storage addendum, the canonical-addendum file only, its sibling memos being input material; and addendum A2. The standalone spec is a reading aid outside the chain."
 mechanism = "`202603181200`; `202606061000`; `202606070100`; r3 `202606070200`; r4 `202606070700`; fairness `202606081100`; r2 `202606081500`; r5 `202606081600`; A1 `202606111400`; storage addendum `202606210600`; A2; standalone `202606111800`."
 source = "mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:96-102"
-provenance = ["mock::research::pre_seed::202607193200_canon-amendment-a2-precedence-and-rulings::#registry-state-after-a2"]
+provenance = ["mock::research::pre_seed::t202607193200_canon_amendment_a2_precedence_and_rulings::registry_state_after_a2"]
 quote = '''
 ## Registry state after A2
 
@@ -30,7 +30,7 @@ subject = "governance"
 what = "Addendum A1 is an amendment to canon and not an intermediate round. Where it speaks it modifies the effective design, and where it is silent the consolidation spec together with the registered amendment chain stands unchanged."
 mechanism = "Status locked, with the maintainer's rulings recorded live on 2026-06-11; it amends the consolidation spec as modified by r2, the rechart, r3, r4, fairness and r5; the rule applied is in the rule file canonical-design-outranks-intermediate-rounds."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:4-5, mock/research/202606111400_canonical-design-addendum-a1.md:20-23"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#canonical-design-addendum-a1-post-gate-2-reconciliation-and-rulings"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::canonical_design_addendum_a1_post_gate_2_reconciliation_and_rulings"]
 quote = '''
 **Status:** locked (op rulings recorded live, 2026-06-11)
 **Amends:** the consolidation spec (`mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`) as modified by the amendment chain (r2 `202606081500`, rechart `202606070100`, r3 `202606070200`, r4 `202606070700`, fairness `202606081100`, r5 `202606081600`)
@@ -53,7 +53,7 @@ subject = "governance"
 what = "Addendum A1 exists because the spec's load-bearing mechanisms stopped being hypotheses and contact with the toolchain surfaced constraints the founding spec could not have known. It reconciles canon against the shipped reality, records the rulings the maintainer made on the surfaced forks, and registers the amendment chain in one place, so any later document has a single authoritative pointer."
 mechanism = "Mechanisms named as shipped and green under fair benchmarks: the const-eval grouping with const-gated DCE dispatch, core-pinned trunk parallelism, the self-hosting meta pipeline, the first live adapt datum. Scope: branch feat/hilavitkutin-parallel-engine-gate2 HEAD 0e4369d."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:6-18"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#canonical-design-addendum-a1-post-gate-2-reconciliation-and-rulings"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::canonical_design_addendum_a1_post_gate_2_reconciliation_and_rulings"]
 quote = '''
 **Scope:** the engine state at branch `feat/hilavitkutin-parallel-engine-gate2` HEAD `0e4369d`: parallel exec-core, E4 meta pipeline, and E8 slice 1 complete
 
@@ -83,7 +83,7 @@ subject = "governance"
 what = "The effective canon is the consolidation spec as modified, in order, by seven registered entries: r2, the rechart together with r3, r4, the fairness correction, r5, the round-level amendments, and addendum A1 itself."
 mechanism = "r2 `202606081500`; rechart `202606070100` + r3 `202606070200`; r4 `202606070700`; fairness `202606081100`; r5 `202606081600`; round-level amendments; A1."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:175-195"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 The effective canon is the consolidation spec as modified, in order, by:
 
@@ -119,7 +119,7 @@ subject = "governance"
 what = "The r2 amendment supersedes the r1 phase D and C3, declares type-level auto-derived fiber grouping dead, splits C3 into an arena-layout half and an execution-order half, and promotes the Approach-2 variant menu."
 mechanism = "r2 `202606081500`; the death of type-level auto-derived fiber grouping is attributed to the E0119 and specialization wall."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:177-180"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 1. r2 (`202606081500`): supersedes r1 Phase D and C3; declares type-level
    auto-derived fiber grouping dead (E0119/specialization wall); splits C3
@@ -141,7 +141,7 @@ subject = "governance"
 what = "The r4 amendment replaces the nested-carrier type construction of r3 step G2-0c with the const-eval grouping and const-gated dead-code elimination mechanism."
 mechanism = "r4 `202606070700`; replaces r3's G2-0c."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:184-185"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 3. r4 (`202606070700`): replaces r3's G2-0c nested-carrier type construction
    with the const-eval grouping + const-gated DCE mechanism.
@@ -161,7 +161,7 @@ subject = "governance"
 what = "The fairness correction makes the baseline of the parallel arm an optimal multi-threaded std, and the earlier claim of 3.5 times is superseded by parity."
 mechanism = "fairness `202606081100`; earlier 3.5x claim replaced by parity."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:186-187"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 4. Fairness correction (`202606081100`): parallel-arm baseline is optimal
    multi-threaded std; the earlier 3.5x claim is superseded by parity.
@@ -181,7 +181,7 @@ subject = "governance"
 what = "The r5 amendment makes state-map corrections over the earlier overview and the deviation ledger."
 mechanism = "r5 `202606081600`."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:188-189"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 5. r5 (`202606081600`): state-map corrections over the earlier overview and
    deviation ledger.
@@ -200,7 +200,7 @@ subject = "governance"
 what = "Addendum A1 registers five round-level amendments: the de-specialising of the column value trait, the width parameterisation of the graph crate, the deviation of the E4 witness slot with the engine-owned meta block, designated-core meta bands in the parallel run, and the E8 clock slot with the EMA spine."
 mechanism = "ColumnValue de-specialized (#631); arvo-graph row-width parameterisation (#663/#668); the E4 GateWith witness-slot deviation and engine-owned MetaBlock (rounds `202606081300`, `202606090000`); run_parallel designated-core meta bands (`202606110855`); the E8 clock slot and EMA spine (`202606110948`)."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:190-194"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#amendment-chain-registry"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::amendment_chain_registry"]
 quote = '''
 6. Round-level amendments: ColumnValue de-specialized (#631); arvo-graph
    row-width parameterisation (#663/#668); the E4 GateWith witness-slot
@@ -221,7 +221,7 @@ id = "a_new_standalone_canonical_spec_is_written_self_contained_and_spares_cross
 subject = "governance"
 what = "A new standalone canonical specification is written, fully self-contained and readable with no prior project knowledge, with the related notko and arvo features included inline as attachments, superseding the need to cross-read the registered chain. Addendum A2 names this item of A1 as the commission of the standalone spec and records it as blessed by the maintainer live on 2026-06-11."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:205-208, mock/research/pre_seed/202607193200_canon-amendment-a2-precedence-and-rulings.md:17-19"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#sequence-from-here"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::sequence_from_here"]
 quote = '''
 3. A new standalone canonical specification is written: fully
    self-contained, readable with no prior project knowledge, with related
@@ -245,7 +245,7 @@ subject = "governance"
 what = "The sequence after addendum A1 is: the pre-chart feasibility sketches with their findings recorded in version control; then the chart-the-path routine run against canon plus A1, producing the roadmap of the completion arc; then the standalone spec; then build work resuming on the charted arc. The RCM order bench and the per-arm gate recalibration ride the chart as early steps."
 mechanism = "Sketches: facade 7-4a and 7-4b (A1-5), CtxFor computed Ctx (A1-6), both meta-carrier shapes (A1-7), cap-lifting shapes (A1-2). Early chart steps: RCM order bench (A1-1), per-arm gate recalibration (A1-8)."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:199-209"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#sequence-from-here"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::sequence_from_here"]
 quote = '''
 1. Pre-chart feasibility sketches, findings recorded in VCS: facade 7-4a and
    7-4b (A1-5), `CtxFor` computed Ctx (A1-6), meta-carrier both shapes
@@ -273,7 +273,7 @@ subject = "governance"
 what = "The unified-engine amendment is canon by the maintainer's explicit ruling of 2026-06-06. It is no proposal or research finding to be weighed but an authoritative addition to the canonical design, with the same standing as the consolidation spec, and where any intermediate artifact conflicts with it, it wins."
 mechanism = "Intermediate artifacts named: the build-plan memo, audits, design rounds, DESIGN.md.tmpl, agent memory."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:3-3"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#canon-amendment-the-engine-is-unified-core-count-is-configuration-not-a-code-fork"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::canon_amendment_the_engine_is_unified_core_count_is_configuration_not_a_code_fork"]
 quote = '''
 **Status: CANON. Authority: op (O. R. Toimela), 2026-06-06, explicit ruling.** This is not a proposal or a research finding to be weighed; it is an authoritative addition to the canonical hilavitkutin design, made by op under op's authority. It has the same standing as the consolidation spec (`mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`). Where any intermediate artifact (build-plan memo, audit, design rounds, DESIGN.md.tmpl, agent memory) conflicts with this, this wins.
 '''
@@ -290,7 +290,7 @@ subject = "governance"
 what = "The consolidation spec is a locked, archived design round and cannot be edited inline, because of the gap in the canon-amendment mechanism. The amendment file is therefore the authoritative canon record until that mechanism, or a dedicated canon design round, folds the ruling into the spec text proper, and it is treated as canon now."
 mechanism = "The canon-amendment-mechanism gap is tracked as #667."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:32-34"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#formal-fold-in"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::formal_fold_in"]
 quote = '''
 ## Formal fold-in
 
@@ -310,7 +310,7 @@ subject = "governance"
 what = "The build-plan memo's phrase single-core-correct first, with the single-core path as the correctness oracle, drifted toward special-casing when read as a distinct single-core build. It is re-read as the same unified engine validated and benched at one core first."
 mechanism = "Memo `202605282100:52`."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:22-24"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#what-this-corrects-intermediate-drift-now-superseded"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::what_this_corrects_intermediate_drift_now_superseded"]
 quote = '''
 ## What this corrects (intermediate drift, now superseded)
 
@@ -331,7 +331,7 @@ subject = "governance"
 what = "The Replaceable swap specification is a draft pending the maintainer's ratification, as part of the seed pre-freeze resolution batch. On ratification it is the ruling source for the registry items of the swap rulings and for the replacement section of the seed storage chapter. It was commissioned by the citation-correction section of addendum A2, which found swap semantics unspecified and the prior grounding a mis-citation."
 mechanism = "Inputs: the expert panel (`pre_seed/202607193300_swap-semantics-panel/`, memos 01 soundness, 02 cost, 03 synthesis), the exclusivity sketch (`pre_seed/sketches/202607193310_planaffecting-replaceable-exclusivity/`, WORKS both arms), the storage addendum, A2-3, and shipped source at the cited lines."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:4-14"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#the-replaceable-swap-specification"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::the_replaceable_swap_specification"]
 quote = '''
 **Status:** DRAFT pending op ratification (the seed pre-freeze resolution
 batch). On ratification this document is the ruling source for the swap
@@ -356,7 +356,7 @@ id = "the_earlier_presentation_of_the_swap_spec_was_declined_on_the_durability_o
 subject = "governance"
 what = "The prior presentation of the swap spec was declined not on content but on the durability of canon's medium. That objection is resolved by the seed and registry regime, and the clauses are unchanged in substance from the audited synthesis, restated as the normative spec with the evidence pointers inline."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:16-20"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#the-replaceable-swap-specification"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::the_replaceable_swap_specification"]
 quote = '''
 The prior presentation of this spec was declined not on content but on the
 durability of canon's medium; that objection is resolved by the seed and
@@ -378,7 +378,7 @@ subject = "governance"
 what = "Three artifacts carry the refuted member-by-member swap language that addendum A2 traced to the input memo of the tier-4 material, and each contradicts the swap spec's replace-value clause: the engine design template's swap paragraph, the citation in the replace-value placeholder comment, and the ignore reason of the catalogued test. The implementing round corrects them, and the signature correction of the replace-resource clause additionally touches that call's bounds and the plan-affecting seal, alongside #696."
 mechanism = "Artifacts: the engine DESIGN template's swap paragraph, the `replace_value` FIXME's citation, the catalogued test's ignore reason; S2 correction touches `replace_resource`'s bounds and the `PlanAffecting` seal (#696)."
 source = "mock/research/202607200200_replaceable-swap-semantics-spec.md:22-22, mock/research/202607200200_replaceable-swap-semantics-spec.md:122-128"
-provenance = ["mock::research::202607200200_replaceable-swap-semantics-spec::#s1-replace-value-mechanism"]
+provenance = ["mock::research::t202607200200_replaceable_swap_semantics_spec::s1_replace_value_mechanism"]
 quote = '''
 ## S1: replace_value mechanism
 ---
@@ -404,7 +404,7 @@ subject = "governance"
 what = "The maintainer held ratification of the swap spec, clauses S1 to S7, until the spec was implemented and benched, and the ratification-evidence memo is that evidence."
 mechanism = "Round `202607200500_topic.replaceable-swap-semantics.md` (#697, absorbing the A2-3 `PlanAffecting` ruling, #696)."
 source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:4-8"
-provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#swap-semantics-implementation-and-bench-evidence-for-ratification"]
+provenance = ["mock::research::t202607201100_swap_semantics_ratification_evidence::swap_semantics_implementation_and_bench_evidence_for_ratification"]
 quote = '''
 **Round:** `202607200500_topic.replaceable-swap-semantics.md` (#697,
 absorbing the A2-3 `PlanAffecting` ruling, #696)
@@ -425,7 +425,7 @@ subject = "governance"
 what = "The ask is to ratify S1 through S7 as the swap-semantics canon. On ratification the seed storage chapter replaces its open-question wording with the spec, governance item 1 and the A2-3 remainder in item 6 close, and #696 and #697 complete. S3 and the Swap-D bench remain gated on #344 inside the ratified spec by name, and not as open questions."
 mechanism = "Seed storage chapter; governance item 1; A2-3 remainder in item 6; #696; #697; S3 and Swap-D gated on #344."
 source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:77-83"
-provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#the-ask"]
+provenance = ["mock::research::t202607201100_swap_semantics_ratification_evidence::the_ask"]
 quote = '''
 ## The ask
 
@@ -447,7 +447,7 @@ subject = "governance"
 what = "As of 2026-07-19, the ratification evidence memo records that all settled bench-framework work is merged on the mockspace dev branch: the full feature batch through docgen with graphviz, the setup fix of the timed macro, which the untimed swap setup of the swap benches uses directly, the builtin bench-and-sketch rule, subprocess validation with bounded orchestrator memory, and transactional results with crash-borne trees auto-voided."
 mechanism = "mockspace PR #269 (full feature batch through docgen with graphviz), #270 (`timed!` setup fix), #271 (builtin bench-and-sketch rule), #278 (subprocess validation, bounded orchestrator memory), #279 (transactional results, crash-borne trees auto-void)."
 source = "mock/research/202607201100_swap-semantics-ratification-evidence.md:68-75"
-provenance = ["mock::research::202607201100_swap-semantics-ratification-evidence::#upstream-state-asked-and-answered"]
+provenance = ["mock::research::t202607201100_swap_semantics_ratification_evidence::upstream_state_asked_and_answered"]
 quote = '''
 ## Upstream state (asked and answered)
 
@@ -471,7 +471,7 @@ subject = "governance"
 what = "The seed directory is the flat, self-contained expression of hilavitkutin's effective engine canon as of 2026-07-19. It consolidates the founding consolidation spec with the full registered amendment chain applied once, in precedence order, with superseded material left out, so a reader holding only its chapters holds the design and nothing outside them needs to be cross-read."
 mechanism = "Founding spec: design round `202604200055`, topic `202603181200`, 22 domains, the single source of truth."
 source = "mock/research/seed/governance.md:3-9"
-provenance = ["mock::research::seed::governance::#governance-what-this-seed-is"]
+provenance = ["mock::research::seed::governance::governance_what_this_seed_is"]
 quote = '''
 This directory is the flat, self-contained expression of hilavitkutin's
 effective engine canon as of 2026-07-19. It consolidates the founding
@@ -494,7 +494,7 @@ id = "the_second_verification_pass_runs_on_the_candidate_registry_after_drain"
 subject = "governance"
 what = "The second verification pass runs on the candidate registry after the drain."
 source = "mock/research/seed/governance.md:61-62"
-provenance = ["mock::research::seed::governance::#lifecycle"]
+provenance = ["mock::research::seed::governance::lifecycle"]
 quote = '''
 definitions, consumer scale envelope) is applied as committed. The second
 pass runs on the candidate registry after drain.

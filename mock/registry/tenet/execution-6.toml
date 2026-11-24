@@ -6,7 +6,7 @@ subject = "execution"
 what = "Spawning a thread takes a generic once-callable closure and copies a pointer-sized closure by value into the thread-creation argument under a compile-time size and alignment assertion. The closure captures a data pointer, so no function pointer is cast and the question of whether function and data pointers have matching size does not arise. A closure that is too fat is a compile error and never an allocation. This is neither option the old backlog note proposed: boxing a function pointer would allocate, which the engine path forbids, and the static work-queue slot was never built."
 mechanism = "`spawn<F: FnOnce() + Send + 'static>` with `tramp<F>` (os.rs:163) and `PtrSizedClosure::<F>::CHECK`."
 source = "mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:21-24, mock/design_rounds/202607192810/202607192800_topic.retire-the-fn-pointer-spawn.md:36-41, mock/design_rounds/202607192810/202607192810_changelist.doc.lock.md:16-24"
-provenance = ["mock::design_rounds::202607192810::202607192800_topic.retire-the-fn-pointer-spawn::#what-each-piece-is-for"]
+provenance = ["mock::design_rounds::t202607192810::t202607192800_topic::what_each_piece_is_for"]
 quote = '''
 The generic `spawn<F: FnOnce() + Send + 'static>` is separate machinery with its own entry point,
 `tramp<F>` (`os.rs:163`). It copies a pointer-sized closure by value into the argument slot, guarded
@@ -44,7 +44,7 @@ what = "The ruling that the consumer supplies the executor moved who spawns thre
 because = "The previous round deleted the rule while moving the pool to the consumer, and the deletion let the code overrule the design."
 mechanism = "`min(runnable worker count, parallelisable_width + 1)`; the engine design's `max_trunks_per_phase`; `mock/PRINCIPLES.md.tmpl` Pre-allocated thread pool."
 source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:19-19, mock/design_rounds/202609191001/202609191001_changelist.doc.lock.md:13-13"
-provenance = ["mock::design_rounds::202609191001::202609191000_topic.second-review-on-arvo-dev::#a-the-thread-count-rule-was-deleted-to-match-the-code"]
+provenance = ["mock::design_rounds::t202609191001::t202609191000_topic::a_the_thread_count_rule_was_deleted_to_match_the_code"]
 quote = '''
 `mock/PRINCIPLES.md.tmpl`, Pre-allocated thread pool, said `Threads = min(physical_cores, parallelisable_width + 1)`. The founding spec carries the same rule (`202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`, the thread-count paragraph: the "+1" is the convergence thread). The previous round deleted it while moving the pool to the consumer. The ruling moved who spawns and who pins; it did not touch how many workers the engine uses, so the deletion let the code overrule the design. The rule comes back restated against what the engine now controls: the closures it hands out, `min(runnable worker count, parallelisable_width + 1)`, where the parallelisable width is the most trunks any phase carries (the engine design's `max_trunks_per_phase`). `run_parallel` hands out one closure per clamped worker regardless of the plan, so it does not honour the rule: a `FIXME:` at that site, and a catalogue test stating the bound.
 ---
@@ -64,7 +64,7 @@ subject = "execution"
 what = "As of 2026-09-19, the engine hands out one closure per clamped worker whatever the plan's width, so it does not honour the thread-count bound. The gap is recorded where implementation status belongs, as a marked comment at the call site and an ignored catalogue test, and the principle text ends on the rule alone and does not state the engine's current status."
 mechanism = "`run_parallel`; `FIXME:` at the `runnable_worker_count` call in `scheduler/run_parallel.rs`; the ignored catalogue test in `tests/gate2_worker_count.rs`; `mock/PRINCIPLES.md.tmpl` (Pre-allocated thread pool)."
 source = "mock/design_rounds/202609191001/202609191000_topic.second-review-on-arvo-dev.md:19-19, mock/design_rounds/202609191201/202609191201_changelist.doc.lock.md:9-13"
-provenance = ["mock::design_rounds::202609191001::202609191000_topic.second-review-on-arvo-dev::#a-the-thread-count-rule-was-deleted-to-match-the-code"]
+provenance = ["mock::design_rounds::t202609191001::t202609191000_topic::a_the_thread_count_rule_was_deleted_to_match_the_code"]
 quote = '''
 `mock/PRINCIPLES.md.tmpl`, Pre-allocated thread pool, said `Threads = min(physical_cores, parallelisable_width + 1)`. The founding spec carries the same rule (`202604200055/202603181200_topic.hilavitkutin-design-consolidation.md`, the thread-count paragraph: the "+1" is the convergence thread). The previous round deleted it while moving the pool to the consumer. The ruling moved who spawns and who pins; it did not touch how many workers the engine uses, so the deletion let the code overrule the design. The rule comes back restated against what the engine now controls: the closures it hands out, `min(runnable worker count, parallelisable_width + 1)`, where the parallelisable width is the most trunks any phase carries (the engine design's `max_trunks_per_phase`). `run_parallel` hands out one closure per clamped worker regardless of the plan, so it does not honour the rule: a `FIXME:` at that site, and a catalogue test stating the bound.
 ---
@@ -90,7 +90,7 @@ what = "The canonical spin-then-park middle tier is wired unconditionally into t
 because = "The frame waits never called the parking machinery that already ships, and park-immediately was the safe wrong tier."
 mechanism = "`thread/parking.rs` (`WakeStrategy`, `pick_tier`, `spin_budget_for`, `spin`); `thread/frame.rs`; `RunCfg` budget constant defaulting to 128; `predicted_wait_ns` telemetry, always zero."
 source = "mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md:10-18, mock/design_rounds/202607202310/202607202300_topic.wake-spin-preroll.md:22-30"
-provenance = ["mock::design_rounds::202607202310::202607202300_topic.wake-spin-preroll::#the-finding-that-shapes-the-round"]
+provenance = ["mock::design_rounds::t202607202310::t202607202300_topic::the_finding_that_shapes_the_round"]
 quote = '''
 The canonical three-tier parking machinery already ships in
 `thread/parking.rs` (`WakeStrategy` with the Topic 6 axis K budgets,
@@ -124,7 +124,7 @@ subject = "execution"
 what = "The wake policy bench ruled against the bounded spin pre-roll on the measured host, because park-immediately wins at every size, a fixed per-frame spin penalty from wake-word cache-line contention and core competition. Per the prior round's evidence exit, the machinery stays, as the parameter, the constant and the budget-sweep test, and the default becomes the measured winner, so the spin budget default flips from 128 to 0. Consumers on hosts where the trade runs the other way override the constant."
 mechanism = "`RunCfg::WAKE_SPIN_BUDGET` flips from 128 to 0, doc comment citing the bench; park-immediately wins 1.64x / 1.34x / 1.11x at n = 64 / 1024 / 8192."
 source = "mock/design_rounds/202607202351/202607202350_topic.wake-budget-default-zero.md:8-16"
-provenance = ["mock::design_rounds::202607202351::202607202350_topic.wake-budget-default-zero::#topic-flip-the-wake-spin-budget-default-to-the-measured-winner"]
+provenance = ["mock::design_rounds::t202607202351::t202607202350_topic::topic_flip_the_wake_spin_budget_default_to_the_measured_winner"]
 quote = '''
 The wake_policy bench ruled against the bounded spin pre-roll on this
 host: park-immediately wins at every size (1.64x / 1.34x / 1.11x at
@@ -149,7 +149,7 @@ subject = "execution"
 what = "As of 2026-11-13, the fused run entry refuses at compile time a unit that has no per-record map, but it does not refuse a unit that has a per-record map and also writes an accumulator: the fused chain never runs that unit's own execute and the append is silently dropped. The fused entry also lacks the per-frame accumulator reset that the other two run entries perform, so running the body alone would hit the capacity assert at the first frame. This is a gap, committed as an ignored two-frame append test and ticketed, and the engine change that would make the fused entry refuse an accumulator-writing carrier is not part of the suite round."
 mechanism = "`run_fused`; `RecordOp`; `ChainWu`; the compile-fail pair `unmapped_unit_fused`; the ignored two-frame append test on `run_fused`; ticket `0fb716c5a463`; finding H25; `reset_accumulators` called by `run.rs` and `run_parallel.rs` at frame start and not by `run_fused.rs`."
 source = "mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:13-13, mock/design_rounds/202611130044/202611130044_topic.suite-can-fail-review-fixes.md:20-22, mock/design_rounds/202611130044/202611130044_changelist.doc.lock.md:11-11, mock/design_rounds/202611130058/202611130058_topic.suite-can-fail-second-review.md:14-14"
-provenance = ["mock::design_rounds::202611130044::202611130044_topic.suite-can-fail-review-fixes::#findings-and-what-answers-each"]
+provenance = ["mock::design_rounds::t202611130044::t202611130044_topic::findings_and_what_answers_each"]
 quote = '''
 2. The `append_fused` pair shows that a unit without a per-record map is refused by `run_fused`, and the changelist claimed more: that appends cannot reach the fused entry. They can. A unit that implements `RecordOp` and also writes an accumulator compiles through `run_fused`, the fused `ChainWu` never runs its `execute`, and the append is silently dropped. Answer: the pair is renamed for what it shows (`unmapped_unit_fused`), the hole is a committed two-frame append test on `run_fused` that fails today and is ignored with its ticket (`0fb716c5a463`), and H25 is reported ticketed rather than closed.
 ---
@@ -175,7 +175,7 @@ subject = "execution"
 what = "Dispatch code generation is a sealed trait over the run configuration, with the per-core dispatch as an associated type and one implementation shipped in the first version. Further passes, such as a bench-instrumented one and a debug one, arrive as further sealed implementations, and the build function carries all of the plan's const generics through."
 mechanism = "Sealed `trait DispatchCodegen<Cfg: RunCfg>: Sealed` with TAIT `type CoreDispatch = impl Fn(...)` via `feature(impl_trait_in_assoc_type)`; the `ExecutionPlan<...>` parameter carries ten const generics (seven independent, three derived via `CeilingDiv`); sole implementation `StandardCodegen`; future `BenchInstrumentedCodegen`, `DebugCodegen`; sketch `202605101036-codegen-entrypoint-tait` FINDINGS WORKS, call site emits zero `blr`."
 source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:202-215"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.dispatch-codegen::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<dispatch_codegen_md>::decision_log"]
 quote = '''
 - [x] **Axis A — codegen entrypoint surface: A3 + Rider 1 + Rider 2.** Sealed
   `trait DispatchCodegen<Cfg: RunCfg>: Sealed` with TAIT associated type
@@ -207,7 +207,7 @@ what = "Three dispatch approaches ship under descriptive names: a mono-tuple bas
 because = "The per-fiber indirect approach is polka-dots Approach C with a 1.17x penalty and superseded per Domain 17, and it is not the mono-tuple Approach A at the 1.0x baseline."
 mechanism = "`enum DispatchApproach { MonoTuple, TrunkMega, ScheduleMega }` marked `#[non_exhaustive]`; plan-stage selector chooses `MonoTuple` for tests and baseline reference, `TrunkMega` for under 10K, `ScheduleMega` for 10K or more; Topic 3 amendment required to change `IndirectPerFiber` to `MonoTuple`."
 source = "mock/design_rounds/202605101036/202605101036_topic.dispatch-codegen.md:216-216"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.dispatch-codegen::#decision-log"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<dispatch_codegen_md>::decision_log"]
 quote = '''
 - [x] **Axis B — DispatchApproach selection: ship `MonoTuple` + `TrunkMega` + `ScheduleMega`.** Three variants by descriptive name. **Topic 3 amendment required:** Topic 3's current `enum DispatchApproach { IndirectPerFiber, TrunkMega, ScheduleMega }` is semantically wrong — `IndirectPerFiber` is polka-dots Approach C (1.17x penalty, superseded per Domain 17 L1654), not Approach A (mono tuple, 1.0x baseline). The intent is to ship A+D+E (mono-tuple baseline + trunk-mega for <10K + schedule-mega for ≥10K), so Topic 3's enum must change `IndirectPerFiber` to `MonoTuple` and update its plan-stage selector to choose `MonoTuple` for tests/baseline reference, `TrunkMega` for <10K, `ScheduleMega` for ≥10K. Approach C kept available only as a BACKLOG entry (re-add if a workload bench surfaces a need). **Vocabulary discipline:** polka-dots A/B/C/D/E letters are bench-paper citations only; engine-side prose and source use descriptive names exclusively (e.g., "MonoTuple beats IndirectPerFiber by ~17% on the polka-dots T6 bench" instead of "Approach A beats Approach C"). Enum marked `#[non_exhaustive]` so future additions don't break consumers.
 '''
@@ -227,7 +227,7 @@ what = "As a first body, approach selection picks the whole-schedule function wh
 because = "The whole-schedule function gives LLVM its whole-pipeline optimisation window, and the ten thousand threshold matches the existing under-10K target named in the type doc comments."
 mechanism = "`select_approach`: `record_count >= 10_000` returns `ScheduleMega`; otherwise `fiber_count <= 1` returns `TrunkMega`, else `IndirectPerFiber`; follow-up sweeps `(record_count, fiber_count)` against a dispatch-overhead bench fixture to refine the 10_000 threshold and the `fiber_count <= 1` tiebreaker."
 source = "mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:25-29, mock/design_rounds/202605250600/202605250600_topic.hila-c2-select-approach-base.md:43-43, mock/design_rounds/202605250600/202605250600_changelist.doc.lock.md:12-12, mock/design_rounds/202605250600/202605250600_changelist.doc.lock.md:18-18"
-provenance = ["mock::design_rounds::202605250600::202605250600_topic.hila-c2-select-approach-base::#heuristic"]
+provenance = ["mock::design_rounds::t202605250600::t202605250600_topic::heuristic"]
 quote = '''
 The base body:
 - If `record_count >= 10_000`: return `ScheduleMega`.
@@ -254,7 +254,7 @@ what = "After the last non-temporal writes of a fiber's output, the generated co
 because = "Non-temporal stores on aarch64 do not participate in the release semantics of a later release store, so a reader on another core that sees the progress counter may not see the earlier writes."
 mechanism = "aarch64: `dmb ishst` immediately before `progress_counter.store(end_record, Ordering::Release)` (`stlr`); x86_64: `core::arch::x86_64::_mm_sfence()` before the store (`mov`); `dmb st` is local-PE-only; the sixth ASM check: `dmb ishst` / `sfence` immediately preceding the progress counter store; Topic 3 invariant S3, corrected per audit-2 C1."
 source = "mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1094-1096, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1104-1108, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1114-1119, mock/design_rounds/202605101036/202605101036_topic.plan-algorithm-chain.md:1123-1127"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.plan-algorithm-chain::#s3-non-temporal-store-release-store-ordering-corrected-per-audit-2-c1"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<plan_algorithm_chain_md>::s3_non_temporal_store__release_store_ordering_corrected_per_audit_2_c1"]
 quote = '''
 M7 commits to `stnp` for FiberOutput columns. ARMv8-A `stnp` does NOT participate in the release semantics of a subsequent `stlr` (ARM ARMv8-A B2.3.2: non-temporal stores are weakly ordered relative to release barriers). Without an **inner-shareable** store-side data memory barrier, a reader on another core that sees the progress counter `stlr` may NOT see the prior `stnp` writes.
 
@@ -294,7 +294,7 @@ subject = "execution"
 what = "The scheduler's run returns the foundation outcome type, whose success and error types are determined by the consumer's run configuration and propagated through the builder typestate by the existing dispatch routing. The old three-variant pipeline result enum is retired, and the result type uses the stack's own outcome primitive."
 mechanism = "`Scheduler::run()` returns `notko::Outcome<T, E>`, `T` and `E` from the consumer's `RunCfg`; dispatch-routing variant `RunCfgDispatch<C>` (Axis 2); retired `PipelineResult { Completed | Failed | Poisoned }`."
 source = "mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:119-119, mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:121-129"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.scheduler-run-signature::#axis-2-return-shape"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<scheduler_run_signature_md>::axis_2_return_shape"]
 quote = '''
 **DECIDED.** `Scheduler::run()` returns `notko::Outcome<T, E>` whose concrete `T` and `E` are determined by the consumer's `RunCfg` type, propagated through the builder typestate via the existing dispatch-routing mechanism. The substrate's old `PipelineResult { Completed | Failed | Poisoned }` enum is retired; the result type dogfoods notko's foundation primitive.
 ---
@@ -321,7 +321,7 @@ subject = "execution"
 what = "After the build, the scheduler carries one phantom type parameter, the run configuration handle, which relaxes the earlier position that the built scheduler is zero-sized with no type parameters. Storage stays effectively zero and only the type identity widens."
 mechanism = "`PhantomData` carrying the run-cfg handle; relaxes A9 (post-build Scheduler is ZST, no type params)."
 source = "mock/design_rounds/202605101036/202605101036_topic.scheduler-run-signature.md:200-200"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.scheduler-run-signature::#scheduler-type-after-build"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<scheduler_run_signature_md>::scheduler_type_after_build"]
 quote = '''
 A9 ("post-build Scheduler is ZST, no type params") relaxes slightly: one phantom type parameter carries the run-cfg handle. Storage stays effectively zero (PhantomData); only type identity widens.
 '''
@@ -339,7 +339,7 @@ subject = "execution"
 what = "The per-trunk dispatch structure is established before parallelism, and a following round pins one trunk to each core on the shipped pool."
 mechanism = "G2-N core-pins one trunk per core onto the shipped pool in a following round."
 source = "mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10"
-provenance = ["mock::design_rounds::202606071100::202606071100_topic.gate2-const-gated-dispatch::#what-this-round-does"]
+provenance = ["mock::design_rounds::t202606071100::t202606071100_topic::what_this_round_does"]
 quote = '''
 Re-point `Scheduler::run` through const-gated per-trunk dispatch: a flat walk over the `WuVals` carrier where each position is gated by `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }`, member positions delegating to the shipped `RunFiber` per-unit projection, so dead-code elimination collapses the walk into one member-only program per `(phase, trunk)`. Single-core, output-equivalent to the current flat `RunFiber::run` walk, `#664` no-regress. This establishes the per-trunk dispatch structure (op's correction: trunks established before parallelism); G2-N core-pins one trunk per core onto the shipped pool in a following round.
 '''
@@ -355,7 +355,7 @@ subject = "execution"
 what = "The trunk level of dispatch is a walk over a nested carrier of fibers, directly above the per-fiber walk, and it produces the same column state as the per-fiber walk over the flat concatenation of those fibers. The scheduler's run is not re-pointed onto the nested carrier in that step; a later step builds the nested phase, trunk and fiber carrier from the plan and replaces the flat walk."
 mechanism = "`FiberCons<F, Rest>` / `FiberNil` in `hilavitkutin-api::work_unit_values`; `RunTrunk<A, WL>` in `dispatch/trunk_run.rs` over the shipped `RunFiber`; G2-0b is the phase level plus waist barrier; G2-0c builds the `PhaseCons<TrunkCons<FiberCons<WuCons>>>` carrier from the plan."
 source = "mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:16-20, mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:22-22, mock/design_rounds/202606070048/202606070048_topic.gate2-g2-0a-runtrunk-fibercons.md:24-24"
-provenance = ["mock::design_rounds::202606070048::202606070048_topic.gate2-g2-0a-runtrunk-fibercons::#changes-proposed"]
+provenance = ["mock::design_rounds::t202606070048::t202606070048_topic::changes_proposed"]
 quote = '''
 Add the trunk nesting level, the level directly above the shipped `RunFiber`:
 
@@ -380,7 +380,7 @@ what = "Trunk isolation comes from a flat ordered walk of the unit carrier gated
 because = "Deriving a heterogeneous nested type from flat registration is a forbidden type-level N-way partition, and the plan to build a nested carrier type from the plan walled at that step."
 mechanism = "`const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }` over a flat `WuCons` walk; `RunFiber` reused verbatim; superseded `RunTrunk` / `RunPhase` / `RunPipeline` and `FiberCons` / `TrunkCons` / `PhaseCons`; `RunPipeline`'s phase-loop-plus-`waist_barrier` logic conceptually reused later; spec domain 17; fork doc `202606071200`."
 source = "mock/design_rounds/202606070900/202606070900_topic.gate2-const-grouping.md:22-24"
-provenance = ["mock::design_rounds::202606070900::202606070900_topic.gate2-const-grouping::#reconciliation-flat-carrier-const-gate-supersedes-the-value-nest"]
+provenance = ["mock::design_rounds::t202606070900::t202606070900_topic::reconciliation_flat_carrier_const_gate_supersedes_the_value_nest"]
 quote = '''
 G2-0a/0b (rounds on this branch) built `RunTrunk` / `RunPhase` / `RunPipeline` over value-carrying nested carriers (`FiberCons` / `TrunkCons` / `PhaseCons`), executing r3's plan to build a nested carrier *type* from the plan. That plan walled at G2-0c (deriving a heterogeneous nested type from flat registration is a forbidden type-level N-way partition; see the fork doc `202606071200`). The canonical mechanism (spec domain 17) instead emits, per core, a flat ordered sequence of that core's WUs with barriers between phases. The proven realization is a flat `WuCons` walk gated by `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }`, member positions delegating to the unchanged `RunFiber`, DCE producing one member-only mono per (phase, trunk).
 
@@ -402,7 +402,7 @@ subject = "execution"
 what = "The scheduler's run is re-pointed through const-gated per-trunk dispatch, a flat walk over the value carrier in which each position is gated by a constant on its phase and trunk and member positions delegate to the shipped per-fiber walk. Dead-code elimination then collapses the walk into one member-only program per phase and trunk, with single-core output equivalent to the existing flat walk."
 mechanism = "`Scheduler::run` re-pointed; `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }` over the `WuVals` carrier; member positions delegate to the shipped `RunFiber` per-unit projection; `#664` no-regress."
 source = "mock/design_rounds/202606071100/202606071100_topic.gate2-const-gated-dispatch.md:10-10"
-provenance = ["mock::design_rounds::202606071100::202606071100_topic.gate2-const-gated-dispatch::#what-this-round-does"]
+provenance = ["mock::design_rounds::t202606071100::t202606071100_topic::what_this_round_does"]
 quote = '''
 Re-point `Scheduler::run` through const-gated per-trunk dispatch: a flat walk over the `WuVals` carrier where each position is gated by `const { phase_of(POS) == PHASE && trunk_of(POS) == TRUNK }`, member positions delegating to the shipped `RunFiber` per-unit projection, so dead-code elimination collapses the walk into one member-only program per `(phase, trunk)`. Single-core, output-equivalent to the current flat `RunFiber::run` walk, `#664` no-regress. This establishes the per-trunk dispatch structure (op's correction: trunks established before parallelism); G2-N core-pins one trunk per core onto the shipped pool in a following round.
 '''
@@ -420,7 +420,7 @@ subject = "execution"
 what = "Single-core dispatch executes the registered units phase by phase in phase order with a waist barrier between phases, the waist sectioning being established before parallelising. A following round swaps the degenerate barrier for the real one and pins each phase's trunks to cores."
 mechanism = "`Scheduler::run` morsel-outer path re-pointed to phase-by-phase execution; G2-N swaps the degenerate barrier for the real one."
 source = "mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md:10-10"
-provenance = ["mock::design_rounds::202606071300-abandoned::202606071300_topic.gate2-phase-sectioned-run::#what-this-round-does"]
+provenance = ["mock::design_rounds::t202606071300_abandoned::t202606071300_topic::what_this_round_does"]
 quote = '''
 Re-point `Scheduler::run` (the morsel-outer dispatch path) to execute the registered units PHASE BY PHASE, in phase order, with a waist barrier between phases. Single-core, output-equivalent to the current flat walk; `#664` no-regress. This establishes the phase-sectioned dispatch structure (the waist sectioning op's correction requires before parallelising); G2-N swaps the degenerate barrier for the real one and pins each phase's trunks to cores.
 '''
@@ -435,7 +435,7 @@ what = "Single-core output equivalence does not need per-phase-and-trunk monomor
 because = "Enumerating every phase and trunk at single-core would hit a count-bound mono-explosion and the const-recursion overflow that round 2a already resolved for the position axis."
 mechanism = "`for p in 0..nphases { for morsel { wu_values.run_gated(bindings, morsel, dirty & phase_mask_p, ZERO) }; waist_barrier(degenerate) }`; per-phase unit mask `{ pos : phase_of(pos) == p }` as a runtime `AdjRow` built once per frame; `RunFiber::run_gated`; `run_one_trunk` / `RunGatedTrunk` are the G2-N per-core building block."
 source = "mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md:14-14, mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md:19-20, mock/design_rounds/202606071300-abandoned/202606071300_topic.gate2-phase-sectioned-run.md:22-22"
-provenance = ["mock::design_rounds::202606071300-abandoned::202606071300_topic.gate2-phase-sectioned-run::#design-resolved-by-spec-grounding"]
+provenance = ["mock::design_rounds::t202606071300_abandoned::t202606071300_topic::design_resolved_by_spec_grounding"]
 quote = '''
 Single-core output-equivalence does not need per-`(phase, trunk)` monomorphisation. The const-gated per-trunk monos (round 2a, `run_one_trunk` / `RunGatedTrunk`) are the G2-N per-core building block; enumerating every `(phase, trunk)` at single-core would hit a count-bound mono-explosion (and the `{N+1}` const-recursion overflow round 2a already resolved for the position axis). Single-core needs only phase-ordered execution with waists, and degenerate single-core barriers are no-ops, so the output is unchanged.
 ---
@@ -456,7 +456,7 @@ subject = "execution"
 what = "For N-core dispatch each worker walks the flat unit carrier gated by a runtime mask of the trunks it owns, reusing the existing mask-gated walk, and one worker owning every trunk is the existing single-core walk. The const-gated enumeration of per-trunk monomorphisations is superseded by this choice, while the grouping data that gives each unit its phase and trunk stays on the path."
 mechanism = "`run_gated<M: BitAccess>` reused; the mask for a core and a phase is the units whose trunk the core owns and whose phase is that phase; per-unit phase and trunk from `plan::grouping` via `phase_of(pos)` / `trunk_of(pos)`; superseded `run_one_trunk` / `RunGatedTrunk`; round R4a, decision \"bench-first runtime mask\" of 2026-06-07."
 source = "mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:13-17, mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:4-4, mock/design_rounds/202606071109/202606071109_topic.gate2-r4a-core-phase-masks.md:21-29"
-provenance = ["mock::design_rounds::202606071109::202606071109_topic.gate2-r4a-core-phase-masks::#what-this-round-adds"]
+provenance = ["mock::design_rounds::t202606071109::t202606071109_topic::what_this_round_adds"]
 quote = '''
 op's chosen mechanism: each worker walks the flat carrier gated by a runtime mask
 of its owned trunks (reuse the shipped `run_gated<M: BitAccess>`). Single-core =

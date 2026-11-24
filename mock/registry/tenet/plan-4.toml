@@ -6,7 +6,7 @@ subject = "plan"
 what = "If the in-engine probe shows that the grouping scratch compiles as a projected associated-type array under the real compounded obligations, a caps trait is introduced for the unit, accumulator and plan-dirty capacities, threaded the way the plan dimensions are, and every hardcoded cap site migrates onto the projections. If the probe overflows, the grouping caps stay bounded at the documented 256 and 16 ceiling with the tracked lift condition, and the other caps still lift."
 mechanism = "`Caps` trait with `type Units: Capacity`, `type Accums: Capacity`, `type PlanDirty: Capacity`, `MAX_CORES` if clean; `GATE2_MAX_UNITS = 256`, `GATE2_MAX_ACCUMS = 16`, `plan_dirty: [AtomicBool; 256]`, `gate2_accum_live: [AtomicUsize; MAX_CORES * GATE2_MAX_ACCUMS]`; `<CU as ConstCapacity>::Array<_>`; `MAX_CORES * GATE2_MAX_ACCUMS` becomes `Cores::Array<Accums::Array<_>>`; sketch `202606111450_cap-lifting-shapes` shape s1; defaults 256/16 keep pipelines byte-identical."
 source = "mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md:9-16, mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md:18-25, mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md:35-45, mock/design_rounds/202606191200/202606191200_topic.gate2-caps-lifting.md:50-50"
-provenance = ["mock::design_rounds::202606191200::202606191200_topic.gate2-caps-lifting::#problem"]
+provenance = ["mock::design_rounds::t202606191200::t202606191200_topic::problem"]
 quote = '''
 The const-gated grouping walk fixes its scratch at hardcoded caps:
 `GATE2_MAX_UNITS = 256` and `GATE2_MAX_ACCUMS = 16` in `plan/grouping.rs`,
@@ -53,7 +53,7 @@ what = "The accumulator-store set that a fiber's morsel-local test reads is prod
 because = "The plan's access masks index stores by position in the global stores list, whereas the drain's store identity advances once per non-zero-sized resource and once per column, skipping zero-sized resources, which is a different space, and the per-unit write masks live in the stores-list-position space."
 mechanism = "A type-level fold over the global `Stores` AccessSet, built by the same `MaskProject` machinery; `PlanInputs.reads/writes/access` indexed by position through `WitnessIndex` / `Locate` / `MaskProject` (`plan/project.rs`); the drain's `StoreId` space (`bindings.rs:269`); `writes[u] & accum_mask`."
 source = "mock/design_rounds/202606051500/202606051500_changelist.src.lock.md:11-11, mock/design_rounds/202606051500/202606051500_changelist.src.lock.md:13-13"
-provenance = ["mock::design_rounds::202606051500::202606051500_changelist.src.lock::#deviation-from-the-locked-doc-cl-recorded-per-cl-claim-sketch-discipline-arvo-bridge-home-rule-precedent"]
+provenance = ["mock::design_rounds::t202606051500::t202606051500_changelist<src_lock_md>::deviation_from_the_locked_doc_cl_recorded_per_cl_claim_sketch_discipline__arvo_bridge_home_rule_precedent"]
 quote = '''
 The locked doc CL (and the architect read it captured) place the accumulator-store-set production at the store DRAIN, as a `Mask` over `D::Stores`. SRC inspection of `plan/project.rs` shows that is the wrong store-index space: the plan's access masks (`PlanInputs.reads/writes/access`) index stores by POSITION IN THE GLOBAL `Stores` AccessSet cons-list (`WitnessIndex` / `Locate` / `MaskProject`), whereas the drain's `StoreId` advances "once per non-zero-sized resource and once per column" (`bindings.rs:269`), skipping ZST resources, a different space. A fiber's morsel-local test is "does any unit in the fiber write an accumulator," and the per-unit write masks (`PlanInputs.writes`) live in the Stores-list-position space. So the accumulator mask must live in that same space.
 ---
@@ -75,7 +75,7 @@ what = "The capacity lift to a Cap is made only for the one capacity parameter t
 because = "The attempts that hung are held, as a working theory, to have swept witness clauses over every capacity const generic on every function, a cartesian product across many const generics, and not the single-witness-per-function shape."
 mechanism = "One clause `[(); cap_size(cap_of(MAX_UNITS))]:` per function; the three stubs (rcm, block, spectral) consume only MAX_UNITS and not MAX_PHASES or MAX_FIBERS; eleven const generics on `compute_execution_plan` would carry eleven witness clauses under the sweep."
 source = "mock/research/sketches/202605131500-witness-propagation/OUTCOME.md:31-42, mock/research/sketches/202605131500-witness-propagation/OUTCOME.md:56-67, mock/research/sketches/202605131500-witness-propagation/OUTCOME.md:73-75"
-provenance = ["mock::research::sketches::202605131500-witness-propagation::OUTCOME::#what-this-changes-about-the-prior-plan"]
+provenance = ["mock::research::sketches::t202605131500_witness_propagation::outcome::what_this_changes_about_the_prior_plan"]
 quote = '''
 S2's evidence: witness propagation does not blow up. The src CL's
 fear (path-1 propagation triggers exponential trait-solver work) is
@@ -118,7 +118,7 @@ id = "lifting_the_engine_s_hardcoded_caps_was_documented_as_blocked_by_field_acc
 subject = "plan"
 what = "Lifting the engine's hardcoded caps to consumer-tunable values is documented as blocked by two walls: field access in generic constants, and a trait-solver overflow when a capacity-size array length is re-proven through the const-gated walk's type-level recursion."
 source = "mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:3-10"
-provenance = ["mock::research::sketches::202606111450_cap-lifting-shapes::FINDINGS::#cap-lifting-shapes-findings"]
+provenance = ["mock::research::sketches::t202606111450_cap_lifting_shapes::findings::cap_lifting_shapes_findings"]
 quote = '''
 HYPOTHESIS: the engine's three hardcoded caps (GATE2_MAX_UNITS=256 and
 GATE2_MAX_ACCUMS=16 in plan/grouping.rs, plan_dirty `[AtomicBool; 256]` in
@@ -143,7 +143,7 @@ subject = "plan"
 what = "The documented trait-solver overflow did not reproduce in a reduced fold on the pinned nightly, with the capacity-size array in the recursive trait's method signature, at depth 7 and at depth 64. The overflow documented at the grouping unit cap is a property of the compounded obligation set of the real walk, or of an older nightly, and not of the capacity-size array length through recursion as such. The engine-side claim is treated as unreproduced in reduction, and an in-engine probe is required before relying on either the wall or its absence."
 mechanism = "Shape s2c: `cap_size(CU::CAP)` arrays in the recursive trait signature with the `[(); ..]:` bound on every cons-cell impl; the real const-gated walk compounds `BundleMasks` (4 type params) with per-unit `MaskProject` witness bounds, `GateWith` and the `RunFiber` where-blocks; the overflow is documented at `GATE2_MAX_UNITS`."
 source = "mock/research/sketches/202606111450_cap-lifting-shapes/FINDINGS.md:127-139"
-provenance = ["mock::research::sketches::202606111450_cap-lifting-shapes::FINDINGS::#s2c-cap-size-cu-cap-arrays-in-the-recursive-trait-signature"]
+provenance = ["mock::research::sketches::t202606111450_cap_lifting_shapes::findings::s2c_cap_sizecucap_arrays_in_the_recursive_trait_signature"]
 quote = '''
 
 OUTCOME: WORKS, at depth 7 and at depth 64 (a macro-built 64-unit cons

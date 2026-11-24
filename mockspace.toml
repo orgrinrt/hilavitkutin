@@ -1,7 +1,7 @@
 # The engine pin. `mockspace_version` is the released form, and mockspace has
 # cut no release yet, so this tracks the working trunk instead. The launcher
 # re-resolves the branch head periodically.
-mockspace_branch = "dev"
+mockspace_branch = "work/qh2-mockspace"
 
 project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
@@ -1507,22 +1507,11 @@ description = "Whose the red is: a ticket id, or a line saying what is wrong."
 
 # --- the workflow pack's tools -----------------------------------------------
 #
-# The tools that search what was already said read the maintainer's captured
-# words as well as the research and the rounds. The captures are kept by the
-# workspace this repository is cloned into, one directory up; in a clone that
-# stands alone the tools say the directory was not read and answer from the
-# repository's own record.
+# `search`, and the tools over tickets and work, read the research and the
+# rounds, and the maintainer's captured words where `maintainer_words` names a
+# directory inside this repository. `search` names none, and says so.
 
-[tools.already-said]
-maintainer_words = "../.data/op-responses"
-maintainer_names = ["op", "lead designer"]
-
-[tools.unearth]
-maintainer_words = "../.data/op-responses"
-maintainer_names = ["op", "lead designer"]
-
-[tools.corpus]
-maintainer_words = "../.data/op-responses"
+[tools.search]
 maintainer_names = ["op", "lead designer"]
 
 [tools.tackle]

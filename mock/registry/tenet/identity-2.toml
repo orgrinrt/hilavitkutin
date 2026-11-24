@@ -6,7 +6,7 @@ subject = "identity"
 what = "The graph crate holds the DAG algorithms: topological sort with a fixed-size queue, connected components, weighted longest and shortest paths, upward and downward rank, critical path analysis, waist detection and node renumbering that matches the reverse topological order."
 mechanism = "Kahn's topological sort (fixed-size queue + in-degree array); connected components (DFS/BFS on bitmask adjacency); `rank(u) = cost(u) + max(rank(successors(u)))`; waist detection by concurrent path counting in topo order; node renumbering to sequential IDs matching reverse topo order (prefetcher-optimal access)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:207-215"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Topological sort (Kahn's): fixed-size queue + in-degree array
 - Connected components: DFS/BFS on bitmask adjacency
@@ -30,7 +30,7 @@ subject = "identity"
 what = "The spectral crate holds Laplacian construction from a weighted adjacency, power iteration for eigenvectors, the Fiedler vector, and spectral bisection and k-way partitioning by recursive bisection."
 mechanism = "L = D - W; power iteration; Fiedler vector (second-smallest eigenvalue of the Laplacian); spectral bisection and k-way partitioning (recursive bisection)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:220-223"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Laplacian construction from weighted adjacency: L = D - W
 - Power iteration for eigenvector computation
@@ -49,7 +49,7 @@ subject = "identity"
 what = "The combinatorial crate holds the matrix chain ordering dynamic program for optimal interval grouping under constraints, the greedy interval grouping that is the fusion walk, and a greedy two-level bin packing."
 mechanism = "Matrix chain ordering DP (cost function + feasibility check + DP recurrence); greedy interval grouping (fusion walk) with a feasibility predicate; two-level greedy bin-packing (e.g. affinity-ordered bit assignment from domain 10)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:229-234"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - Matrix chain ordering DP: optimal interval grouping under
   constraints. Cost function + feasibility check + DP recurrence.
@@ -70,7 +70,7 @@ subject = "identity"
 what = "The engine uses arvo numerics for all its internal numerics, the bitmask crate for the access mask, DAG adjacency and virtual flag storage, the graph crate for topological sort, waist detection, rank and components, the sparse crate for the access matrix and its reordering, the spectral crate for trunk formation, and the combinatorial crate for fiber grouping and morsel bin packing."
 mechanism = "arvo (all internal numerics); arvo-bitmask (AccessMask, DAG adjacency, virtual flag storage); arvo-graph (topo sort, waist detection, rank computation, connected components); arvo-sparse (access matrix, RCM, block diagonal, Dulmage-Mendelsohn); arvo-spectral (trunk formation, Fiedler); arvo-comb (fiber grouping DP, morsel bin-pack)."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:238-246"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#01-arvo-primitives"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t01_arvo_primitives"]
 quote = '''
 - hilavitkutin uses arvo (numerics) for all internal numerics
 - hilavitkutin uses arvo-bitmask for AccessMask, DAG adjacency,
@@ -93,7 +93,7 @@ id = "the_analysis_algorithms_are_reusable_primitives_in_the_arvo_crates_and_not
 subject = "identity"
 what = "The analysis algorithms are not specific to hilavitkutin: they are reusable mathematical primitives that live in the arvo crates, defined once under the same discipline of no standard library, no allocation, const generics and LLVM optimisation. hilavitkutin consumes them, and so can saalis, loimu or any other project."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1235-1238"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 These algorithms are not hilavitkutin-specific. They are reusable
 mathematical primitives that live in arvo crates (domain 01). Define
@@ -113,7 +113,7 @@ subject = "identity"
 what = "The earlier data structure names built on partition and chain are replaced by names built on phase, fiber and trunk."
 mechanism = "PartitionMap becomes PhaseMap, ChainPlan becomes FiberPlan, ChainGroupPlan becomes TrunkPlan. T3 used partition and chain group, updated to phase and trunk."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1439-1443"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#15-pipeline-analysis-algorithms"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t15_pipeline_analysis_algorithms"]
 quote = '''
 **What this supersedes:**
 - T3 used "partition" and "chain group" → updated to "phase" and
@@ -134,7 +134,7 @@ id = "the_consumer_materialises_external_data_into_columns_through_its_own_loade
 subject = "identity"
 what = "The consumer materialises external data into the engine's columns before execution, through loader units it defines, provides the memory provider, and manages the storage lifecycle: allocation, growth and eviction via the R2 APIs. The engine accepts whatever columns the consumer provides."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1465-1475"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#16-data-loading"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::t16_data_loading"]
 quote = '''
 **Consumer's responsibility:**
 - Provide a MemoryProvider (domain 02 platform traits)
@@ -160,7 +160,7 @@ id = "the_engine_owns_dag_scheduling_dispatch_morsels_stages_stealing_and_progre
 subject = "identity"
 what = "The engine's scope is DAG scheduling, unit dispatch, morsel chunking, pipeline stages, work-stealing and progress tracking. It does not own column storage, the data model, schema, query planning, the user interface or IO."
 source = "mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:2279-2281"
-provenance = ["mock::design_rounds::202604200055::202603181200_topic.hilavitkutin-design-consolidation::#cross-cutting-constraints"]
+provenance = ["mock::design_rounds::t202604200055::t202603181200_topic::cross_cutting_constraints"]
 quote = '''
 - hilavitkutin scope: owns DAG scheduling, WU dispatch, morsel chunking,
   pipeline stages, work-stealing, progress tracking. Does NOT own column
@@ -178,7 +178,7 @@ subject = "identity"
 what = "Hilavitkutin is a morsel-driven pipeline execution engine. Consumers declare units with typed read and write access sets, and the engine analyses them into phases, trunks and fibers, compiles per-core dispatch programs and runs them on a pre-allocated thread pool."
 mechanism = "`#![no_std]`, no alloc. WorkUnits with typed read/write access sets; per-core dispatch programs."
 source = "mock/DESIGN.md.tmpl:3-6"
-provenance = ["mock::DESIGN::#hilavitkutin-architecture-design"]
+provenance = ["mock::design::hilavitkutin_architecture_design"]
 quote = '''
 > Morsel-driven pipeline execution engine. `#![no_std]`, no alloc.
 > Consumers declare WorkUnits with typed read/write access sets; the
@@ -198,7 +198,7 @@ subject = "identity"
 what = "The api crate is the consumer-facing contract surface: the unit and access-set types, the three store types, the context, and the platform contracts for clock, memory provider and thread pool. It also carries the consumer contract surface for interface positions that receive or emit items outside unit execution."
 mechanism = "`hilavitkutin-api`: WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. The consumer contract surface is capability / sink / codec."
 source = "mock/DESIGN.md.tmpl:14-14"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-api` | Consumer-facing types + traits + platform contracts. WorkUnit, AccessSet, Column/Resource/Virtual, Context, Contains, Clock/MemoryProvider/ThreadPool. Consumer contract surface (capability / sink / codec) for API positions that receive or emit items outside WU execution. |
 '''
@@ -215,7 +215,7 @@ subject = "identity"
 what = "A proc-macro companion crate of the api crate derives, for a resource value type, the footprint that the engine reads as its write-collection budget in the first-level cache for a morsel."
 mechanism = "`hilavitkutin-api-macros` emits `#[derive(ResourceFootprint)]`, which sums the `Field` / `Seq` / `Map` field footprints of a resource value type; the engine reads the result as its L1-morsel write-collection budget (canonical R5)."
 source = "mock/DESIGN.md.tmpl:15-15"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-api-macros` | Proc-macro companion to `hilavitkutin-api`. Emits `#[derive(ResourceFootprint)]`, which sums a resource value type's `Field`/`Seq`/`Map` field footprints so the engine reads its L1-morsel write-collection budget (canonical R5). |
 '''
@@ -232,7 +232,7 @@ subject = "identity"
 what = "The engine crate holds the plan, the dispatch, the resource handling, the threads, the strategy selection, the adaptation and the scheduler."
 mechanism = "`hilavitkutin`: plan, dispatch, resource, thread, strategy, adapt, scheduler."
 source = "mock/DESIGN.md.tmpl:16-16"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin` | Engine: plan, dispatch, resource, thread, strategy, adapt, scheduler. |
 '''
@@ -250,7 +250,7 @@ subject = "identity"
 what = "The context framework is a standalone ecosystem crate, and what a context gives access to is gated by providers."
 mechanism = "`hilavitkutin-ctx`: provider-gated context framework (ecosystem, standalone)."
 source = "mock/DESIGN.md.tmpl:18-18"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-ctx` | Provider-gated context framework (ecosystem, standalone). |
 '''
@@ -267,7 +267,7 @@ subject = "identity"
 what = "The generic interned-identity core is a standalone ecosystem crate holding the identity handle, the domain traits, the interner and the generator. The interned string system is a second standalone ecosystem crate that is one domain of that core."
 mechanism = "`hilavitkutin-sym`: the `Sym` handle, domain traits, `Interner`, `Generator`. `hilavitkutin-str`: interned string system, one domain of `hilavitkutin-sym`."
 source = "mock/DESIGN.md.tmpl:25-26"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-sym` | Generic interned-identity core: the `Sym` handle, domain traits, `Interner`, `Generator` (ecosystem, standalone). `hilavitkutin-str` builds on it. |
 | `hilavitkutin-str` | Interned string system, one domain of `hilavitkutin-sym` (ecosystem, standalone). |
@@ -285,7 +285,7 @@ subject = "identity"
 what = "The context, persistence, identity core, string, kit and providers crates are standalone ecosystem crates that consumers opt into. The context, persistence, identity core and string crates are pure ecosystem crates that the engine does not depend on."
 mechanism = "hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers: standalone, opt-in. ctx, persistence, sym, str: the engine does not depend on them."
 source = "mock/DESIGN.md.tmpl:32-32"
-provenance = ["mock::DESIGN::#dependency-graph"]
+provenance = ["mock::design::dependency_graph"]
 quote = '''
 hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
 '''
@@ -300,7 +300,7 @@ subject = "identity"
 what = "The string crate depends on the identity core for the identity handle, and the identity core itself depends only on the foundations crates, so it sits below the rest of the ecosystem."
 mechanism = "hilavitkutin-str depends on hilavitkutin-sym; hilavitkutin-sym depends only on arvo and notko."
 source = "mock/DESIGN.md.tmpl:32-32"
-provenance = ["mock::DESIGN::#dependency-graph"]
+provenance = ["mock::design::dependency_graph"]
 quote = '''
 hilavitkutin-ctx, -persistence, -sym, -str, -kit, -providers are standalone ecosystem crates that consumers opt into. ctx, persistence, sym, str are pure ecosystem (engine does not depend on them). hilavitkutin-str depends on hilavitkutin-sym for the identity handle; hilavitkutin-sym itself depends only on the foundations (arvo, notko), sitting below the rest of the ecosystem. kit is a contract crate the engine depends on for its `.add_kit()` method, but it has no reverse dependency on the engine; consumers can author Kits without pulling the engine in. providers ships default Kit impls consumers wire in (interner, future ColumnStorage / Clock / Memory defaults); it consumes api + str + kit + the foundations crates, no reverse dep.
 '''
@@ -318,7 +318,7 @@ what = "The derive that reports a resource value type's footprint emits paths in
 because = "Every resource value type must implement the footprint trait for the sizing arm to be bounded on it, and no blanket default exists without specialization, so a derive is mandatory."
 mechanism = "New crate `hilavitkutin-api-macros` with `[lib] proc-macro = true` shipping `#[derive(ResourceFootprint)]`, emitting `::hilavitkutin_api::footprint::*` paths; `hilavitkutin-extensions-macros` is forbidden from referencing them; the crate count becomes 10 and the proc-macro count 2."
 source = "mock/design_rounds/202606210300/202606210300_topic.api-macros-resourcefootprint-derive.md:10-24, mock/design_rounds/202606210300/202606210300_changelist.doc.lock.md:7-8"
-provenance = ["mock::design_rounds::202606210300::202606210300_topic.api-macros-resourcefootprint-derive::#current-state"]
+provenance = ["mock::design_rounds::t202606210300::t202606210300_topic::current_state"]
 quote = '''
 A3-redo-1 shipped `CollectionBytes` + `ResourceFootprint` traits in `hilavitkutin-api`
 (`src/footprint.rs`). To re-bound `StoreElemBytes for Resource<T>` on `ResourceFootprint`
@@ -354,7 +354,7 @@ subject = "identity"
 what = "The identity handle of the generic interned-identity core is a four-byte handle with a four-bit kind over a twenty-eight-bit id. This reinterprets the four high bits of the current string handle layout, one origin bit plus three reserved, as one kind field, so every bit pattern a string handle holds today is a valid handle. Equality is integer equality over the whole thirty-two bits, so two handles with different kinds are never equal whatever their ids, and that disjointness by kind is the core property the whole design rests on."
 mechanism = "`hilavitkutin-sym` defines `Sym`, a `#[repr(transparent)]` 4-byte handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`; a zero-byte-change reinterpretation of the current `Str` layout."
 source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:22-22"
-provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+provenance = ["mock::design_rounds::t202607241915::t202607241915_topic::changes_proposed"]
 quote = '''
 The identity handle. `hilavitkutin-sym` defines `Sym`, a 4-byte `#[repr(transparent)]` handle over a `SymLayout` bitfield with `kind: 4 at 28` and `id: 28 at 0`. This reinterprets the current `Str` layout's four high bits (one origin plus three reserved) as one 4-bit `kind` field over the same 28-bit id. It is a zero-byte-change reinterpretation: every bit pattern a `Str` can hold today is a valid `Sym`, and the fields simply gain a unified meaning. `Sym` carries integer-equality identity on its whole 32-bit layout, so two `Sym`s with different `kind` values are never equal whatever their ids. That disjointness by kind is the core property the whole design rests on.
 '''
@@ -369,7 +369,7 @@ subject = "identity"
 what = "The identity handle has a three-bit domain tag, a one-bit flag that stays private to the domain and a twenty-eight-bit id, with integer equality across the whole layout, so two handles of differing kind never compare equal. The string domain is then a single kind rather than two, which lets the string interner be a genuine single-kind implementer of the generic interner. Byte-compatibility with the string handle layout is unchanged."
 mechanism = "`Sym`: `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, `flag: 1 at 31`. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. `StringInterner` is a single-`KIND` `Interner<StrDomain>` implementer. Const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`."
 source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:20-20"
-provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+provenance = ["mock::design_rounds::t202607241915::t202607241915_changelist<doc_lock_md>::mockcrateshilavitkutin_symdesignmdtmpl_create"]
 quote = '''
 - `Sym`: the `#[repr(transparent)]` 4-byte handle over `SymLayout` (an `arvo::bitfield!` over `Bits<32, Hot>`) with `id: 28 at 0`, `kind: 3 at 28`, and `flag: 1 at 31`. Integer-equality identity across the whole layout; two `Sym`s of differing `kind` never compare equal. Accessors `kind()`, `id()`, `flag()`, `to_bits()`; constructors `Sym::new(kind, id)` and `Sym::with_flag(self, bit)`. (Refinement of the topic's "4-bit kind": the domain tag is the 3 reserved bits and the origin stays a 1-bit domain-private flag, so the string domain is a single kind rather than two, which lets `StringInterner` be a genuine single-`KIND` `Interner<StrDomain>` implementer. Byte-compatibility is unchanged: const is still nibble `0b0000`, runtime `0b1000`, binder `0b0001`.)
 '''
@@ -388,7 +388,7 @@ subject = "identity"
 what = "The identity core owns the convention that assigns kinds and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current string layout already produces, const strings at zero and runtime strings at the high-bit pattern, which is mandatory for byte-compatibility. The rest are assignable to other domains, and the first consumer generative domain is recorded in the table. The string-domain kind constants live in the string crate, since they are string-domain facts, and the identity core documents the reservation."
 mechanism = "Const strings `0b0000`, runtime strings `0b1000` (today's origin-plus-reserved patterns), vehje's minted binder `0b0001`; the constants live in `hilavitkutin-str`, `hilavitkutin-sym` documents the reservation."
 source = "mock/design_rounds/202607241915/202607241915_topic.sym-generic-interned-identity.md:28-28"
-provenance = ["mock::design_rounds::202607241915::202607241915_topic.sym-generic-interned-identity::#changes-proposed"]
+provenance = ["mock::design_rounds::t202607241915::t202607241915_topic::changes_proposed"]
 quote = '''
 The kind-assignment discipline. `hilavitkutin-sym` owns the kind-assignment convention and documents it, so two domains cannot claim one kind. The four-bit field gives sixteen kinds. Two are reserved for the string domains at exactly the values the current `Str` layout already produces, which is mandatory for byte-compatibility: const strings at `0b0000` and runtime strings at `0b1000` (today's origin-plus-reserved patterns). The remaining values are assignable to other domains; the first consumer generative domain (vehje's minted binder, landing in its own round) is recorded in the table as `0b0001`. The string-domain kind constants themselves live in `hilavitkutin-str`, since they are string-domain facts; `hilavitkutin-sym` documents the reservation.
 '''
@@ -403,7 +403,7 @@ subject = "identity"
 what = "The kind-assignment table is a documented convention owned by the identity core, so two domains cannot claim one tag, and the tag is three bits. The string domain takes the first value, with const and runtime strings told apart by the flag bit and not by tag, and its constant is defined in the string crate, which is mandatory for byte-compatibility. The second value is recorded as a downstream consumer's minted-binder domain, defined in that consumer's own crate, and the remaining values are free."
 mechanism = "`SymKind`: newtype over `Bits<3, Hot>`; `SymKind::new(raw)`. `0b000` the string domain, `0b001` vehje's minted-binder domain, `0b010` through `0b111` free."
 source = "mock/design_rounds/202607241915/202607241915_changelist.doc.lock.md:21-21"
-provenance = ["mock::design_rounds::202607241915::202607241915_changelist.doc.lock::#mock-crates-hilavitkutin-sym-design-md-tmpl-create"]
+provenance = ["mock::design_rounds::t202607241915::t202607241915_changelist<doc_lock_md>::mockcrateshilavitkutin_symdesignmdtmpl_create"]
 quote = '''
 - `SymKind`: newtype over `Bits<3, Hot>` naming the domain tag. `SymKind::new(raw)`. The kind-assignment table (documented convention, owned here so two domains cannot claim one tag): `0b000` the string domain (const/runtime distinguished by the flag bit, not by tag; the constant defined in `hilavitkutin-str`, mandatory for byte-compatibility), `0b001` recorded as vehje's minted-binder domain (defined in its own crate), `0b010` through `0b111` free.
 '''
@@ -423,7 +423,7 @@ what = "A domain declares the shape it belongs to, so a domain of one shape cann
 because = "Associated type defaults are forbidden in this stack, and the compiler refused it when reached for."
 mechanism = "`Domain` gains `type Shape`; `associated_type_defaults` is forbidden."
 source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:43-47"
-provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#what-the-mechanism-is"]
+provenance = ["mock::design_rounds::t202608090130::t202608090130_topic::what_the_mechanism_is"]
 quote = '''
 **A domain declares its shape.** `Domain` gains `type Shape`, so a domain of one
 shape cannot hand its tag to a producer of another and the compiler says so
@@ -444,7 +444,7 @@ subject = "identity"
 what = "A generator is constructed for an origin. Under a shape with no origin bits there is exactly one origin and the constructor takes no argument, so the engine's single-minter use is unchanged. Under a shape with origin bits the only constructor available takes the origin, so a collision requires two peers to claim the same origin explicitly."
 mechanism = "`ORIGIN_BITS = 0` means one origin."
 source = "mock/design_rounds/202608082215/202608082215_changelist.src.lock.md:72-76"
-provenance = ["mock::design_rounds::202608082215::202608082215_changelist.src.lock::#change-generator-new-from-a-zero-seeded-constructor-to-an-origin-taking-one"]
+provenance = ["mock::design_rounds::t202608082215::t202608082215_changelist<src_lock_md>::change_generatornew_from_a_zero_seeded_constructor_to_an_origin_taking_one"]
 quote = '''
 A generator is constructed for an origin. Under a shape with `ORIGIN_BITS = 0`
 there is exactly one origin, and the constructor for that case takes no argument,
@@ -465,7 +465,7 @@ subject = "identity"
 what = "Making the shape trait itself a const trait gives a const construction path that is generic over every shape. A refused bound on an associated type was one bound spelling and not a wall. The per-name const shim added on the default shape, on the reading that a generic const path was unavailable, is deleted, and the string crate returns to the plain names."
 mechanism = "`pub const trait SymShape` with `type Layout: [const] SymLayoutOps`; `const_trait_impl` is a vetted allowed feature. `[const]` bounds belong on trait impls and on function `where` clauses, not on inherent impl headers: `pub const fn new(..) -> Self where S: [const] SymShape` is accepted, `impl<S: [const] SymShape>` is not. Deleted: `new_const`, `to_bits_const`, `with_flag_const`, `id_const`, `kind_const`, `flag_const`."
 source = "mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:73-80, mock/design_rounds/202608090130/202608090130_topic.the-origin-mechanism-round-one-only-named.md:82-85, mock/design_rounds/202608090130/202608090130_changelist.src.lock.md:64-68"
-provenance = ["mock::design_rounds::202608090130::202608090130_topic.the-origin-mechanism-round-one-only-named::#the-const-traits-correction-which-is-the-more-useful-lesson"]
+provenance = ["mock::design_rounds::t202608090130::t202608090130_topic::the_const_traits_correction_which_is_the_more_useful_lesson"]
 quote = '''
 Round one hit `Layout: [const] SymLayoutOps` being refused on an associated type
 bound, concluded const construction was unavailable generically, and shipped a

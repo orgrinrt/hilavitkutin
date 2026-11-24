@@ -6,7 +6,7 @@ subject = "principles"
 what = "Where extension across an ABI boundary is required, the means are registered traits and C-layout descriptors, which the text calls the inventory pattern, and not dynamic dispatch."
 mechanism = "registered traits + `repr(C)` descriptors (inventory pattern), not `dyn`."
 source = "mock/PRINCIPLES.md.tmpl:78-79"
-provenance = ["mock::PRINCIPLES::#no-dyn-no-box-dyn-no-runtime-dispatch"]
+provenance = ["mock::principles::no_dyn_no_boxdyn_no_runtime_dispatch"]
 quote = '''
 Where extension across an ABI boundary is required, use registered
 traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
@@ -23,7 +23,7 @@ what = "Every type anywhere in source, public or private, in a signature or a fi
 mechanism = "Trait: arithmetic ops, sinks, platform providers. Newtype: `UFixed<I, F, S>`, `USize`, `Bool`, `ContentHash`, strategy markers. `repr(C)` enum: `Priority`, `ErrorClass`."
 rejects = ["a fourth bare primitive category", "raw u8..u128, i8..i128, f32, f64, usize, isize or bool in source"]
 source = "mock/PRINCIPLES.md.tmpl:81-94"
-provenance = ["mock::PRINCIPLES::#type-taxonomy"]
+provenance = ["mock::principles::type_taxonomy"]
 quote = '''
 ## Type taxonomy
 
@@ -53,7 +53,7 @@ because = "It is what the no heap principle bottoms out in at the storage layer:
 mechanism = "`Mask64`, `Mask256`, `Seq<T, N: Cap>`, `Map<K, V, N: Cap>`."
 rejects = ["runtime resize of a container", "runtime growth of a container"]
 source = "mock/PRINCIPLES.md.tmpl:102-111"
-provenance = ["mock::PRINCIPLES::#sizes-are-const-at-type-level"]
+provenance = ["mock::principles::sizes_are_const_at_type_level"]
 quote = '''
 ## Sizes are const at type level
 
@@ -78,7 +78,7 @@ subject = "principles"
 what = "If two subsystems solve the same problem differently, one must go. There are no parallel versioning tables, no parallel serialisation paths and no fast path beside a slow path, and there is one mechanism per concern."
 rejects = ["parallel versioning tables", "parallel serialization paths", "a fast path alongside a slow path"]
 source = "mock/PRINCIPLES.md.tmpl:113-117"
-provenance = ["mock::PRINCIPLES::#one-mechanism-not-two"]
+provenance = ["mock::principles::one_mechanism_not_two"]
 quote = '''
 ## One mechanism, not two
 
@@ -98,7 +98,7 @@ subject = "principles"
 what = "All engine runtime state lives in one store. Resources, columns and the execution plan all back onto the same column storage, which owns columns of scalar column values allocated through the memory provider. Every aggregate decomposes struct-of-arrays style into scalar columns, and resource versus column is intent, persistent and cold versus hot and per morsel, and not a separate mechanism."
 mechanism = "`ColumnStorage` owns columns of `ColumnValue` scalars allocated through `MemoryProvider`; `Resource` versus `Column` is intent (persistent / cold versus hot / per-morsel)."
 source = "mock/PRINCIPLES.md.tmpl:119-126"
-provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+provenance = ["mock::principles::unified_columnar_storage"]
 quote = '''
 ## Unified columnar storage
 
@@ -122,7 +122,7 @@ what = "There is no bespoke per-subsystem storage. A subsystem that needs to hol
 because = "It is one mechanism, not two, applied to the data plane: the engine accreted disjoint arenas once, and unwinding them onto the one store is the correction."
 rejects = ["a hand-rolled arena", "a MaybeUninit pool", "a raw fixed buffer holding runtime data outside the column storage and the store markers", "a new arena when a subsystem needs to hold N things"]
 source = "mock/PRINCIPLES.md.tmpl:128-133"
-provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+provenance = ["mock::principles::unified_columnar_storage"]
 quote = '''
 There is no bespoke per-subsystem storage. No hand-rolled arena, no
 `MaybeUninit` pool, no raw fixed buffer holding runtime data outside
@@ -144,7 +144,7 @@ subject = "principles"
 what = "The single sanctioned fixed-array exception is the thread-pool synchronisation structure, with atomic progress and wake slots on cache lines. It is pool coordination and not consumer data, and a storage lint enforces the rule."
 mechanism = "`PoolFrame`: atomic progress / wake slots on cache lines."
 source = "mock/PRINCIPLES.md.tmpl:135-138"
-provenance = ["mock::PRINCIPLES::#unified-columnar-storage"]
+provenance = ["mock::principles::unified_columnar_storage"]
 quote = '''
 The single sanctioned fixed-array exception is the thread-pool
 `PoolFrame` synchronisation structure (atomic progress / wake slots on
@@ -164,7 +164,7 @@ subject = "principles"
 what = "If a concept might need extension, it is a trait with registration, or the inventory equivalent of the stack, and not a C-layout enum. Enums are for truly closed sets only."
 mechanism = "trait + `#[register]` (or the stack's inventory equivalent); closed-set enums: `Priority`, `ErrorClass`, `FieldKind`, `HealthStatus`."
 source = "mock/PRINCIPLES.md.tmpl:140-145"
-provenance = ["mock::PRINCIPLES::#registered-traits-over-repr-c-enums"]
+provenance = ["mock::principles::registered_traits_over_reprc_enums"]
 quote = '''
 ## Registered traits over `repr(C)` enums
 
@@ -185,7 +185,7 @@ what = "Every registrable type has one constant name, and the name field of its 
 mechanism = "`Named::NAME`: `const NAME: &'static str`."
 rejects = ["duplicated names", "copies of the name", "parallel naming"]
 source = "mock/PRINCIPLES.md.tmpl:147-151"
-provenance = ["mock::PRINCIPLES::#named-name-single-source-of-truth"]
+provenance = ["mock::principles::namedname_single_source_of_truth"]
 quote = '''
 ## `Named::NAME` single source of truth
 
@@ -204,7 +204,7 @@ id = "schema_kinds_events_settings_domains_storage_locations_and_access_levels_a
 subject = "principles"
 what = "Schema kinds, events, settings domains, storage locations, access levels and HTTP methods are all zero-sized marker types, which carry compile-time identity without runtime footprint."
 source = "mock/PRINCIPLES.md.tmpl:153-157"
-provenance = ["mock::PRINCIPLES::#zst-markers-for-discrimination"]
+provenance = ["mock::principles::zst_markers_for_discrimination"]
 quote = '''
 ## ZST markers for discrimination
 
@@ -226,7 +226,7 @@ what = "Every crate is no standard library with no allocation. Consumers provide
 mechanism = "`#![no_std]`; `MemoryProvider` (os tier uses mmap; no_os tier: consumer plugs one in)."
 source = "mock/PRINCIPLES.md.tmpl:198-200"
 rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
-provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+provenance = ["mock::principles::no_std_no_alloc"]
 quote = '''
 Every crate is `#![no_std]` with no allocation. Consumers provide a
 `MemoryProvider` (os tier uses mmap; no_os tier requires the consumer
@@ -246,7 +246,7 @@ what = "There is no std tier."
 rejects = ["a std tier"]
 source = "mock/PRINCIPLES.md.tmpl:200-200"
 rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
-provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+provenance = ["mock::principles::no_std_no_alloc"]
 quote = '''
 to plug one in). There is no std tier, and no crate here spawns
 '''
@@ -266,7 +266,7 @@ mechanism = "`ThreadPoolApi`."
 rejects = ["a crate in the family spawning threads"]
 source = "mock/PRINCIPLES.md.tmpl:200-202"
 rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
-provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+provenance = ["mock::principles::no_std_no_alloc"]
 quote = '''
 to plug one in). There is no std tier, and no crate here spawns
 threads: the executor behind `ThreadPoolApi` is the consumer's, or
@@ -284,7 +284,7 @@ id = "the_engine_never_calls_the_allocator_at_runtime_and_plan_time_allocation_h
 subject = "principles"
 what = "The engine never calls into the allocator at runtime. Plan-time allocation, such as arena sizing and fiber layouts, happens once per pipeline lifetime and not per frame."
 source = "mock/PRINCIPLES.md.tmpl:204-206"
-provenance = ["mock::PRINCIPLES::#no-std-no-alloc"]
+provenance = ["mock::principles::no_std_no_alloc"]
 quote = '''
 The engine never calls into the allocator at runtime. Plan-time
 allocation (arena sizing, fiber layouts) happens once per pipeline
@@ -304,7 +304,7 @@ what = "Units are generic over their access set, so the monomorphised function i
 mechanism = "No `dyn`, no `TypeId`, no `std::any`; WUs are generic over their `AccessSet`."
 rejects = ["dyn", "TypeId", "std::any"]
 source = "mock/PRINCIPLES.md.tmpl:210-212"
-provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
+provenance = ["mock::principles::monomorphisation_is_the_dispatch"]
 quote = '''
 No `dyn`. No `TypeId`. No `std::any`. WUs are generic over their
 AccessSet; the monomorphised function IS the type identity. LLVM
@@ -323,7 +323,7 @@ subject = "principles"
 what = "The engine hands the consumer's executor its closures once, on the first parallel run."
 mechanism = "`ThreadPoolApi`."
 source = "mock/PRINCIPLES.md.tmpl:227-229"
-provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
+provenance = ["mock::principles::pre_allocated_thread_pool"]
 quote = '''
 The pool is the consumer's executor behind `ThreadPoolApi`. The
 engine hands it its closures once, on the first parallel run, and
@@ -342,7 +342,7 @@ subject = "principles"
 what = "The thread pool is the consumer's executor: the engine ships only the executor contract, and the executor behind it lives in the consumer or in a crate outside the family. Its workers persist for the pipeline's lifetime."
 mechanism = "`ThreadPoolApi`."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:26-32, mock/design_rounds/202604200055/202603181200_topic.hilavitkutin-design-consolidation.md:1799-1800"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-0918::#what-was-going-on"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers_0918::what_was_going_on"]
 quote = '''
 1. **Consumer supplies it.** hilavitkutin ships only the executor contract (a trait). The OS-thread executor lives in the consumer, or in a crate outside the hilavitkutin* family, gated per target and feature.
 2. **hilavitkutin-platform-std crate.** A separate hilavitkutin crate that openly needs std, not claiming no_std, and exempted from rule-0 in the lint config by name. The engine stays no_std.
@@ -369,7 +369,7 @@ what = "The canonical terms are pipeline, core, phase, waist, trunk, fiber, bran
 rejects = ["chain", "chain group", "partition", "archetype", "entity", "row", "entry", "order"]
 source = "mock/PRINCIPLES.md.tmpl:281-287"
 rev = "d793fa84071089b2b3d93da05b329aa8d7cfac43"
-provenance = ["mock::PRINCIPLES::#vocabulary-discipline"]
+provenance = ["mock::principles::vocabulary_discipline"]
 quote = '''
 ## Vocabulary discipline
 
@@ -389,7 +389,7 @@ id = "the_complexity_against_simplicity_axis_is_an_anti_axis_in_this_workspace_a
 subject = "principles"
 what = "Op chose the hybrid resource addressing over the pure blob, citing future-proofing and a performance parity that the bench measured, so the hybrid carries only upsides. The one point the bench listed against the erased addressing, its backcast machinery and type-erasure round-trip burden, is a complexity-versus-simplicity concern, and that axis is an anti-axis in this workspace: it is not counted against a design."
 source = "mock/design_rounds/202607161000/202606210600_topic.hybrid-decision.md:12-19"
-provenance = ["mock::design_rounds::202607161000::202606210600_topic.hybrid-decision::#the-decision-op-2026-07-02"]
+provenance = ["mock::design_rounds::t202607161000::t202606210600_topic<hybrid_decision_md>::the_decision_op_2026_07_02"]
 quote = '''
 ## The decision (op, 2026-07-02)
 
@@ -413,7 +413,7 @@ subject = "principles"
 what = "Deleting the N-way branch leaves single-trunk phases running serially until head and tail convergence is built, which is a real loss of parallelism on exactly the phases that most want it, and it is still the right move. The canon's parallelism comes from trunks, and a single-trunk phase legitimately has none until the mechanism the canon specifies exists. Keeping a non-canonical mechanism because it is faster than nothing is how drift became load-bearing in the first place, and the longer it stays the more of the engine is built against it."
 mechanism = "Roadmap band W1 builds head and tail; its substrate (`HeadTailConvergence`, `RecordRange::Head` and `Tail`, `thread::Convergence`, the `commutative` flag computed at plan/mod.rs:422 and read nowhere) exists and is unwired."
 source = "mock/design_rounds/202607192110/202607192100_topic.n-way-record-split-is-not-convergence.md:56-65"
-provenance = ["mock::design_rounds::202607192110::202607192100_topic.n-way-record-split-is-not-convergence::#what-removing-it-costs-and-why-that-is-correct"]
+provenance = ["mock::design_rounds::t202607192110::t202607192100_topic::what_removing_it_costs_and_why_that_is_correct"]
 quote = '''
 Deleting the branch leaves single-trunk phases running serially until head+tail is built. That is a
 real loss of parallelism on exactly the phases that most want it, and it is still the right move.
@@ -440,7 +440,7 @@ subject = "principles"
 what = "A lint allow comment on an item line that ends in an opening brace is kept where the lint reads it by pinning the item against the formatter, because the formatter otherwise moves the comment into the body, where it suppresses nothing. The earlier conclusion that nothing was wrongly suppressed was wrong: the strict gate reported live violations at exactly those items, and the allows were decorative while the gate passed only because those lints are advisory. The conflict between the same-line requirement and the formatter was never a wall for op."
 mechanism = "`#[rustfmt::skip]` on the affected items; an allow on a line ending in `;` stays put, one on a line ending in `{` is moved into the body by rustfmt on every commit. The strict gate over both crates dropped from fourteen findings to five."
 source = "mock/design_rounds/202608090500/202608090500_changelist.src.lock.md:55-70, mock/design_rounds/202608090700/202608090700_changelist.src.lock.md:48-57"
-provenance = ["mock::design_rounds::202608090500::202608090500_changelist.src.lock::#change-lint-allow-comments-return-to-their-item-lines"]
+provenance = ["mock::design_rounds::t202608090500::t202608090500_changelist<src_lock_md>::change_lintallow_comments_return_to_their_item_lines"]
 quote = '''
 
 rustfmt moved seven of them into bodies, where they suppress nothing. Restored
@@ -485,7 +485,7 @@ subject = "principles"
 what = "hilavitkutin is intended for the cases that have millions of simulation and crunching work data going constantly. A workload of one to four morsels is almost never a realistic use case for it in the first place, and the benches should reflect that better."
 because = "The maintainer said it on the convergence bench's short-fiber result, that below one to four morsels no parallel arm beats the sequential frame."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-20.md:3-6"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-20::#op-answers-20-13-november-about-12-20-utc-what-hilavitkutin-is-for-and-its-benches"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers_20::op_answers_20_13_november_about_1220_utc_what_hilavitkutin_is_for_and_its_benches"]
 quote = '''
 Op, verbatim, on the convergence bench's short-fiber result (below one to four morsels no parallel arm beats the sequential frame):
 
@@ -504,7 +504,7 @@ id = "the_benches_of_the_engine_against_hand_written_and_plain_rust_paths_are_a_
 subject = "principles"
 what = "The benches that bench hilavitkutin against a hand-written optimised path and against plain Rust on no_std and on std, with the threaded variants of each, do not yet include any of the headline features such as fusing and the adaptive trunk, fiber and morsel crunching on the dataflow-like schedule. The engine in them is bare bones and barely lowers to anything interesting yet. No calls are made based on them yet, and they are a baseline to compare against later."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-21.md:3-5"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-21::#op-answers-21-13-november-about-12-25-utc-the-engine-benches-so-far-are-a-baseline-and-no-call-rests-on-them"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers_21::op_answers_21_13_november_about_1225_utc_the_engine_benches_so_far_are_a_baseline_and_no_call_rests_on_them"]
 quote = '''
 Op, verbatim, following op-answers-20:
 
