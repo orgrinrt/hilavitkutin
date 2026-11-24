@@ -6,7 +6,7 @@ subject = "execution"
 what = "As of 2026-06-11, addendum A1 records as complete and proven: single-core devirtualised dispatch with zero indirect calls, const-eval grouping with the const-gated carrier walk, core-pinned per-trunk parallel dispatch with waist barriers and the frame publish and await protocol, incremental dirty-skip, the accumulator unit-outer path with per-core regions and merge, the plan store-back, the E4 meta pipeline end to end, and the pass-duration EMA through a builder clock slot."
 mechanism = "`BundleMasks` fold, `compute_phases_waist`, `compute_trunks`, rank renumber; `RunTrunkDispatch` with `IsRoot` / `PhaseAt` associated consts; plan store-back `PlanHandle` with six columns; E4: virtual epoch firing, lifecycle bands, the `MetaBlock` bridge, parallel parity with main-thread designated meta bands; ASM gate green."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:27-37"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::state_assessment_truth_of_impl_2026_06_11"]
 quote = '''
 Complete and proven: single-core devirt dispatch (zero indirect calls, ASM
 gate green); const-eval grouping (`BundleMasks` fold, `compute_phases_waist`,
@@ -33,7 +33,7 @@ subject = "execution"
 what = "As of 2026-06-11, addendum A1 records that the plan cache is never populated and that the steal fallback is an unimplemented placeholder."
 mechanism = "`PlanCache` never populated; `steal_fallback` is `todo!()`."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:41-41"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#state-assessment-truth-of-impl-2026-06-11"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::state_assessment_truth_of_impl_2026_06_11"]
 quote = '''
 `PlanCache` is never populated; `steal_fallback` is `todo!()`; RCM rides only
 '''
@@ -50,7 +50,7 @@ subject = "execution"
 what = "Cross-checked against the consolidation spec, the spec never special-cases single-core as a code path. Sequential at one core with no overhead is one of the per-phase strategy modes, single-core being trivially ordered is a statement about ordering, pool size is the physical core count and thread count is the lesser of the physical core count and the parallelisable bound, morsel-to-core affinity is an adaptive plan-stage parameter, and the compiled per-core program is the dispatch, with one program, one arriver at each phase sync point and one worker at one core, so nothing forks."
 mechanism = "Spec lines: `:1956` sequential 1.00x as a strategy among MAX_FUSE / BALANCED / MAX_SPLIT / sequential (`:1916-1956`); `:605` single-core = trivially ordered; `:1799` pool size = `physical_core_count`; `:1826` thread count = `min(physical_cores, parallelisable ...)`; R6 morsel-to-core affinity (`:2442-2446`); domain 17 compiled per-core program (`:1596-1613`)."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:11-20"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#what-i-found-the-verification-op-asked-for"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::what_i_found_the_verification_op_asked_for"]
 quote = '''
 ## What I found (the verification op asked for)
 
@@ -77,7 +77,7 @@ subject = "execution"
 what = "Framing the cons-list walk over fiber columns as a single-core dispatch core, distinct from the parallel-path shape, is special-casing that the ruling forbids. The unified per-core program, with per-fiber devirtualised local slices of unit functions, is the only dispatch shape. The machinery the cons-list-walk sketches proved is reusable as an internal detail of how the sequence of units of a fiber is walked, and not as a separate single-core dispatch shape."
 mechanism = "`RunFiberCol` cons-list walk (`DESIGN.md.tmpl:143-145` and the 2026-06 dispatch sketches); the unified shape is per-fiber devirtualised LOCAL `&[WuFn]` slices, the canonical domain-17 dispatch; reusable machinery: `EngineCtx` projection, the 7-param GAT tie, accumulator-inline, devirtualisation of monomorphised trait dispatch."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:25-25"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#what-this-corrects-intermediate-drift-now-superseded"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::what_this_corrects_intermediate_drift_now_superseded"]
 quote = '''
 - The `RunFiberCol` cons-list-walk framed as a "single-core dispatch core, distinct from the parallel-path shape" (`DESIGN.md.tmpl:143-145` and the 2026-06 dispatch sketches' single-core framing) is exactly the special-casing this ruling forbids. The unified per-core program (per-fiber devirtualised LOCAL `&[WuFn]` slices, the canonical domain-17 dispatch) is the only dispatch shape. The cons-list-walk sketches' proven machinery (EngineCtx projection, the 7-param GAT tie, accumulator-inline, devirtualisation of monomorphised trait dispatch) is reusable as an internal detail of how a fiber's WU sequence is walked, but not as a separate single-core dispatch shape.
 '''
@@ -96,7 +96,7 @@ subject = "execution"
 what = "The two-gate mandate, single-core to completion and then parallel, is re-read as validation and bench milestones of the one engine. Gate 1 is the unified engine running correctly and benching at parity configured to one core, with the multi-core scaffolding present but degenerate. Gate 2 is the same engine benching well at N cores, with barriers, convergence and multi-worker distribution doing real work. No code is special-cased by core count."
 mechanism = "Gate 1 at one core: real plan, real per-core-program dispatch, pool with one worker, strategy=sequential, adapt."
 source = "mock/research/202606061000_canon-amendment-unified-engine.md:26-26"
-provenance = ["mock::research::202606061000_canon-amendment-unified-engine::#what-this-corrects-intermediate-drift-now-superseded"]
+provenance = ["mock::research::t202606061000_canon_amendment_unified_engine::what_this_corrects_intermediate_drift_now_superseded"]
 quote = '''
 - The two-gate mandate (single-core to completion, then parallel) is re-read as validation/bench milestones of the one engine: Gate 1 = the unified engine runs correctly and benches at parity configured to one core (real plan, real per-core-program dispatch, pool with one worker, strategy=sequential, adapt; the multi-core scaffolding present but degenerate); Gate 2 = the same engine benches well at N cores (barriers, convergence, multi-worker distribution now doing real work). No code is special-cased by core count.
 '''
@@ -115,7 +115,7 @@ subject = "execution"
 what = "The head and tail mid slot is resolved as a made design call on 2026-07-19: it is a record boundary, uniform with the full record range, independent of layout and fitting the protocol, and morsel-aligned by construction. The rename to mid record and the doc note on static seed versus dynamic cursor land with the G2-Nd convergence build round."
 mechanism = "`mid_slot` is a RECORD boundary, uniform with `RecordRange::Full`; rename to `mid_record`; record `202607201500_mid-slot-semantics-call.md`; G2-Nd convergence build round."
 source = "mock/research/seed/governance.md:172-177"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 7. **Head+tail `mid_slot` semantics**: RESOLVED as a made design call
    (2026-07-19, record `202607201500_mid-slot-semantics-call.md`):
@@ -137,7 +137,7 @@ subject = "execution"
 what = "The evidence for the GATE-2 deviations 1 and 6, the inline pool frame with its pin and the inline GATE-2 scratch, was delivered on 2026-07-19. A sketch shows the whole-plane arena route mechanically proven, and it dissolves the consumer pin and about 48 KiB of single-core dead weight. The proposed ruling is the relocation round."
 mechanism = "Record `202607201400_gate2-deviation-1-6-evidence.md`; sketch `202607201300_arena-poolframe` WORKS; ~48 KiB single-core dead weight; `PoolFrame` with `Pin`."
 source = "mock/research/seed/governance.md:131-139"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
 5. **The six GATE-2 agent-call deviations** each await an
    evidence-then-bless ruling. See [[execution]]. Deviations 1 and 6
@@ -161,7 +161,7 @@ subject = "execution"
 what = "The GATE-2 deviation 5, raw scheduler aliasing, was audited on 2026-07-19 with a confirmed hole: the between-frames mutable surface aliases the shared scheduler reference held by a parked worker, which is miscompilation-class and independent of timing. The plane relocation is therefore required for soundness, and deviations 1, 5 and 6 resolve in one round. The finding is catalogued as an ignored test."
 mechanism = "Record `202607201600`; between-frames `&mut` surface aliases a parked worker's held `&Scheduler`."
 source = "mock/research/seed/governance.md:139-144"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
    round. Deviation 5 (raw aliasing): AUDITED with a CONFIRMED hole
    (2026-07-19, record `202607201600`): the between-frames `&mut`
@@ -182,7 +182,7 @@ subject = "execution"
 what = "The evidence for the GATE-2 deviation 2, the core-ownership mask, was delivered: the five-check asm gate re-ran green with zero indirect calls in every dispatch body, and the perf gate stands as the second oracle. The bless holds, with the escalation to build-script code generation armed."
 mechanism = "Record `202607202200`; asm-gate five-check green; perf gate as second oracle; build-script-codegen escalation armed."
 source = "mock/research/seed/governance.md:144-148"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
    round; the finding is catalogued as an ignored test. Deviation 2 (core-ownership mask): EVIDENCE DELIVERED (record
    `202607202200`): the asm-gate five-check re-ran green (zero indirect
@@ -202,7 +202,7 @@ subject = "execution"
 what = "The design memo for the GATE-2 deviation 4, the pointer-size spawn, was delivered: the mechanism is sound as shipped and a contract gap is named. The proposed ruling blesses the mechanism, lifts the size check to compile time, and folds the widening of inline storage into the plane relocation round."
 mechanism = "Record `202607202000`; size check lifted to compile time; inline-storage widening folded into the plane relocation round."
 source = "mock/research/seed/governance.md:148-152"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
    armed. Deviation 4 (pointer-size spawn): DESIGN MEMO DELIVERED
    (record `202607202000`): sound as shipped, contract gap named, the
@@ -222,7 +222,7 @@ subject = "execution"
 what = "The GATE-2 deviation 3, park-immediately, is resolved by bench on 2026-07-19. The canonical spin-then-park middle tier was built, with a budget parameter on both frame waits, a consumer-tunable setting and a budget-sweep equivalence test, and the wake policy bench ruled for park-immediately, reproducibly. Across seven wait policies, three sizes and three invocations, park is never worse and no spin policy is ever better. The round-1 point margins are retired as variance-inflated, and the spin iteration is an ISB instruction on aarch64 at 9 to 20 ns. The default is zero and the machinery ships tunable."
 mechanism = "Round `202607202310` + follow-through `202607202351`, record `202607202340_wake-policy-evidence.md`, margins and mechanism corrected by the re-examination `202607210100` (the controlling evidence); `RunCfg::WAKE_SPIN_BUDGET`; wake_policy bench; seven wait policies, three sizes, three invocations; ISB on aarch64, 9 to 20 ns per spin iteration."
 source = "mock/research/seed/governance.md:152-164"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
    relocation round. Deviation 3 (park-immediately): RESOLVED BY BENCH
    (2026-07-19, round 202607202310 + follow-through 202607202351,
@@ -250,7 +250,7 @@ subject = "execution"
 what = "Any future telemetry selection through the tier pick must beat park-immediately on a paired within-process oracle. The batch's deviation channels are now all delivered."
 mechanism = "`pick_tier` telemetry selection; paired within-process oracle."
 source = "mock/research/seed/governance.md:164-167"
-provenance = ["mock::research::seed::governance::#open-questions-blocking-the-freeze"]
+provenance = ["mock::research::seed::governance::open_questions_blocking_the_freeze"]
 quote = '''
    20 ns). The default is 0, the machinery ships tunable, and any
    future `pick_tier` telemetry selection must beat park-immediately
@@ -270,7 +270,7 @@ id = "the_engine_chooses_which_core_owns_which_trunk_and_pinning_a_thread_to_a_c
 subject = "execution"
 what = "The engine chooses which core owns which trunk. Pinning a thread to a core is the executor's."
 source = "mock/PRINCIPLES.md.tmpl:229-231"
-provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
+provenance = ["mock::principles::pre_allocated_thread_pool"]
 quote = '''
 the workers persist for the pipeline's lifetime. The engine chooses
 which core owns which trunk; pinning a thread to a core is the
@@ -289,7 +289,7 @@ subject = "execution"
 what = "The number of closures handed out is the smaller of the worker count and the parallelisable width plus one. The worker count is the executor's count after the engine's clamp, the parallelisable width is the most trunks any phase carries, and the one extra is the convergence worker."
 mechanism = "`min(worker_count, parallelisable_width + 1)`."
 source = "mock/PRINCIPLES.md.tmpl:233-236"
-provenance = ["mock::PRINCIPLES::#pre-allocated-thread-pool"]
+provenance = ["mock::principles::pre_allocated_thread_pool"]
 quote = '''
 Closures handed out = `min(worker_count, parallelisable_width + 1)`,
 where `worker_count` is the executor's count after the engine's
@@ -309,7 +309,7 @@ subject = "execution"
 what = "A run of the scheduler takes no parameters. The run configuration is supplied by the consumer through the builder, with defaults for a configuration that can be built trivially, and dispatch is routed at the type level through a slot of the configuration."
 mechanism = "`run(&mut self) -> Cfg::Out`, built from the frame's `notko::Outcome<(), AccumRefused>`; `RunCfg` supplied via `.with(my_cfg)`; defaults via `HasTrivialCtor`; `RunCfgDispatch<Self>` slot; `Scheduler<'frame, Cfg, E>` propagates a frame lifetime through `ExecutionPlan<'frame, ...>` to the per-worker entry, validated by the PoolFrame lifetime sketch under nightly Rust."
 source = "mock/DESIGN.md.tmpl:40-42"
-provenance = ["mock::DESIGN::#scheduler-run-signature"]
+provenance = ["mock::design::schedulerrun_signature"]
 quote = '''
 ### `Scheduler::run()` signature
 
@@ -328,7 +328,7 @@ subject = "execution"
 what = "Dispatch code generation is a sealed trait with a single shipped implementation that lowers to closed-form arithmetic with zero blr instructions. Three dispatch approaches ship in the first version."
 mechanism = "Sealed `trait DispatchCodegen<Cfg: RunCfg>` with TAIT `type CoreDispatch = impl Fn(...)`; sole impl `StandardCodegen`, zero `blr`; `DispatchApproach` variants ScheduleMega, TrunkMega, IndirectPerFiber."
 source = "mock/DESIGN.md.tmpl:52-54"
-provenance = ["mock::DESIGN::#dispatch-codegen"]
+provenance = ["mock::design::dispatch_codegen"]
 quote = '''
 ### Dispatch codegen
 
@@ -347,7 +347,7 @@ subject = "execution"
 what = "Dispatch is monomorphised per fiber shape, so the number of generated variants is the number of unique shapes and not exponential in the number of units. A bench showed that sealed-trait dispatch costs nothing compared with hand-written direct calls at every size."
 mechanism = "`fn run_fiber<S: FiberShape>(...)` over sealed `FiberShape: Sealed` marker carrying `type WuTuple` and `const SHAPE_ID`; combinatorics K (unique shapes), not 2^N; bench `dispatch_static`."
 source = "mock/DESIGN.md.tmpl:56-56"
-provenance = ["mock::DESIGN::#dispatch-codegen"]
+provenance = ["mock::design::dispatch_codegen"]
 quote = '''
 Per-fiber-shape generic monomorphisation: `fn run_fiber<S: FiberShape>(...)` over sealed `FiberShape: Sealed` marker carrying `type WuTuple` + `const SHAPE_ID`. Combinatorics K (unique shapes), not 2^N. Sealed-trait dispatch is empirically free vs hand-written direct calls per the `dispatch_static` bench at every N.
 '''
@@ -364,7 +364,7 @@ subject = "execution"
 what = "The adaptation is configured over nine independent axes and not through opaque modes, each axis with its own sampling cadence. Four convenience presets are provided as constant functions over the multi-axis space."
 mechanism = "Nine-axis `AdaptConfig`: `pass_duration`, `phase_ema`, `fiber_ema`, `change_class`, `cache_residency`, `throughput_trending`, `predictive_parking`, `memory_watermark`, `core_idle_time`; cadence-interleave via per-axis `sample_skip`; presets `off()/fast()/standard()/aggressive()` as const fn."
 source = "mock/DESIGN.md.tmpl:58-60"
-provenance = ["mock::DESIGN::#adapt-subsystem"]
+provenance = ["mock::design::adapt_subsystem"]
 quote = '''
 ### Adapt subsystem
 
@@ -381,7 +381,7 @@ subject = "execution"
 what = "The adapt metrics are split into a hot path in a scratch arena and a cold part. A snapshot is published as a resource at the schedule end, and the per-axis metric resources ship individually with an optional kit recipe that bundles them."
 mechanism = "`AdaptMetrics`: scratch-arena hot path + `Resource<AdaptMetrics>` snapshot at ScheduleEnd; per-fiber 64B-aligned hot lines (progress + inline metrics, AoS-packed within line); per-core 64B-aligned park slots; cold SoA arena for end-of-pass derived metrics; `PassDurationMetrics`, `PhaseEMAMetrics` etc.; optional `MetricsKit`."
 source = "mock/DESIGN.md.tmpl:62-62"
-provenance = ["mock::DESIGN::#adapt-subsystem"]
+provenance = ["mock::design::adapt_subsystem"]
 quote = '''
 `AdaptMetrics` hot-cold split: scratch-arena hot path + `Resource<AdaptMetrics>` snapshot at ScheduleEnd. Per-fiber 64B-aligned hot lines (progress + inline metrics, AoS-packed within line); per-core 64B-aligned park slots; cold SoA arena for end-of-pass derived metrics. Per-axis sub-resources shipped individually (`PassDurationMetrics`, `PhaseEMAMetrics`, etc.); optional `MetricsKit` recipe bundles them.
 '''
@@ -398,7 +398,7 @@ subject = "execution"
 what = "Each kind of anomaly is its own virtual marker type, so that observers of anomalies compose through the union of access sets."
 mechanism = "`Virtual` markers `BalanceAnomaly`, `MemoryPressure`, `ThroughputAnomaly`, `FiberEMADrift`, `PhaseEMADrift`."
 source = "mock/DESIGN.md.tmpl:64-64"
-provenance = ["mock::DESIGN::#adapt-subsystem"]
+provenance = ["mock::design::adapt_subsystem"]
 quote = '''
 Per-anomaly `Virtual` marker types (`BalanceAnomaly`, `MemoryPressure`, `ThroughputAnomaly`, `FiberEMADrift`, `PhaseEMADrift`) for observer composition via AccessSet union.
 '''
@@ -413,7 +413,7 @@ subject = "execution"
 what = "The moving-average computation is vectorised from the first version with SIMD gated by target, on a baseline for each of the two main architectures and a scalar fallback. Wider vector sets are added as benches drive them, and no speedup is claimed for the vector versions yet: the one bench that measured them timed a different kernel from the shipped one, and its auto-vectorisation arm stands for no compiler baseline."
 mechanism = "cfg-gated `core::arch::*` SIMD: NEON aarch64 + SSE2 x86_64 baseline + scalar fallback; AVX2/AVX-512/SVE expand bench-driven; no speedup claimed: `ema_axis_h` timed an accumulator carried across one stream, not the shipped element-wise update."
 source = "mock/DESIGN.md.tmpl:66-66"
-provenance = ["mock::DESIGN::#adapt-subsystem"]
+provenance = ["mock::design::adapt_subsystem"]
 quote = '''
 EMA vectorisation is cfg-gated `core::arch::*` SIMD from day one (NEON aarch64 + SSE2 x86_64 baseline + scalar fallback; AVX2/AVX-512/SVE expand bench-driven). No speedup is claimed for the vector arms yet. The one bench that measured them, `ema_axis_h` (`mock/benches/ema_axis_h_n1024_findings.md`), timed an accumulator carried across the samples of one stream, where the shipped contract is an independent element-wise update. On that kernel at N = 1024 it puts NEON at 41 ns against 85 ns for the scalar arm, 2.07 times in the function under test, and the two within 1.4 percent of each other end to end (2197 ns against 2228 ns). Its autovec arm writes through a lane index no vectoriser can touch, so it stands for no compiler baseline.
 '''
@@ -430,7 +430,7 @@ subject = "execution"
 what = "The executor is an open trait that is monomorphised into the scheduler, with a hybrid executor as the default."
 mechanism = "`trait Executor: Sealed`; default `HybridExecutor`; `Scheduler<'frame, Cfg, E = HybridExecutor>`."
 source = "mock/DESIGN.md.tmpl:70-70"
-provenance = ["mock::DESIGN::#thread-pool-executor"]
+provenance = ["mock::design::thread_pool__executor"]
 quote = '''
 Open `trait Executor: Sealed` monomorphised. Default `HybridExecutor` impl. `Scheduler<'frame, Cfg, E = HybridExecutor>` propagation.
 '''
@@ -448,7 +448,7 @@ subject = "execution"
 what = "Workers wait in three tiers. The tier is chosen from the predicted wait of the phase, with spin only for the shortest waits, spin plus an operating-system wait for the middle range and an immediate park for the longest, using each operating system's own atomic-wait primitive."
 mechanism = "Linux `futex(2)`, macOS `__ulock_*`, Windows `WaitOnAddress`; per-phase `predicted_wait_ns` atomic slot in `PoolFrame`: <2us spin-only, 2-50us spin+futex, >50us skip spin and park immediately."
 source = "mock/DESIGN.md.tmpl:72-72"
-provenance = ["mock::DESIGN::#thread-pool-executor"]
+provenance = ["mock::design::thread_pool__executor"]
 quote = '''
 Three-tier parking via per-OS atomic-wait primitives: Linux `futex(2)`, macOS `__ulock_*`, Windows `WaitOnAddress`. Tier selection driven by per-phase `predicted_wait_ns` atomic slot in `PoolFrame`: <2µs spin-only, 2-50µs spin+futex, >50µs skip spin and park immediately.
 '''
@@ -464,7 +464,7 @@ subject = "execution"
 what = "The pool frame is the engine-internal data plane, kept on per-pool cache lines. The phase barrier is a single centralised atomic counter, and the last worker to arrive wakes all the others."
 mechanism = "`PoolFrame<MAX_CORES, MAX_PHASES>`: `shutdown: AtomicBool`, `phase_arrived: AtomicU32`, `predicted_wait_ns: [AtomicU32; MAX_PHASES]`, `progress_slots: [AtomicUsize; MAX_CORES]`; barrier = centralised atomic counter + futex-wake-all by the last arriver."
 source = "mock/DESIGN.md.tmpl:74-74"
-provenance = ["mock::DESIGN::#thread-pool-executor"]
+provenance = ["mock::design::thread_pool__executor"]
 quote = '''
 `PoolFrame<MAX_CORES, MAX_PHASES>` engine-internal data plane on per-pool cache lines: `shutdown: AtomicBool`, `phase_arrived: AtomicU32`, `predicted_wait_ns: [AtomicU32; MAX_PHASES]`, `progress_slots: [AtomicUsize; MAX_CORES]`. Phase barrier = centralised atomic counter + futex-wake-all by last arriver.
 '''
@@ -481,7 +481,7 @@ subject = "execution"
 what = "Classification of performance and efficiency cores is done for each operating system from the first version, and each core class has its own wake strategy with different default spin counts."
 mechanism = "CPUID 0x1A (x86_64), `/sys/.../cluster_id` + cpufreq (Linux), `sysctl hw.perflevel0` (macOS), `GetSystemCpuSetInformation` (Windows). `WakeStrategy { p_spin_iters, e_spin_iters, futex_threshold_ns, park_threshold_ns }` per CoreClass; defaults P=128, E=32."
 source = "mock/DESIGN.md.tmpl:76-76"
-provenance = ["mock::DESIGN::#thread-pool-executor"]
+provenance = ["mock::design::thread_pool__executor"]
 quote = '''
 Per-OS P/E core classification ships in v1: CPUID 0x1A (x86_64), `/sys/.../cluster_id` + cpufreq (Linux), `sysctl hw.perflevel0` (macOS), `GetSystemCpuSetInformation` (Windows). `WakeStrategy { p_spin_iters, e_spin_iters, futex_threshold_ns, park_threshold_ns }` per-CoreClass. Defaults P=128, E=32.
 '''

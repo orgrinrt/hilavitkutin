@@ -6,7 +6,7 @@ subject = "kits"
 what = "The kit crate defines the preset trait. A kit is a declarative bundle of the units it brings and the stores it owns, and the engine reads the bundle at compile time when a consumer adds the kit."
 mechanism = "`hilavitkutin-kit`: `type Units` (cons-list of WorkUnits) and `type Owned` (cons-list of Resources / Columns / Virtuals), read at compile time on `.add_kit::<K>()`."
 source = "mock/DESIGN.md.tmpl:21-21"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
 '''
@@ -23,7 +23,7 @@ subject = "kits"
 what = "The kit crate is a contract crate that the engine depends on for adding a kit, and it has no dependency back on the engine. Consumers can therefore author kits without pulling the engine in."
 mechanism = "Engine `.add_kit()` depends on `hilavitkutin-kit`; `hilavitkutin-kit` has no other hilavitkutin-crate dependency."
 source = "mock/DESIGN.md.tmpl:21-21, mock/DESIGN.md.tmpl:32-32"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-kit` | Kit preset trait. Declarative bundle: `type Units` (cons-list of WorkUnits) plus `type Owned` (cons-list of Resources / Columns / Virtuals). Engine reads associated types at compile time on `.add_kit::<K>()`. Standalone (no other hilavitkutin-crate deps). |
 ---
@@ -42,7 +42,7 @@ subject = "kits"
 what = "In its first version the providers crate ships the interner value-type surface and the declarative interner kit, whose units are an empty read set and whose owned stores are a resource."
 mechanism = "InternerApi / HasInterner / MemoryArena plus a `default_interner` constructor; `InternerKit` in the round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`."
 source = "mock/DESIGN.md.tmpl:24-24"
-provenance = ["mock::DESIGN::#crate-layout"]
+provenance = ["mock::design::crate_layout"]
 quote = '''
 | `hilavitkutin-providers` | Default Resource-backed providers for the scheduler. v0 ships the interner value-type surface (InternerApi / HasInterner / MemoryArena + default_interner constructor) plus the declarative `InternerKit` (round-4 shape: `type Units = read![]`, `type Owned = read![Resource<...>]`). Future modules add ColumnStorage / Clock / Memory defaults per consumer demand. Standalone (no engine dep). |
 '''
@@ -59,7 +59,7 @@ subject = "kits"
 what = "The kit crate ships exactly one trait. A kit is a declarative bundle that names the units it ships and the stores it owns, and the engine reads those declarations at compile time and accumulates them into the scheduler builder's typestate. The engine depends on the kit crate for adding a kit, and the reverse direction does not exist."
 mechanism = "`#![no_std]`; one trait `Kit`; the engine's `SchedulerBuilder<Wus, Stores>` offers `.add_kit::<K>()`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:3-9"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#hilavitkutin-kit-design-overview"]
+provenance = ["mock::crates::hilavitkutin_kit::design::hilavitkutin_kit_design_overview"]
 quote = '''
 `#![no_std]`, zero deps. Ships exactly one trait, `Kit`. The
 hilavitkutin engine depends on this crate so its
@@ -83,7 +83,7 @@ subject = "kits"
 what = "Most consumer apps register the same handful of units and stores together: a runner unit with its column outputs, a logger unit with its diagnostic store, an interner resource. A kit captures one such bundle, declaring the units it ships and the stores it owns."
 mechanism = "`type Units` (the WorkUnits) and `type Owned` (the stores)."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:13-18"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#purpose"]
+provenance = ["mock::crates::hilavitkutin_kit::design::purpose"]
 quote = '''
 The scheduler builder accumulates type-state across each
 registration call. Most consumer apps register the same handful of
@@ -105,7 +105,7 @@ subject = "kits"
 what = "Authoring a kit is purely a type-level statement. Kit authors write no install method, compose no builder method chains and name the scheduler builder nowhere. The engine's add-kit call reads the kit's units and owned stores at compile time and prepends them onto the builder's accumulators."
 mechanism = "`.add_kit::<K>()` reads `K::Units` and `K::Owned` and prepends them onto the SchedulerBuilder's accumulators via `Concat`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:20-25"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#purpose"]
+provenance = ["mock::crates::hilavitkutin_kit::design::purpose"]
 quote = '''
 Authoring a Kit is purely a type-level statement. Kit authors do
 not write an `install` method, do not compose builder method
@@ -128,7 +128,7 @@ subject = "kits"
 what = "The kit crate exists separately so that the kit shape lives below the engine but above the api and context layer. A consumer can author kits without pulling the engine in, the layering is the same shape the context crate has (an ecosystem crate the engine consumes for one specific contract), and any future kit-related helpers that recurring patterns call for ship in the kit crate."
 mechanism = "A downstream crate can author a Kit depending only on `hilavitkutin-kit` plus the bare api markers (`Resource<T>`, `Column<T>`, `Virtual<T>`, `WorkUnitBundle`, `StoreBundle`, `Replaceable` from `hilavitkutin-api`). `hilavitkutin-kit` slots between `hilavitkutin-ctx` and the engine."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:27-30, mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:213-225"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#purpose"]
+provenance = ["mock::crates::hilavitkutin_kit::design::purpose"]
 quote = '''
 The crate exists separately so the Kit shape lives below the
 engine but above the api / ctx layer. A consumer can author Kits
@@ -163,7 +163,7 @@ subject = "kits"
 what = "The kit trait has two associated types and no more. The units type is a cons-list of the unit declarations the kit ships and the owned type is a cons-list of store markers the kit declares as its own, and both bounds are core primitives of the api crate."
 mechanism = "`pub trait Kit { type Units: WorkUnitBundle; type Owned: StoreBundle; }`; owned markers `Resource<T>` / `Column<T>` / `Virtual<T>`; `WorkUnitBundle` and `StoreBundle` are in `hilavitkutin-api`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:34-45"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#the-trait"]
+provenance = ["mock::crates::hilavitkutin_kit::design::the_trait"]
 quote = '''
 ```rust
 pub trait Kit {
@@ -191,7 +191,7 @@ subject = "kits"
 what = "The kit trait carries no member for what a kit requires and no helper that documents requirements. The third topic originally proposed one, derivable as the set difference between the units' access set and the owned stores, but an audit investigation confirmed that the type-level set-difference operator hits the same coherence wall as the round-3 proof of non-membership, and the fourth round drops the claim. What a kit requires lives in prose: the kit author documents the external resources the kit reads but does not own in the kit's rustdoc."
 mechanism = "No `Required` associated type and no `requirements_doc()` helper; proposed shape was `Units::AccessSet \\ Owned`; evidence in `mock/research/sketches/202605050800_dedup_concat/` (audit M6); the wall is the same as round-3's NotIn proof."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:47-55"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#the-trait"]
+provenance = ["mock::crates::hilavitkutin_kit::design::the_trait"]
 quote = '''
 The trait carries no `Required` member and no `requirements_doc()`
 helper. Topic 3 originally proposed `Required` as an associated
@@ -218,7 +218,7 @@ subject = "kits"
 what = "A kit may bundle units and own no state, and an empty owned list is fine because the empty cons-list satisfies the store bundle trivially. A kit may also ship only owned state with no units, as a pure provider preset. In that case the kit declares the type-level commitment that the store exists, and the actual value is supplied at the app's call site, since the api has no way for a kit to give default resources."
 mechanism = "`TracingKit`: `type Units = read![TracerFiber, SampleCollector]; type Owned = read![];`. `InternerKit<const BYTES: usize, const ENTRIES: usize>`: `type Units = read![]; type Owned = read![Resource<StringInterner<MemoryArena<BYTES, ENTRIES>>>];`, value supplied by `builder.add_resource(default_interner::<...>())`; there is no `Kit::default_resources()` association (BACKLOG entry). The `read!` macro from `hilavitkutin-api` expands the flat list into `Cons<H, T>`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:59-111"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#authoring-a-kit"]
+provenance = ["mock::crates::hilavitkutin_kit::design::authoring_a_kit"]
 quote = '''
 A consumer-side Kit that owns a `RunnerKit` shape with one WU plus
 two output columns:
@@ -288,7 +288,7 @@ subject = "kits"
 what = "Every type in the owned position of a public kit implementation must be at least as visible as the implementation itself, because the language forbids private types in the associated-type positions of a public trait. Two kit shapes work: a whole-kit public shape, where kit-internal is only a documentation convention that the framework cannot enforce, and a whole-kit crate-private shape inside a per-kit crate, where the crate offers a public helper function that takes a builder and returns one without naming the kit, which is the genuine kit-private mode. A single kit implementation cannot mix the levels, the fourth-round kits ship in the first shape, and the second is an optional choice when kit-private state is genuinely needed at the crate boundary."
 mechanism = "Rust E0446 (\"private type in public interface\") forbids `pub(crate)` or module-private types in pub-trait associated-type positions. Pattern 1: whole-kit `pub` (the Kit struct, every Owned type, every WorkUnit type); pattern 2: whole-kit `pub(crate)` within a per-kit crate with a `pub` helper fn. Evidence: round-4 S5 sketch, `mock/research/sketches/202605050615_kit_taxonomy/FINDINGS.md`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:113-143"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#kit-internal-types-and-visibility"]
+provenance = ["mock::crates::hilavitkutin_kit::design::kit_internal_types_and_visibility"]
 quote = '''
 ### Kit-internal types and visibility
 
@@ -336,7 +336,7 @@ subject = "kits"
 what = "A kit declaration depends only on the api crate, for the bundle traits, the replaceable marker and the three store markers, and on the kit crate itself for the kit trait. Kit-author crates do not import the engine directly, and the forbidden-imports rule continues to apply and is trivially satisfied. The earlier bridge layer, which let a kit's install method call the builder against any builder type, is gone, because the new shape has no install method and never names a builder."
 mechanism = "Depends on `hilavitkutin-api` (`WorkUnitBundle`, `StoreBundle`, `Replaceable`, `Resource<T>` / `Column<T>` / `Virtual<T>`) and `hilavitkutin-kit` (`Kit`); the v0.1 `BuilderResource` bridge layer is removed."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:145-158"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#kits-in-crates-that-cannot-import-the-engine"]
+provenance = ["mock::crates::hilavitkutin_kit::design::kits_in_crates_that_cannot_import_the_engine"]
 quote = '''
 ### Kits in crates that cannot import the engine
 
@@ -366,7 +366,7 @@ subject = "kits"
 what = "Kits compose by being added in sequence on the scheduler builder. Each add-kit call accumulates the kit's units into the bundle and its owned stores into the stores by type-level concatenation. A kit whose units read another kit's owned state is fine, but that state must be among the accumulated stores by the time the build resolves the bound, so adding kits in dependency order is the simplest discipline, and the builder accepts any order that satisfies the proof."
 mechanism = "`Scheduler::builder().resource::<...>(default_interner()).add_kit::<RunnerKit>().add_kit::<LinterKit>().add_kit::<TracingKit>().build()`; `ContainsAll<Wus::AccumRead>` proof at `.build()`; type-level `Concat`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:160-180"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#composition"]
+provenance = ["mock::crates::hilavitkutin_kit::design::composition"]
 quote = '''
 ## Composition
 
@@ -403,7 +403,7 @@ subject = "kits"
 what = "A kit cannot install another kit, because there is no install body to write, and composing kits is the consumer's choice through the builder chain. A kit author who wants to bundle several kits behind one registration declares a super-kit whose units and owned stores are the union of the inner kits' projections, written out at the type level in the super-kit's implementation."
 mechanism = "Super-kit `Units` and `Owned` via `Concat` composition."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:182-188"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#composition"]
+provenance = ["mock::crates::hilavitkutin_kit::design::composition"]
 quote = '''
 A Kit cannot install another Kit inside its declaration; there is
 no install body to write. Kit composition is the consumer's
@@ -427,7 +427,7 @@ subject = "kits"
 what = "Replaceable is the only enforced annotation on owned types, and kit authors opt in per type. An override of a kit-owned resource by the app is rejected at compile time unless the type opted in, which makes the polarity safer by default and follows the workspace rule of tools and not policies."
 mechanism = "`Replaceable` marker in `hilavitkutin-api`; the static bound `T: Replaceable` on `Scheduler::replace_value::<T>(value)` in the engine crate; `impl Replaceable for LintConfig {}` allows override, `RoundState` without the impl is locked. Polarity decision in sketch S4, `mock/research/sketches/202605050555_replaceable_polarity/`."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:190-211"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#replaceable-enforced-override-gating"]
+provenance = ["mock::crates::hilavitkutin_kit::design::replaceable_enforced_override_gating"]
 quote = '''
 ## Replaceable: enforced override gating
 
@@ -466,7 +466,7 @@ subject = "kits"
 what = "The kit crate declares a recursion limit of 512 defensively. A consumer composing deep kit chains sends the trait solver through the cons-list at each add-kit call and again at build, the default of 128 suffices for shallow chains and 512 covers realistic compositions without consumer-side awareness. A consumer whose own crate hits the limit anyway declares its own limit at its crate root, and the kit trait's diagnostic message references that fallback so consumers land on the directive without reading the api docs first."
 mechanism = "`#![recursion_limit = \"512\"]`; Concat recursion at `.add_kit`, ContainsAll recursion plus WorkUnitBundle accumulator recursion at `.build()`; the api crate documents a consumer-side `#![recursion_limit = \"1024\"]`; S1b depth-5 sketch (`mock/research/sketches/202605050700_deep_stacking_d5/`): 25 WUs at 5 tiers compile in 0.53s without exceeding 512."
 source = "mock/crates/hilavitkutin-kit/DESIGN.md.tmpl:227-247"
-provenance = ["mock::crates::hilavitkutin-kit::DESIGN::#crate-internal-recursion-limit"]
+provenance = ["mock::crates::hilavitkutin_kit::design::crate_internal_recursion_limit"]
 quote = '''
 ## Crate-internal recursion limit
 

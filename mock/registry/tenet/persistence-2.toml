@@ -6,7 +6,7 @@ subject = "persistence"
 what = "A backup is a copy of the data directory. Every file is an archive and is always consistent because writes complete through the memory provider, and the consumer wraps the copy in whatever container format it wants."
 mechanism = "Container formats named: ZIP+zstd, custom container."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:208-213"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#backup"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::backup"]
 quote = '''
 ## Backup
 
@@ -29,7 +29,7 @@ subject = "persistence"
 what = "The engine never depends on the persistence crate's types. Consumers wire persistence in through a persistence provider trait registered on the scheduler builder, and the engine's resource resolution reaches the provider through the standard provider accessor pattern."
 mechanism = "`PersistenceProvider` trait registered on the `SchedulerBuilder`; the standard `Has...Provider` accessor pattern. Round 202605101036, Topic 8 axis C."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:236-242"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::engine_integration_boundary_round_202605101036"]
 quote = '''
 ## Engine integration boundary (round 202605101036)
 
@@ -53,7 +53,7 @@ subject = "persistence"
 what = "A unit that runs at the end of a pass, supplied by the consumer or the layer it builds on, reads the accumulator columns and writes them through the provider's commit. The commit is the phase-end synchronisation point, so persistence writes are ordered after the phase barrier and before the next phase's morsel dispatch begins, and the barrier's release-acquire pair guarantees visibility across threads."
 mechanism = "`PassEnd` WorkUnit writes through `PersistenceProvider::commit(...)`; Release-Acquire pair of the barrier (Topic 3 S7 atomic-ordering protocol)."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:244-250"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::engine_integration_boundary_round_202605101036"]
 quote = '''
 PassEnd WU drain protocol: a substrate or consumer-authored PassEnd
 WorkUnit reads accumulator columns and writes through
@@ -76,7 +76,7 @@ subject = "persistence"
 what = "The narrow integration shape preserves the rule that the persistence crate is a standalone ecosystem crate. Consumers that build on the engine ship their own provider implementations, and the persistence crate ships no glue on the engine side."
 mechanism = "Substrate consumers named: vehje, future loimu."
 source = "mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl:252-254"
-provenance = ["mock::crates::hilavitkutin-persistence::DESIGN::#engine-integration-boundary-round-202605101036"]
+provenance = ["mock::crates::hilavitkutin_persistence::design::engine_integration_boundary_round_202605101036"]
 quote = '''
 The narrow integration shape preserves the standalone-ecosystem-crate
 rule. Substrate consumers (vehje, future loimu) ship their own
@@ -96,7 +96,7 @@ what = "Persistence is the cold-store sibling of the runtime data plane, and the
 because = "This preserves the rule that the persistence crate is a standalone ecosystem crate."
 mechanism = "`Resource<P>` where `P: PersistenceProvider`; a PassEnd unit calls `PersistenceProvider::commit`."
 source = "mock/design_rounds/202605101036/202605101036_topic.resource-resolution.md:47-53"
-provenance = ["mock::design_rounds::202605101036::202605101036_topic.resource-resolution::#axis-c-persistence-spine-hilavitkutin-persistence-integration"]
+provenance = ["mock::design_rounds::t202605101036::t202605101036_topic<resource_resolution_md>::axis_c_persistence_spine__hilavitkutin_persistence_integration"]
 quote = '''
 The persistence spine is the cold-store sibling to the runtime data plane. `hilavitkutin-persistence` ships `PersistenceContext` (existing crate). The runtime engine accesses persistence via:
 
@@ -117,7 +117,7 @@ subject = "persistence"
 what = "Op ruled on 2026-09-18, choosing among persistence being standalone, persistence building on the str crate and the api crate, and persistence using str without the api, that persistence builds on str and api: the per-crate design holds, and the scope of the lint for persistence is corrected to allow the str crate and the api crate while it still forbids the engine."
 mechanism = "`hilavitkutin-persistence` lists `hilavitkutin-str` and takes memory from the shared `MemoryProvider` of `hilavitkutin-api`; rule-4 of the lint config. Op's answer: \"Builds on str and api\"."
 source = "mock/research/202611130850_the-record-read-whole/OP-ANSWERS-0918.md:36-46"
-provenance = ["mock::research::202611130850_the-record-read-whole::OP-ANSWERS-0918::#what-was-going-on"]
+provenance = ["mock::research::t202611130850_the_record_read_whole::op_answers_0918::what_was_going_on"]
 quote = '''
 > `hilavitkutin-persistence`: its DESIGN lists `hilavitkutin-str` and a shared `MemoryProvider` from the api as dependencies, but the lint config (rule-4) says persistence is a standalone crate and forbids importing `hilavitkutin_str` and `hilavitkutin_api`. Which one holds?
 
@@ -145,7 +145,7 @@ subject = "persistence"
 what = "Op ruled on 2026-09-18, choosing among persistence being standalone, persistence building on the str crate and the api crate, and persistence using str without the api, that persistence builds on str and api. The per-crate design governs and the lint line was wrong. The lint now forbids only the engine and the context crate, and its reason says what the crate builds on. The cargo rule, which said persistence and str do not depend on each other, now says persistence builds on the str crate and the api crate, never on the engine or the context crate."
 mechanism = "The `forbidden-imports` rule for `hilavitkutin-persistence` forbids only `hilavitkutin` and `hilavitkutin-ctx`; the per-crate design lists `hilavitkutin-str` and takes memory from the shared `MemoryProvider` of `hilavitkutin-api`; `mock/agent/rules/cargo.md.tmpl` carries the dependency rule. Op's answer: \"Builds on str and api\"."
 source = "mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:70-70, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:77-77, mock/design_rounds/202609181402/202609181401_topic.hilavitkutin-on-arvo-dev.md:83-83, mock/design_rounds/202609181402/202609181402_changelist.doc.lock.md:31-31, mock/design_rounds/202609190201/202609190200_topic.review-fixes-on-arvo-dev.md:12-12"
-provenance = ["mock::design_rounds::202609181402::202609181401_topic.hilavitkutin-on-arvo-dev::#hilavitkutin-persistence"]
+provenance = ["mock::design_rounds::t202609181402::t202609181401_topic::hilavitkutin_persistence"]
 quote = '''
 `mock/crates/hilavitkutin-persistence/DESIGN.md.tmpl` lists `hilavitkutin-str` as a dependency, the persistence sweep round `202604201319` built on it, and the design takes all memory from the shared `MemoryProvider`, whose trait lives in `hilavitkutin-api`. The forbidden-imports rule for the crate forbids both, and `mock/agent/rules/cargo.md.tmpl` says persistence and str do not depend on each other. The per-crate design and the lint config disagree. Handed back.
 ---

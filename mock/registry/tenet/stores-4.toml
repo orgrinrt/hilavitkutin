@@ -6,7 +6,7 @@ subject = "stores"
 what = "The swap of a replaceable resource value takes the new value directly, because the bindings are keyed by the value type and the signature should agree with the data plane it writes. The alternatives kept a marker that the install has to translate away and reached the same call site behind more machinery. It was recorded as a reasoned pick and not a lookup, so that a reviewer can redirect it in one round."
 mechanism = "`pub fn replace_value<V: Replaceable, Index>(&mut self, new: V) where Stores: Locate<Resource<V>, Index>, Index: WitnessIndex, <Vals as BindingsFor>::Bindings: Selector<V, Index>`."
 source = "mock/design_rounds/202607192710/202607192720_changelist.src.lock.md:13-19, mock/design_rounds/202607192710/202607192720_changelist.src.lock.md:31-37"
-provenance = ["mock::design_rounds::202607192710::202607192720_changelist.src.lock::#change-replace-value-installs-the-value-taking-the-value-type"]
+provenance = ["mock::design_rounds::t202607192710::t202607192720_changelist::change_replace_value_installs_the_value_taking_the_value_type"]
 quote = '''
 ```rust
 pub fn replace_value<V: Replaceable, Index>(&mut self, new: V)
@@ -38,7 +38,7 @@ subject = "stores"
 what = "On 2026-07-19 op ruled, in the words \"revert it now\", that the install that the round before had given to the swap of a replaceable value be reverted."
 mechanism = "`Scheduler::replace_value`; the install resolved the binding through `Selector<V, Index>` and assigned the new value through the returned pointer; round `202607192700`."
 source = "mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md:5-15"
-provenance = ["mock::design_rounds::202607193110::202607193100_topic.revert-the-blob-install::#topic-revert-the-blob-install-from-replace-value"]
+provenance = ["mock::design_rounds::t202607193110::t202607193100_topic::topic_revert_the_blob_install_from_replace_value"]
 quote = '''
 **Scope:** `Scheduler::replace_value` (`scheduler/mod.rs`), its test, and the design invariant that
 round `202607192700` added.
@@ -65,7 +65,7 @@ subject = "stores"
 what = "As of the revert round of 2026-07-19, the design stated that a swap of a replaceable value is a member-by-member copy of each leaf into its column slot, the same path as the initial drain, and not an in-place blob write of the whole value, with scalars written one per leaf and sequences and maps written element by element consecutively. Until that install could be built the swap returned to marking the store dirty without writing, which is honest about doing nothing rather than doing the wrong thing, the signature taking the value stayed, and the test became a catalogued red. The statement was made in the design because the code could not then express it."
 mechanism = "`replace_value` marks the store dirty without writing; the old signature took `T` unifying to `Resource<Ra>`, a `PhantomData` marker carrying no value; cited to `202606210600`."
 source = "mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md:13-15, mock/design_rounds/202607193110/202607193100_topic.revert-the-blob-install.md:30-43, mock/design_rounds/202607193110/202607193110_changelist.doc.lock.md:13-19"
-provenance = ["mock::design_rounds::202607193110::202607193100_topic.revert-the-blob-install::#topic-revert-the-blob-install-from-replace-value"]
+provenance = ["mock::design_rounds::t202607193110::t202607193100_topic::topic_revert_the_blob_install_from_replace_value"]
 quote = '''
 It should not have. `202606210600` says a `Replaceable` swap is a "member-by-member copy of each leaf
 into its column slot ... **not an in-place blob memcpy**". The install is exactly the in-place blob
@@ -107,7 +107,7 @@ subject = "stores"
 what = "The engine design states a swap of a replaceable value as installing the whole value in one blob write through the same selector witness that the drain and the projection read use, plus a store-dirty mark, with no other pointer derivation on the swap path. The member-by-member wording was grounded on the storage layout from before the bench and is refuted under the bench-decided blob layout. The earlier revert of the one-line install was a mis-citation, and the blob write is the specified install and not the excluded one. Collection-bearing values gain per-record element writes only when the collection wiring lands, and until then the collection halves of a swapped value are out of scope, tracked by the catalogued test."
 mechanism = "`replace_value<V: Replaceable>` performs the whole-blob `ptr::write` through `Selector<V, Index>` plus `mark_dirty` (S1); `mock/crates/hilavitkutin/DESIGN.md.tmpl` swap paragraphs between the accumulator regioning text and the region-boundary sharing text; collection wiring #344 (S3); the revert followed the A2-5 mis-citation."
 source = "mock/design_rounds/202607200900/202607200500_topic.replaceable-swap-semantics.md:10-15, mock/design_rounds/202607200900/202607200900_changelist.doc.lock.md:13-30"
-provenance = ["mock::design_rounds::202607200900::202607200500_topic.replaceable-swap-semantics::#the-problem"]
+provenance = ["mock::design_rounds::t202607200900::t202607200500_topic::the_problem"]
 quote = '''
 Canon has no swap specification. The shipped `replace_value` marks dirty without installing (the D1 install was reverted after the A2-5 mis-citation was found); `replace_resource` is callable only for a type no consumer registers (its `PlanAffecting` bound is sealed with one run-config implementor); the plan-dirty trigger canon promises (a swapped plan-affecting resource forces plan recompute) is unwired end to end (the band gate reads `first_frame` only); and three artifacts (the engine DESIGN template's swap paragraph, the `replace_value` FIXME, the catalogued test's ignore reason) still state the bench-refuted member-by-member layout as if it were canon.
 
@@ -150,7 +150,7 @@ what = "The marker that makes a resource value type plan-affecting is an open ma
 because = "The sealed marker had exactly one implementor in the workspace, the default run configuration, which is a run-configuration trait and not a resource-value trait, so the replace-resource function was callable for one type and not for anything a consumer registers as a resource, and a consumer could not widen it."
 mechanism = "`pub trait PlanAffecting {}` in place of `PlanAffecting: BuilderInput + private::Sealed`; the only implementor was `DefaultRunCfg` (hilavitkutin-api/src/run_cfg.rs:155); `replace_resource<T: PlanAffecting, Index>`; A2-3 ruling, S4 exclusivity; section in `mock/crates/hilavitkutin-api/DESIGN.md.tmpl`."
 source = "mock/design_rounds/202607192710/202607192720_changelist.src.lock.md:53-64, mock/design_rounds/202607200900/202607200900_changelist.doc.lock.md:6-7, mock/design_rounds/202607200900/202607200900_changelist.doc.lock.md:67-79"
-provenance = ["mock::design_rounds::202607192710::202607192720_changelist.src.lock::#not-changed-replace-resource-and-why"]
+provenance = ["mock::design_rounds::t202607192710::t202607192720_changelist::not_changed_replace_resource_and_why"]
 quote = '''
 `replace_resource<T: PlanAffecting, Index>` keeps its stub, because it carries a second problem this
 round should not paper over.
@@ -197,7 +197,7 @@ subject = "stores"
 what = "A column value reports its width as the size of the storage type in bits for every type, through a default constant in the trait body that an empty blanket implementation inherits, with no full specialization and no per-width specialisations for sub-byte types. When bitpacking lands, the storage layer reads sub-byte width from arvo's width traits at the point of consumption."
 mechanism = "Trait-body default const plus an empty blanket impl; `ColumnValue` reports `size_of * 8`; no `default const`, no full `specialization`, no `min_specialization` coverage per arvo width inside `ColumnValue`; the BACKLOG note `ColumnValue specialisation coverage` replaced."
 source = "mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:7-7, mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:11-11, mock/design_rounds/202606091600/202606091600_changelist.doc.lock.md:15-15"
-provenance = ["mock::design_rounds::202606091600::202606091600_changelist.doc.lock::#doc-changelist-spec-free-columnvalue"]
+provenance = ["mock::design_rounds::t202606091600::t202606091600_changelist<doc_lock_md>::doc_changelist_spec_free_columnvalue"]
 quote = '''
 Rewrites the `ColumnValue` documentation to the spec-free shape this round ships: a trait-body default const plus an empty blanket impl, no `default const`, no full `specialization`, and no sub-byte width specialisations. Records that sub-byte storage width is a future bitpacking concern sourced from arvo's width traits, not a `ColumnValue` specialization behind a forbidden feature.
 ---
@@ -221,7 +221,7 @@ what = "A resource contributes its footprint to the per-store size fold through 
 because = "Bounding the resource on the column-value trait and using its plain size does not resolve for a value type that is not a column value, so the earlier bound made the fold fail for such a resource."
 mechanism = "`Resource<T>` re-bounded on `ResourceFootprint` (const `L1_BYTES`), where A3a bounded `Resource<T>` on `T: ColumnValue` and used `size_of::<T>()`; `Column<T>` keeps the `ColumnValue` bound."
 source = "mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md:59-59, mock/research/sketches/202606210100_a3-resource-footprint/FINDINGS.md:96-102"
-provenance = ["mock::research::sketches::202606210100_a3-resource-footprint::FINDINGS::#claim-2-per-resource-type-footprint-trait-hand-written"]
+provenance = ["mock::research::sketches::t202606210100_a3_resource_footprint::findings::claim_2_per_resource_type_footprint_trait_hand_written"]
 quote = '''
 A `ResourceFootprint { const L1_BYTES: USize }` trait the value type implements. The
 ---
@@ -248,7 +248,7 @@ subject = "stores"
 what = "As of 2026-06-20, the A3 sketch records that the access mask backs its bits in one machine word, so the skeleton caps the stores at 64. The per-store size array and the sum walk share that ceiling until the multi-container bitmask swap lands, and the cap is not specific to the per-store size collection."
 mechanism = "`AccessMask` backed by one `USize` word, `StoreCeiling::ASSERT_FITS`, cap 64, a `< 64` ceiling; the arvo-bitmask multi-container swap."
 source = "mock/research/sketches/202606202400_a3-per-store-size-collection/FINDINGS.md:106-108"
-provenance = ["mock::research::sketches::202606202400_a3-per-store-size-collection::FINDINGS::#hard-sub-problems-surfaced"]
+provenance = ["mock::research::sketches::t202606202400_a3_per_store_size_collection::findings::hard_sub_problems_surfaced"]
 quote = '''
 3. 64-store skeleton cap: `AccessMask` backs bits in one `USize` word
    (`StoreCeiling::ASSERT_FITS`, cap 64); the size array and the sum walk share that
@@ -268,7 +268,7 @@ subject = "stores"
 what = "The write-list mask assertion of the frame view is evaluated during monomorphisation, so a check does not report it and only a build does. A gate that only checks does not see a kernel naming a lane twice, and the fixtures hold because they are built."
 mechanism = "E0080 \"evaluation panicked\" from the inline `const` block; `probes/lane_twice.rs`: `cargo check --bin lane_twice` passes (`probes/out/lane_twice.check.txt`) and `cargo build --bin lane_twice` fails (`probes/out/lane_twice.build.txt`); trybuild builds its fixtures, so fixtures 05 and 06 hold under it."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:23-23, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:36-37, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:70-70"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_shape"]
 quote = '''
 The position mask: each lane's place in the registry is found by the solver (`Pick<X, P>` on a list tagged by lane, `P` inferred as `Here` or `There<..>`), read back as a count through `notko_hlist::Position<Slot>::INDEX`, and folded into `Stage::MASK: u128`, with `Stage::LEN` the list's length. The runner asserts `MASK.count_ones() == LEN` per kernel, and `A::MASK & B::MASK == 0` for two kernels of one step, in an inline `const` block in `Frame::step` and `Frame::step2`.
 ---
@@ -291,7 +291,7 @@ subject = "stores"
 what = "In the frame view sketch the position mask has no bit past 128, and a larger registry was not probed. At 128 lanes the registry walk runs nested in the write-list walk, so the depth is about the sum of the two, and the crate that instantiates the kernel needs a recursion limit over 256, set as an attribute and not a feature line."
 mechanism = "`Stage::MASK: u128`; `Pick` (one step per lane) nested in `Stage` (one step per member); at limit 256 the solver stops with `error[E0275]` (`probes/limit_256.rs`); a limit of 300 holds (`lengths_128.rs`); the test file's own `list!` macro needs a raised limit at 128 for the macro's recursion; lengths 8 and 32 evaluate under the default limit of 128."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:23-23, mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:62-68"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-shape"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_shape"]
 quote = '''
 The position mask: each lane's place in the registry is found by the solver (`Pick<X, P>` on a list tagged by lane, `P` inferred as `Here` or `There<..>`), read back as a count through `notko_hlist::Position<Slot>::INDEX`, and folded into `Stage::MASK: u128`, with `Stage::LEN` the list's length. The runner asserts `MASK.count_ones() == LEN` per kernel, and `A::MASK & B::MASK == 0` for two kernels of one step, in an inline `const` block in `Frame::step` and `Frame::step2`.
 ---
@@ -317,7 +317,7 @@ subject = "stores"
 what = "The contract on two writers of one column can rest on the data-bound form. Under the plan's default the stored columns are bound from data, so the type-level mask has no list to fold for them and holds only where a list is fixed in the engine's types. The data-bound form is also safe without the check, since the split hands each staged column to at most one kernel and a second claimant would get nothing rather than an alias. What the check adds is that the second writer is refused at bind, by name, and not found at the step. The price is that the refusals the typed form makes at compile time become values."
 mechanism = "A second writer is refused at bind, a write to an undeclared column at the write, and a column past capacity at bind, as values; only the value-type confusion (fixture 11) and the bypasses of the check (06c, 06d) stay compile errors; call 7's default binds stored columns from data; fixtures 05 and 06 are the type-level form."
 source = "mock/research/sketches/202611122242_frame-view-typestate/FINDINGS.md:91-91"
-provenance = ["mock::research::sketches::202611122242_frame-view-typestate::FINDINGS::#the-data-bound-twin-of-05-and-06"]
+provenance = ["mock::research::sketches::t202611122242_frame_view_typestate::findings::the_data_bound_twin_of_05_and_06"]
 quote = '''
 Which of the two the contract can rest on: the data-bound form. Under call 7's default the stored columns are bound from data, so the type-level mask of 05 and 06 has no list to fold for them, and holds only where a list is fixed in the engine's types. The data-bound form is also safe without the check. The split hands each staged column to at most one kernel, so a second claimant would get nothing rather than an alias. What the check adds is that the second writer is refused at bind, by name, instead of finding at the step that its writes are refused. The price is that the three refusals the typed form makes at compile time become values. A second writer is refused at bind, a write to an undeclared column at the write, and a column past capacity at bind. Only the value-type confusion (11) and the bypasses of the check (06c, 06d) stay compile errors.
 '''

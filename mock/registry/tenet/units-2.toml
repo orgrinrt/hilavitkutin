@@ -6,7 +6,7 @@ subject = "units"
 what = "A unit that is a pure per-record map, reading one column and writing one column, value to value, with no cross-record state, may additionally declare that map as an opt-in fusion contract: an input type, an output type and an apply function from one to the other. This is orthogonal to the execute contract, does not change execute, and a simple unit never implements it. Its purpose is linear fusion within a fiber: a straight read-after-write sequence of such maps is folded at the type level into a single fused unit whose body keeps every intermediate in a register. A unit that carries cross-record state, an accumulator, does not implement the contract and stays on the ordinary per-unit dispatch path."
 mechanism = "An associated input type, an associated output type and an apply function. The fold is a compile-time composition of concrete monomorphised calls, no function pointers and no dynamic dispatch; dead-store elimination removes the intermediate column traffic. The shipped trait name and signature live in the engine-facing rustdoc."
 source = "mock/crates/hilavitkutin-api/DESIGN.md.tmpl:485-511"
-provenance = ["mock::crates::hilavitkutin-api::DESIGN::#the-function-under-a-name-and-fusion"]
+provenance = ["mock::crates::hilavitkutin_api::design::the_function_under_a_name_and_fusion"]
 quote = '''
 ### The function under a name, and fusion
 
@@ -50,7 +50,7 @@ subject = "units"
 what = "The execute body of a unit receives a context and nothing else. It does not receive handles to global storage, does not reach into a registry and holds no long-lived references. Everything it can touch is exactly what its access set declared, projected into the context for the duration of one call."
 mechanism = "`trait WorkUnit<Sched = Always> { type Read: AccessSet; type Write: AccessSet; type Hint; type Ctx<'frame>; fn execute<'frame>(&self, ctx: &Self::Ctx<'frame>); }`"
 source = "mock/research/pre_seed/202606111800_canonical-spec-standalone.md:138-145, mock/research/pre_seed/202606111800_canonical-spec-standalone.md:155-158"
-provenance = ["mock::research::pre_seed::202606111800_canonical-spec-standalone::#3-1-workunit"]
+provenance = ["mock::research::pre_seed::t202606111800_canonical_spec_standalone::t31_workunit"]
 quote = '''
 ```rust
 trait WorkUnit<Sched = Always> {
@@ -78,7 +78,7 @@ id = "inside_a_fiber_a_unit_is_a_pure_function_from_column_values_to_column_valu
 subject = "units"
 what = "The founding round's api topic describes the processing of one record inside a fiber as the composition of its units, each a pure function that takes column values and produces column values, with the intermediate columns as named wires between stages that need no memory inside the fiber. The closure a unit registers moves from taking references to columns to a pure function of values that returns values, and the flattener wires the returns to the next stage's inputs."
 source = "mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1767-1771, mock/design_rounds/202604200055/202603151200_topic.hilavitkutin-api-surface.md:1840-1843"
-provenance = ["mock::design_rounds::202604200055::202603151200_topic.hilavitkutin-api-surface::#chain-internal-columns-are-dead-stores-only-chain-outputs-need-materialization"]
+provenance = ["mock::design_rounds::t202604200055::t202603151200_topic::chain_internal_columns_are_dead_stores__only_chain_outputs_need_materialization"]
 quote = '''
 Within a chain, processing row n is: `d(c(b(a(input_n))))`. Each WU is
 a pure function that takes column values and produces column values. The
@@ -105,7 +105,7 @@ subject = "units"
 what = "The canonical consumer spelling of a unit reduces to its read set, write set, hint and schedule. The full nine-parameter engine context shape is computed by an api-side type function instead of being hand-spelled per unit, if a feasibility sketch proves the type function under the current toolchain. If it walls, the fallback discussion re-opens with the sketch findings, and the derive-macro and keep-explicit alternatives stay on the table only in that event."
 mechanism = "Working name `CtxFor<'frame, R, W, Sched>` replacing the hand-spelled nine-parameter `EngineCtx`; sketch covers GAT normalization and GCE interaction; `BuilderInput` and `HasSchedule` impls stay explicit either way."
 source = "mock/research/202606111400_canonical-design-addendum-a1.md:112-120"
-provenance = ["mock::research::202606111400_canonical-design-addendum-a1::#a1-6-the-consumer-surface-adopts-a-computed-ctx-type-if-feasible"]
+provenance = ["mock::research::t202606111400_canonical_design_addendum_a1::a1_6_the_consumer_surface_adopts_a_computed_ctx_type_if_feasible"]
 quote = '''
 The canonical consumer spelling of a WorkUnit reduces to `Read`, `Write`,
 `Hint`, and schedule; the full nine-parameter `EngineCtx` shape is computed
@@ -129,7 +129,7 @@ subject = "units"
 what = "The context of a unit is a generic associated type over a frame lifetime owned by the scheduler. The engine instantiates it at dispatch time with the live frame lifetime, so a unit can read borrows into state derived from the pool frame, such as progress slots and predicted-wait readers, without its implementation carrying an explicit lifetime parameter. Dispatch sites use higher-ranked trait bounds."
 mechanism = "`WorkUnit::Ctx` is `type Ctx<'frame>`; borrows into `PoolFrame`-derived state; dispatch sites use HRTB; validated by the lifetime sketch shipped alongside round 202605101036."
 source = "mock/PRINCIPLES.md.tmpl:217-223"
-provenance = ["mock::PRINCIPLES::#monomorphisation-is-the-dispatch"]
+provenance = ["mock::principles::monomorphisation_is_the_dispatch"]
 quote = '''
 `WorkUnit::Ctx` is a Generic Associated Type (`type Ctx<'frame>`)
 over a frame lifetime owned by the scheduler. The engine instantiates
@@ -152,7 +152,7 @@ subject = "units"
 what = "Whether a unit is dispatched per morsel or per record is inferred from the shape of its access set. A unit that works on columns receives a morsel window, and a unit that touches only resources is dispatched per record."
 mechanism = "Column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record."
 source = "mock/DESIGN.md.tmpl:86-86"
-provenance = ["mock::DESIGN::#morsel-loop"]
+provenance = ["mock::design::morsel_loop"]
 quote = '''
 Per-morsel vs per-record WU dispatch inferred from AccessSet shape: column-shaped WUs receive a `Morsel<T>` window; resource-only WUs dispatch per-record.
 '''
@@ -170,7 +170,7 @@ what = "The scheduling hint stays sealed over the tuple shapes the api names and
 because = "A runner with a dimension that the triple lacks cannot express it, and unsealing would cost the engine its ability to reason about every hint shape."
 mechanism = "`pub trait HintExt: 'static {}` and `impl<U: UrgencyValue, D: DivisibilityValue, S: SignificanceValue, X: HintExt> SchedulingHint for (U, D, S, X) {}`; `SchedulingHint` sealed at hint.rs:68 for `(U, D, S)` triples."
 source = "mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-89, mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48"
-provenance = ["mock::design_rounds::202607171807::202607171733_topic.plannable-declaration-split::#the-hint-s-extensibility-settled-in-the-same-round"]
+provenance = ["mock::design_rounds::t202607171807::t202607171733_topic::the_hints_extensibility_settled_in_the_same_round"]
 quote = '''
 ## The hint's extensibility, settled in the same round
 
@@ -209,7 +209,7 @@ id = "a_four_tuple_hint_schedules_as_its_three_axis_prefix_and_reading_a_fourth_
 subject = "units"
 what = "A hint carrying an extension marker schedules as its urgency, divisibility and significance prefix would, and reading a fourth dimension is a later gate for whichever runner defines one. The design makes no claim of present engine behaviour for the extension, because the engine is untouched, the hint has no extraction api, and no extension markers ship."
 source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:44-48, mock/design_rounds/202607171824/202607171824_changelist.doc.lock.md:8-14, mock/design_rounds/202607171824/202607171824_topic.plannable-post-review-fixes.md:24-29"
-provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#change-document-the-hintext-slot-in-the-hint-prose"]
+provenance = ["mock::design_rounds::t202607171807::t202607171807_changelist<doc_lock_md>::change_document_the_hintext_slot_in_the_hint_prose"]
 quote = '''
 Where the scheduling hint is described (the three-axis tuple), note that `SchedulingHint` stays
 sealed and gains one additive arm: the 4-tuple `(U, D, S, X: HintExt)`, where `HintExt` is an open
@@ -247,7 +247,7 @@ subject = "units"
 what = "The round that introduced the runner-agnostic declaration trait lands that trait in full, as the load-bearing prerequisite that a runner which does not use the column-record execution model can implement, and lands only the extension mechanism of the hint, with zero extension markers defined, because no hint dimension beyond urgency, divisibility and significance has a consumer yet. Inventing markers now would be speculative surface with no reader, so the mechanism is ready and the content waits for a real need. The divisibility axis already expresses whether work can be split or paused, which a tiling-capable runner would reach for first, so the extension slot may never gain a marker; it exists so that a genuinely new dimension lands additively and not by unsealing."
 mechanism = "`Plannable<Schedule>` in full; `HintExt` mechanism only, the 4-tuple `(U, D, S, X: HintExt)` arm; zero `HintExt` markers defined."
 source = "mock/design_rounds/202607171807/202607171807_changelist.doc.lock.md:10-24, mock/design_rounds/202607171807/202607171733_topic.plannable-declaration-split.md:73-77"
-provenance = ["mock::design_rounds::202607171807::202607171807_changelist.doc.lock::#scope-decision-recorded-here-the-topic-said-more-this-narrows-it"]
+provenance = ["mock::design_rounds::t202607171807::t202607171807_changelist<doc_lock_md>::scope_decision_recorded_here_the_topic_said_more_this_narrows_it"]
 quote = '''
 ## Scope decision recorded here (the topic said more; this narrows it)
 
@@ -287,7 +287,7 @@ what = "The builder appends each registered unit to the unit carrier, so the car
 because = "The producer-before-consumer registration requirement is a provisional compromise, to be relaxed once the engine applies the cache-optimal order itself."
 mechanism = "`UnitDispatch<W>::NextWus` becomes the append output; `WorkUnitKind::place` appends; recursive `WuAppend<P>` on `WuCons`/`WuNil`; build-time check against the `DependencyGraph` returning a `BuildError` variant; the recommended order is the RCM-row order from `plan.rcm_order` where available, else a plain topological order; store and platform carriers unchanged; roadmap r2 section 8 decision (b)."
 source = "mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:12-14, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:20-20, mock/design_rounds/202606061446/202606061446_topic.gate1-dispatch-builder-append.md:22-26"
-provenance = ["mock::design_rounds::202606061446::202606061446_topic.gate1-dispatch-builder-append::#current-state"]
+provenance = ["mock::design_rounds::t202606061446::t202606061446_topic::current_state"]
 quote = '''
 The scheduler builder PREPENDS each registered WorkUnit onto the carrier. The type accumulator router `UnitDispatch<W>::NextWus = Cons<W, Wus>` (`hilavitkutin-api/src/builder_input.rs:116`) and the value carrier `impl Place<P> for WorkUnitKind { type NextWus<W> = WuCons<P, W>; fn place(..) }` (`hilavitkutin-api/src/store_values.rs:182-196`) both cons the newly-registered WU onto the front. So the `WuVals` carrier ends up in REVERSE registration order. `Scheduler::run` compensates with the runtime `topo_order` field (computed by `derive_phase_dispatch_order` in `build()`) consumed through the `CollectFiber`/`FiberSlot` indexing path. `build()` runs Kahn cycle-detection on the dependency graph but does NOT check that the registration SEQUENCE is itself a valid topological order; it then discards the `DependencyGraph`.
 
@@ -317,7 +317,7 @@ what = "The access-set substrate adopts the recursive list shape under a marker 
 because = "The recursive shape has no structural arity cap, since two implementations cover any depth; set operations scale as one recursive implementation each; the verbosity of the nested list disappears behind a macro that emits the type alias from a flat list; and the error messages are comparable, more verbose but more informative."
 mechanism = "`Empty` terminator and `Cons<H, T>` with a recursive `Contains<X>`; `#[marker] pub trait Contains<X>` (feature `marker_trait_attr`); a `set!` macro; the flat-arity `Contains` impls cover arities 1 through 12 by macro, and a recursive `(H, R)` Cons-style impl already exists in `access.rs`."
 source = "mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:15-15, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:110-113, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:115-116, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:152-161, mock/research/sketches/202605050503_accessset_arity/FINDINGS.md:163-165"
-provenance = ["mock::research::sketches::202605050503_accessset_arity::FINDINGS::#setup"]
+provenance = ["mock::research::sketches::t202605050503_accessset_arity::findings::setup"]
 quote = '''
 - **B. Recursive HList AccessSet.** `Empty` terminator and `Cons<H, T>`. `Contains<X>` is recursive: head match, or tail recurses.
 ---
@@ -358,7 +358,7 @@ id = "the_arity_twelve_cap_continues_to_govern_unit_read_and_write_declarations_
 subject = "units"
 what = "The access set needs no extension to higher arities: the arity-twelve cap continues to govern the unit read and write declarations, which are flat tuples, and it does not govern the builder's accumulator, which is a cons-list."
 source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:166-178"
-provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#accessset-arity-ceiling-not-the-binding-constraint"]
+provenance = ["mock::research::sketches::app_builder_typestate_202605010900::findings::accessset_arity_ceiling_not_the_binding_constraint"]
 quote = '''
 ## AccessSet arity ceiling: not the binding constraint
 
@@ -386,7 +386,7 @@ what = "The read and write declarations of a unit are written through macros tha
 because = "The original per-arity cap of twelve on the satisfaction trait bites real consumers: one legitimately reads from sixteen or more stores."
 mechanism = "`read!` / `write!` macros; `WuSatisfied<A>` recursive over the cons-list; consumers migrate from `type Read = (Resource<X>, Column<Y>);` to `type Read = read![Resource<X>, Column<Y>];`; verified by `smoke_wu_with_sixteen_stores`, a single unit declaring 16 stores in Read; the consumer is vehje typecheck."
 source = "mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:26-30, mock/research/sketches/app-builder-typestate-202605010900/FINDINGS.md:46-46"
-provenance = ["mock::research::sketches::app-builder-typestate-202605010900::FINDINGS::#2-wusatisfied-uncap-via-cons-list-shape"]
+provenance = ["mock::research::sketches::app_builder_typestate_202605010900::findings::t2_wusatisfied_uncap_via_cons_list_shape"]
 quote = '''
 ### 2. WuSatisfied uncap via cons-list shape
 
@@ -411,7 +411,7 @@ subject = "units"
 what = "The declaration half of a unit, its reads, writes and hint, is granted by one blanket implementation to every unit under any schedule, because the schedule is a parameter of the declaration trait. No explicit implementation is needed for a unit under a schedule other than the always one, which is strictly more general than the earlier schedule trait, whose blanket pins the always schedule and requires an explicit implementation per unit under an event-type schedule."
 mechanism = "`Plannable<Schedule = Always>` with `impl<W: WorkUnit<S>, S> Plannable<S> for W`; `AdaptWu`, an `impl WorkUnit<On<ScheduleEnd>>`, is accepted at a `T: Plannable<S>` bound; `HasSchedule` (`work_unit.rs:145`) has a blanket that pins `Always`."
 source = "mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:28-34, mock/research/sketches/202607171733_plannable-declaration-split/FINDINGS.md:38-41"
-provenance = ["mock::research::sketches::202607171733_plannable-declaration-split::FINDINGS::#the-shape-that-works-upstream-rs-downstream-rs"]
+provenance = ["mock::research::sketches::t202607171733_plannable_declaration_split::findings::the_shape_that_works_upstreamrs_downstreamrs"]
 quote = '''
 ```rust
 pub trait Plannable<Schedule = Always> { type Read: AccessSet; /* Write, Hint */ }
