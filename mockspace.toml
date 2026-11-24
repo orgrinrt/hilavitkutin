@@ -1,7 +1,7 @@
 # The engine pin. `mockspace_version` is the released form, and mockspace has
 # cut no release yet, so this tracks the working trunk instead. The launcher
 # re-resolves the branch head periodically.
-mockspace_branch = "work/qh2-mockspace"
+mockspace_branch = "dev"
 
 project_name = "hilavitkutin"
 crate_prefix = "hilavitkutin"
